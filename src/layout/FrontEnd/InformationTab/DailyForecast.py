@@ -20,7 +20,7 @@ class DailyForecast:
             expand=True
             )
 
-    def build(self, page):
+    def build(self):
         return ft.Container(
             bgcolor=self.bgcolor,
             border_radius=15,

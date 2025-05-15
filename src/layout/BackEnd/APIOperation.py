@@ -1,3 +1,4 @@
+from ctypes import alignment
 import logging
 import flet as ft
 import requests
@@ -176,9 +177,9 @@ class APIOperation:
                 day_key = date_obj.strftime("%Y-%m-%d")
                 hour = dt_txt.split(" ")[1]
 
-                if hour in ["09:00:00", "15:00:00"]:
+                if hour in ["06:00:00", "12:00:00"]:
                     # Preferisci 09:00 se disponibile
-                    if day_key not in daily_data or hour == "09:00:00":
+                    if day_key not in daily_data or hour == "06:00:00":
                         daily_data[day_key] = item
 
             forecast_cards = []
@@ -193,22 +194,61 @@ class APIOperation:
 
                 row = ft.Row(
                     controls=[
-                        ft.Text(label, size=15, color=self.txtcolor, weight="bold", width=100),
-                        ft.Image(
-                            src=f"https://openweathermap.org/img/wn/{icon}@4x.png",
-                            width=80,
-                            height=80,
+                        ft.Text(label, size=20, color=self.txtcolor, weight="bold", width=100,
+                                text_align=ft.TextAlign.START),
+                        ft.Container(
+                            content=ft.Image(
+                                src=f"https://openweathermap.org/img/wn/{icon}@4x.png",
+                                width=80,
+                                height=80,
+                            ),
+                            expand=True,
+                            alignment=ft.alignment.center
                         ),
-                        ft.Text(f"{temp_min}°C / {temp_max}°C", width=100),
-                        #ft.Text(weather.capitalize(), size=12)
+                        ft.Text(
+                            spans=[
+                                ft.TextSpan(
+                                    f"{temp_min}°",
+                                    ft.TextStyle(
+                                        size=20,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=ft.Colors.BLUE,
+                                    )
+                                ),
+                                ft.TextSpan(" / ",
+                                    ft.TextStyle(
+                                        size=20,
+                                        weight=ft.FontWeight.BOLD,
+                                    )),
+                                ft.TextSpan(
+                                    f"{temp_max}°",
+                                    ft.TextStyle(
+                                        size=20,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=ft.Colors.RED,
+                                    )
+                                ),
+                            ],
+                            expand=True,
+                            text_align=ft.TextAlign.END
+                        )
                     ],
-                    alignment=ft.MainAxisAlignment.START,
+                    expand=True,
+                    spacing=0,
+                    alignment=ft.MainAxisAlignment.SPACE_EVENLY,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER
                 )
 
-                forecast_cards.append(ft.Container(content=row, padding=10))
+                forecast_cards.append(ft.Container(content=row))
+                
+                if i < 4:  # Divider solo tra le righe, non dopo l'ultima
+                    forecast_cards.append(
+                        ft.Container(
+                            content=ft.Divider(thickness=0.5, color="white", opacity=1),
+                        )
+                    )
 
-            return ft.Column(scroll="always", controls=forecast_cards)
+            return ft.Column(controls=forecast_cards, expand=True)
 
         except Exception as e:
             print(f"Errore durante l'elaborazione della previsione: {e}")

@@ -15,13 +15,16 @@ class InformationTab:
         self.airCondition = AirCondition(page)
 
     def createInformationPage(self):
-        controls = [
-            ft.Container(content=self.searchbar.build()),
-            ft.Container(content=self.mainInformation.build()),
-            ft.Container(content=self.dailyForecast.build(self.page)),
-            ft.Container(content=self.airCondition.build()),
-        ]
-        return ft.Column(controls=controls, expand=True)
+        return ft.Column(
+            controls = [
+                ft.Container(content=self.searchbar.build()),
+                ft.Container(content=self.mainInformation.build()),
+                ft.Container(content=self.dailyForecast.build()),
+                ft.Container(content=self.airCondition.build()),
+            ],
+            expand=True
+        )
+        
 
     def build(self):  
         return ft.Container(

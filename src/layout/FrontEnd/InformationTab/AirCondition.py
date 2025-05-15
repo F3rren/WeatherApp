@@ -73,7 +73,6 @@ class AirCondition:
 
 
     def build(self):
-        # Creiamo un container con il tab
         return ft.Container(
             bgcolor=self.bgcolor,
             border_radius=15,

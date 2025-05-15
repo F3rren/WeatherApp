@@ -32,7 +32,8 @@ class WeeklyWeather:
             content=ft.Column(
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[self.api.getWeeklyForecast(self.city)]
+                controls=[
+                    self.createWeeklyForecast()]
                 ),
             expand=True
         )

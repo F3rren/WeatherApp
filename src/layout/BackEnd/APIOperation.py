@@ -172,11 +172,12 @@ class APIOperation:
             items = response["list"]
             forecast_cards = []
 
+            
             for item in items:
                 dt_txt = item["dt_txt"]  # "2025-05-16 09:00:00"
                 date_obj = datetime.strptime(dt_txt, "%Y-%m-%d %H:%M:%S")
                 abbrev = date_obj.strftime("%a")  # "Mon", "Tue", ...
-
+                
                 if abbrev not in days:
                     continue
 
@@ -187,13 +188,12 @@ class APIOperation:
                 is_today = abbrev == today_abbrev
                 label = "Today" if is_today else abbrev
 
-                temp_min = item["main"]["temp_min"]
-                temp_max = item["main"]["temp_max"]
+                temp_min = round(item["main"]["temp_min"])
+                temp_max = round(item["main"]["temp_max"])
                 weather = item["weather"][0]["description"]
                 icon = item["weather"][0]["icon"]
 
-                card = ft.Container(
-                    content=ft.Column(
+                card = ft.Row(
                         controls=[
                             ft.Text(
                                 label,
@@ -206,22 +206,16 @@ class APIOperation:
                                 width=100,
                                 height=100,
                             ),
-                            ft.Text(f"{temp_min:.1f}°C / {temp_max:.1f}°C"),
-                            ft.Text(weather.capitalize(), size=12)
+                            ft.Text(weather.capitalize(), size=12),
+                            ft.Text(f"{temp_min}° / {temp_max}°")
                         ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    ),
-                    bgcolor="#f0f0f0",
-                    padding=10,
-                    border_radius=10,
-                    width=140
+                        alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                        
                 )
 
                 forecast_cards.append(card)
-                print(f"{dt_txt} - {label} - {weather} - Min: {temp_min} - Max: {temp_max}")
-
-            return ft.Column(scroll="always", controls=forecast_cards)
+                
+            return ft.Column(controls=forecast_cards)
 
         except Exception as e:
             print(f"Errore durante l'elaborazione della previsione: {e}")

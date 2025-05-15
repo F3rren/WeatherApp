@@ -1,4 +1,3 @@
-from ctypes import alignment
 import logging
 import flet as ft
 import requests

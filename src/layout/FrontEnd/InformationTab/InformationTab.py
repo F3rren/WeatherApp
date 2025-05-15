@@ -7,12 +7,12 @@ from layout.FrontEnd.InformationTab.Searchbar import Searchbar
 
 class InformationTab:
 
-    def __init__(self, page):
+    def __init__(self, page, city, language, unit):
         self.page = page
         self.searchbar = Searchbar()
-        self.mainInformation = MainInformation(page)
-        self.dailyForecast = DailyForecast(page)
-        self.airCondition = AirCondition(page)
+        self.mainInformation = MainInformation(page, city, language, unit)
+        self.dailyForecast = DailyForecast(page, city, language, unit)
+        self.airCondition = AirCondition(page, city, language, unit)
 
     def createInformationPage(self):
         return ft.Column(

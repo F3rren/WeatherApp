@@ -6,11 +6,11 @@ SIZE_TEXT = 18
 
 class WeeklyWeather:
 
-    def __init__(self, page, city = "Milano"):
+    def __init__(self, page, city, language, unit):
         self.city = city
         self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
         self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
-        self.api = APIOperation(page)
+        self.api = APIOperation(page, city, language, unit)
 
     def createWeeklyForecast(self):
         return ft.Container(
@@ -18,7 +18,8 @@ class WeeklyWeather:
             content=ft.Column(
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[self.api.getWeeklyForecast(self.city)]
+                controls=[self.api.getWeeklyForecast()
+                    ]
                 ),
             expand=True
             )

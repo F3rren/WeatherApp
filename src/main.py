@@ -10,9 +10,14 @@ class Main:
         page.title = "App Meteo"
         page.theme_mode = ft.ThemeMode.DARK
 
+
+        city = "Milano"
+        language = "sq"
+        unit = "metric"
+
         sidebar = Sidebar(page)
-        informationTab = InformationTab(page)
-        weeklyWeather = WeeklyWeather(page)
+        informationTab = InformationTab(page, city, language, unit)
+        weeklyWeather = WeeklyWeather(page, city, language, unit)
 
         page.add(
             ft.Row(

@@ -8,6 +8,7 @@ class Sidebar:
     def __init__(self, page):
         self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" 
         self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" 
+
         page.update()
 
     def create_sidebar(self):

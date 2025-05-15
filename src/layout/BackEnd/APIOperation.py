@@ -1,4 +1,5 @@
 import logging
+from fastapi import params
 import flet as ft
 import requests
 from datetime import datetime, timedelta
@@ -8,19 +9,35 @@ class APIOperation:
 
     logger = logging.getLogger(__name__)
 
-    def __init__(self, page):
+    def __init__(self, page, city, language, unit):
         logging.basicConfig(filename='logapp.log', level=logging.INFO, filemode='w')
         self.logger.info('Started')
         self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
         self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
-
+        
+        self.city = city
+        self.unit = unit
+        self.lang = language
+    
     def getApiKey(self):
         return "ef054c6def10c2df7b266ba83513133a"   
     
-    def getInformation(self, city):
+    def getStateInformation(self, city):
+        try:
+            url = "http://api.openweathermap.org/geo/1.0/direct"
+            params = {"q": city, "limit": 5, "appid": self.getApiKey()}
+            response = requests.get(url, params=params)
+            data = response.json()
+            print(data)
+            #return data
+        except (KeyError, TypeError) as e:
+            logging.error(f"Errore nel recupero delle informazioni dello stato: {e}")
+            return None
+
+    def getInformation(self):
         try:
             url = "https://api.openweathermap.org/data/2.5/forecast"
-            params = {"q": city, "appid": self.getApiKey(), "units": "metric", "lang": "it"}
+            params = {"q": self.city, "appid": self.getApiKey(), "units": self.unit, "lang": self.lang}
             response = requests.get(url, params=params)
             data = response.json()
             return data
@@ -29,9 +46,9 @@ class APIOperation:
             return None
 
     #SEZIONE TEMPERATURE
-    def getTemperatureByCity(self, city):
+    def getTemperatureByCity(self):
         try:
-            response = self.getInformation(city)
+            response = self.getInformation()
             logging.info("Temperatura per citta' recuperata")
             return round(response["list"][0]["main"]["temp"])
         except (KeyError, TypeError) as e:
@@ -40,16 +57,16 @@ class APIOperation:
         
     def getRealFeelByCity(self, city):
         try:
-            response = self.getInformation(city)
+            response = self.getInformation()
             logging.info("Temperatura ipotetica per citta' recuperata")
             return round(response["list"][0]["main"]["feels_like"])   
         except (KeyError, TypeError) as e:
             logging.error(f"Errore nel recupero della temperatura ipotetica per citta': {e}")
             return None
         
-    def getMinMaxTemperatureByCity(self, city):
+    def getMinMaxTemperatureByCity(self):
         try:
-            response = self.getInformation(city)
+            response = self.getInformation()
             logging.info("Temperatura minima e max per citta' recuperata")
             return round(response["list"][0]["main"]["temp_min"]), round(response["list"][0]["main"]["temp_max"])
         except (KeyError, TypeError) as e:
@@ -57,36 +74,36 @@ class APIOperation:
             return None 
     
     #SEZIONE PIOGGIA/VENTO/UMIDITA'
-    def getWindInformation(self, city):
+    def getWindInformation(self):
         try:
-            response = self.getInformation(city)
+            response = self.getInformation()
             logging.info("Informazioni vento recuperato")
             return round(response["list"][0]["wind"]["speed"])   
         except (KeyError, TypeError) as e:
             logging.error(f"Errore nel recupero del vento ipotetico: {e}")
             return None 
         
-    def getHumidityInformation(self, city):
+    def getHumidityInformation(self):
         try:
-            response = self.getInformation(city)
+            response = self.getInformation()
             logging.info("Informazioni umidita' recuperato")
             return response["list"][0]["main"]["humidity"]
         except (KeyError, TypeError) as e:
             logging.error(f"Errore nel recupero dell'umidita' : {e}")
             return None 
 
-    def getPressureInformation(self, city):
+    def getPressureInformation(self):
         try:
-            response = self.getInformation(city)
+            response = self.getInformation()
             logging.info("Informazioni pressione recuperato")
             return round(response["list"][0]["main"]["pressure"])   
         except (KeyError, TypeError) as e:
             logging.error(f"Errore nel recupero della pressione : {e}")
             return None 
         
-    def getImageByWeather(self, city):
+    def getImageByWeather(self):
         try:
-            response = self.getInformation(city)
+            response = self.getInformation()
             icon_code= response["list"][0]["weather"][0]["icon"]
             logging.info("Informazioni immagine meteo recuperata")
             return ft.Image(src=f"https://openweathermap.org/img/wn/{icon_code}@4x.png")
@@ -94,18 +111,18 @@ class APIOperation:
             print(f"Errore durante il recupero dell'immagine meteo: {e}")
             return ft.Image(src="https://openweathermap.org/img/wn/01d@2x.png", width=100, height=100)
         
-    def getVisibilityPercentage(self, city):
+    def getVisibilityPercentage(self):
         try:
-            response = self.getInformation(city)
+            response = self.getInformation()
             logging.info("Informazioni visibilita' recuperata")
             return response["list"][0]["visibility"] / 1000  
         except (KeyError, TypeError) as e:
             print(f"Errore nel recupero della visibilita': {e}")
             return None
 
-    def getCurrentPressure(self, city):
+    def getCurrentPressure(self):
         try:
-            response = self.getInformation(city)
+            response = self.getInformation()
             logging.info("Informazioni pressione attuale recuperata")
             return response.json()["list"][0]["main"]["pressure"]
         except (KeyError, TypeError) as e:
@@ -137,7 +154,7 @@ class APIOperation:
                                     width=100,
                                     height=100,
                                 ),
-                                ft.Text(f"{item["main"]["temp"]:.1f}°", size=20, weight=ft.FontWeight.BOLD)
+                                ft.Text(f"{round(item["main"]["temp"])}°", size=20, weight=ft.FontWeight.BOLD)
                             ],
                             expand=True,
                             spacing=0,
@@ -163,38 +180,44 @@ class APIOperation:
             return ft.Text("Errore nel caricamento della previsione.")
 
 
-    def getWeeklyForecast(self, city):
+    def getWeeklyForecast(self):
         try:
-            response = self.getInformation(city)
+            response = self.getInformation()
             items = response["list"]
             daily_data = {}
 
-            # Raggruppa per giorno, scegli 09:00 oppure 15:00
+            # Raggruppa tutti gli item per giorno
             for item in items:
                 dt_txt = item["dt_txt"]
                 date_obj = datetime.strptime(dt_txt, "%Y-%m-%d %H:%M:%S")
                 day_key = date_obj.strftime("%Y-%m-%d")
-                hour = dt_txt.split(" ")[1]
 
-                if hour in ["06:00:00", "12:00:00"]:
-                    # Preferisci 09:00 se disponibile
-                    if day_key not in daily_data or hour == "06:00:00":
-                        daily_data[day_key] = item
+                if day_key not in daily_data:
+                    daily_data[day_key] = []
+                daily_data[day_key].append(item)
 
             forecast_cards = []
-            for i, (day_key, item) in enumerate(sorted(daily_data.items())[:5]):
+            for i, (day_key, items_in_day) in enumerate(sorted(daily_data.items())[:5]):
                 date_obj = datetime.strptime(day_key, "%Y-%m-%d")
                 label = format_datetime(date_obj, "EEEE", locale="it").capitalize()
 
-                temp_min = round(item["main"]["temp_min"])
-                temp_max = round(item["main"]["temp_max"])
-                #weather = item["weather"][0]["description"]
-                icon = item["weather"][0]["icon"]
+                # Calcola min e max su tutti i valori della giornata
+                temp_min = min([x["main"]["temp_min"] for x in items_in_day])
+                temp_max = max([x["main"]["temp_max"] for x in items_in_day])
+
+                # Prendi l'icona dal primo elemento delle 12:00 se c'è, altrimenti qualsiasi
+                icon_item = next((x for x in items_in_day if "12:00:00" in x["dt_txt"]), items_in_day[0])
+                icon = icon_item["weather"][0]["icon"]
 
                 row = ft.Row(
                     controls=[
-                        ft.Text(label, size=20, color=self.txtcolor, weight="bold", width=100,
-                                text_align=ft.TextAlign.START),
+                        ft.Text(label, 
+                                size=20, 
+                                color=self.txtcolor, 
+                                weight="bold", 
+                                width=100,
+                                text_align=ft.TextAlign.START
+                            ),
                         ft.Container(
                             content=ft.Image(
                                 src=f"https://openweathermap.org/img/wn/{icon}@4x.png",
@@ -205,9 +228,12 @@ class APIOperation:
                             alignment=ft.alignment.center
                         ),
                         ft.Text(
+                            item["weather"][0]["description"].capitalize()
+                        ),
+                        ft.Text(
                             spans=[
                                 ft.TextSpan(
-                                    f"{temp_min}°",
+                                    f"{round(temp_min)}°",
                                     ft.TextStyle(
                                         size=20,
                                         weight=ft.FontWeight.BOLD,
@@ -220,7 +246,7 @@ class APIOperation:
                                         weight=ft.FontWeight.BOLD,
                                     )),
                                 ft.TextSpan(
-                                    f"{temp_max}°",
+                                    f"{round(temp_max)}°",
                                     ft.TextStyle(
                                         size=20,
                                         weight=ft.FontWeight.BOLD,
@@ -239,8 +265,8 @@ class APIOperation:
                 )
 
                 forecast_cards.append(ft.Container(content=row))
-                
-                if i < 4:  # Divider solo tra le righe, non dopo l'ultima
+
+                if i < 4:
                     forecast_cards.append(
                         ft.Container(
                             content=ft.Divider(thickness=0.5, color="white", opacity=1),

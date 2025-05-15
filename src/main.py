@@ -8,7 +8,7 @@ class Main:
     def main(page: ft.Page):
 
         page.title = "App Meteo"
-        page.theme_mode = ft.ThemeMode.LIGHT
+        page.theme_mode = ft.ThemeMode.DARK
 
         sidebar = Sidebar(page)
         informationTab = InformationTab(page)

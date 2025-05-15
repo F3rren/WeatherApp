@@ -2,6 +2,7 @@ import logging
 import flet as ft
 import requests
 from datetime import datetime, timedelta
+from babel.dates import format_datetime
 
 class APIOperation:
 
@@ -161,61 +162,53 @@ class APIOperation:
             logging.error(f"Errore nel parsing della previsione: {e}")
             return ft.Text("Errore nel caricamento della previsione.")
 
-    from datetime import datetime
 
     def getWeeklyForecast(self, city):
         try:
-            days = self.get_upcoming_days(5)  # es. ["Mon", "Tue", ...]
-            today_abbrev = datetime.now().strftime("%a")
-
             response = self.getInformation(city)
             items = response["list"]
-            forecast_cards = []
+            daily_data = {}
 
-            
+            # Raggruppa per giorno, scegli 09:00 oppure 15:00
             for item in items:
-                dt_txt = item["dt_txt"]  # "2025-05-16 09:00:00"
+                dt_txt = item["dt_txt"]
                 date_obj = datetime.strptime(dt_txt, "%Y-%m-%d %H:%M:%S")
-                abbrev = date_obj.strftime("%a")  # "Mon", "Tue", ...
-                
-                if abbrev not in days:
-                    continue
-
+                day_key = date_obj.strftime("%Y-%m-%d")
                 hour = dt_txt.split(" ")[1]
-                if hour not in ["09:00:00", "15:00:00"]:
-                    continue
 
-                is_today = abbrev == today_abbrev
-                label = "Today" if is_today else abbrev
+                if hour in ["09:00:00", "15:00:00"]:
+                    # Preferisci 09:00 se disponibile
+                    if day_key not in daily_data or hour == "09:00:00":
+                        daily_data[day_key] = item
+
+            forecast_cards = []
+            for i, (day_key, item) in enumerate(sorted(daily_data.items())[:5]):
+                date_obj = datetime.strptime(day_key, "%Y-%m-%d")
+                label = format_datetime(date_obj, "EEEE", locale="it").capitalize()
 
                 temp_min = round(item["main"]["temp_min"])
                 temp_max = round(item["main"]["temp_max"])
-                weather = item["weather"][0]["description"]
+                #weather = item["weather"][0]["description"]
                 icon = item["weather"][0]["icon"]
 
-                card = ft.Row(
-                        controls=[
-                            ft.Text(
-                                label,
-                                size=15,
-                                color=self.txtcolor,
-                                weight="bold" if is_today else "normal",
-                            ),
-                            ft.Image(
-                                src=f"https://openweathermap.org/img/wn/{icon}@4x.png",
-                                width=100,
-                                height=100,
-                            ),
-                            ft.Text(weather.capitalize(), size=12),
-                            ft.Text(f"{temp_min}° / {temp_max}°")
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_EVENLY,
-                        
+                row = ft.Row(
+                    controls=[
+                        ft.Text(label, size=15, color=self.txtcolor, weight="bold", width=100),
+                        ft.Image(
+                            src=f"https://openweathermap.org/img/wn/{icon}@4x.png",
+                            width=80,
+                            height=80,
+                        ),
+                        ft.Text(f"{temp_min}°C / {temp_max}°C", width=100),
+                        #ft.Text(weather.capitalize(), size=12)
+                    ],
+                    alignment=ft.MainAxisAlignment.START,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER
                 )
 
-                forecast_cards.append(card)
-                
-            return ft.Column(controls=forecast_cards)
+                forecast_cards.append(ft.Container(content=row, padding=10))
+
+            return ft.Column(scroll="always", controls=forecast_cards)
 
         except Exception as e:
             print(f"Errore durante l'elaborazione della previsione: {e}")

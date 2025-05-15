@@ -7,7 +7,7 @@ class AirCondition:
         self.city = city
         self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
         self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
-        self.api = APIOperation()
+        self.api = APIOperation(page)
 
     def createAirConditionTab(self):
         informationTag = ft.Row(

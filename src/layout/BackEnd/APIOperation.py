@@ -1,15 +1,17 @@
 import logging
 import flet as ft
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class APIOperation:
 
     logger = logging.getLogger(__name__)
 
-    def __init__(self):
+    def __init__(self, page):
         logging.basicConfig(filename='logapp.log', level=logging.INFO, filemode='w')
         self.logger.info('Started')
+        self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
+        self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
 
     def getApiKey(self):
         return "ef054c6def10c2df7b266ba83513133a"   
@@ -109,6 +111,11 @@ class APIOperation:
             print(f"Errore nel recupero della pressione: {e}")
             return None
 
+    
+    def get_upcoming_days(self, n):
+        today = datetime.now()
+        return [(today + timedelta(days=i)).strftime("%a") for i in range(n)]
+
     #SEZIONE PREVISIONI METEO GIORNALIERE/SETTIMANALI
     def getDailyForecast(self, city):
         forecast_cards = []
@@ -129,8 +136,8 @@ class APIOperation:
                                     width=100,
                                     height=100,
                                 ),
-                            ft.Text(f"{item["main"]["temp"]:.1f}°", size=20, weight=ft.FontWeight.BOLD)
-                        ],
+                                ft.Text(f"{item["main"]["temp"]:.1f}°", size=20, weight=ft.FontWeight.BOLD)
+                            ],
                             expand=True,
                             spacing=0,
                             alignment=ft.MainAxisAlignment.SPACE_EVENLY,
@@ -154,25 +161,68 @@ class APIOperation:
             logging.error(f"Errore nel parsing della previsione: {e}")
             return ft.Text("Errore nel caricamento della previsione.")
 
-    def getWeeklyForecast(self, city):
-        forecast_cards = []
-        try:
-            response = self.getInformation(city)
-            forecast_list = response["list"]
-            every_8h_forecasts = forecast_list[::8]  # ogni 3x3h = 9h (circa ogni 8h)
+    from datetime import datetime
 
-            for item in every_8h_forecasts:
-                time = item["dt_txt"]
-                temp = item["main"]["temp"]
+    def getWeeklyForecast(self, city):
+        try:
+            days = self.get_upcoming_days(5)  # es. ["Mon", "Tue", ...]
+            today_abbrev = datetime.now().strftime("%a")
+
+            response = self.getInformation(city)
+            items = response["list"]
+            forecast_cards = []
+
+            for item in items:
+                dt_txt = item["dt_txt"]  # "2025-05-16 09:00:00"
+                date_obj = datetime.strptime(dt_txt, "%Y-%m-%d %H:%M:%S")
+                abbrev = date_obj.strftime("%a")  # "Mon", "Tue", ...
+
+                if abbrev not in days:
+                    continue
+
+                hour = dt_txt.split(" ")[1]
+                if hour not in ["09:00:00", "15:00:00"]:
+                    continue
+
+                is_today = abbrev == today_abbrev
+                label = "Today" if is_today else abbrev
+
+                temp_min = item["main"]["temp_min"]
+                temp_max = item["main"]["temp_max"]
                 weather = item["weather"][0]["description"]
-                #Per calcolare la temperatura minima e massima meteo, si devono individuare i valori più bassi e più alti registrati durante un determinato periodo di tempo, solitamente una giornata. La temperatura minima si registra solitamente poco dopo il sorgere del sole, mentre la massima nel corso del pomeriggio
-                min = item["main"]["temp_min"] #da prendere verso le 6
-                max = item["main"]["temp_max"] #da prendere verso le 15
-                #print(f"{time} - {weather} - {temp}°C - {min} - {max}")
+                icon = item["weather"][0]["icon"]
+
+                card = ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ft.Text(
+                                label,
+                                size=15,
+                                color=self.txtcolor,
+                                weight="bold" if is_today else "normal",
+                            ),
+                            ft.Image(
+                                src=f"https://openweathermap.org/img/wn/{icon}@4x.png",
+                                width=100,
+                                height=100,
+                            ),
+                            ft.Text(f"{temp_min:.1f}°C / {temp_max:.1f}°C"),
+                            ft.Text(weather.capitalize(), size=12)
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                    bgcolor="#f0f0f0",
+                    padding=10,
+                    border_radius=10,
+                    width=140
+                )
+
+                forecast_cards.append(card)
+                print(f"{dt_txt} - {label} - {weather} - Min: {temp_min} - Max: {temp_max}")
+
+            return ft.Column(scroll="always", controls=forecast_cards)
 
         except Exception as e:
-            logging.error(f"Errore nel parsing della previsione: {e}")
-            return ft.Text("Errore nel caricamento della previsione.")
-
-
-
+            print(f"Errore durante l'elaborazione della previsione: {e}")
+            return ft.Text("Errore nella previsione meteo.")

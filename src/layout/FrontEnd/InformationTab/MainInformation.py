@@ -3,9 +3,9 @@ import flet as ft
 from layout.BackEnd.APIOperation import APIOperation
 
 class MainInformation:
-    def __init__(self, city="Milano"):
+    def __init__(self, page, city="Milano"):
         self.city = city
-        self.api = APIOperation()
+        self.api = APIOperation(page)
 
     def createMainInformation(self):
         return ft.Row(

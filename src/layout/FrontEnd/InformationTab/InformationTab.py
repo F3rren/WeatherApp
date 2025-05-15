@@ -10,7 +10,7 @@ class InformationTab:
     def __init__(self, page):
         self.page = page
         self.searchbar = Searchbar()
-        self.mainInformation = MainInformation()
+        self.mainInformation = MainInformation(page)
         self.dailyForecast = DailyForecast(page)
         self.airCondition = AirCondition(page)
 

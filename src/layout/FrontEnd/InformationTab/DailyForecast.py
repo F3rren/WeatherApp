@@ -7,7 +7,7 @@ class DailyForecast:
         self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
         self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
         self.city = city
-        self.api = APIOperation()
+        self.api = APIOperation(page)
 
     def createHourlyForecast(self):
         return ft.Container(

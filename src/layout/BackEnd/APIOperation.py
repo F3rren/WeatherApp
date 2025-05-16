@@ -1,5 +1,4 @@
 import logging
-from fastapi import params
 import flet as ft
 import requests
 from datetime import datetime, timedelta
@@ -14,7 +13,9 @@ class APIOperation:
         self.logger.info('Started')
         self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
         self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
+        page.update()
         
+        #VARIABLE
         self.city = city
         self.unit = unit
         self.lang = language
@@ -135,49 +136,50 @@ class APIOperation:
         return [(today + timedelta(days=i)).strftime("%a") for i in range(n)]
 
     #SEZIONE PREVISIONI METEO GIORNALIERE/SETTIMANALI
-    def getDailyForecast(self, city):
+    def getDailyForecast(self):
         forecast_cards = []
         try:
-            url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={self.getApiKey()}&units=metric&lang=it"
-            response = requests.get(url)
-            data = response.json()
-            for i, item in enumerate(data["list"][:6]):
+            response = self.getInformation()
+            items = response["list"]
+
+            for i, item in enumerate(items[:6]):
                 time = item["dt_txt"]
                 dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
                 orario = dt.strftime("%H:%M")
-                
+
                 card = ft.Column(
-                            controls=[
-                                ft.Text(orario, size=20, weight=ft.FontWeight.BOLD),
-                                ft.Image(
-                                    src=f"https://openweathermap.org/img/wn/{item['weather'][0]['icon']}@2x.png",
-                                    width=100,
-                                    height=100,
-                                ),
-                                ft.Text(f"{round(item["main"]["temp"])}°", size=20, weight=ft.FontWeight.BOLD)
-                            ],
-                            expand=True,
-                            spacing=0,
-                            alignment=ft.MainAxisAlignment.SPACE_EVENLY,
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                    )
-                
+                    controls=[
+                        ft.Text(orario, size=20, weight=ft.FontWeight.BOLD),
+                        ft.Image(
+                            src=f"https://openweathermap.org/img/wn/{item['weather'][0]['icon']}@2x.png",
+                            width=100,
+                            height=100,
+                        ),
+                        ft.Text(f"{round(item['main']['temp'])}°", size=20, weight=ft.FontWeight.BOLD)
+                    ],
+                    expand=True,
+                    spacing=0,
+                    alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                )
+
                 forecast_cards.append(card)
 
                 if i < 5:
-                     forecast_cards.append(
-                         ft.Container(
-                             content=ft.VerticalDivider(width=1, thickness=1, color="white", opacity=0.5),
-                             height=100,
-                             alignment=ft.alignment.center,
-                         )
-                     )
+                    forecast_cards.append(
+                        ft.Container(
+                            content=ft.VerticalDivider(width=1, thickness=1, color="white", opacity=0.5),
+                            height=100,
+                            alignment=ft.alignment.center,
+                        )
+                    )
 
-            return ft.Row(controls=forecast_cards)
+            return ft.Row(controls=forecast_cards, expand=True)
 
         except Exception as e:
             logging.error(f"Errore nel parsing della previsione: {e}")
             return ft.Text("Errore nel caricamento della previsione.")
+
 
 
     def getWeeklyForecast(self):
@@ -204,10 +206,11 @@ class APIOperation:
                 # Calcola min e max su tutti i valori della giornata
                 temp_min = min([x["main"]["temp_min"] for x in items_in_day])
                 temp_max = max([x["main"]["temp_max"] for x in items_in_day])
-
+                
                 # Prendi l'icona dal primo elemento delle 12:00 se c'è, altrimenti qualsiasi
                 icon_item = next((x for x in items_in_day if "12:00:00" in x["dt_txt"]), items_in_day[0])
                 icon = icon_item["weather"][0]["icon"]
+                description = icon_item["weather"][0]["description"]
 
                 row = ft.Row(
                     controls=[
@@ -228,8 +231,8 @@ class APIOperation:
                             alignment=ft.alignment.center
                         ),
                         ft.Text(
-                            item["weather"][0]["description"].capitalize()
-                        ),
+                            description
+                            ),
                         ft.Text(
                             spans=[
                                 ft.TextSpan(

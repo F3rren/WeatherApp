@@ -1,14 +1,11 @@
 import flet as ft
-from flet import icons
-
-
+from flet import Icons
 
 class Sidebar:
 
     def __init__(self, page):
         self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" 
         self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" 
-
         page.update()
 
     def create_sidebar(self):
@@ -18,29 +15,29 @@ class Sidebar:
                 content=ft.Column(
                     controls=[
                         ft.IconButton(
-                            icon=icons.WB_SUNNY,  # Weather, 
-                            icon_color=ft.colors.YELLOW, 
+                            icon=Icons.WB_SUNNY,  # Weather, 
+                            icon_color=ft.Colors.YELLOW, 
                             icon_size=30, 
                             tooltip="Weather",
                         ),
                         ft.Text("Weather", size=12, color=self.txtcolor, weight="bold"),
                         ft.IconButton(
-                            icon=icons.MAP_OUTLINED,  # Cities
-                            icon_color=ft.colors.CYAN, 
+                            icon=Icons.MAP_OUTLINED,  # Cities
+                            icon_color=ft.Colors.CYAN, 
                             icon_size=30, 
                             tooltip="Cities",
                         ),
                         ft.Text("Cities", size=12, color=self.txtcolor, weight="bold"),
                         ft.IconButton(
-                            icon=icons.MAP_OUTLINED,  # Map
-                            icon_color=ft.colors.GREEN, 
+                            icon=Icons.MAP_OUTLINED,  # Map
+                            icon_color=ft.Colors.GREEN, 
                             icon_size=30, 
                             tooltip="Map",
                         ),
                         ft.Text("Map", size=12, color=self.txtcolor, weight="bold"),
                         ft.IconButton(
-                            icon=ft.icons.SETTINGS_OUTLINED,
-                            icon_color=ft.colors.BLACK,
+                            icon=ft.Icons.SETTINGS_OUTLINED,
+                            icon_color=ft.Colors.BLACK,
                             icon_size=30,
                             tooltip="Settings",
                         ),

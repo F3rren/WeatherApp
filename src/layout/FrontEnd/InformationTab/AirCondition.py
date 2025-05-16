@@ -4,9 +4,11 @@ from layout.BackEnd.APIOperation import APIOperation
 class AirCondition:
 
     def __init__(self, page, city, language, unit):
-        self.city = city
         self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
         self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
+        page.update()
+        
+        self.city = city
         self.api = APIOperation(page, city, language, unit)
 
     def createAirConditionTab(self):
@@ -14,7 +16,7 @@ class AirCondition:
             controls=[
                 ft.Column(
                     controls=[
-                        ft.Icon(name=ft.icons.THERMOSTAT, size=30),
+                        ft.Icon(name=ft.Icons.THERMOSTAT, size=30),
                         ft.Text(
                             f"Real feel: {self.api.getRealFeelByCity(self.city)}°",
                             size=20,
@@ -27,7 +29,7 @@ class AirCondition:
                 ),
                 ft.Column(
                     controls=[
-                        ft.Icon(name=ft.icons.AIR, size=30),
+                        ft.Icon(name=ft.Icons.AIR, size=30),
                         ft.Text(
                             f"Wind: {self.api.getWindInformation()} km/h",
                             size=20,
@@ -40,7 +42,7 @@ class AirCondition:
                 ),
                 ft.Column(
                     controls=[
-                        ft.Icon(name=ft.icons.WATER_DROP, size=30),
+                        ft.Icon(name=ft.Icons.WATER_DROP, size=30),
                         ft.Text(
                             f"Humidity: {self.api.getHumidityInformation()}%",
                             size=20,
@@ -53,7 +55,7 @@ class AirCondition:
                 ),
                 ft.Column(
                     controls=[
-                        ft.Icon(name=ft.icons.SPEED, size=30),
+                        ft.Icon(name=ft.Icons.SPEED, size=30),
                         ft.Text(
                             f"Pressure: {self.api.getPressureInformation()} hPa",
                             size=20,

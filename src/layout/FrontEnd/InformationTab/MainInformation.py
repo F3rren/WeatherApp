@@ -12,7 +12,7 @@ class MainInformation:
             controls=[
                 ft.Column(
                     controls=[
-                        ft.Text(self.api.getStateInformation(self.city), size=40, weight="bold"),
+                        ft.Text((self.city).upper(), size=40, weight="bold"),
                         ft.Text(f"Visibility: {self.api.getVisibilityPercentage()} km", size=20),
                         ft.Text(f"{self.api.getTemperatureByCity()}°", size=60, weight="bold"),
                     ],

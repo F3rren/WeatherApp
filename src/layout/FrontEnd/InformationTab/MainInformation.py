@@ -5,14 +5,14 @@ class MainInformation:
     def __init__(self, page, city, language, unit):
         self.city = city
         self.api = APIOperation(page, city, language, unit)
-
+        self.api.getStateInformation()
     def createMainInformation(self):
         return ft.Row(
             controls=[
                 ft.Column(
                     controls=[
                         ft.Text((self.city).upper(), size=40, weight="bold"),
-                        ft.Text(f"Visibility: {self.api.getVisibilityPercentage()} km", size=20),
+                        #ft.Text(self.api.getCityLocation(), size=20),
                         ft.Text(f"{self.api.getTemperatureByCity()}°", size=60, weight="bold"),
                     ],
                     expand=True, 

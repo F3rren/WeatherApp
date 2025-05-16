@@ -78,7 +78,7 @@ class AirCondition:
         return ft.Container(
             bgcolor=self.bgcolor,
             border_radius=15,
-            padding=25,       
+            padding=20,    
             expand=True,           
             content=self.createAirConditionTab() 
         )

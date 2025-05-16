@@ -10,12 +10,8 @@ class PopMenu:
                 ft.PopupMenuItem(
                     content=ft.Row(
                         [
-                            ft.Icon(
-                                ft.Icons.WB_SUNNY, color = ft.Colors.YELLOW
-                                ),
-                            ft.Text(
-                                "Weather", size=20,
-                                ),
+                            ft.Icon(ft.Icons.WB_SUNNY, color = ft.Colors.YELLOW),
+                            ft.Text("Weather", size=20),
                         ]
                     ),
                     on_click=lambda _: print("Weather"),

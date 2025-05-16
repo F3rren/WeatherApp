@@ -7,7 +7,7 @@ from layout.FrontEnd.WeeklyWeather.WeeklyWeather import WeeklyWeather
 def main(page: ft.Page):
 
     page.title = "App Meteo"
-    page.theme_mode = ft.ThemeMode.LIGHT
+    page.theme_mode = ft.ThemeMode.DARK
     page.adaptive = True
     page.scroll = True
 
@@ -22,21 +22,21 @@ def main(page: ft.Page):
     page.add(
         ft.Column(
             controls=[
-                # Sidebar in riga sopra
                 ft.ResponsiveRow(
                     controls=[
                         ft.Container(
                             content=sidebar.build(),
-                            col={"xs": 12}
+                            col={"xs": 12},
+                            padding = 10
                         )
                     ]
                 ),
-                # RIGA sotto con i due componenti principali
                 ft.ResponsiveRow(
                     controls=[
                         ft.Container(
                             content=informationTab.build(),
-                            col={"xs": 12, "md": 7}
+                            col={"xs": 12, "md": 7},
+                            
                         ),
                         ft.Container(
                             content=weeklyWeather.build(),

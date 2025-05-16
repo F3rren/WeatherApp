@@ -25,5 +25,6 @@ class InformationTab:
 
     def build(self):  
         return ft.Container(
+            padding=10,
             content=self.createInformationPage()
         )

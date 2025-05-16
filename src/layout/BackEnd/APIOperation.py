@@ -13,24 +13,22 @@ class APIOperation:
         self.logger.info('Started')
         self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
         self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
-        page.update()
         
         #VARIABLE
         self.city = city
         self.unit = unit
         self.lang = language
-    
+
     def getApiKey(self):
         return "ef054c6def10c2df7b266ba83513133a"   
     
-    def getStateInformation(self, city):
+    def getStateInformation(self):
         try:
             url = "http://api.openweathermap.org/geo/1.0/direct"
-            params = {"q": city, "limit": 5, "appid": self.getApiKey()}
+            params = {"q": self.city, "limit": 5, "appid": self.getApiKey()}
             response = requests.get(url, params=params)
             data = response.json()
-            print(data)
-            #return data
+            return data
         except (KeyError, TypeError) as e:
             logging.error(f"Errore nel recupero delle informazioni dello stato: {e}")
             return None
@@ -112,11 +110,12 @@ class APIOperation:
             print(f"Errore durante il recupero dell'immagine meteo: {e}")
             return ft.Image(src="https://openweathermap.org/img/wn/01d@2x.png", width=100, height=100)
         
-    def getVisibilityPercentage(self):
+    def getCityLocation(self):
         try:
-            response = self.getInformation()
-            logging.info("Informazioni visibilita' recuperata")
-            return response["list"][0]["visibility"] / 1000  
+            response = self.getStateInformation()
+            logging.info("Informazioni località' recuperata")
+
+            #restituire name, country e state
         except (KeyError, TypeError) as e:
             print(f"Errore nel recupero della visibilita': {e}")
             return None
@@ -129,8 +128,7 @@ class APIOperation:
         except (KeyError, TypeError) as e:
             print(f"Errore nel recupero della pressione: {e}")
             return None
-
-    
+  
     def get_upcoming_days(self, n):
         today = datetime.now()
         return [(today + timedelta(days=i)).strftime("%a") for i in range(n)]
@@ -179,9 +177,7 @@ class APIOperation:
         except Exception as e:
             logging.error(f"Errore nel parsing della previsione: {e}")
             return ft.Text("Errore nel caricamento della previsione.")
-
-
-
+        
     def getWeeklyForecast(self):
         try:
             response = self.getInformation()

@@ -20,8 +20,7 @@ class WeeklyWeather:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[self.api.getWeeklyForecast()
                     ]
-                ),
-            expand=True
+                )
             )
 
     def build(self):
@@ -29,12 +28,10 @@ class WeeklyWeather:
             bgcolor=self.bgcolor,
             border_radius=15,
             padding=20,
-            margin=ft.Margin(10, 80, 10, 10),
             content=ft.Column(
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
                     self.createWeeklyForecast()]
                 ),
-            expand=True
         )

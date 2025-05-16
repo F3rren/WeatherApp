@@ -56,7 +56,7 @@ class APIOperation:
             logging.error(f"Errore nel recupero della temperatura per citta': {e}")
             return None
         
-    def getRealFeelByCity(self, city):
+    def getRealFeelByCity(self):
         try:
             response = self.getInformation()
             logging.info("Temperatura ipotetica per citta' recuperata")

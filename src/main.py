@@ -8,9 +8,11 @@ def main(page: ft.Page):
 
     page.title = "App Meteo"
     page.theme_mode = ft.ThemeMode.LIGHT
+    page.adaptive = True
+    page.scroll = True
 
     city = "Milano"
-    language = "en"
+    language = "it"
     unit = "metric"
 
     sidebar = Sidebar(page)
@@ -18,15 +20,35 @@ def main(page: ft.Page):
     weeklyWeather = WeeklyWeather(page, city, language, unit)
 
     page.add(
-        ft.Row(
+        ft.Column(
             controls=[
-                ft.Container(content=sidebar.build()),
-                ft.Container(content=informationTab.build(), expand=4),
-                ft.Container(content=weeklyWeather.build(), expand=2),
-            ],
-            expand=True
+                # Sidebar in riga sopra
+                ft.ResponsiveRow(
+                    controls=[
+                        ft.Container(
+                            content=sidebar.build(),
+                            col={"xs": 12}
+                        )
+                    ]
+                ),
+                # RIGA sotto con i due componenti principali
+                ft.ResponsiveRow(
+                    controls=[
+                        ft.Container(
+                            content=informationTab.build(),
+                            col={"xs": 12, "md": 7}
+                        ),
+                        ft.Container(
+                            content=weeklyWeather.build(),
+                            col={"xs": 12, "md": 5}
+                        )
+                    ]
+                )
+            ]
         )
     )
 
+
+
 if __name__ == "__main__":
-    ft.app(target=main, assets_dir="assets")
+    ft.app(target=main, assets_dir="assets", view=ft.AppView.WEB_BROWSER)

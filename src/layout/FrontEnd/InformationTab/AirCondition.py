@@ -18,7 +18,7 @@ class AirCondition:
                     controls=[
                         ft.Icon(name=ft.Icons.THERMOSTAT, size=30),
                         ft.Text(
-                            f"Real feel: {self.api.getRealFeelByCity(self.city)}°",
+                            f"Real feel: {self.api.getRealFeelByCity()}°",
                             size=20,
                             weight="bold",
                             color=self.txtcolor,

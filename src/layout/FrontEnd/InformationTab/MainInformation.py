@@ -1,4 +1,3 @@
-import random
 import flet as ft
 from layout.BackEnd.APIOperation import APIOperation
 

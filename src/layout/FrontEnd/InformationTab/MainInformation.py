@@ -6,6 +6,13 @@ class MainInformation:
         self.city = city
         self.api = APIOperation(page, city, language, unit)
         self.api.getStateInformation()
+
+    def update_data(self, city, language, unit):
+        self.city = city
+        self.language = language
+        self.unit = unit
+        self.fetch_data_again()  # un metodo che rifà la chiamata API e aggiorna i controlli
+
     def createMainInformation(self):
         return ft.Row(
             controls=[

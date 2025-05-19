@@ -44,6 +44,13 @@ class APIOperation:
             logging.error(f"Errore nel recupero delle informazioni: {e}")
             return None
 
+    def update_data(self, city, language, unit):
+        self.city = city
+        self.language = language
+        self.unit = unit
+        self.fetch_data_again()  # un metodo che rifà la chiamata API e aggiorna i controlli
+
+
     #SEZIONE TEMPERATURE
     def getTemperatureByCity(self):
         try:
@@ -103,7 +110,7 @@ class APIOperation:
     def getImageByWeather(self):
         try:
             response = self.getInformation()
-            icon_code= response["list"][0]["weather"][0]["icon"]
+            icon_code = response["list"][0]["weather"][0]["icon"]
             logging.info("Informazioni immagine meteo recuperata")
             return ft.Image(src=f"https://openweathermap.org/img/wn/{icon_code}@4x.png")
         except (KeyError, IndexError, TypeError) as e:
@@ -158,7 +165,7 @@ class APIOperation:
                     expand=True,
                     spacing=0,
                     alignment=ft.MainAxisAlignment.SPACE_EVENLY,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
 
                 forecast_cards.append(card)
@@ -172,7 +179,7 @@ class APIOperation:
                         )
                     )
 
-            return ft.Row(controls=forecast_cards, expand=True)
+            return ft.Row(controls=forecast_cards,  expand=True)
 
         except Exception as e:
             logging.error(f"Errore nel parsing della previsione: {e}")
@@ -227,7 +234,12 @@ class APIOperation:
                             alignment=ft.alignment.center
                         ),
                         ft.Text(
-                            description
+                            description.upper(), 
+                            size=20, 
+                                color=self.txtcolor, 
+                                weight="bold", 
+                                
+                                text_align=ft.TextAlign.START
                             ),
                         ft.Text(
                             spans=[

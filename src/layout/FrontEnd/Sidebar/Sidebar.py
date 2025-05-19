@@ -3,25 +3,26 @@ from layout.FrontEnd.Sidebar.PopMenu import PopMenu
 from layout.FrontEnd.Sidebar.Searchbar import Searchbar
 
 class Sidebar:
-    def __init__(self, page):
+
+    def __init__(self, page, on_city_selected=None):
+        self.page = page
+        self.on_city_selected = on_city_selected  # 🔧 Salva la callback
         self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626"
         self.txtcolor = "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff"
-        self.page = page
-        self.popMenu = PopMenu()
-        self.searchbar = Searchbar()
+        self.searchbar = Searchbar(on_city_selected=self.on_city_selected)  # ✅ Usa la callback
 
     def build(self):
         return ft.Container(
             content=ft.ResponsiveRow(
                 controls=[
                     ft.Container(
-                        content=self.popMenu.build(),
-                        col={"xs": 2, "md": 1},  # stretto
+                        content=PopMenu().build(),
+                        col={"xs": 2, "md": 1},
                         alignment=ft.alignment.center_left
                     ),
                     ft.Container(
-                        content=self.searchbar.build(),
-                        col={"xs": 10, "md": 11},  # largo
+                        content=self.searchbar.build(),  # ✅ Usa l’istanza già creata
+                        col={"xs": 10, "md": 11},
                     )
                 ],
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,

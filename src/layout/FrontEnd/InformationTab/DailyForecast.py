@@ -11,6 +11,11 @@ class DailyForecast:
         self.city = city
         self.api = APIOperation(page, city, unit, language)
 
+    def update_data(self, city, language, unit):
+        self.city = city
+        self.language = language
+        self.unit = unit
+        self.fetch_data_again()  # un metodo che rifà la chiamata API e aggiorna i controlli
         
 
     def createHourlyForecast(self):
@@ -19,10 +24,17 @@ class DailyForecast:
             content=ft.Column(
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[self.api.getDailyForecast()]
-                ),
+                controls=[
+                    ft.Row(
+                        controls=[self.api.getDailyForecast()],
+                        scroll=ft.ScrollMode.AUTO,  # Scroll orizzontale qui
+                    ),
+                ],
+            ),
             expand=True
-            )
+        )
+
+
 
     def build(self):
         return ft.Container(

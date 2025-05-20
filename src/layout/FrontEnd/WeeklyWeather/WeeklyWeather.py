@@ -5,8 +5,6 @@ from layout.FrontEnd.InformationTab.AirCondition import AirCondition
 from layout.FrontEnd.InformationTab.DailyForecast import DailyForecast
 from layout.FrontEnd.InformationTab.MainInformation import MainInformation
 
-SIZE_TEXT = 18
-
 class WeeklyWeather:
 
     def __init__(self, page, city, language, unit):

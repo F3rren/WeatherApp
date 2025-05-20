@@ -26,7 +26,7 @@ def main(page: ft.Page):
         weekly_container.content = weekly_weather.build()
         page.update()
 
-        # Passa la callback alla Sidebar
+    # Passa la callback alla Sidebar
     sidebar = Sidebar(page, on_city_selected=update_city)
 
     # Inizializza con Milano
@@ -38,7 +38,7 @@ def main(page: ft.Page):
                 ft.ResponsiveRow(
                     controls=[
                         ft.Container(
-                            content=sidebar.build(),  # usa .build() sulla sidebar
+                            content=sidebar.build(),
                             col={"xs": 12},
                             padding=10
                         )

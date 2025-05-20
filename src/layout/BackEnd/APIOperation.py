@@ -7,12 +7,11 @@ from dotenv import load_dotenv
 import os
 
 class APIOperation:
+    
     load_dotenv()
-    logger = logging.getLogger(__name__)
-
+  
     def __init__(self, page, city, language, unit):
-        logging.basicConfig(filename='logapp.log', level=logging.INFO, filemode='w')
-        self.logger.info('Started')
+        
         self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
         self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
         
@@ -51,8 +50,6 @@ class APIOperation:
         self.city = city
         self.language = language
         self.unit = unit
-        self.fetch_data_again()  # un metodo che rifà la chiamata API e aggiorna i controlli
-
 
     #SEZIONE TEMPERATURE
     def getTemperatureByCity(self):
@@ -124,24 +121,56 @@ class APIOperation:
         try:
             response = self.getStateInformation()
             logging.info("Informazioni località' recuperata")
-
-            #restituire name, country e state
+            
+            if response and len(response) > 0:
+                location = response[0]
+                name = location.get("name", "")
+                country = location.get("country", "")
+                state = location.get("state", "")
+                return f"{name}, {country} {state}".strip()
+            return self.city
         except (KeyError, TypeError) as e:
-            print(f"Errore nel recupero della visibilita': {e}")
-            return None
+            logging.error(f"Errore nel recupero della località: {e}")
+            return self.city
 
     def getCurrentPressure(self):
         try:
             response = self.getInformation()
             logging.info("Informazioni pressione attuale recuperata")
-            return response.json()["list"][0]["main"]["pressure"]
+            return response["list"][0]["main"]["pressure"]
         except (KeyError, TypeError) as e:
-            print(f"Errore nel recupero della pressione: {e}")
+            logging.error(f"Errore nel recupero della pressione: {e}")
             return None
   
-    def get_upcoming_days(self, n):
+    def getUpcomingDay(self):
         today = datetime.now()
-        return [(today + timedelta(days=i)).strftime("%a") for i in range(n)]
+        return [(today + timedelta(days=i)).strftime("%a") for i in range(5)]
+
+
+    def getUpcomingMinMaxTemperature(self):
+        response = self.getInformation()
+        items = response["list"]
+        daily_data = {}
+        temp_min = [] 
+        temp_max = []
+
+        # Raggruppa tutti gli item per giorno
+        for item in items:
+            dt_txt = item["dt_txt"]
+            date_obj = datetime.strptime(dt_txt, "%Y-%m-%d %H:%M:%S")
+            day_key = date_obj.strftime("%Y-%m-%d")
+
+            if day_key not in daily_data:
+                daily_data[day_key] = []
+            daily_data[day_key].append(item)
+
+        for i, (day_key, items_in_day) in enumerate(list(daily_data.items())[:5]):
+            # Calcola min e max su tutti i valori della giornata
+            temp_min.append(min([x["main"]["temp_min"] for x in items_in_day]))
+            temp_max.append(max([x["main"]["temp_max"] for x in items_in_day]))
+
+        return temp_min, temp_max
+
 
     #SEZIONE PREVISIONI METEO GIORNALIERE/SETTIMANALI
     def getDailyForecast(self):

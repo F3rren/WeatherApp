@@ -24,7 +24,6 @@ class InformationTab:
 
     def build(self):  
         return ft.Container(
-            padding=10,
             content=ft.Column([
                 self.mainInformation.build(),
                 self.dailyForecast.build(),

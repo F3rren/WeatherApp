@@ -18,7 +18,6 @@ class SidebarOperations:
                     capitale = paese.get("capital")
                     if capitale:
                         cities.append(capitale)
-                        #print(cities[0])
             return cities
 
         except (FileNotFoundError, json.JSONDecodeError) as e:

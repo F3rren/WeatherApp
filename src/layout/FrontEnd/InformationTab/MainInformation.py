@@ -19,7 +19,7 @@ class MainInformation:
                 ft.Column(
                     controls=[
                         ft.Text((self.city).upper(), size=40, weight="bold"),
-                        #ft.Text(self.api.getCityLocation(), size=20),
+                        ft.Text(self.api.getCityLocation(), size=20),
                         ft.Text(f"{self.api.getTemperatureByCity()}°", size=60, weight="bold"),
                     ],
                     expand=True, 
@@ -37,6 +37,6 @@ class MainInformation:
     def build(self):
         return ft.Container(
             expand=True,
-            padding=20,
+            padding=30,
             content=self.createMainInformation(),
         )

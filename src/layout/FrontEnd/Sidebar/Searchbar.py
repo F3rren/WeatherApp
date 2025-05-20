@@ -1,6 +1,6 @@
 import flet as ft
 
-from layout.BackEnd.sidebar.SidebarOperations import SidebarOperations
+from layout.BackEnd.Sidebar.SidebarOperations import SidebarOperations
 
 class Searchbar:
     

@@ -1,3 +1,4 @@
+import os
 import flet as ft
 
 from layout.FrontEnd.Sidebar.Sidebar import Sidebar
@@ -13,6 +14,7 @@ def main(page: ft.Page):
     language = "it"
     unit = "metric"
     default_city = "Milano"
+
 
     # Containers vuoti che conterranno le UI aggiornabili
     info_container = ft.Container()

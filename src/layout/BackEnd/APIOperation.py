@@ -3,9 +3,11 @@ import flet as ft
 import requests
 from datetime import datetime, timedelta
 from babel.dates import format_datetime
+from dotenv import load_dotenv
+import os
 
 class APIOperation:
-
+    load_dotenv()
     logger = logging.getLogger(__name__)
 
     def __init__(self, page, city, language, unit):
@@ -19,8 +21,9 @@ class APIOperation:
         self.unit = unit
         self.lang = language
 
-    def getApiKey(self):
-        return "ef054c6def10c2df7b266ba83513133a"   
+    def getApiKey(self):        
+        API_KEY = os.getenv("API_KEY")
+        return API_KEY
     
     def getStateInformation(self):
         try:

@@ -5,77 +5,79 @@ from layout.FrontEnd.Sidebar.Sidebar import Sidebar
 from layout.FrontEnd.InformationTab.InformationTab import InformationTab
 from layout.FrontEnd.WeeklyWeather.WeeklyWeather import WeeklyWeather
 
-def main(page: ft.Page):
 
-    page.title = "App Meteo"
-    page.theme_mode = ft.ThemeMode.DARK
-    page.adaptive = True
+class Main:
 
-    language = "it"
-    unit = "metric"
-    default_city = "Milano"
+    def main(page: ft.Page):
 
-    # Containers vuoti che conterranno le UI aggiornabili
-    info_container = ft.Container()
-    weekly_container = ft.Container()
-    chart_component = ft.Container()
+        page.title = "App Meteo"
+        page.theme_mode = ft.ThemeMode.DARK
+        page.adaptive = True
 
-    # Funzione che aggiorna le view
-    def update_city(new_city):
-        info_tab = InformationTab(page, new_city, language, unit)
-        weekly_weather = WeeklyWeather(page, new_city, language, unit)
-        temperature_chart = TemperatureChart(page, new_city, language, unit)
+        language = "it"
+        unit = "metric"
+        default_city = "Milano"
 
-    
-        info_container.content = info_tab.build()
-        weekly_container.content = weekly_weather.build()
-        chart_component.content = temperature_chart.build()
-        page.update()
+        # Contenitori dinamici
+        info_container = ft.Container()
+        weekly_container = ft.Container()
+        chart_component = ft.Container()
 
-    # Passa la callback alla Sidebar
-    sidebar = Sidebar(page, on_city_selected=update_city)
-    
-    # Inizializza con Milano
-    update_city(default_city)
+        def update_city(new_city):
+            info_tab = InformationTab(page, new_city, language, unit)
+            weekly_weather = WeeklyWeather(page, new_city, language, unit)
+            temperature_chart = TemperatureChart(page, new_city, language, unit)
 
-    page.add(
-        ft.Column(
-            controls=[
-                ft.ResponsiveRow(
-                    controls=[
-                        ft.Container(
-                            content=sidebar.build(),
-                            col={"xs": 12, "lg": 7},
-                        )
-                    ]
-                ),
-                ft.ResponsiveRow(
-                    controls=[
-                        ft.Container(
-                            content=info_container,
-                            col={"xs": 12, "md": 3, "lg": 7},
-                        ),
-                        ft.Container(
-                            content=weekly_container,
-                            col={"xs": 12, "md": 3, "lg": 5},
-                            
-                        )
-                    ]
-                ),
-                ft.ResponsiveRow(
-                    controls=[
-                        ft.Container(
-                            content=chart_component,
-                            col={"xs": 12, "md": 6, "lg": 12}
-                            
-                        )
-                    ]
-                )
+            info_container.content = info_tab.build()
+            weekly_container.content = weekly_weather.build()
+            chart_component.content = temperature_chart.build()
 
-            ]
+            page.update()
+
+        def handle_city_change(city):
+            update_city(city)
+
+        # Sidebar con callback corretta
+        sidebar = Sidebar(page, on_city_selected=handle_city_change)
+
+        # Layout principale
+        page.add(
+            ft.Column(
+                controls=[
+                    ft.ResponsiveRow(
+                        controls=[
+                            ft.Container(
+                                content=sidebar.build(),
+                                col={"xs": 12, "lg": 7},
+                            )
+                        ]
+                    ),
+                    ft.ResponsiveRow(
+                        controls=[
+                            ft.Container(
+                                content=info_container,
+                                col={"xs": 12, "md": 3, "lg": 7},
+                            ),
+                            ft.Container(
+                                content=weekly_container,
+                                col={"xs": 12, "md": 3, "lg": 5},
+                            )
+                        ]
+                    ),
+                    ft.ResponsiveRow(
+                        controls=[
+                            ft.Container(
+                                content=chart_component,
+                                col={"xs": 12, "md": 6, "lg": 12}
+                            )
+                        ]
+                    )
+                ]
+            )
         )
-    )
+
+        update_city(default_city)
 
 
 if __name__ == "__main__":
-    ft.app(target=main, assets_dir="assets", view=ft.AppView.WEB_BROWSER)
+    ft.app(target=Main.main, assets_dir="assets", view=ft.AppView.WEB_BROWSER)

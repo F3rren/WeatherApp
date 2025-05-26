@@ -1,8 +1,8 @@
 import flet as ft
 
-from layout.FrontEnd.InformationTab.DailyForecast import DailyForecast
-from layout.FrontEnd.InformationTab.MainInformation import MainInformation
-from layout.FrontEnd.InformationTab.AirCondition import AirCondition
+from layout.frontend.informationtab.daily_forecast import DailyForecast
+from layout.frontend.informationtab.main_information import MainWeatherInfo
+from layout.frontend.informationtab.air_condition import AirConditionInfo
 
 
 class InformationTab:
@@ -12,9 +12,9 @@ class InformationTab:
         self.language = language
         self.unit = unit
         self.city = city
-        self.mainInformation = MainInformation(page, city, language, unit)
+        self.mainInformation = MainWeatherInfo(page, city, language, unit)
         self.dailyForecast = DailyForecast(page, city, language, unit)
-        self.airCondition = AirCondition(page, city, language, unit)
+        self.airCondition = AirConditionInfo(page, city, language, unit)
         self.location_indicator = ft.Text("", size=14, italic=True, color=ft.Colors.GREEN_400)
 
     def update_city(self, new_city):

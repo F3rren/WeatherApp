@@ -9,6 +9,7 @@ import requests
 from datetime import datetime, timedelta
 from typing import Dict, Any, Tuple, List, Optional
 from dotenv import load_dotenv
+import unicodedata
 
 from config import (
     API_BASE_URL,
@@ -29,24 +30,21 @@ class ApiService:
         if not self._api_key:
             logging.error("API key not found. Please set the API_KEY environment variable.")
     
+    def _normalize_city_name(self, city: str) -> str:
+        if city:
+            city = city.replace("’", "'").replace("‘", "'")
+            city = unicodedata.normalize("NFKD", city)
+        return city
+    
     def get_weather_data(self, city: str = None, lat: float = None, lon: float = None, 
                         language: str = "en", unit: str = "metric") -> Dict[str, Any]:
         """
         Get weather forecast data for a city or coordinates.
-        
-        Args:
-            city: City name (optional if lat and lon are provided)
-            lat: Latitude (optional if city is provided)
-            lon: Longitude (optional if city is provided)
-            language: Language code (default: "en")
-            unit: Unit system (default: "metric")
-            
-        Returns:
-            Dictionary containing weather data
+        Tenta prima con coordinate, poi con nome città se le coordinate non sono disponibili.
         """
         try:
             url = f"{API_BASE_URL}{API_WEATHER_ENDPOINT}"
-            
+            # Prima tenta con coordinate
             if lat is not None and lon is not None:
                 params = {
                     "lat": lat,
@@ -55,20 +53,26 @@ class ApiService:
                     "units": unit,
                     "lang": language
                 }
-            elif city:
+                response = requests.get(url, params=params)
+                if response.status_code == 200:
+                    return response.json()
+                # Se la richiesta con coordinate fallisce, tenta con nome città
+                logging.warning("Coordinate non valide o nessun dato trovato, provo con nome città...")
+            # Poi tenta con nome città
+            if city:
+                city = self._normalize_city_name(city)
                 params = {
                     "q": city,
                     "appid": self._api_key,
                     "units": unit,
                     "lang": language
                 }
+                response = requests.get(url, params=params)
+                response.raise_for_status()
+                return response.json()
             else:
                 logging.error("Either city or lat/lon must be provided")
                 return {}
-                
-            response = requests.get(url, params=params)
-            response.raise_for_status()  # Raise exception for HTTP errors
-            return response.json()
         except requests.exceptions.RequestException as e:
             logging.error(f"Error fetching weather data: {e}")
             return {}

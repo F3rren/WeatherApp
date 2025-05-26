@@ -1,0 +1,36 @@
+src/
+├── app.py                    # Main application entry point
+├── config.py                 # Configuration and settings
+├── state_manager.py         # Application state management
+│
+├── backend/                 # Backend services and operations
+│   ├── __init__.py
+│   ├── database/           # Database operations
+│   │   ├── __init__.py
+│   │   └── supabase_client.py
+│   ├── weather/           # Weather data operations
+│   │   ├── __init__.py
+│   │   └── weather_operations.py
+│   └── geo/              # Geolocation operations
+│       ├── __init__.py
+│       └── geo_operations.py
+│
+├── frontend/              # Frontend UI components
+│   ├── __init__.py
+│   ├── components/       # Reusable UI components
+│   │   ├── __init__.py
+│   │   └── containers.py
+│   ├── weather/         # Weather display components
+│   │   ├── __init__.py
+│   │   ├── weather_view.py
+│   │   ├── forecast_view.py
+│   │   └── pollution_view.py
+│   └── sidebar/         # Sidebar components
+│       ├── __init__.py
+│       ├── sidebar_view.py
+│       └── location_toggle.py
+│
+└── services/            # External services integration
+    ├── __init__.py
+    ├── api_service.py   # OpenWeather API client
+    └── geolocation_service.py

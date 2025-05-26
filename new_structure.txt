@@ -1,0 +1,38 @@
+src/
+├── backend/                 # Backend services and operations
+│   ├── database/           # Database operations
+│   │   ├── __init__.py
+│   │   └── database_service.py
+│   ├── weather/           # Weather operations
+│   │   ├── __init__.py
+│   │   └── weather_service.py
+│   └── geolocation/       # Geolocation operations
+│       ├── __init__.py
+│       └── geolocation_service.py
+│
+├── frontend/              # Frontend components
+│   ├── components/       # Common UI components
+│   │   ├── __init__.py
+│   │   └── base_container.py
+│   ├── sidebar/         # Sidebar components
+│   │   ├── __init__.py
+│   │   ├── sidebar.py
+│   │   ├── search_bar.py
+│   │   └── location_toggle.py
+│   └── weather/         # Weather display components
+│       ├── __init__.py
+│       ├── weather_view.py
+│       └── weather_card.py
+│
+├── services/            # External API services
+│   ├── __init__.py
+│   └── api_service.py
+│
+├── utils/              # Utility functions and helpers
+│   ├── __init__.py
+│   └── theme_utils.py
+│
+├── __init__.py
+├── app.py             # Main application
+├── config.py          # Configuration settings
+└── state_manager.py   # Application state management

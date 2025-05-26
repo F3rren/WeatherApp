@@ -11,10 +11,11 @@ from config import (
     DEFAULT_UNIT,
     DEFAULT_THEME_MODE
 )
-from ui.components import LocationToggle
+
+from layout.backend.sidebar.sidebar import Sidebar
+from layout.frontend.sidebar.location_toggle import LocationToggle
 from state_manager import StateManager
 from services.geolocation_service import GeolocationService
-from layout.backEnd.sidebar.sidebar import Sidebar
 from ui.weather_view import WeatherView
 
 # Configure logging
@@ -27,11 +28,11 @@ class MeteoApp:
     """
     Main application class for the MeteoApp.
     """
-    
     def __init__(self):
         self.geolocation_service = GeolocationService()
-    
-    async def main(self, page: ft.Page):
+        self.state_manager = None
+
+    async def main(self, page: ft.Page) -> None:
         """
         Main entry point for the application.
         
@@ -45,207 +46,172 @@ class MeteoApp:
         )
         page.adaptive = True
         page.scroll = ft.ScrollMode.AUTO
-        
-        # Create state manager
+
         self.state_manager = StateManager(page)
-        
-        # Create weather view
         weather_view = WeatherView(page)
         info_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = weather_view.get_containers()
-        
-        # Handle city change
-        async def handle_city_change(city):
-            # Update state
-            await self.state_manager.update_state({
-                "city": city,
-                "using_location": False
-            })
-            
-            # Update weather view
-            await weather_view.update_by_city(
-                city=city,
-                language=self.state_manager.get_state("language"),
-                unit=self.state_manager.get_state("unit")
-            )
-            
-            # Update location toggle
-            if location_toggle.value:
-                location_toggle.value = False
-                page.update()
-        
-        # Handle location change
-        async def handle_location_change(lat_lon):
-            lat, lon = lat_lon
-            
-            # Update state
-            await self.state_manager.update_state({
-                "current_lat": lat,
-                "current_lon": lon
-            })
-            
-            # Update weather view if using location
-            if self.state_manager.get_state("using_location"):
-                await weather_view.update_by_coordinates(
-                    lat=lat,
-                    lon=lon,
+
+        # Create location toggle first so it's available in callbacks
+        location_toggle = LocationToggle(
+            on_change=None,  # Temporarily None, will set after definition
+            value=False
+        )
+
+        async def handle_city_change(city: str):
+            """Callback per il cambio città."""
+            try:
+                await self.state_manager.update_state({
+                    "city": city,
+                    "using_location": False
+                })
+                await weather_view.update_by_city(
+                    city=city,
                     language=self.state_manager.get_state("language"),
                     unit=self.state_manager.get_state("unit")
                 )
-        
-        # Handle location toggle
-        async def handle_location_toggle(e):
-            using_location = e.control.value
-            
-            # Update state
-            await self.state_manager.set_state("using_location", using_location)
-            
-            if using_location:
-                # If we have coordinates, use them
-                if self.geolocation_service.has_coordinates:
-                    lat, lon = self.geolocation_service.current_coordinates
-                    
-                    # Update weather view
+                if location_toggle.value:
+                    location_toggle.value = False
+                    page.update()
+            except Exception as e:
+                logging.error(f"Errore nel cambio città: {e}")
+
+        async def handle_location_change(lat_lon):
+            """Callback per il cambio posizione."""
+            try:
+                lat, lon = lat_lon
+                await self.state_manager.update_state({
+                    "current_lat": lat,
+                    "current_lon": lon
+                })
+                if self.state_manager.get_state("using_location"):
                     await weather_view.update_by_coordinates(
                         lat=lat,
                         lon=lon,
                         language=self.state_manager.get_state("language"),
                         unit=self.state_manager.get_state("unit")
                     )
-                    
-                    # Set location callback
-                    self.geolocation_service.set_location_callback(handle_location_change)
+            except Exception as e:
+                logging.error(f"Errore nel cambio posizione: {e}")
+
+        async def handle_location_toggle(e: ft.ControlEvent):
+            """Callback per il toggle della posizione."""
+            try:
+                using_location = e.control.value
+                await self.state_manager.set_state("using_location", using_location)
+                if using_location:
+                    if self.geolocation_service.has_coordinates:
+                        lat, lon = self.geolocation_service.current_coordinates
+                        await weather_view.update_by_coordinates(
+                            lat=lat,
+                            lon=lon,
+                            language=self.state_manager.get_state("language"),
+                            unit=self.state_manager.get_state("unit")
+                        )
+                        self.geolocation_service.set_location_callback(handle_location_change)
+                    else:
+                        success = await self.geolocation_service.start_tracking(
+                            page=page,
+                            on_location_change=handle_location_change
+                        )
+                        if not success:
+                            e.control.value = False
+                            page.update()
                 else:
-                    # Start tracking location
-                    success = await self.geolocation_service.start_tracking(
-                        page=page,
-                        on_location_change=handle_location_change
-                    )
-                    
-                    if not success:
-                        # If tracking failed, reset toggle
-                        e.control.value = False
-                        page.update()
-            else:
-                # Remove location callback
-                self.geolocation_service.set_location_callback(None)
-        
-        # Create sidebar
+                    self.geolocation_service.set_location_callback(None)
+            except Exception as ex:
+                logging.error(f"Errore nel toggle posizione: {ex}")
+
+        # Set the callback now that it's defined
+        location_toggle.on_change = handle_location_toggle
+
         sidebar = Sidebar(page, on_city_selected=handle_city_change)
-        
-        # Create location toggle
-        location_toggle = LocationToggle(
-            on_change=handle_location_toggle,
-            value=False
-        )
-        #location_toggle_row = location_toggle.build()
-        
-        # Create layout
-        page.add(
-            ft.ListView(
+
+        def build_layout():
+            return ft.ListView(
                 expand=True,
                 spacing=10,
-                #padding=20,
                 auto_scroll=True,
                 controls=[
-                    # Header row with sidebar and location toggle
                     ft.ResponsiveRow(
                         controls=[
                             ft.Container(
                                 content=ft.Column([
                                     sidebar.build(),
                                     location_toggle.build()
-                                ]), 
+                                ]),
                                 col={"xs": 12},
                                 margin=10,
                                 padding=10,
-                                border_radius=15,
-                                #bgcolor=ft.Colors.PURPLE_900 if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.PURPLE_100
+                                border_radius=15
                             )
-                        ],
-                        #spacing=20
+                        ]
                     ),
-                    # Main content row
                     ft.ResponsiveRow(
                         controls=[
                             ft.Container(
-                                content=info_container, 
+                                content=info_container,
                                 col={"xs": 12},
                                 margin=10,
                                 padding=10,
-                                border_radius=15,
-                                #bgcolor=ft.Colors.BLUE_GREY_900 if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.BLUE_100
-                            ),
-                        ],
-                        #spacing=20
+                                border_radius=15
+                            )
+                        ]
                     ),
                     ft.ResponsiveRow(
                         controls=[
                             ft.Container(
-                                content=weekly_container, 
+                                content=weekly_container,
                                 col={"xs": 8},
                                 margin=10,
                                 padding=10,
-                                border_radius=15,
-                                #bgcolor=ft.Colors.INDIGO_900 if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.INDIGO_100
+                                border_radius=15
                             ),
                             ft.Container(
-                                content=chart_container, 
+                                content=chart_container,
                                 col={"xs": 4},
                                 margin=10,
                                 padding=10,
-                                border_radius=15,
-                                #bgcolor=ft.Colors.TEAL_900 if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.TEAL_100
-                            ),  
-                        ],
-                        #spacing=20
+                                border_radius=15
+                            )
+                        ]
                     ),
-                    # Chart row
                     ft.ResponsiveRow(
                         controls=[
                             ft.Container(
-                                content=air_pollution_chart_container, 
+                                content=air_pollution_chart_container,
                                 col={"xs": 7},
                                 margin=10,
                                 padding=10,
-                                border_radius=15,
-                                #bgcolor=ft.Colors.TEAL_900 if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.TEAL_100
-                            ),                      
+                                border_radius=15
+                            ),
                             ft.Container(
-                                content=air_pollution_container, 
+                                content=air_pollution_container,
                                 col={"xs": 5},
                                 margin=10,
                                 padding=10,
-                                border_radius=15,
-                                #bgcolor=ft.Colors.TEAL_900 if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.TEAL_100
-                            ),    
-                        ],
-                        #spacing=20
-                    ),
-                           
+                                border_radius=15
+                            )
+                        ]
+                    )
                 ]
             )
-        )
-        
-        # Load default city
+
+        page.add(build_layout())
+
         await weather_view.update_by_city(
             city=DEFAULT_CITY,
             language=DEFAULT_LANGUAGE,
             unit=DEFAULT_UNIT
         )
-        
-        # Start location tracking in background
+
         try:
-            # Start tracking but without UI updates
             success = await self.geolocation_service.start_tracking(
                 page=page,
                 on_location_change=None
             )
-            
             if success:
-                # Get initial coordinates
                 lat, lon = await self.geolocation_service.get_current_location(page)
                 if lat and lon:
-                    # Store coordinates in state
                     await self.state_manager.update_state({
                         "current_lat": lat,
                         "current_lon": lon

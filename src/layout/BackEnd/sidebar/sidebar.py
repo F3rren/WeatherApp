@@ -5,8 +5,9 @@ Handles the sidebar functionality.
 
 import flet as ft
 from typing import List, Callable, Optional
-from layout.frontend.sidebar.Searchbar import SearchBar
-from layout.backEnd.sidebar.sidebarquery import SidebarQuery
+from layout.frontend.sidebar.searchbar import SearchBar
+from layout.backend.sidebar.sidebarquery import SidebarQuery
+from layout.frontend.sidebar.pop_menu import PopMenu
 
 class Sidebar:
     """
@@ -36,16 +37,14 @@ class Sidebar:
         """Build the sidebar"""
         # Create search bar
         search_bar = SearchBar(self.cities, self.on_city_selected)
-        
-        # Create pop menu (hamburger menu)
-        pop_menu = self._create_pop_menu()
-        
+        pop_menu = PopMenu()
+                
         # Create sidebar container
         return ft.Container(
             content=ft.ResponsiveRow(
                 controls=[
                     ft.Container(
-                        content=pop_menu,
+                        content=pop_menu.createPopMenu(self.page),
                         col={"xs": 2, "md": 1},
                         alignment=ft.alignment.center_left
                     ),
@@ -58,24 +57,4 @@ class Sidebar:
                 spacing=10,
                 run_spacing=10,
             )
-        )
-    
-    def _create_pop_menu(self) -> ft.PopupMenuButton:
-        """Create popup menu button"""
-        return ft.PopupMenuButton(
-            icon=ft.Icons.MENU,
-            items=[
-                ft.PopupMenuItem(
-                    text="Impostazioni",
-                    icon=ft.Icons.SETTINGS,
-                ),
-                ft.PopupMenuItem(
-                    text="Informazioni",
-                    icon=ft.Icons.INFO,
-                ),
-                ft.PopupMenuItem(
-                    text="Esci",
-                    icon=ft.Icons.EXIT_TO_APP,
-                ),
-            ]
         )

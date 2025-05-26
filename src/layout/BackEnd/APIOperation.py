@@ -19,6 +19,9 @@ class APIOperation:
         self.city = city
         self.unit = unit
         self.lang = language
+        self.lat = None
+        self.lon = None
+        self.using_coordinates = False
 
     def getApiKey(self):        
         API_KEY = os.getenv("API_KEY")
@@ -34,11 +37,41 @@ class APIOperation:
         except (KeyError, TypeError) as e:
             logging.error(f"Errore nel recupero delle informazioni dello stato: {e}")
             return None
+    
+    def getReverseGeocoding(self, lat, lon):
+        """Ottiene il nome della città dalle coordinate"""
+        try:
+            url = "http://api.openweathermap.org/geo/1.0/reverse"
+            params = {"lat": lat, "lon": lon, "limit": 1, "appid": self.getApiKey()}
+            response = requests.get(url, params=params)
+            data = response.json()
+            if data and len(data) > 0:
+                return data[0].get("name", "Posizione Attuale")
+            return "Posizione Attuale"
+        except (KeyError, TypeError) as e:
+            logging.error(f"Errore nel geocoding inverso: {e}")
+            return "Posizione Attuale"
 
     def getInformation(self):
         try:
             url = "https://api.openweathermap.org/data/2.5/forecast"
-            params = {"q": self.city, "appid": self.getApiKey(), "units": self.unit, "lang": self.lang}
+            
+            if self.using_coordinates and self.lat is not None and self.lon is not None:
+                params = {
+                    "lat": self.lat, 
+                    "lon": self.lon, 
+                    "appid": self.getApiKey(), 
+                    "units": self.unit, 
+                    "lang": self.lang
+                }
+            else:
+                params = {
+                    "q": self.city, 
+                    "appid": self.getApiKey(), 
+                    "units": self.unit, 
+                    "lang": self.lang
+                }
+                
             response = requests.get(url, params=params)
             data = response.json()
             return data
@@ -48,8 +81,24 @@ class APIOperation:
 
     def update_data(self, city, language, unit):
         self.city = city
-        self.language = language
+        self.lang = language  # Changed from self.language to self.lang for consistency
         self.unit = unit
+        self.using_coordinates = False
+        # Fetch new data after updating parameters
+        self.getInformation()
+        self.getStateInformation()
+        
+    def update_coordinates(self, lat, lon, language, unit):
+        """Aggiorna i dati usando le coordinate geografiche"""
+        self.lat = lat
+        self.lon = lon
+        self.lang = language  # Changed from self.language to self.lang for consistency
+        self.unit = unit
+        self.using_coordinates = True
+        # Aggiorna il nome della città in base alle coordinate
+        self.city = self.getReverseGeocoding(lat, lon)
+        # Fetch new data after updating parameters
+        self.getInformation()
 
     #SEZIONE TEMPERATURE
     def getTemperatureByCity(self):

@@ -15,19 +15,32 @@ class InformationTab:
         self.mainInformation = MainInformation(page, city, language, unit)
         self.dailyForecast = DailyForecast(page, city, language, unit)
         self.airCondition = AirCondition(page, city, language, unit)
+        self.location_indicator = ft.Text("", size=14, italic=True, color=ft.Colors.GREEN_400)
 
     def update_city(self, new_city):
         self.city = new_city
         self.mainInformation.update_city(new_city)
         self.dailyForecast.update_city(new_city)
         self.airCondition.update_city(new_city)
+        self.location_indicator.value = ""
+        self.page.update()
+        
+    def update_by_coordinates(self, lat, lon):
+        """Aggiorna le informazioni meteo usando le coordinate geografiche"""
+        self.mainInformation.update_by_coordinates(lat, lon)
+        self.dailyForecast.update_by_coordinates(lat, lon)
+        self.airCondition.update_by_coordinates(lat, lon)
+        self.location_indicator.value = "📍 Posizione attuale"
+        self.page.update()
 
     def build(self):  
         return ft.Container(
             content=ft.Column([
-                self.mainInformation.build(),
+                ft.Row([
+                    self.mainInformation.build(),
+                    self.location_indicator
+                ]),
                 self.dailyForecast.build(),
                 self.airCondition.build(),
             ])
         )
-

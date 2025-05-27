@@ -52,6 +52,7 @@ class SearchBar:
             on_change=handle_change,
             on_submit=handle_submit,
             on_tap=handle_tap,
+            bar_leading=ft.Icon(ft.Icons.SEARCH),
             controls=[
                 ft.ListTile(title=ft.Text(city if isinstance(city, str) else str(city)), on_click=close_anchor, data=city)
                 for city in self.filtered_cities[:10]

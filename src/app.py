@@ -12,8 +12,7 @@ from config import (
     DEFAULT_THEME_MODE
 )
 
-from layout.backend.sidebar.sidebar import Sidebar
-from layout.frontend.sidebar.location_toggle import LocationToggle
+from layout.frontend.sidebar.sidebar import Sidebar  
 from state_manager import StateManager
 from services.geolocation_service import GeolocationService
 from ui.weather_view import WeatherView
@@ -51,12 +50,6 @@ class MeteoApp:
         weather_view = WeatherView(page)
         info_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = weather_view.get_containers()
 
-        # Create location toggle first so it's available in callbacks
-        location_toggle = LocationToggle(
-            on_change=None,  # Temporarily None, will set after definition
-            value=False
-        )
-
         async def handle_city_change(city: str):
             """Callback per il cambio città."""
             try:
@@ -69,9 +62,6 @@ class MeteoApp:
                     language=self.state_manager.get_state("language"),
                     unit=self.state_manager.get_state("unit")
                 )
-                if location_toggle.value:
-                    location_toggle.value = False
-                    page.update()
             except Exception as e:
                 logging.error(f"Errore nel cambio città: {e}")
 
@@ -121,10 +111,12 @@ class MeteoApp:
             except Exception as ex:
                 logging.error(f"Errore nel toggle posizione: {ex}")
 
-        # Set the callback now that it's defined
-        location_toggle.on_change = handle_location_toggle
-
-        sidebar = Sidebar(page, on_city_selected=handle_city_change)
+        sidebar = Sidebar(
+            page=page, 
+            on_city_selected=handle_city_change,
+            handle_location_toggle=handle_location_toggle,
+            location_toggle_value=self.state_manager.get_state("using_location") or False
+        )
 
         def build_layout():
             return ft.ListView(
@@ -137,7 +129,6 @@ class MeteoApp:
                             ft.Container(
                                 content=ft.Column([
                                     sidebar.build(),
-                                    location_toggle.build()
                                 ]),
                                 col={"xs": 12},
                                 margin=10,

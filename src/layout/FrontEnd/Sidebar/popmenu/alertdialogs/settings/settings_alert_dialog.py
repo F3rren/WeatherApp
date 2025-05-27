@@ -1,37 +1,55 @@
-import flet as ft
-from layout.frontend.sidebar.popmenu.alertdialogs.settings.location_toggle import LocationToggle
-        
+﻿import flet as ft
+
+from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
+from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
+
 class SettingsAlertDialog:
     """
-    A class representing a settings alert dialog in the frontend sidebar.
-    This class is used to manage the display and functionality of the settings alert dialog.
+    Versione semplificata per test dell'alert dialog delle impostazioni.
     """
+    def __init__(self, state_manager=None):
+        self.state_manager = state_manager
+        self.language_dropdown = DropdownLanguage(state_manager)
+        self.measurement_dropdown = DropdownMeasurement(state_manager)
+
     def createAlertDialog(self, page):
-
+        # Dialog semplificato per test
         self.dlg = ft.AlertDialog(
-            title=ft.Text("Settings"),
-            content=ft.Text("You are notified!"),
-            actions=[
-                ft.TextButton("Close settings", on_click=lambda e: page.close(self.dlg)),
-            ],
-            alignment=ft.alignment.center,
-            on_dismiss=lambda e: print("Dialog dismissed!"),
-            title_padding=ft.padding.all(25),
-        )
-        
-        # Creare un pulsante con testo grande
-        return ft.ElevatedButton(
-            content=ft.Row(
+            title=ft.Text("Settings", size=20, weight=ft.FontWeight.BOLD),
+            content=ft.Column(
                 controls=[
-                    ft.Icon(ft.Icons.SETTINGS, color=ft.Colors.GREY),
-                    ft.Text(
-                        "SETTINGS",
-                        size=18,  # Dimensione aumentata
+                    # Sezione lingua
+                    ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.LANGUAGE, size=20),
+                            ft.Text("Language:", size=14),
+                            self.language_dropdown.build(),
+                        ],
+                        spacing=10,
                     ),
-                ]
+                    ft.Divider(),
+                    # Sezione unità di misura
+                    ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.STRAIGHTEN, size=20),
+                            ft.Text("Measurement:", size=14),
+                            self.measurement_dropdown.build(),
+                        ],
+                        spacing=10,
+                    ),
+                ],
+                height=150,
+                spacing=20,
             ),
-
-            on_click=lambda e: page.open(self.dlg),            
-
+            actions=[
+                ft.TextButton("Close", on_click=lambda e: page.close(self.dlg)),
+            ],
+            on_dismiss=lambda e: print("Dialog closed"),
         )
         
+        # Pulsante semplificato per aprire il dialog
+        return ft.ElevatedButton(
+            text="Settings",
+            icon=ft.Icons.SETTINGS,
+            on_click=lambda e: page.open(self.dlg),
+        )

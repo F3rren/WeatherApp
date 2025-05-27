@@ -51,7 +51,6 @@ class WeeklyWeather:
         self.dailyForecast.update_by_coordinates(lat, lon)
         self.airCondition.update_by_coordinates(lat, lon)
 
-
     def createWeeklyForecast(self):
         return ft.Container(
             alignment=ft.alignment.center,

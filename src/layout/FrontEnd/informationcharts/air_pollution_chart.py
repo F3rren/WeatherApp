@@ -24,23 +24,23 @@ class AirPollutionChart:
         self.pm10 = 0
         self.nh3 = 0
 
-        self.gradient = (
-            ft.LinearGradient(
-                begin=ft.alignment.top_center,
-                end=ft.alignment.bottom_center,
-                colors=[ft.Colors.BLUE, ft.Colors.YELLOW],
-            )
-            if page.theme_mode == ft.ThemeMode.LIGHT else
-            ft.LinearGradient(
-                begin=ft.alignment.top_center,
-                end=ft.alignment.bottom_center,
-                colors=[
-                    ft.Colors.with_opacity(0.8, ft.Colors.BLACK),
-                    ft.Colors.GREY_900,
-                ],
-            )
-        )
+        self.gradient = self._get_gradient()
 
+
+    def _get_gradient(self) -> ft.LinearGradient:
+        """Get the gradient based on the current theme"""
+        if self.page.theme_mode == ft.ThemeMode.DARK:
+            return ft.LinearGradient(
+                begin=ft.alignment.top_left,
+                end=ft.alignment.bottom_right,
+                colors=[ft.Colors.BLUE, ft.Colors.YELLOW]
+            )
+        else:
+            return ft.LinearGradient(
+                begin=ft.alignment.top_left,
+                end=ft.alignment.bottom_right,
+                colors=["#1a1a1a", "#333333"],
+            )
 
     def createAirPollutionChart(self, lat, lon):
 

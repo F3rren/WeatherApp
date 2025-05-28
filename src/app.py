@@ -15,6 +15,8 @@ from config import (
 from layout.frontend.sidebar.sidebar import Sidebar  
 from state_manager import StateManager
 from services.geolocation_service import GeolocationService
+from services.location_toggle_service import LocationToggleService
+from services.theme_toggle_service import ThemeToggleService
 from ui.weather_view import WeatherView
 
 # Configure logging
@@ -30,6 +32,8 @@ class MeteoApp:
     def __init__(self):
         self.geolocation_service = GeolocationService()
         self.state_manager = None
+        self.location_toggle_service = None
+        self.theme_toggle_service = None
 
     async def main(self, page: ft.Page) -> None:
         """
@@ -47,75 +51,58 @@ class MeteoApp:
         page.scroll = ft.ScrollMode.AUTO
 
         self.state_manager = StateManager(page)
+        # Salva lo state_manager nella sessione per accedervi da altre parti dell'app
+        page.session.set('state_manager', self.state_manager)
         weather_view = WeatherView(page)
         info_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = weather_view.get_containers()
+        
+        # Inizializza il servizio di location toggle
+        self.location_toggle_service = LocationToggleService(
+            page=page,
+            geolocation_service=self.geolocation_service,
+            state_manager=self.state_manager,
+            update_weather_callback=weather_view.update_by_coordinates
+        )
+        
+        # Inizializza il servizio di theme toggle
+        self.theme_toggle_service = ThemeToggleService(
+            page=page,
+            state_manager=self.state_manager
+        )
 
         async def handle_city_change(city: str):
             """Callback per il cambio città."""
             try:
+                # Aggiorna lo stato: quando si seleziona una città, disabilita la localizzazione
                 await self.state_manager.update_state({
                     "city": city,
                     "using_location": False
                 })
+                
+                # Aggiorna la UI: se esiste l'istanza della sidebar, aggiorna il toggle
+                if hasattr(sidebar, 'update_location_toggle'):
+                    sidebar.update_location_toggle(False)
+                
+                # Aggiorna la visualizzazione del meteo con la città selezionata
                 await weather_view.update_by_city(
                     city=city,
                     language=self.state_manager.get_state("language"),
                     unit=self.state_manager.get_state("unit")
                 )
+                
+                logging.info(f"Città cambiata: {city}, localizzazione disattivata")
             except Exception as e:
                 logging.error(f"Errore nel cambio città: {e}")
 
-        async def handle_location_change(lat_lon):
-            """Callback per il cambio posizione."""
-            try:
-                lat, lon = lat_lon
-                await self.state_manager.update_state({
-                    "current_lat": lat,
-                    "current_lon": lon
-                })
-                if self.state_manager.get_state("using_location"):
-                    await weather_view.update_by_coordinates(
-                        lat=lat,
-                        lon=lon,
-                        language=self.state_manager.get_state("language"),
-                        unit=self.state_manager.get_state("unit")
-                    )
-            except Exception as e:
-                logging.error(f"Errore nel cambio posizione: {e}")
-
-        async def handle_location_toggle(e: ft.ControlEvent):
-            """Callback per il toggle della posizione."""
-            try:
-                using_location = e.control.value
-                await self.state_manager.set_state("using_location", using_location)
-                if using_location:
-                    if self.geolocation_service.has_coordinates:
-                        lat, lon = self.geolocation_service.current_coordinates
-                        await weather_view.update_by_coordinates(
-                            lat=lat,
-                            lon=lon,
-                            language=self.state_manager.get_state("language"),
-                            unit=self.state_manager.get_state("unit")
-                        )
-                        self.geolocation_service.set_location_callback(handle_location_change)
-                    else:
-                        success = await self.geolocation_service.start_tracking(
-                            page=page,
-                            on_location_change=handle_location_change
-                        )
-                        if not success:
-                            e.control.value = False
-                            page.update()
-                else:
-                    self.geolocation_service.set_location_callback(None)
-            except Exception as ex:
-                logging.error(f"Errore nel toggle posizione: {ex}")
+        # Le funzioni di gestione della posizione sono state spostate nel LocationToggleService
 
         sidebar = Sidebar(
             page=page, 
             on_city_selected=handle_city_change,
-            handle_location_toggle=handle_location_toggle,
-            location_toggle_value=self.state_manager.get_state("using_location") or False
+            handle_location_toggle=self.location_toggle_service.handle_location_toggle,
+            location_toggle_value=self.state_manager.get_state("using_location") or False,
+            handle_theme_toggle=self.theme_toggle_service.handle_theme_toggle,
+            theme_toggle_value=self.state_manager.get_state("using_theme") or False
         )
 
         def build_layout():
@@ -195,22 +182,11 @@ class MeteoApp:
             unit=DEFAULT_UNIT
         )
 
-        try:
-            success = await self.geolocation_service.start_tracking(
-                page=page,
-                on_location_change=None
-            )
-            if success:
-                lat, lon = await self.geolocation_service.get_current_location(page)
-                if lat and lon:
-                    await self.state_manager.update_state({
-                        "current_lat": lat,
-                        "current_lon": lon
-                    })
-            else:
-                logging.warning("Failed to start location tracking")
-        except Exception as e:
-            logging.error(f"Error initializing geolocation: {e}")
+        # Inizializza il tracking della posizione
+        await self.location_toggle_service.initialize_tracking()
+        
+        # Inizializza il tema dell'applicazione
+        await self.theme_toggle_service.initialize_theme()
 
 
 def main():

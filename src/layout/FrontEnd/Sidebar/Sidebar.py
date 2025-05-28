@@ -13,11 +13,15 @@ class Sidebar:
     """
     Sidebar component for the MeteoApp.
     """
-    def __init__(self, page: ft.Page, on_city_selected: Optional[Callable] = None, handle_location_toggle: Optional[Callable] = None, location_toggle_value: bool = False):
+    def __init__(self, page: ft.Page, on_city_selected: Optional[Callable] = None, 
+                handle_location_toggle: Optional[Callable] = None, location_toggle_value: bool = False,
+                handle_theme_toggle: Optional[Callable] = None, theme_toggle_value: bool = False):
         self.page = page
         self.on_city_selected = on_city_selected
         self.handle_location_toggle = handle_location_toggle
         self.location_toggle_value = location_toggle_value
+        self.handle_theme_toggle = handle_theme_toggle
+        self.theme_toggle_value = theme_toggle_value
         self.query = SidebarQuery()
         self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626"
         self.txtcolor = "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff"
@@ -35,14 +39,28 @@ class Sidebar:
             return []
 
         
+    def update_location_toggle(self, value):
+        """Aggiorna il valore del toggle posizione"""
+        if hasattr(self, 'pop_menu'):
+            self.pop_menu.update_location_toggle_value(value)
+            
+    def update_theme_toggle(self, value):
+        """Aggiorna il valore del toggle tema"""
+        if hasattr(self, 'pop_menu'):
+            self.pop_menu.update_theme_toggle_value(value)
+    
     def build(self) -> ft.Container:
         """Build the sidebar"""
         # Create search bar
         search_bar = SearchBar(self.cities, self.on_city_selected)
         
         # Create pop menu with location toggle callback
-        pop_menu = PopMenu(
-            
+        self.pop_menu = PopMenu(
+            state_manager=self.page.session.get('state_manager'),
+            handle_location_toggle=self.handle_location_toggle,
+            handle_theme_toggle=self.handle_theme_toggle,
+            theme_toggle_value=self.theme_toggle_value,
+            location_toggle_value=self.location_toggle_value
         )
         
         # Create sidebar container
@@ -50,7 +68,7 @@ class Sidebar:
             content=ft.ResponsiveRow(
                 controls=[
                     ft.Container(
-                        content=pop_menu.build(self.page),
+                        content=self.pop_menu.build(self.page),
                         col={"xs": 2, "md": 1},
                         alignment=ft.alignment.center_left
                     ),

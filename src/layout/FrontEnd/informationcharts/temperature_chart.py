@@ -14,6 +14,7 @@ class TemperatureChart:
         self.temp_max = temp_max
         self.text_color = text_color
     
+
     def build(self) -> ft.Column:
         """Build the temperature chart"""
         # Calculate dynamic range with margin

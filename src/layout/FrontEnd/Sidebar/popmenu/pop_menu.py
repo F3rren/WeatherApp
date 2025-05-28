@@ -5,8 +5,18 @@ from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog
 
 class PopMenu:
 
-    def __init__(self):
-        self.setting_alert = SettingsAlertDialog()
+    def __init__(self, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None, 
+                theme_toggle_value=False, location_toggle_value=False):
+        self.state_manager = state_manager
+        self.handle_location_toggle = handle_location_toggle
+        self.handle_theme_toggle = handle_theme_toggle
+        self.theme_toggle_value = theme_toggle_value
+        self.location_toggle_value = location_toggle_value
+        self.setting_alert = SettingsAlertDialog(
+            state_manager=state_manager, 
+            handle_location_toggle=handle_location_toggle,
+            handle_theme_toggle=handle_theme_toggle
+        )
         
     def createPopMenu(self, page=None):
 
@@ -42,7 +52,16 @@ class PopMenu:
         Aggiorna il valore interno dello stato del toggle della localizzazione.
         Da chiamare quando lo stato cambia esternamente.
         """
-        self.location_toggle_value = value
+        if hasattr(self, 'setting_alert'):
+            self.setting_alert.update_location_toggle(value)
+            
+    def update_theme_toggle_value(self, value):
+        """
+        Aggiorna il valore interno dello stato del toggle del tema.
+        Da chiamare quando lo stato cambia esternamente.
+        """
+        if hasattr(self, 'setting_alert'):
+            self.setting_alert.update_theme_toggle(value)
         
     def build(self, page=None):
         return ft.Container(

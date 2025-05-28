@@ -3,19 +3,19 @@ from typing import Callable, Optional
 import inspect
 import asyncio
 
-class LocationToggle:
+class ThemeToggle:
     """
-    A toggle switch for enabling/disabling location tracking.
+    A toggle switch for enabling/disabling dark mode.
     """
-    
+
     def __init__(self, on_change: Optional[Callable] = None, value: bool = False):
         self.on_change = on_change
         self._value = value
         self.switch = None
     
     def build(self) -> ft.Row:
-        """Build the location toggle"""
-        
+        """Build the theme toggle"""
+
         def handle_toggle_change(e):
             print(f"Toggle changed to: {e.control.value}")
             if self.on_change:
@@ -47,7 +47,7 @@ class LocationToggle:
                     self.on_change(e)
         
         self.switch = ft.Switch(
-            label="Usa posizione attuale",
+            label="Usa tema scuro",
             value=self._value,
             on_change=handle_toggle_change,
             active_color=ft.Colors.BLUE,

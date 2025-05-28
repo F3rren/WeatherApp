@@ -27,6 +27,7 @@ class StateManager:
             "current_lat": None,
             "current_lon": None,
             "theme_mode": page.theme_mode,
+            "using_theme": page.theme_mode == ft.ThemeMode.DARK,
         }
         
         # Observers for state changes
@@ -86,3 +87,20 @@ class StateManager:
                 callback(value)
         except Exception as e:
             print(f"Error in observer callback: {e}")
+            
+    async def notify_all(self, event_type: str, data: Any) -> None:
+        """
+        Notifica tutti gli osservatori di un evento generico.
+        Utile per eventi che non sono associati a un cambio di stato specifico.
+        
+        Args:
+            event_type: Tipo di evento
+            data: Dati associati all'evento
+        """
+        if event_type in self._observers:
+            for callback in self._observers[event_type]:
+                try:
+                    # Crea un task per eseguire il callback in modo asincrono
+                    asyncio.create_task(self._run_callback(callback, data))
+                except Exception as e:
+                    print(f"Errore nella notifica dell'evento {event_type}: {e}")

@@ -10,22 +10,6 @@ class WeeklyWeather:
     def __init__(self, page, city, language, unit):
         #self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
         self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
-        self.gradient = (
-            ft.LinearGradient(
-                begin=ft.alignment.top_center,
-                end=ft.alignment.bottom_center,
-                colors=[ft.Colors.BLUE, ft.Colors.YELLOW],
-            )
-            if page.theme_mode == ft.ThemeMode.LIGHT else
-            ft.LinearGradient(
-                begin=ft.alignment.top_center,
-                end=ft.alignment.bottom_center,
-                colors=[
-                    ft.Colors.with_opacity(0.8, ft.Colors.BLACK),
-                    ft.Colors.GREY_900,
-                ],
-            )
-        )
         
         self.page = page
         self.language = language

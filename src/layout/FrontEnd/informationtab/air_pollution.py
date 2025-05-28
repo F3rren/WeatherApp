@@ -35,27 +35,28 @@ class AirPollution:
         self.nh3 = 0
         
         # Get gradient based on theme mode
-        self.gradient = (
-            ft.LinearGradient(
-                begin=ft.alignment.top_center,
-                end=ft.alignment.bottom_center,
-                colors=[ft.Colors.BLUE, ft.Colors.YELLOW],
-            )
-            if page.theme_mode == ft.ThemeMode.LIGHT else
-            ft.LinearGradient(
-                begin=ft.alignment.top_center,
-                end=ft.alignment.bottom_center,
-                colors=[
-                    ft.Colors.with_opacity(0.8, ft.Colors.BLACK),
-                    ft.Colors.GREY_900,
-                ],
-            )
-        )
-        
+        self.gradient = self._get_gradient()
+
         # Update data if coordinates are provided
         if lat is not None and lon is not None:
             self.update_data(lat, lon)
-    
+
+    def _get_gradient(self) -> ft.LinearGradient:
+        """Get the gradient based on the current theme"""
+        if self.page.theme_mode == ft.ThemeMode.DARK:
+            return ft.LinearGradient(
+                begin=ft.alignment.top_left,
+                end=ft.alignment.bottom_right,
+                colors=[ft.Colors.BLUE, ft.Colors.YELLOW]
+            )
+        else:
+            return ft.LinearGradient(
+                begin=ft.alignment.top_left,
+                end=ft.alignment.bottom_right,
+                colors=["#1a1a1a", "#333333"],
+            )
+
+
     def update_data(self, lat, lon):
         """
         Update air pollution data with new coordinates.
@@ -109,13 +110,13 @@ class AirPollution:
         """Create the air pollution tab content"""
         # AQI indicator
         aqi_row = ft.Row([
-            ft.Text("Air Quality Index:", size=20, weight="bold", color=self.txtcolor),
+            ft.Text("Air Quality Index:", size=20, weight="bold"),
             ft.Container(
                 content=ft.Text(
                     self._get_aqi_description(),
                     size=20,
                     weight="bold",
-                    color="#000000" if self.aqi <= 2 else "#ffffff"
+                    #color="#000000" if self.aqi <= 2 else "#ffffff"
                 ),
                 bgcolor=self._get_aqi_color(),
                 border_radius=10,
@@ -148,8 +149,8 @@ class AirPollution:
             row_items.append(
                 ft.Container(
                     content=ft.Column([
-                        ft.Text(f"{name1}", size=16, weight="bold", color=self.txtcolor, tooltip=desc1),
-                        ft.Text(f"{value1} {unit1}", size=20, weight="bold", color=self.txtcolor)
+                        ft.Text(f"{name1}", size=16, weight="bold", tooltip=desc1),
+                        ft.Text(f"{value1} {unit1}", size=20, weight="bold")
                     ]),
                     expand=True
                 )
@@ -161,8 +162,8 @@ class AirPollution:
                 row_items.append(
                     ft.Container(
                         content=ft.Column([
-                            ft.Text(f"{name2}", size=16, weight="bold", color=self.txtcolor, tooltip=desc2),
-                            ft.Text(f"{value2} {unit2}", size=20, weight="bold", color=self.txtcolor)
+                            ft.Text(f"{name2}", size=16, weight="bold", tooltip=desc2),
+                            ft.Text(f"{value2} {unit2}", size=20, weight="bold")
                         ]),
                         expand=True
                     )
@@ -172,10 +173,10 @@ class AirPollution:
         
         return ft.Column(
             controls=[
-                ft.Text("Air Pollution", size=24, weight="bold", color=self.txtcolor),
-                ft.Divider(height=1, color=self.txtcolor),
+                ft.Text("Air Pollution", size=24, weight="bold",),
+                ft.Divider(height=1),
                 aqi_row,
-                ft.Divider(height=1, color=self.txtcolor),
+                ft.Divider(height=1, ),
                 *pollution_rows
             ],
             expand=True

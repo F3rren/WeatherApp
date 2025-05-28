@@ -18,23 +18,18 @@ class DropdownLanguage:
 
     def get_options(self):
         options = []
-        for language in LANGUAGES:
-            # Converte il codice paese in formato corretto per l'API (lowercase)
-            country_code = language['code'].lower()
-            
+        for language in LANGUAGES: 
             # Crea il contenuto con bandiera e testo
             content = ft.Row(
                 controls=[
                     ft.Image(
-                        src=f"/flags/{country_code}.png",
-                        width=24,
-                        height=16,
-                        fit=ft.ImageFit.COVER,
-                        border_radius=ft.border_radius.all(2),
+                        src=f"flags/{language['code']}.png",
+                        width=40,
+                        height=20,
                         # Fallback in caso l'immagine non si carichi
                         error_content=ft.Container(
-                            width=24,
-                            height=16,
+                            width=30,
+                            height=20,
                             bgcolor=ft.Colors.GREY_300,
                             border_radius=ft.border_radius.all(2),
                             content=ft.Text(
@@ -55,7 +50,7 @@ class DropdownLanguage:
             
             options.append(
                 ft.DropdownOption(
-                    key=language["name"],  # Usa il nome come key
+                    key=language["code"],  # Usa il codice come key
                     text=language["name"],  # Testo che verrà mostrato quando selezionato
                     content=content,
                 )
@@ -65,10 +60,12 @@ class DropdownLanguage:
     def createDropdown(self):
         
         def dropdown_changed(e):
-            # Trova il codice lingua dal nome selezionato
-            selected_name = e.control.value
-            language_code = self.get_language_code_by_name(selected_name)
-            self.set_language(language_code)
+            # Ottieni direttamente il codice lingua dalla selezione
+            # Poiché hai impostato key=language["code"] nelle opzioni
+            selected_code = e.control.value
+            print(f'Lingua selezionata dal dropdown: {selected_code}')
+            print(f'Nome lingua: {self.get_language_name_by_code(selected_code)}')
+            self.set_language(selected_code)
             if hasattr(self, 'parent') and self.parent:
                 self.parent.update()
 
@@ -77,9 +74,10 @@ class DropdownLanguage:
         if self.state_manager:
             current_language_code = self.state_manager.get_state('language') or 'en'
             self.selected_language = current_language_code
-
-        # Converti il codice lingua nel nome per il dropdown
-        current_language_name = self.get_language_name_by_code(current_language_code)
+            print(f'Lingua corrente dallo state manager: {current_language_code}')
+        
+        # Assumiamo che il valore nel dropdown debba essere il codice lingua
+        # dato che abbiamo impostato key=language["code"] nelle opzioni
 
         return ft.Dropdown(
             autofocus=True,
@@ -88,7 +86,7 @@ class DropdownLanguage:
             options=self.get_options(),
             on_change=dropdown_changed,
             expand=True,  # Usa tutto lo spazio disponibile
-            value=current_language_name,  # Usa il nome invece del codice
+            value=current_language_code,  # Usando direttamente il codice
             # text_size rimosso poiché non supportato in Flet 0.28.2
             border_width=2,
             border_color=ft.Colors.GREY_400,
@@ -106,6 +104,7 @@ class DropdownLanguage:
 
     def set_language(self, language):
         self.selected_language = language
+        print(f'Impostazione lingua: {language} - {self.get_language_name_by_code(language)}')
         
         # Aggiorna lo stato dell'applicazione se state_manager è disponibile
         if self.state_manager:
@@ -126,11 +125,10 @@ class DropdownLanguage:
             
             # Aggiorna lo stato con il nuovo linguaggio
             call_async_safely(self.state_manager.set_state("language", language))
+            print(f'Stato aggiornato con lingua: {language}')
         
-        print(f'Language set to: {self.selected_language}')
+        print(f'Lingua impostata con successo: {self.selected_language} - {self.get_language_name_by_code(self.selected_language)}')
 
-    def get_selected_language(self):
-        return self.selected_language
 
     def build(self):
         return self.createDropdown()

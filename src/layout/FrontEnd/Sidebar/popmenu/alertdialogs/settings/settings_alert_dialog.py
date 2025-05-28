@@ -27,7 +27,6 @@ class SettingsAlertDialog:
                         ],
                         spacing=10,
                     ),
-                    ft.Divider(),
                     # Sezione unità di misura
                     ft.Row(
                         controls=[

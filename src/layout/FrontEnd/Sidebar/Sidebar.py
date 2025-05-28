@@ -5,9 +5,9 @@ Handles the sidebar functionality.
 
 import flet as ft
 from typing import List, Callable, Optional
-from layout.frontend.sidebar.searchbar import SearchBar
 from layout.backend.sidebar.sidebarquery import SidebarQuery
 from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
+from layout.frontend.sidebar.searchbar import SearchBar
 
 class Sidebar:
     """

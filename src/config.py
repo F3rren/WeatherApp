@@ -15,21 +15,21 @@ LIGHT_THEME = {
     "BACKGROUND": "#f5f5f5",
     "TEXT": "#000000",
     "SECONDARY_TEXT": "#555555",
-    "ACCENT": "#0078d4",
+    "ACCENT": "#6b46c1",  # Cambiato da azzurro a viola
     "CARD_BACKGROUND": "#ffffff",
     "BORDER": "#e0e0e0",
     "ICON": "#333333",
     "BUTTON_TEXT": "#ffffff",
-    "BUTTON_BACKGROUND": "#0078d4",
+    "BUTTON_BACKGROUND": "#6b46c1",  # Cambiato da azzurro a viola
     "DIALOG_BACKGROUND": "#ffffff",
     "DIALOG_TEXT": "#000000",
     "GRADIENT": {
         "LINEAR": {
-            "BEGIN": "#0078d4",
+            "BEGIN": "#6b46c1",  # Cambiato da azzurro a viola
             "END": "#ffe600"
         },
         "RADIAL": {
-            "CENTER": "#0078d4",
+            "CENTER": "#6b46c1",  # Cambiato da azzurro a viola
             "RADIUS": "#ffe600"
         }
     }
@@ -40,12 +40,12 @@ DARK_THEME = {
     "BACKGROUND": "#1a1a1a",
     "TEXT": "#ffffff",
     "SECONDARY_TEXT": "#cccccc",
-    "ACCENT": "#0078d4",
+    "ACCENT": "#8b5cf6",  # Cambiato da azzurro a viola più chiaro per il tema scuro
     "CARD_BACKGROUND": "#262626",
     "BORDER": "#444444",
     "ICON": "#ffffff",
     "BUTTON_TEXT": "#ffffff",
-    "BUTTON_BACKGROUND": "#0078d4",
+    "BUTTON_BACKGROUND": "#8b5cf6",  # Cambiato da azzurro a viola più chiaro
     "DIALOG_BACKGROUND": "#262626",
     "DIALOG_TEXT": "#ffffff",
     "GRADIENT": {

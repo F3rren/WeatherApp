@@ -81,17 +81,3 @@ class SearchBar:
         """Restituisce solo il componente AutoComplete senza la toolbox"""
         return self.autocomplete
     
-    def get_toolbox_only(self) -> ft.Container:
-        """Restituisce solo la toolbox senza l'autocomplete"""
-        return ft.Container(
-            content=ft.Row(
-                [
-                    ft.Icon(ft.Icons.LOCATION_CITY, color=ft.Colors.AMBER, size=20),
-                    ft.Text("Scrivi il nome della città:", size=14, weight="bold"),
-                ],
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=8,
-            ),
-            padding=ft.padding.only(bottom=10),
-        )

@@ -161,7 +161,7 @@ class WeatherView:
             name = location_data.get("name", "")
             country = location_data.get("country", "")
             state = location_data.get("state", "")
-            location = f"{name}, {country} {state}".strip()
+            location = f"{name}, {state}, {country}".strip()
         else:
             location = city
         weather_card = WeatherCard(self.page)

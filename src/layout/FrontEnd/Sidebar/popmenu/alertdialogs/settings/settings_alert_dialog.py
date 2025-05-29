@@ -18,7 +18,7 @@ class SettingsAlertDialog:
         self.measurement_dropdown = DropdownMeasurement(state_manager)
         self.location_toggle = None
         self.theme_toggle = None
-        self.dialog = None  # Changed from self.dlg to self.dialog for consistency
+        self.dialog = None  # Changed from self.dlg to self.dialog
         
         # Register for theme change events if state_manager is available
         if state_manager:
@@ -124,7 +124,8 @@ class SettingsAlertDialog:
                                     if isinstance(sub_item, ft.Text):
                                         sub_item.color = self.text_color
                                     elif isinstance(sub_item, ft.Icon):
-                                        sub_item.color = current_theme.get("ICON")
+                                        # Icons have custom colors, don't change them
+                                        pass
                             elif isinstance(item, ft.Text): # Direct text in a row (should not happen with current structure)
                                 item.color = self.text_color
             
@@ -162,7 +163,7 @@ class SettingsAlertDialog:
                         controls=[
                             ft.Row(
                                 controls=[
-                                    ft.Icon(ft.Icons.LANGUAGE, size=20, color=current_theme["ICON"]),
+                                    ft.Icon(ft.Icons.LANGUAGE, size=20, color="#ff6b35"),  # Arancione personalizzato
                                     ft.Text("Language:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
@@ -178,7 +179,7 @@ class SettingsAlertDialog:
                         controls=[
                             ft.Row(
                                 controls=[
-                                    ft.Icon(ft.Icons.STRAIGHTEN, size=20, color=current_theme["ICON"]),
+                                    ft.Icon(ft.Icons.STRAIGHTEN, size=20, color="#22c55e"),  # Verde personalizzato
                                     ft.Text("Measurement:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
@@ -194,7 +195,7 @@ class SettingsAlertDialog:
                         controls=[
                             ft.Row(
                                 controls=[
-                                    ft.Icon(ft.Icons.LOCATION_ON, size=20, color=current_theme["ICON"]),
+                                    ft.Icon(ft.Icons.LOCATION_ON, size=20, color="#ef4444"),  # Rosso personalizzato
                                     ft.Text("Use current location:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
@@ -209,7 +210,7 @@ class SettingsAlertDialog:
                         controls=[
                             ft.Row(
                                 controls=[
-                                    ft.Icon(ft.Icons.DARK_MODE, size=20, color=current_theme["ICON"]),
+                                    ft.Icon(ft.Icons.DARK_MODE, size=20, color="#3b82f6"),  # Blu personalizzato
                                     ft.Text("Dark theme:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
@@ -240,12 +241,7 @@ class SettingsAlertDialog:
             on_dismiss=lambda e: print("Dialog closed"),
         )
         
-        # Pulsante semplificato per aprire il dialog
-        return ft.ElevatedButton( 
-            text="Settings",
-            icon=ft.Icons.SETTINGS,
-            icon_color=current_theme["ICON"], # Uncommented and uses current_theme
-            bgcolor=current_theme["BUTTON_BACKGROUND"], # Uncommented and uses current_theme
-            color=current_theme["BUTTON_TEXT"], # Uncommented and uses current_theme
-            on_click=lambda e: page.open(self.dialog), 
-        )
+        # Rimosso: return ft.ElevatedButton(...)
+
+    def build(self):
+        return self.createAlertDialog(self.page)

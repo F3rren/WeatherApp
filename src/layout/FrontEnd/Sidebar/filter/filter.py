@@ -4,8 +4,8 @@ from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog
 from layout.frontend.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
 
+class Filter:
 
-class PopMenu:
 
     def __init__(self, page: ft.Page = None, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None, 
                 theme_toggle_value=False, location_toggle_value=False, text_color: str = None):
@@ -51,7 +51,7 @@ class PopMenu:
         self.meteo_item_text = ft.Text("Meteo", size=20, color=self.text_color)
         self.map_item_text = ft.Text("Mappa", size=20, color=self.text_color)
         self.settings_item_text = ft.Text("Impostazioni", size=20, color=self.text_color) # Added for settings
-        self.popup_menu_button_icon = ft.Icon(ft.Icons.MENU, size=50, color=self.text_color) # Apply text_color to icon
+        self.popup_menu_button_icon = ft.Icon(ft.Icons.FILTER_ALT_OUTLINED, size=40, color=self.text_color) # Apply text_color to icon
 
         if self.page and self.state_manager:
             self.state_manager.register_observer("theme_event", self.handle_theme_change)
@@ -84,9 +84,15 @@ class PopMenu:
                 if hasattr(self, 'popup_menu_button') and self.popup_menu_button.page:
                     self.popup_menu_button.update() 
             
-            # Propagate theme change to SettingsAlertDialog
-            if hasattr(self, 'setting_alert'):
-                self.setting_alert.handle_theme_change(event_data) # Pass event_data
+            # Propagate theme change to Alert Dialogs
+            if hasattr(self, 'setting_alert') and hasattr(self.setting_alert, 'handle_theme_change'):
+                self.setting_alert.handle_theme_change(event_data)
+
+            if hasattr(self, 'weather_alert') and hasattr(self.weather_alert, 'handle_theme_change'):
+                self.weather_alert.handle_theme_change(event_data)
+            
+            if hasattr(self, 'map_alert') and hasattr(self.map_alert, 'handle_theme_change'):
+                self.map_alert.handle_theme_change(event_data)
 
     def _open_alert_dialog(self, alert_instance):
         """Helper method to create (if needed) and open an alert dialog."""

@@ -8,6 +8,7 @@ from typing import List, Callable, Optional
 from layout.backend.sidebar.sidebarquery import SidebarQuery
 from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
 from layout.frontend.sidebar.searchbar import SearchBar
+from layout.frontend.sidebar.filter.filter import Filter
 
 class Sidebar:
     """
@@ -23,15 +24,19 @@ class Sidebar:
         self.handle_theme_toggle = handle_theme_toggle
         self.theme_toggle_value = theme_toggle_value
         self.query = SidebarQuery()
-        
+        self.search_bar = None
         self.cities = self._load_cities()
 
     def _load_cities(self) -> List[str]:
         """Load city names from JSON (via SidebarQuery)"""
         try:
             cities_data = self.query.loadAllCity()  # dovrebbe essere una lista di dizionari
-            city_names = sorted([item["city"] for item in cities_data if "city" in item])
-            return city_names
+            cities_name = [item["city"] for item in cities_data if "city" in item and item["city"]]
+            cities_admin = [item["admin_name"] for item in cities_data if "admin_name" in item and item["admin_name"]]
+            cities_country = [item["country"] for item in cities_data if "country" in item and item["country"]]
+            cities_info = sorted(zip(cities_name, cities_admin, cities_country))
+            cities = [f"{name}, {admin}, {country}" for name, admin, country in cities_info]
+            return cities
         except Exception as e:
             print(f"Errore nel caricamento delle città: {e}")
             return []
@@ -50,7 +55,7 @@ class Sidebar:
     def build(self) -> ft.Container:
         """Build the sidebar"""
         # Create search bar
-        search_bar = SearchBar(self.cities, self.on_city_selected)
+        self.search_bar = SearchBar(self.cities, self.on_city_selected)
         
         # Create pop menu with location toggle callback
         self.pop_menu = PopMenu(
@@ -61,20 +66,33 @@ class Sidebar:
             theme_toggle_value=self.theme_toggle_value,
             location_toggle_value=self.location_toggle_value
         )
-        
+
+        self.filter = Filter(
+            page=self.page,
+            state_manager=self.page.session.get('state_manager'),
+            handle_location_toggle=self.handle_location_toggle,
+            handle_theme_toggle=self.handle_theme_toggle,
+            theme_toggle_value=self.theme_toggle_value,
+            location_toggle_value=self.location_toggle_value
+        )
+
+
         # Create sidebar container
         return ft.Container(
             content=ft.ResponsiveRow(
                 controls=[
                     ft.Container(
                         content=self.pop_menu.build(self.page),
-                        col={"xs": 2, "md": 1},
-                        alignment=ft.alignment.center_left
+                        col={"xs": 1, "md": 1},
                     ),
                     ft.Container(
-                        content=search_bar.build(),
-                        col={"xs": 10, "md": 11},
-                    )
+                        content=self.search_bar.build(),
+                        col={"xs": 10, "md": 10},
+                    ),
+                    ft.Container(
+                        content=self.filter.build(self.page),
+                        col={"xs": 2, "md": 1},
+                    ),
                 ],
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=10,

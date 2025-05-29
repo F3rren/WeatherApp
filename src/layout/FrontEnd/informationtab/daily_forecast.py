@@ -52,12 +52,12 @@ class DailyForecast:
         return ft.Container(
             alignment=ft.alignment.center,
             content=ft.Column(
-                alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                horizontal_alignment=ft.CrossAxisAlignment.STRETCH, # <--- MODIFICATO QUI
                 controls=[
                     ft.Row(
                         controls=[self.api.getDailyForecast()],
-                        scroll=ft.ScrollMode.AUTO,  # Scroll orizzontale qui
+                        scroll=ft.ScrollMode.AUTO,
                     ),
                 ],
             ),

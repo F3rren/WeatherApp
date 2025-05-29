@@ -8,15 +8,16 @@ class MainWeatherInfo:
     
     def __init__(self, city: str, location: str, temperature: int, 
                  weather_icon: str, text_color: str, page: ft.Page = None): # Added page for state_manager access
-        self.city = city
+        self.city = city.upper() # Changed to accept city name as string
         self.location = location
         self.temperature = temperature
         self.weather_icon = weather_icon
         self.text_color = text_color
         self.page = page # Store page to access state_manager if needed for observing theme
+        #print(self.city)
 
         # Text controls that need dynamic color updates
-        self.city_text = ft.Text(self.city.upper(), size=40, weight="bold", color=self.text_color)
+        self.city_text = ft.Text(self.city.split(", ")[0], size=40, weight="bold", color=self.text_color) # Use self.city directly
         self.location_text = ft.Text(self.location, size=20, color=self.text_color)
         self.temperature_text = ft.Text(f"{self.temperature}°", size=60, weight="bold", color=self.text_color)
         
@@ -36,16 +37,13 @@ class MainWeatherInfo:
             # Update text colors of the controls
             if hasattr(self, 'city_text'): # Check if attribute exists
                 self.city_text.color = self.text_color
-                if self.city_text.page:
-                    self.city_text.update()
+                if self.city_text.page: self.city_text.update()
             if hasattr(self, 'location_text'):
                 self.location_text.color = self.text_color
-                if self.location_text.page:
-                    self.location_text.update()
+                if self.location_text.page: self.location_text.update()
             if hasattr(self, 'temperature_text'):
                 self.temperature_text.color = self.text_color
-                if self.temperature_text.page:
-                    self.temperature_text.update()
+                if self.temperature_text.page: self.temperature_text.update()
 
     def build(self) -> ft.Container:
         """Build the main weather information"""
@@ -75,4 +73,4 @@ class MainWeatherInfo:
             expand=True,
         ),
         padding=20
-    )
+        )

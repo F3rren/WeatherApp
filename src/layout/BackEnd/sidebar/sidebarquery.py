@@ -20,6 +20,7 @@ class SidebarQuery:
             .select("*")  
             .execute()
         )
+        print(response.data)
         return response.data
 
     def loadCityAdmin(self): #carica i capoluoghi di regione

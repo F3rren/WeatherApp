@@ -83,6 +83,7 @@ class MeteoApp:
         page.theme_mode = (ft.ThemeMode.LIGHT if DEFAULT_THEME_MODE == "light" else ft.ThemeMode.DARK)
         page.adaptive = True
         page.scroll = ft.ScrollMode.AUTO
+        page.animation_duration = 500 # Add animation duration for page-level animations
 
         self.state_manager = StateManager(page)
         # Salva lo state_manager nella sessione per accedervi da altre parti dell'app
@@ -144,49 +145,56 @@ class MeteoApp:
         )
 
         def build_layout():
+            animation_duration = 500
+            animation_curve = ft.AnimationCurve.EASE_IN_OUT
+
             self.sidebar_container = ft.Container(
-                content=ft.Column([
-                    sidebar.build(),
-                ]),
+                content=sidebar.build(),
                 col={"xs": 12},
                 margin=10,
                 padding=10,
-                border_radius=15
+                border_radius=15,
+                animate=ft.Animation(animation_duration, animation_curve)
             )
             self.info_container_wrapper = ft.Container(
                 content=info_container,
                 col={"xs": 12},
                 margin=10,
                 padding=10,
-                border_radius=15
+                border_radius=15,
+                animate=ft.Animation(animation_duration, animation_curve)
             )
             self.weekly_container_wrapper = ft.Container(
                 content=weekly_container,
                 col={"xs": 8},
                 margin=10,
                 padding=10,
-                border_radius=15
+                border_radius=15,
+                animate=ft.Animation(animation_duration, animation_curve)
             )
             self.chart_container_wrapper = ft.Container(
                 content=chart_container,
                 col={"xs": 4},
                 margin=10,
                 padding=10,
-                border_radius=15
+                border_radius=15,
+                animate=ft.Animation(animation_duration, animation_curve)
             )
             self.air_pollution_chart_container_wrapper = ft.Container(
                 content=air_pollution_chart_container,
                 col={"xs": 7},
                 margin=10,
                 padding=10,
-                border_radius=15
+                border_radius=15,
+                animate=ft.Animation(animation_duration, animation_curve)
             )
             self.air_pollution_container_wrapper = ft.Container(
                 content=air_pollution_container,
                 col={"xs": 5},
                 margin=10,
                 padding=10,
-                border_radius=15
+                border_radius=15,
+                animate=ft.Animation(animation_duration, animation_curve)
             )
 
             return ft.ListView(

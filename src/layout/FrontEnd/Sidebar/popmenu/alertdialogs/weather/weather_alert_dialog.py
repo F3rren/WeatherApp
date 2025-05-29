@@ -23,7 +23,7 @@ class WeatherAlertDialog:
 
         # Dialog semplificato per test
         self.dialog = ft.AlertDialog( # Changed from self.dlg to self.dialog
-            title=ft.Text("Settings", size=20, weight=ft.FontWeight.BOLD, color=self.text_color),
+            title=ft.Text("Weather", size=20, weight=ft.FontWeight.BOLD, color=self.text_color),
             bgcolor=bg_color,
             content=ft.Container(
                 width=400,  # Imposta una larghezza fissa per il dialogo
@@ -32,9 +32,8 @@ class WeatherAlertDialog:
                     # Sezione lingua
                     ft.Row(
                         controls=[
-                            ft.Row(
-                                controls=[
-                                    ft.Icon(ft.Icons.LANGUAGE, size=20, color=current_theme["ICON"]),
+                            ft.Row(                                controls=[
+                                    ft.Icon(ft.Icons.LANGUAGE, size=20, color="#ff6b35"),  # Arancione personalizzato
                                     ft.Text("Language:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
@@ -48,9 +47,9 @@ class WeatherAlertDialog:
                     # Sezione unità di misura
                     ft.Row(
                         controls=[
-                            ft.Row(
+                            ft.Row(                                
                                 controls=[
-                                    ft.Icon(ft.Icons.STRAIGHTEN, size=20, color=current_theme["ICON"]),
+                                    ft.Icon(ft.Icons.STRAIGHTEN, size=20, color="#22c55e"),  # Verde personalizzato
                                     ft.Text("Measurement:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
@@ -64,9 +63,8 @@ class WeatherAlertDialog:
                     # Sezione posizione attuale
                     ft.Row(
                         controls=[
-                            ft.Row(
-                                controls=[
-                                    ft.Icon(ft.Icons.LOCATION_ON, size=20, color=current_theme["ICON"]),
+                            ft.Row(                                controls=[
+                                    ft.Icon(ft.Icons.LOCATION_ON, size=20, color="#ef4444"),  # Rosso personalizzato
                                     ft.Text("Use current location:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
@@ -79,9 +77,9 @@ class WeatherAlertDialog:
                     ),
                     ft.Row(
                         controls=[
-                            ft.Row(
+                            ft.Row(                                
                                 controls=[
-                                    ft.Icon(ft.Icons.DARK_MODE, size=20, color=current_theme["ICON"]),
+                                    ft.Icon(ft.Icons.DARK_MODE, size=20, color="#3b82f6"),  # Blu personalizzato
                                     ft.Text("Dark theme:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
@@ -110,14 +108,4 @@ class WeatherAlertDialog:
                 ),
             ],
             on_dismiss=lambda e: print("Dialog closed"),
-        )
-        
-        # Pulsante semplificato per aprire il dialog
-        return ft.ElevatedButton( 
-            text="Weather",
-            icon=ft.Icons.WB_SUNNY,
-            icon_color=current_theme["ICON"], # Uncommented and uses current_theme
-            bgcolor=current_theme["BUTTON_BACKGROUND"], # Uncommented and uses current_theme
-            color=current_theme["BUTTON_TEXT"], # Uncommented and uses current_theme
-            on_click=lambda e: page.open(self.dialog), 
         )

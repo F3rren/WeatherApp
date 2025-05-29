@@ -23,8 +23,6 @@ class Sidebar:
         self.handle_theme_toggle = handle_theme_toggle
         self.theme_toggle_value = theme_toggle_value
         self.query = SidebarQuery()
-        self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626"
-        self.txtcolor = "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff"
         
         self.cities = self._load_cities()
 
@@ -56,6 +54,7 @@ class Sidebar:
         
         # Create pop menu with location toggle callback
         self.pop_menu = PopMenu(
+            page=self.page,
             state_manager=self.page.session.get('state_manager'),
             handle_location_toggle=self.handle_location_toggle,
             handle_theme_toggle=self.handle_theme_toggle,

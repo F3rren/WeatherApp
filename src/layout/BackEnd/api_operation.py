@@ -11,11 +11,6 @@ class APIOperation:
     load_dotenv()
   
     def __init__(self, page, city, language, unit):
-        
-        self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
-        self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
-        
-        #VARIABLE
         self.city = city
         self.unit = unit
         self.lang = language
@@ -298,9 +293,8 @@ class APIOperation:
 
                 row = ft.Row(
                     controls=[
-                        ft.Text(label, 
+                        ft.Text(label,
                                 size=20, 
-                                color=self.txtcolor, 
                                 weight="bold", 
                                 width=100,
                                 text_align=ft.TextAlign.START
@@ -316,11 +310,9 @@ class APIOperation:
                         ),
                         ft.Text(
                             description.upper(), 
-                            size=20, 
-                                color=self.txtcolor, 
-                                weight="bold", 
-                                
-                                text_align=ft.TextAlign.START
+                            size=20,                       
+                            weight="bold", 
+                            text_align=ft.TextAlign.START
                             ),
                         ft.Text(
                             spans=[

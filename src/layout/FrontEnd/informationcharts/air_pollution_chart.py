@@ -1,15 +1,21 @@
 import flet as ft
 from layout.backend.air_pollution_operation import AirPollutionOperation
+from config import LIGHT_THEME, DARK_THEME # Import theme configurations
 
 class AirPollutionChart:
     """
     Air Pollution chart display.
     """
-    def __init__(self, page, lat=None, lon=None):
+    def __init__(self, page, lat=None, lon=None, text_color: str = None): # Added text_color
         self.page = page
         self.lat = lat
         self.lon = lon
-        self.txtcolor = "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff"
+        # Set initial text_color or derive from theme
+        if text_color:
+            self.text_color = text_color
+        else:
+            self.text_color = DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"]
+        
         self.api = AirPollutionOperation()
         self.pollution_data = {}
         
@@ -24,23 +30,64 @@ class AirPollutionChart:
         self.pm10 = 0
         self.nh3 = 0
 
-        self.gradient = self._get_gradient()
+        # self.gradient = self._get_gradient() # Gradient seems unused, can be removed or updated
 
+        # Register for theme change events
+        state_manager = self.page.session.get('state_manager')
+        if state_manager:
+            state_manager.register_observer("theme_event", self.handle_theme_change)
 
-    def _get_gradient(self) -> ft.LinearGradient:
-        """Get the gradient based on the current theme"""
-        if self.page.theme_mode == ft.ThemeMode.DARK:
-            return ft.LinearGradient(
-                begin=ft.alignment.top_left,
-                end=ft.alignment.bottom_right,
-                colors=[ft.Colors.BLUE, ft.Colors.YELLOW]
-            )
-        else:
-            return ft.LinearGradient(
-                begin=ft.alignment.top_left,
-                end=ft.alignment.bottom_right,
-                colors=["#1a1a1a", "#333333"],
-            )
+    def handle_theme_change(self, event_data=None):
+        """Handles theme change events by updating text color and chart elements."""
+        if self.page:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
+            self.text_color = current_theme_config["TEXT"]
+            
+            # self.gradient = self._get_gradient() # Update gradient if it were used
+
+            # Update chart axis and title colors
+            if hasattr(self, 'chart_control') and self.chart_control.page:
+                self._update_chart_text_colors() # Implement this method
+                self.chart_control.update()
+            elif hasattr(self, 'container_control') and self.container_control.page:
+                # If chart is not yet built but container is, trigger rebuild of content
+                if self.lat is not None and self.lon is not None:
+                    new_chart_column = self.createAirPollutionChart(self.lat, self.lon)
+                    self.container_control.content = new_chart_column
+                    # self.container_control.gradient = self._get_gradient() # Update gradient if used
+                    self.container_control.update()
+
+    def _update_chart_text_colors(self):
+        """Updates the text colors of the chart's axes and title."""
+        if hasattr(self, 'chart_control'):
+            # Update bottom axis labels
+            if self.chart_control.bottom_axis and self.chart_control.bottom_axis.labels:
+                for label in self.chart_control.bottom_axis.labels:
+                    if isinstance(label.label, ft.Container) and isinstance(label.label.content, ft.Text):
+                        label.label.content.color = self.text_color
+            
+            # Update left axis title
+            if self.chart_control.left_axis and isinstance(self.chart_control.left_axis.title, ft.Text):
+                self.chart_control.left_axis.title.color = self.text_color
+            
+            # Update left axis labels (if they are simple text, not implemented here yet)
+            # If Y labels also need dynamic color, their creation should store ft.Text and be updated here.
+
+    # def _get_gradient(self) -> ft.LinearGradient: # Gradient seems unused
+    #     """Get the gradient based on the current theme"""
+    #     if self.page.theme_mode == ft.ThemeMode.DARK:
+    #         return ft.LinearGradient(
+    #             begin=ft.alignment.top_left,
+    #             end=ft.alignment.bottom_right,
+    #             colors=[ft.Colors.BLUE, ft.Colors.YELLOW]
+    #         )
+    #     else:
+    #         return ft.LinearGradient(
+    #             begin=ft.alignment.top_left,
+    #             end=ft.alignment.bottom_right,
+    #             colors=["#1a1a1a", "#333333"],
+    #         )
 
     def createAirPollutionChart(self, lat, lon):
 
@@ -60,7 +107,7 @@ class AirPollutionChart:
         self.pm10 = self.pollution_data.get("pm10", 0)
         self.nh3 = self.pollution_data.get("nh3", 0)
 
-        chart = ft.BarChart(
+        self.chart_control = ft.BarChart( # Store chart reference
             bar_groups=[
                 ft.BarChartGroup(
                     x=0,
@@ -168,35 +215,37 @@ class AirPollutionChart:
                     ],
                 ),
             ],
-            border=ft.border.all(1, ft.Colors.GREY_400),
+            border=ft.border.all(1, ft.Colors.GREY_400), # Consider theme for border
             left_axis=ft.ChartAxis(
-                labels_size=40, title=ft.Text("Air Pollution (μg/m³)"), title_size=40
+                labels_size=40, 
+                title=ft.Text("Air Pollution (μg/m³)", color=self.text_color), # Apply text_color
+                title_size=40
             ),
             bottom_axis=ft.ChartAxis(
                 labels=[
                     ft.ChartAxisLabel(
-                        value=0, label=ft.Container(ft.Text("CO"), padding=10)
+                        value=0, label=ft.Container(ft.Text("CO", color=self.text_color), padding=10) # Apply text_color
                     ),
                     ft.ChartAxisLabel(
-                        value=1, label=ft.Container(ft.Text("NO"), padding=10)
+                        value=1, label=ft.Container(ft.Text("NO", color=self.text_color), padding=10) # Apply text_color
                     ),
                     ft.ChartAxisLabel(
-                        value=2, label=ft.Container(ft.Text("NO₂"), padding=10)
+                        value=2, label=ft.Container(ft.Text("NO₂", color=self.text_color), padding=10) # Apply text_color
                     ),
                     ft.ChartAxisLabel(
-                        value=3, label=ft.Container(ft.Text("O₃"), padding=10)
+                        value=3, label=ft.Container(ft.Text("O₃", color=self.text_color), padding=10) # Apply text_color
                     ),
                     ft.ChartAxisLabel(
-                        value=4, label=ft.Container(ft.Text("SO₂"), padding=10)
+                        value=4, label=ft.Container(ft.Text("SO₂", color=self.text_color), padding=10) # Apply text_color
                     ),
                     ft.ChartAxisLabel(
-                        value=5, label=ft.Container(ft.Text("PM2.5"), padding=10)
+                        value=5, label=ft.Container(ft.Text("PM2.5", color=self.text_color), padding=10) # Apply text_color
                     ),
                     ft.ChartAxisLabel(
-                        value=6, label=ft.Container(ft.Text("PM10"), padding=10)
+                        value=6, label=ft.Container(ft.Text("PM10", color=self.text_color), padding=10) # Apply text_color
                     ),
                     ft.ChartAxisLabel(
-                        value=7, label=ft.Container(ft.Text("NH₃"), padding=10)
+                        value=7, label=ft.Container(ft.Text("NH₃", color=self.text_color), padding=10) # Apply text_color
                     ),
                 ],
                 labels_size=40,
@@ -211,13 +260,15 @@ class AirPollutionChart:
         )
 
         return ft.Column([ 
-            chart
+            self.chart_control # Return stored chart reference
         ])
 
     def build(self, lat, long):
-        return ft.Container(
-            gradient=self.gradient,
+        # Store the container for potential updates (e.g. gradient)
+        self.container_control = ft.Container(
+            # gradient=self.gradient, # Gradient is currently unused
             border_radius=15,
             padding=30,
             content=self.createAirPollutionChart(lat, long),
         )
+        return self.container_control

@@ -25,12 +25,12 @@ LIGHT_THEME = {
     "DIALOG_TEXT": "#000000",
     "GRADIENT": {
         "LINEAR": {
-            "BEGIN": "#ffffff",
-            "END": "#f0f0f0"
+            "BEGIN": "#0078d4",
+            "END": "#ffe600"
         },
         "RADIAL": {
-            "CENTER": "#ffffff",
-            "RADIUS": "#f0f0f0"
+            "CENTER": "#0078d4",
+            "RADIUS": "#ffe600"
         }
     }
 }
@@ -59,9 +59,6 @@ DARK_THEME = {
         }
     }
 }
-
-
-
 
 # API settings
 API_BASE_URL = "https://api.openweathermap.org"

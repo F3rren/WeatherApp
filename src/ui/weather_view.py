@@ -5,6 +5,7 @@ Handles the display of weather information.
 
 import flet as ft
 from datetime import datetime
+from config import LIGHT_THEME, DARK_THEME
 
 from services.api_service import ApiService
 
@@ -28,13 +29,59 @@ class WeatherView:
         self.api_service = ApiService()
         self.weather_data = {}
         self.city_info = {}
-        self.text_color = "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff"
-        # UI containers (frontend only)
-        self.info_container = ft.Container(content=ft.Text("Caricamento..."))
+        # Store current coordinates for theme change rebuilds
+        self.current_lat = None
+        self.current_lon = None
+        self.current_city = None
+        # Initialize text_color based on the current theme
+        self._update_text_color() 
+        
+        # Register for theme change events
+        state_manager = self.page.session.get('state_manager')
+        if state_manager:
+            state_manager.register_observer("theme_event", self.handle_theme_change)
+
+        self.info_container = ft.Container(content=ft.Text("Caricamento...", color=self.text_color)) # Apply initial text color
         self.weekly_container = ft.Container()
         self.chart_container = ft.Container()
         self.air_pollution_container = ft.Container()
         self.air_pollution_chart_container = ft.Container()
+
+    def _update_text_color(self):
+        """Updates text_color based on the current page theme."""
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        self.text_color = DARK_THEME["TEXT"] if is_dark else LIGHT_THEME["TEXT"]
+
+    def handle_theme_change(self, event_data=None):
+        """Handles theme change events by updating text color and relevant UI parts."""
+        self._update_text_color()
+        
+        if self.info_container.content and isinstance(self.info_container.content, ft.Text):
+            self.info_container.content.color = self.text_color
+            # self.info_container.update() # Usually page.update() is enough
+
+        # Re-build air pollution components with new theme colors if data is available
+        if self.current_lat is not None and self.current_lon is not None:
+            # Update air pollution component with new text color
+            air_pollution = AirPollution(
+                page=self.page,
+                lat=self.current_lat,
+                lon=self.current_lon,
+                text_color=self.text_color,
+            )
+            self.air_pollution_container.content = air_pollution.build()
+            
+            # Update air pollution chart component with new text color
+            air_pollution_chart = AirPollutionChart(
+                page=self.page,
+                lat=self.current_lat,
+                lon=self.current_lon,
+                text_color=self.text_color
+            )
+            self.air_pollution_chart_container.content = air_pollution_chart.build(self.current_lat, self.current_lon)
+        
+        self.page.update()
+
 
     async def update_by_city(self, city: str, language: str, unit: str) -> None:
         """Frontend: Triggers backend to fetch weather by city, then updates UI"""
@@ -67,16 +114,28 @@ class WeatherView:
         """Frontend: Updates UI containers with backend data"""
         if not self.weather_data:
             return
+        
+        # Store current coordinates and city for theme change rebuilds
+        self.current_city = city
+        self.current_lat = lat
+        self.current_lon = lon
+        
+        # Ensure text_color is up-to-date before updating sub-components
+        self._update_text_color() 
         await self._update_main_info(city, is_current_location)
         await self._update_weekly_forecast()
         await self._update_temperature_chart()
         try:
             if lat is not None and lon is not None:
+                self.current_lat = lat
+                self.current_lon = lon
                 await self._update_air_pollution(lat, lon)
                 await self._update_air_pollution_chart(lat, lon)
             elif "city" in self.weather_data and "coord" in self.weather_data["city"]:
                 lat = self.weather_data["city"]["coord"]["lat"]
                 lon = self.weather_data["city"]["coord"]["lon"]
+                self.current_lat = lat
+                self.current_lon = lon
                 await self._update_air_pollution(lat, lon)
                 await self._update_air_pollution_chart(lat, lon)
             else:
@@ -111,35 +170,41 @@ class WeatherView:
             location=location,
             temperature=temperature,
             weather_icon=icon_code,
-            text_color=self.text_color
+            text_color=self.text_color,
+            page=self.page # Pass page for theme observation in MainWeatherInfo
         )
         hourly_data = self.api_service.get_hourly_forecast_data(self.weather_data)
-        hourly_items = []
-        for i, item in enumerate(hourly_data[:6]):
-            time = item["dt_txt"]
+        hourly_items_controls = [] # Renamed to avoid conflict if hourly_items was a list of data
+        for i, item_data in enumerate(hourly_data[:6]): # Iterate over data
+            time = item_data["dt_txt"]
             dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
             hour = dt.strftime("%H:%M")
-            hourly_item = HourlyForecastItems(
+            # Assuming HourlyForecastItems also needs text_color or handles its own theme
+            hourly_item_obj = HourlyForecastItems(
                 time=hour,
-                icon_code=item["weather"][0]["icon"],
-                temperature=round(item["main"]["temp"])
+                icon_code=item_data["weather"][0]["icon"],
+                temperature=round(item_data["main"]["temp"]),
+                text_color=self.text_color, # Pass text_color
+                page=self.page # Pass page for theme observation
             )
-            hourly_items.append(hourly_item.build())
-            if i < 5:
-                hourly_items.append(
+            hourly_items_controls.append(hourly_item_obj.build()) # Append built control
+            if i < 5: # Ensure we only add 5 dividers for 6 items
+                divider_color = DARK_THEME.get("BORDER", ft.Colors.WHITE if self.page.theme_mode == ft.ThemeMode.DARK else ft.Colors.BLACK)
+                hourly_items_controls.append(
                     ft.Container(
-                        content=ft.VerticalDivider(width=1, thickness=1, color="white", opacity=0.5),
+                        content=ft.VerticalDivider(width=1, thickness=1, color=divider_color, opacity=0.5),
                         height=100,
                         alignment=ft.alignment.center,
                     )
                 )
-        hourly_forecast = ft.Row(controls=hourly_items, expand=True)
+        hourly_forecast = ft.Row(controls=hourly_items_controls, expand=True, scroll=ft.ScrollMode.AUTO) # Added scroll
         air_condition = AirConditionInfo(
             feels_like=feels_like,
             humidity=humidity,
             wind_speed=wind_speed,
             pressure=pressure,
-            text_color=self.text_color
+            text_color=self.text_color,
+            page=self.page # Pass page for theme observation
         )
         self.info_container.content = weather_card.build(
             ft.Column([
@@ -152,33 +217,38 @@ class WeatherView:
     async def _update_weekly_forecast(self) -> None:
         """Frontend: Updates weekly forecast UI"""
         weekly_data = self.api_service.get_weekly_forecast_data(self.weather_data)
-        weather_card = WeatherCard(self.page)
-        forecast_items = []
+        weather_card = WeatherCard(self.page) # Pass page if WeatherCard needs theme context
+        forecast_items_controls = [] # Renamed
+        self._update_text_color() # Ensure text_color is current
         for i, day_data in enumerate(weekly_data):
-            forecast_item = DailyForecastItems(
+            forecast_item_obj = DailyForecastItems( # Create instance
                 day=day_data["day_name"],
                 icon_code=day_data["icon"],
                 description=day_data["description"],
                 temp_min=day_data["temp_min"],
                 temp_max=day_data["temp_max"],
-                text_color=self.text_color
+                text_color=self.text_color,
+                page=self.page # Pass page for theme observation
             )
-            forecast_items.append(ft.Container(content=forecast_item.build()))
+            forecast_items_controls.append(ft.Container(content=forecast_item_obj.build())) # Append built control
             if i < len(weekly_data) - 1:
-                forecast_items.append(
+                divider_color = DARK_THEME.get("BORDER", ft.Colors.WHITE if self.page.theme_mode == ft.ThemeMode.DARK else ft.Colors.BLACK)
+                forecast_items_controls.append(
                     ft.Container(
-                        content=ft.Divider(thickness=0.5, color="white", opacity=1),
+                        content=ft.Divider(thickness=0.5, color=divider_color, opacity=1),
                     )
                 )
         self.weekly_container.content = weather_card.build(
-            ft.Column(controls=forecast_items, expand=True)
+            ft.Column(controls=forecast_items_controls, expand=True)
         )
+        # self.weekly_container.update() # Covered by page.update()
 
     async def _update_temperature_chart(self) -> None:
         """Frontend: Updates temperature chart UI"""
         forecast_data = self.api_service.get_daily_forecast_data(self.weather_data)
         days = self.api_service.get_upcoming_days()
-        weather_card = WeatherCard(self.page)
+        weather_card = WeatherCard(self.page) # Pass page if WeatherCard needs theme context
+        self._update_text_color() # Ensure text_color is current
         temp_chart = TemperatureChart(
             page=self.page,
             days=days,
@@ -190,19 +260,23 @@ class WeatherView:
 
     async def _update_air_pollution(self, lat: float, lon: float) -> None:
         """Frontend: Updates air pollution UI"""
-        air_pollution = AirPollution(
+        self._update_text_color() # Ensure text_color is current
+        air_pollution = AirPollution( # Assuming AirPollution is a class
             page=self.page,
             lat=lat,
-            lon=lon
+            lon=lon,
+            text_color=self.text_color, # Pass text_color
         )
         self.air_pollution_container.content = air_pollution.build()
 
     async def _update_air_pollution_chart(self, lat: float, lon: float) -> None:
         """Frontend: Updates air pollution chart UI"""
-        air_pollution_chart = AirPollutionChart(
+        self._update_text_color() # Ensure text_color is current
+        air_pollution_chart = AirPollutionChart( # Assuming AirPollutionChart is a class
             page=self.page,
             lat=lat,
-            lon=lon
+            lon=lon,
+            text_color=self.text_color # Pass text_color
         )
         self.air_pollution_chart_container.content = air_pollution_chart.build(lat, lon)
 

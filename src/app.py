@@ -9,10 +9,12 @@ from config import (
     DEFAULT_CITY,
     DEFAULT_LANGUAGE,
     DEFAULT_UNIT,
-    DEFAULT_THEME_MODE
+    DEFAULT_THEME_MODE,
+    LIGHT_THEME,
+    DARK_THEME
 )
 
-from layout.frontend.sidebar.sidebar import Sidebar  
+from layout.frontend.sidebar.sidebar import Sidebar
 from state_manager import StateManager
 from services.geolocation_service import GeolocationService
 from services.location_toggle_service import LocationToggleService
@@ -34,6 +36,39 @@ class MeteoApp:
         self.state_manager = None
         self.location_toggle_service = None
         self.theme_toggle_service = None
+        self.sidebar_container = None
+        self.info_container_wrapper = None
+        self.weekly_container_wrapper = None
+        self.chart_container_wrapper = None
+        self.air_pollution_chart_container_wrapper = None
+        self.air_pollution_container_wrapper = None
+        self.page = None
+
+    async def _update_container_colors(self, event_data=None):
+        """Updates the background colors of main containers based on the theme."""
+        if not self.page:
+            return
+
+        theme = LIGHT_THEME if self.page.theme_mode == ft.ThemeMode.LIGHT else DARK_THEME
+        page_bg_color = theme.get("BACKGROUND", "#f5f5f5" if self.page.theme_mode == ft.ThemeMode.LIGHT else "#1a1a1a")
+        card_bg_color = theme.get("CARD_BACKGROUND", "#ffffff" if self.page.theme_mode == ft.ThemeMode.LIGHT else "#262626")
+
+        self.page.bgcolor = page_bg_color
+        
+        containers_to_update = [
+            self.sidebar_container,
+            self.info_container_wrapper,
+            self.weekly_container_wrapper,
+            self.chart_container_wrapper,
+            self.air_pollution_chart_container_wrapper,
+            self.air_pollution_container_wrapper
+        ]
+
+        for container in containers_to_update:
+            if container:
+                container.bgcolor = card_bg_color
+                container.update() # Corrected: use update() instead of update_async()
+        self.page.update()
 
     async def main(self, page: ft.Page) -> None:
         """
@@ -42,17 +77,20 @@ class MeteoApp:
         Args:
             page: Flet page object
         """
+        self.page = page # Store page reference
         # Set page properties
         page.title = "MeteoApp"
-        page.theme_mode = (
-            ft.ThemeMode.LIGHT if DEFAULT_THEME_MODE == "light" else ft.ThemeMode.DARK
-        )
+        page.theme_mode = (ft.ThemeMode.LIGHT if DEFAULT_THEME_MODE == "light" else ft.ThemeMode.DARK)
         page.adaptive = True
         page.scroll = ft.ScrollMode.AUTO
 
         self.state_manager = StateManager(page)
         # Salva lo state_manager nella sessione per accedervi da altre parti dell'app
         page.session.set('state_manager', self.state_manager)
+        
+        # Register theme update handler for containers
+        self.state_manager.register_observer("theme_event", self._update_container_colors)
+
         weather_view = WeatherView(page)
         info_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = weather_view.get_containers()
         
@@ -106,75 +144,81 @@ class MeteoApp:
         )
 
         def build_layout():
+            self.sidebar_container = ft.Container(
+                content=ft.Column([
+                    sidebar.build(),
+                ]),
+                col={"xs": 12},
+                margin=10,
+                padding=10,
+                border_radius=15
+            )
+            self.info_container_wrapper = ft.Container(
+                content=info_container,
+                col={"xs": 12},
+                margin=10,
+                padding=10,
+                border_radius=15
+            )
+            self.weekly_container_wrapper = ft.Container(
+                content=weekly_container,
+                col={"xs": 8},
+                margin=10,
+                padding=10,
+                border_radius=15
+            )
+            self.chart_container_wrapper = ft.Container(
+                content=chart_container,
+                col={"xs": 4},
+                margin=10,
+                padding=10,
+                border_radius=15
+            )
+            self.air_pollution_chart_container_wrapper = ft.Container(
+                content=air_pollution_chart_container,
+                col={"xs": 7},
+                margin=10,
+                padding=10,
+                border_radius=15
+            )
+            self.air_pollution_container_wrapper = ft.Container(
+                content=air_pollution_container,
+                col={"xs": 5},
+                margin=10,
+                padding=10,
+                border_radius=15
+            )
+
             return ft.ListView(
                 expand=True,
                 spacing=10,
                 auto_scroll=True,
                 controls=[
                     ft.ResponsiveRow(
+                        controls=[self.sidebar_container]
+                    ),
+                    ft.ResponsiveRow(
+                        controls=[self.info_container_wrapper]
+                    ),
+                    ft.ResponsiveRow(
                         controls=[
-                            ft.Container(
-                                content=ft.Column([
-                                    sidebar.build(),
-                                ]),
-                                col={"xs": 12},
-                                margin=10,
-                                padding=10,
-                                border_radius=15
-                            )
+                            self.weekly_container_wrapper,
+                            self.chart_container_wrapper
                         ]
                     ),
                     ft.ResponsiveRow(
                         controls=[
-                            ft.Container(
-                                content=info_container,
-                                col={"xs": 12},
-                                margin=10,
-                                padding=10,
-                                border_radius=15
-                            )
-                        ]
-                    ),
-                    ft.ResponsiveRow(
-                        controls=[
-                            ft.Container(
-                                content=weekly_container,
-                                col={"xs": 8},
-                                margin=10,
-                                padding=10,
-                                border_radius=15
-                            ),
-                            ft.Container(
-                                content=chart_container,
-                                col={"xs": 4},
-                                margin=10,
-                                padding=10,
-                                border_radius=15
-                            )
-                        ]
-                    ),
-                    ft.ResponsiveRow(
-                        controls=[
-                            ft.Container(
-                                content=air_pollution_chart_container,
-                                col={"xs": 7},
-                                margin=10,
-                                padding=10,
-                                border_radius=15
-                            ),
-                            ft.Container(
-                                content=air_pollution_container,
-                                col={"xs": 5},
-                                margin=10,
-                                padding=10,
-                                border_radius=15
-                            )
+                            self.air_pollution_chart_container_wrapper,
+                            self.air_pollution_container_wrapper
                         ]
                     )
                 ]
             )
 
         page.add(build_layout())
+        
+        # Initial update of container colors
+        await self._update_container_colors()
 
         await weather_view.update_by_city(
             city=DEFAULT_CITY,

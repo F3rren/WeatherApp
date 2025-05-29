@@ -1,5 +1,6 @@
 import flet as ft
 from layout.backend.air_pollution_operation import AirPollutionOperation
+from config import LIGHT_THEME, DARK_THEME # Import theme configurations
 
 class AirPollution:
     """
@@ -7,7 +8,7 @@ class AirPollution:
     Shows detailed air quality information.
     """
     
-    def __init__(self, page, lat=None, lon=None):
+    def __init__(self, page, lat=None, lon=None, text_color: str = None): # Added text_color
         """
         Initialize the AirPollution component.
         
@@ -15,11 +16,17 @@ class AirPollution:
             page: Flet page object
             lat: Latitude (optional)
             lon: Longitude (optional)
+            text_color: Initial text color (optional)
         """
         self.page = page
         self.lat = lat
         self.lon = lon
-        self.txtcolor = "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff"
+        # Set initial text_color or derive from theme
+        if text_color:
+            self.text_color = text_color
+        else:
+            self.text_color = DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"]
+        
         self.api = AirPollutionOperation()
         self.pollution_data = {}
         
@@ -35,26 +42,47 @@ class AirPollution:
         self.nh3 = 0
         
         # Get gradient based on theme mode
-        self.gradient = self._get_gradient()
+        # self.gradient = self._get_gradient() # Gradient seems unused, can be removed or reimplemented if needed
 
         # Update data if coordinates are provided
         if lat is not None and lon is not None:
             self.update_data(lat, lon)
 
-    def _get_gradient(self) -> ft.LinearGradient:
-        """Get the gradient based on the current theme"""
-        if self.page.theme_mode == ft.ThemeMode.DARK:
-            return ft.LinearGradient(
-                begin=ft.alignment.top_left,
-                end=ft.alignment.bottom_right,
-                colors=[ft.Colors.BLUE, ft.Colors.YELLOW]
-            )
-        else:
-            return ft.LinearGradient(
-                begin=ft.alignment.top_left,
-                end=ft.alignment.bottom_right,
-                colors=["#1a1a1a", "#333333"],
-            )
+        # Register for theme change events
+        state_manager = self.page.session.get('state_manager')
+        if state_manager:
+            state_manager.register_observer("theme_event", self.handle_theme_change)
+
+    def handle_theme_change(self, event_data=None):
+        """Handles theme change events by updating text color and relevant UI elements."""
+        if self.page:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
+            self.text_color = current_theme_config["TEXT"]
+            
+            # Update text colors of the dynamically created text controls
+            # This requires re-building or having references to the text controls.
+            # For simplicity, we'll assume the parent will trigger a rebuild or update.
+            # If direct update is needed, store references to text controls during creation.
+            if self.page: # Trigger a page update to reflect changes if controls are rebuilt
+                # self.page.update() # This might be too broad, ideally update specific controls
+                # For now, we rely on WeatherView to refresh this component
+                pass 
+
+    # def _get_gradient(self) -> ft.LinearGradient: # Gradient seems unused
+    #     """Get the gradient based on the current theme"""
+    #     if self.page.theme_mode == ft.ThemeMode.DARK:
+    #         return ft.LinearGradient(
+    #             begin=ft.alignment.top_left,
+    #             end=ft.alignment.bottom_right,
+    #             colors=[ft.Colors.BLUE, ft.Colors.YELLOW]
+    #         )
+    #     else:
+    #         return ft.LinearGradient(
+    #             begin=ft.alignment.top_left,
+    #             end=ft.alignment.bottom_right,
+    #             colors=["#1a1a1a", "#333333"],
+    #         )
 
 
     def update_data(self, lat, lon):
@@ -110,13 +138,13 @@ class AirPollution:
         """Create the air pollution tab content"""
         # AQI indicator
         aqi_row = ft.Row([
-            ft.Text("Air Quality Index:", size=20, weight="bold"),
+            ft.Text("Air Quality Index:", size=20, weight="bold", color=self.text_color), # Apply text_color
             ft.Container(
                 content=ft.Text(
                     self._get_aqi_description(),
                     size=20,
                     weight="bold",
-                    #color="#000000" if self.aqi <= 2 else "#ffffff"
+                    color=self.text_color if self.aqi <= 2 else "#ffffff" # AQI desc color logic
                 ),
                 bgcolor=self._get_aqi_color(),
                 border_radius=10,
@@ -149,43 +177,49 @@ class AirPollution:
             row_items.append(
                 ft.Container(
                     content=ft.Column([
-                        ft.Text(f"{name1}", size=16, weight="bold", tooltip=desc1),
-                        ft.Text(f"{value1} {unit1}", size=20, weight="bold")
+                        ft.Text(name1, weight="bold", size=16, color=self.text_color), # Apply text_color
+                        ft.Text(f"{value1} {unit1}", size=14, color=self.text_color), # Apply text_color
+                        ft.Text(desc1, size=12, color=self.text_color, italic=True), # Apply text_color
                     ]),
+                    padding=10,
+                    border_radius=10,
+                    #bgcolor=ft.colors.with_opacity(0.1, self.txtcolor), # Example: theme aware bg
                     expand=True
                 )
             )
             
-            # Add second item if available
+            # Add second item if exists
             if i + 1 < len(pollution_data):
-                name2, value2, unit2, desc2 = pollution_data[i + 1]
+                name2, value2, unit2, desc2 = pollution_data[i+1]
                 row_items.append(
                     ft.Container(
                         content=ft.Column([
-                            ft.Text(f"{name2}", size=16, weight="bold", tooltip=desc2),
-                            ft.Text(f"{value2} {unit2}", size=20, weight="bold")
+                            ft.Text(name2, weight="bold", size=16, color=self.text_color), # Apply text_color
+                            ft.Text(f"{value2} {unit2}", size=14, color=self.text_color), # Apply text_color
+                            ft.Text(desc2, size=12, color=self.text_color, italic=True), # Apply text_color
                         ]),
+                        padding=10,
+                        border_radius=10,
+                        #bgcolor=ft.colors.with_opacity(0.1, self.txtcolor),
                         expand=True
                     )
                 )
-            
-            pollution_rows.append(ft.Row(row_items, expand=True))
-        
+            pollution_rows.append(ft.Row(row_items, spacing=10))
+
         return ft.Column(
             controls=[
-                ft.Text("Air Pollution", size=24, weight="bold",),
-                ft.Divider(height=1),
                 aqi_row,
-                ft.Divider(height=1, ),
+                ft.Divider(height=20, color=self.text_color), # Apply text_color to divider
                 *pollution_rows
             ],
-            expand=True
+            spacing=10,
+            #expand=True # remove expand true if it causes issues
         )
     
     def build(self):
         """Build the air pollution component"""
         return ft.Container(
-            gradient=self.gradient,
+            #gradient=self.gradient,
             border_radius=15,
             padding=20,
             content=self.createAirPollutionTab(),

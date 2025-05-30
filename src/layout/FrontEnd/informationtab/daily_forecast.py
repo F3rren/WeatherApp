@@ -72,4 +72,5 @@ class DailyForecast:
             border_radius=15,
             padding=20,
             content=self.createHourlyForecast(),
+            expand=True,
         )

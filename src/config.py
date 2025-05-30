@@ -4,8 +4,8 @@ Centralizes all configuration values and settings.
 """
 
 # Default application settings
-DEFAULT_CITY = "Milan"
-DEFAULT_LANGUAGE = "en"
+DEFAULT_CITY = "Milano"
+DEFAULT_LANGUAGE = "it"
 DEFAULT_UNIT = "metric"  # "metric", "imperial", or "standard"
 DEFAULT_THEME_MODE = "light"  # "light" or "dark"
 
@@ -17,22 +17,14 @@ LIGHT_THEME = {
     "SECONDARY_TEXT": "#555555",
     "ACCENT": "#6b46c1",  # Cambiato da azzurro a viola
     "CARD_BACKGROUND": "#ffffff",
+    "HOURLY_FORECAST_CARD": "#ffffff",  # Changed from #ffffff00
     "BORDER": "#e0e0e0",
     "ICON": "#333333",
     "BUTTON_TEXT": "#ffffff",
     "BUTTON_BACKGROUND": "#6b46c1",  # Cambiato da azzurro a viola
     "DIALOG_BACKGROUND": "#ffffff",
     "DIALOG_TEXT": "#000000",
-    "GRADIENT": {
-        "LINEAR": {
-            "BEGIN": "#6b46c1",  # Cambiato da azzurro a viola
-            "END": "#ffe600"
-        },
-        "RADIAL": {
-            "CENTER": "#6b46c1",  # Cambiato da azzurro a viola
-            "RADIUS": "#ffe600"
-        }
-    }
+
 }
 
 # Colori per il tema scuro
@@ -42,22 +34,14 @@ DARK_THEME = {
     "SECONDARY_TEXT": "#cccccc",
     "ACCENT": "#8b5cf6",  # Cambiato da azzurro a viola più chiaro per il tema scuro
     "CARD_BACKGROUND": "#262626",
+    "HOURLY_FORECAST_CARD": "#444444",
     "BORDER": "#444444",
     "ICON": "#ffffff",
     "BUTTON_TEXT": "#ffffff",
     "BUTTON_BACKGROUND": "#8b5cf6",  # Cambiato da azzurro a viola più chiaro
     "DIALOG_BACKGROUND": "#262626",
     "DIALOG_TEXT": "#ffffff",
-    "GRADIENT": {
-        "LINEAR": {
-            "BEGIN": "#333333",
-            "END": "#1a1a1a"
-        },
-        "RADIAL": {
-            "CENTER": "#262626",
-            "RADIUS": "#1a1a1a"
-        }
-    }
+
 }
 
 # API settings

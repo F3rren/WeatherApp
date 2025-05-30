@@ -1,4 +1,5 @@
 import flet as ft
+import math # Added import math
 from layout.backend.air_pollution_operation import AirPollutionOperation
 from config import LIGHT_THEME, DARK_THEME # Import theme configurations
 
@@ -71,24 +72,6 @@ class AirPollutionChart:
             if self.chart_control.left_axis and isinstance(self.chart_control.left_axis.title, ft.Text):
                 self.chart_control.left_axis.title.color = self.text_color
             
-            # Update left axis labels (if they are simple text, not implemented here yet)
-            # If Y labels also need dynamic color, their creation should store ft.Text and be updated here.
-
-    # def _get_gradient(self) -> ft.LinearGradient: # Gradient seems unused
-    #     """Get the gradient based on the current theme"""
-    #     if self.page.theme_mode == ft.ThemeMode.DARK:
-    #         return ft.LinearGradient(
-    #             begin=ft.alignment.top_left,
-    #             end=ft.alignment.bottom_right,
-    #             colors=[ft.Colors.BLUE, ft.Colors.YELLOW]
-    #         )
-    #     else:
-    #         return ft.LinearGradient(
-    #             begin=ft.alignment.top_left,
-    #             end=ft.alignment.bottom_right,
-    #             colors=["#1a1a1a", "#333333"],
-    #         )
-
     def createAirPollutionChart(self, lat, lon):
 
         self.lat = lat
@@ -96,16 +79,51 @@ class AirPollutionChart:
         # Get air pollution data
         self.pollution_data = self.api.get_air_pollution(lat, lon)
         
-        # Update component properties
-        self.aqi = self.pollution_data.get("aqi", 0)
-        self.co = self.pollution_data.get("co", 0)
-        self.no = self.pollution_data.get("no", 0)
-        self.no2 = self.pollution_data.get("no2", 0)
-        self.o3 = self.pollution_data.get("o3", 0)
-        self.so2 = self.pollution_data.get("so2", 0)
-        self.pm2_5 = self.pollution_data.get("pm2_5", 0)
-        self.pm10 = self.pollution_data.get("pm10", 0)
-        self.nh3 = self.pollution_data.get("nh3", 0)
+        # Update component properties, ensuring they are floats
+        self.aqi = float(self.pollution_data.get("aqi", 0.0)) # AQI might not be directly on the bar chart
+        self.co = float(self.pollution_data.get("co", 0.0))
+        self.no = float(self.pollution_data.get("no", 0.0))
+        self.no2 = float(self.pollution_data.get("no2", 0.0))
+        self.o3 = float(self.pollution_data.get("o3", 0.0))
+        self.so2 = float(self.pollution_data.get("so2", 0.0))
+        self.pm2_5 = float(self.pollution_data.get("pm2_5", 0.0))
+        self.pm10 = float(self.pollution_data.get("pm10", 0.0))
+        self.nh3 = float(self.pollution_data.get("nh3", 0.0))
+
+        # Calculate dynamic max_y for the chart
+        all_pollution_metrics = [
+            self.co, self.no, self.no2, self.o3,
+            self.so2, self.pm2_5, self.pm10, self.nh3
+        ]
+        
+        max_val = 0.0
+        numeric_metrics = [m for m in all_pollution_metrics if isinstance(m, (int, float))]
+        if numeric_metrics:
+            max_val = max(numeric_metrics)
+
+        raw_dynamic_max_y = 0.0 # Renamed from dynamic_max_y to avoid confusion before rounding
+        if max_val == 0.0:
+            raw_dynamic_max_y = 50.0  # Default max_y if all values are zero
+        else:
+            # Add a 20% buffer or a fixed 10 units, whichever is larger
+            buffered_max_percentage = max_val * 1.2
+            buffered_max_fixed = max_val + 10.0
+            raw_dynamic_max_y = max(buffered_max_percentage, buffered_max_fixed)
+            # Ensure the y-axis isn't too cramped if values are small but non-zero, e.g., min height of 20
+            raw_dynamic_max_y = max(raw_dynamic_max_y, 20.0)
+
+        # Round up to the nearest nice number (10, 20, 50)
+        if raw_dynamic_max_y <= 0: # Handle edge case of zero or negative before rounding
+            final_max_y = 50.0
+        elif raw_dynamic_max_y <= 50:
+            final_max_y = math.ceil(raw_dynamic_max_y / 10) * 10
+        elif raw_dynamic_max_y <= 200:
+            final_max_y = math.ceil(raw_dynamic_max_y / 20) * 20
+        else:
+            final_max_y = math.ceil(raw_dynamic_max_y / 50) * 50
+        
+        # Ensure final_max_y is at least a small default if all calculations result in very low numbers
+        final_max_y = max(final_max_y, 10.0) 
 
         self.chart_control = ft.BarChart( # Store chart reference
             bar_groups=[
@@ -114,7 +132,7 @@ class AirPollutionChart:
                     bar_rods=[
                         ft.BarChartRod(
                             from_y=0,
-                            to_y=self.co,
+                            to_y=self.co, # Use float value
                             width=40,
                             color=ft.Colors.RED,
                             tooltip=f"{self.co}",
@@ -127,7 +145,7 @@ class AirPollutionChart:
                     bar_rods=[
                         ft.BarChartRod(
                             from_y=0,
-                            to_y=self.no,
+                            to_y=self.no, # Use float value
                             width=40,
                             color=ft.Colors.ORANGE,
                             tooltip=f"{self.no}",
@@ -140,7 +158,7 @@ class AirPollutionChart:
                     bar_rods=[
                         ft.BarChartRod(
                             from_y=0,
-                            to_y=int(self.no2),
+                            to_y=self.no2, # Use float value
                             width=40,
                             color=ft.Colors.YELLOW,
                             tooltip=f"{self.no2}",
@@ -153,7 +171,7 @@ class AirPollutionChart:
                     bar_rods=[
                         ft.BarChartRod(
                             from_y=0,
-                            to_y=int(self.o3),
+                            to_y=self.o3, # Use float value
                             width=40,
                             color=ft.Colors.GREEN,
                             tooltip=f"{self.o3}",
@@ -166,7 +184,7 @@ class AirPollutionChart:
                     bar_rods=[
                         ft.BarChartRod(
                             from_y=0,
-                            to_y=int(self.so2),
+                            to_y=self.so2, # Use float value
                             width=40,
                             color=ft.Colors.BLUE,
                             tooltip=f"{self.so2}",
@@ -179,7 +197,7 @@ class AirPollutionChart:
                     bar_rods=[
                         ft.BarChartRod(
                             from_y=0,
-                            to_y=int(self.pm2_5),
+                            to_y=self.pm2_5, # Use float value
                             width=40,
                             color=ft.Colors.INDIGO,
                             tooltip=f"{self.pm2_5}",
@@ -192,7 +210,7 @@ class AirPollutionChart:
                     bar_rods=[
                         ft.BarChartRod(
                             from_y=0,
-                            to_y=int(self.pm10),
+                            to_y=self.pm10, # Use float value
                             width=40,
                             color=ft.Colors.PURPLE,
                             tooltip=f"{self.pm10}",
@@ -205,7 +223,7 @@ class AirPollutionChart:
                     bar_rods=[
                         ft.BarChartRod(
                             from_y=0,
-                            to_y=int(self.nh3),
+                            to_y=self.nh3, # Use float value
                             width=40,
                             color=ft.Colors.BLACK,
                             tooltip=f"{self.nh3}",
@@ -219,42 +237,42 @@ class AirPollutionChart:
             left_axis=ft.ChartAxis(
                 labels_size=40, 
                 title=ft.Text("Air Pollution (μg/m³)", color=self.text_color), # Apply text_color
-                title_size=40
+                title_size=16 # Changed from 40 to 16
             ),
             bottom_axis=ft.ChartAxis(
                 labels=[
                     ft.ChartAxisLabel(
-                        value=0, label=ft.Container(ft.Text("CO", color=self.text_color), padding=10) # Apply text_color
+                        value=0, label=ft.Container(ft.Text("CO", color=self.text_color, size=12), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=1, label=ft.Container(ft.Text("NO", color=self.text_color), padding=10) # Apply text_color
+                        value=1, label=ft.Container(ft.Text("NO", color=self.text_color, size=12), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=2, label=ft.Container(ft.Text("NO₂", color=self.text_color), padding=10) # Apply text_color
+                        value=2, label=ft.Container(ft.Text("NO₂", color=self.text_color, size=12), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=3, label=ft.Container(ft.Text("O₃", color=self.text_color), padding=10) # Apply text_color
+                        value=3, label=ft.Container(ft.Text("O₃", color=self.text_color, size=12), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=4, label=ft.Container(ft.Text("SO₂", color=self.text_color), padding=10) # Apply text_color
+                        value=4, label=ft.Container(ft.Text("SO₂", color=self.text_color, size=12), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=5, label=ft.Container(ft.Text("PM2.5", color=self.text_color), padding=10) # Apply text_color
+                        value=5, label=ft.Container(ft.Text("PM2.5", color=self.text_color, size=12), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=6, label=ft.Container(ft.Text("PM10", color=self.text_color), padding=10) # Apply text_color
+                        value=6, label=ft.Container(ft.Text("PM10", color=self.text_color, size=12), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=7, label=ft.Container(ft.Text("NH₃", color=self.text_color), padding=10) # Apply text_color
+                        value=7, label=ft.Container(ft.Text("NH₃", color=self.text_color, size=12), padding=10) # Apply text_color and size
                     ),
                 ],
-                labels_size=40,
+                labels_size=50, # Restored and set to 50 to ensure space for labels
             ),
             horizontal_grid_lines=ft.ChartGridLines(
                 color=ft.Colors.GREY_300, width=1, dash_pattern=[9, 4]
             ),
             tooltip_bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_300),
-            max_y=120,
+            max_y=final_max_y, # Use calculated and rounded final_max_y
             interactive=True,
             expand=True,
         )

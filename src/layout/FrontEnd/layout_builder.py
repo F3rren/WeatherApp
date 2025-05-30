@@ -54,6 +54,7 @@ class LayoutBuilder:
             margin=10,
             padding=10,
             border_radius=15,
+            expand=True,  # <--- ADD THIS LINE
             animate=ft.Animation(animation_duration, animation_curve)
         )
     

@@ -60,33 +60,37 @@ class AirConditionInfo:
 
     def build(self) -> ft.Column:
         """Build the air condition information"""
-        return ft.Column(
-            controls=[
-                self.title_text,
-                self.divider,
-                ft.Row(
-                    controls=[
-                        ft.Column(
-                            controls=[
-                                self.feels_like_label,
-                                self.feels_like_value,
-                                self.humidity_label,
-                                self.humidity_value,
-                            ],
-                            expand=True,
-                        ),
-                        ft.Column(
-                            controls=[
-                                self.wind_label,
-                                self.wind_value,
-                                self.pressure_label,
-                                self.pressure_value,
-                            ],
-                            expand=True,
-                        ),
-                    ],
-                    expand=True,
-                ),
-            ],
-            expand=True,
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    self.title_text,
+                    self.divider,
+                    ft.Row(
+                        controls=[
+                            ft.Column(
+                                controls=[
+                                    self.feels_like_label,
+                                    self.feels_like_value,
+                                    self.humidity_label,
+                                    self.humidity_value,
+                                ],
+                                expand=True,
+                            ),
+                            ft.Column(
+                                controls=[
+                                    self.wind_label,
+                                    self.wind_value,
+                                    self.pressure_label,
+                                    self.pressure_value,
+                                ],
+                                expand=True,
+                            ),
+                        ],
+                        expand=True,
+                    ),
+                ],
+                expand=True,
+            )
+
         )
+

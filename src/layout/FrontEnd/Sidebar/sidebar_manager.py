@@ -86,6 +86,6 @@ class SidebarManager:
             location_toggle_value=self.state_manager.get_state("using_location") or False,
             handle_theme_toggle=self.theme_toggle_service.handle_theme_toggle,
             theme_toggle_value=self.state_manager.get_state("using_theme") or False
-        )
+        ).build()
         
         return self.sidebar

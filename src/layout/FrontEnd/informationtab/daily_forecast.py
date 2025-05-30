@@ -4,24 +4,7 @@ from layout.backend.api_operation import APIOperation
 class DailyForecast:
 
     def __init__(self, page, city, language, unit):
-        self.txtcolor= "#1F1A1A" if page.theme_mode == ft.ThemeMode.LIGHT else "#adadad" #"#262626",
-        self.gradient = (
-            ft.LinearGradient(
-                begin=ft.alignment.top_center,
-                end=ft.alignment.bottom_center,
-                colors=[ft.Colors.BLUE, ft.Colors.YELLOW],
-            )
-            if page.theme_mode == ft.ThemeMode.LIGHT else
-            ft.LinearGradient(
-                begin=ft.alignment.top_center,
-                end=ft.alignment.bottom_center,
-                colors=[
-                    ft.Colors.with_opacity(0.8, ft.Colors.BLACK),
-                    ft.Colors.GREY_900,
-                ],
-            )
-        )
-        
+        self.txtcolor= "#1F1A1A" if page.theme_mode == ft.ThemeMode.LIGHT else "#adadad" #"#262626",        
         self.page = page
         page.update()
         
@@ -68,7 +51,6 @@ class DailyForecast:
 
     def build(self):
         return ft.Container(
-            gradient=self.gradient,
             border_radius=15,
             padding=20,
             content=self.createHourlyForecast(),

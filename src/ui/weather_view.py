@@ -10,7 +10,7 @@ from config import LIGHT_THEME, DARK_THEME
 from services.api_service import ApiService
 
 from layout.frontend.weather_card import WeatherCard
-from layout.frontend.weeklyweather.hourly_forecast_items import HourlyForecastItems
+from layout.frontend.weeklyweather.hourly_forecast_items import HourlyForecastDisplay # Importa la nuova classe
 from layout.frontend.weeklyweather.daily_forecast_items import DailyForecastItems
 from layout.frontend.informationtab.main_information import MainWeatherInfo
 from layout.frontend.informationtab.air_condition import AirConditionInfo
@@ -60,7 +60,7 @@ class WeatherView:
             self.info_container.content.color = self.text_color
             # self.info_container.update() # Usually page.update() is enough
 
-        # Re-build air pollution components with new theme colors if data is available
+        # Re-build air pollution components with new theme Colors if data is available
         if self.current_lat is not None and self.current_lon is not None:
             # Update air pollution component with new text color
             air_pollution = AirPollution(
@@ -146,94 +146,45 @@ class WeatherView:
 
     async def _update_main_info(self, city: str, is_current_location: bool) -> None:
         """Frontend: Updates main weather info UI"""
-        # All data comes from backend service
+        # Dati meteo correnti dal servizio API
         temperature = self.api_service.get_current_temperature(self.weather_data)
         feels_like = self.api_service.get_feels_like_temperature(self.weather_data)
         humidity = self.api_service.get_humidity(self.weather_data)
         wind_speed = self.api_service.get_wind_speed(self.weather_data)
         pressure = self.api_service.get_pressure(self.weather_data)
         icon_code = self.api_service.get_weather_icon_code(self.weather_data)
-        location = ""
+
+        # Determina la posizione da mostrare
         if is_current_location:
             location = "📍 Posizione attuale"
-        elif self.city_info and len(self.city_info) > 0:
-            location_data = self.city_info[0]
-            name = location_data.get("name", "")
-            country = location_data.get("country", "")
-            state = location_data.get("state", "")
-            location = f"{name}, {state}, {country}".strip()
+        elif self.city_info:
+            data = self.city_info[0]
+            location = ", ".join(filter(None, [data.get("name"), data.get("state"), data.get("country")]))
         else:
             location = city
-        weather_card = WeatherCard(self.page)
 
-
-        main_info = MainWeatherInfo(
-            city=city,
-            location=location,
-            temperature=temperature,
-            weather_icon=icon_code,
+        # Costruisce la riga di previsioni orarie (massimo 6)
+        hourly_data = self.api_service.get_hourly_forecast_data(self.weather_data)[:6]
+        
+        # Utilizza la nuova classe per costruire la sezione delle previsioni orarie
+        hourly_forecast = HourlyForecastDisplay(
+            hourly_data=hourly_data,
             text_color=self.text_color,
-            page=self.page # Pass page for theme observation in MainWeatherInfo
-        )
-        hourly_data = self.api_service.get_hourly_forecast_data(self.weather_data)
-        hourly_items_controls = [] # Renamed to avoid conflict if hourly_items was a list of data
-        for i, item_data in enumerate(hourly_data[:6]): # Iterate over data
-            time = item_data["dt_txt"]
-            dt = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
-            hour = dt.strftime("%H:%M")
-            # Assuming HourlyForecastItems also needs text_color or handles its own theme
-            hourly_item_obj = HourlyForecastItems(
-                time=hour,
-                icon_code=item_data["weather"][0]["icon"],
-                temperature=round(item_data["main"]["temp"]),
-                text_color=self.text_color, # Pass text_color
-                page=self.page # Pass page for theme observation
-            )
-            hourly_items_controls.append(hourly_item_obj.build()) # Append built control
-            
-            if i < 5: # Ensure we only add 5 dividers for 6 items
-                divider_color = DARK_THEME.get("BORDER", ft.Colors.WHITE if self.page.theme_mode == ft.ThemeMode.DARK else ft.Colors.BLACK)
-                hourly_items_controls.append(
-                    ft.Container(
-                        content=ft.VerticalDivider(width=1, thickness=1, color=divider_color, opacity=0.5),
-                        height=120,  # Increased height for better visual separation
-                        alignment=ft.alignment.center
-                    )
-                )
+            page=self.page
+        ).build()
 
-        # Use a container with padding to give the hourly forecast more room
-        hourly_forecast_row = ft.Row(
-            controls=hourly_items_controls, 
-            expand=True, 
-            scroll=ft.ScrollMode.ADAPTIVE, # Changed to ADAPTIVE
-            alignment=ft.MainAxisAlignment.SPACE_EVENLY, # Changed to SPACE_EVENLY
-            vertical_alignment=ft.CrossAxisAlignment.START # Align items to the start vertically
-        )
+        # Costruisce le sezioni dell'interfaccia
+        main_info = MainWeatherInfo(city, location, temperature, icon_code, self.text_color, self.page).build()
 
-        hourly_forecast_container = ft.Container(
-            content=hourly_forecast_row,
-            padding=ft.padding.symmetric(vertical=5), # Adjusted padding
-            margin=ft.margin.symmetric(vertical=5), # Adjusted margin
-            expand=True
-        )
+        air_condition = AirConditionInfo(feels_like, humidity, wind_speed, pressure, self.text_color, self.page).build()
 
-        air_condition = AirConditionInfo(
-            feels_like=feels_like,
-            humidity=humidity,
-            wind_speed=wind_speed,
-            pressure=pressure,
-            text_color=self.text_color,
-            page=self.page # Pass page for theme observation
-        )
-        self.info_container.content = weather_card.build(
+        # Assembla il contenuto e aggiorna il contenitore
+        self.info_container.content = WeatherCard(self.page).build(
             ft.Column(
-                controls=[
-                    main_info.build(),
-                    hourly_forecast_container, # Use the new container
-                    air_condition.build(),
-                ],
-                expand=True, # Ensure this column also expands
-                spacing=10 # Add some spacing between sections
+                controls=[main_info, hourly_forecast, air_condition],
+                expand=True,
+                spacing=10,
+                horizontal_alignment=ft.CrossAxisAlignment.STRETCH  # Assicura che i figli si estendano
             )
         )
         self.info_container.expand = True

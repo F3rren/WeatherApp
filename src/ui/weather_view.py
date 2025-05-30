@@ -41,11 +41,11 @@ class WeatherView:
         if state_manager:
             state_manager.register_observer("theme_event", self.handle_theme_change)
 
-        self.info_container = ft.Container(content=ft.Text("Caricamento...", color=self.text_color), expand=True) # Apply initial text color and expand
-        self.weekly_container = ft.Container(expand=True)
-        self.chart_container = ft.Container(expand=True)
-        self.air_pollution_container = ft.Container(expand=True)
-        self.air_pollution_chart_container = ft.Container(expand=True)
+        self.info_container = ft.Container(content=ft.Text("Caricamento...", color=self.text_color)) # Apply initial text color
+        self.weekly_container = ft.Container()
+        self.chart_container = ft.Container()
+        self.air_pollution_container = ft.Container()
+        self.air_pollution_chart_container = ft.Container()
 
     def _update_text_color(self):
         """Updates text_color based on the current page theme."""
@@ -236,6 +236,7 @@ class WeatherView:
                 spacing=10 # Add some spacing between sections
             )
         )
+        self.info_container.expand = True
 
     async def _update_weekly_forecast(self) -> None:
         """Frontend: Updates weekly forecast UI"""

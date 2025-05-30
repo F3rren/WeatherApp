@@ -41,11 +41,11 @@ class WeatherView:
         if state_manager:
             state_manager.register_observer("theme_event", self.handle_theme_change)
 
-        self.info_container = ft.Container(content=ft.Text("Caricamento...", color=self.text_color)) # Apply initial text color
-        self.weekly_container = ft.Container()
-        self.chart_container = ft.Container()
-        self.air_pollution_container = ft.Container()
-        self.air_pollution_chart_container = ft.Container()
+        self.info_container = ft.Container(content=ft.Text("Caricamento...", color=self.text_color), expand=True) # Apply initial text color and expand
+        self.weekly_container = ft.Container(expand=True)
+        self.chart_container = ft.Container(expand=True)
+        self.air_pollution_container = ft.Container(expand=True)
+        self.air_pollution_chart_container = ft.Container(expand=True)
 
     def _update_text_color(self):
         """Updates text_color based on the current page theme."""
@@ -165,6 +165,8 @@ class WeatherView:
         else:
             location = city
         weather_card = WeatherCard(self.page)
+
+
         main_info = MainWeatherInfo(
             city=city,
             location=location,
@@ -188,16 +190,33 @@ class WeatherView:
                 page=self.page # Pass page for theme observation
             )
             hourly_items_controls.append(hourly_item_obj.build()) # Append built control
+            
             if i < 5: # Ensure we only add 5 dividers for 6 items
                 divider_color = DARK_THEME.get("BORDER", ft.Colors.WHITE if self.page.theme_mode == ft.ThemeMode.DARK else ft.Colors.BLACK)
                 hourly_items_controls.append(
                     ft.Container(
                         content=ft.VerticalDivider(width=1, thickness=1, color=divider_color, opacity=0.5),
-                        height=100,
-                        alignment=ft.alignment.center,
+                        height=120,  # Increased height for better visual separation
+                        alignment=ft.alignment.center
                     )
                 )
-        hourly_forecast = ft.Row(controls=hourly_items_controls, expand=True, scroll=ft.ScrollMode.AUTO) # Added scroll
+
+        # Use a container with padding to give the hourly forecast more room
+        hourly_forecast_row = ft.Row(
+            controls=hourly_items_controls, 
+            expand=True, 
+            scroll=ft.ScrollMode.ADAPTIVE, # Changed to ADAPTIVE
+            alignment=ft.MainAxisAlignment.SPACE_EVENLY, # Changed to SPACE_EVENLY
+            vertical_alignment=ft.CrossAxisAlignment.START # Align items to the start vertically
+        )
+
+        hourly_forecast_container = ft.Container(
+            content=hourly_forecast_row,
+            padding=ft.padding.symmetric(vertical=5), # Adjusted padding
+            margin=ft.margin.symmetric(vertical=5), # Adjusted margin
+            expand=True
+        )
+
         air_condition = AirConditionInfo(
             feels_like=feels_like,
             humidity=humidity,
@@ -207,11 +226,15 @@ class WeatherView:
             page=self.page # Pass page for theme observation
         )
         self.info_container.content = weather_card.build(
-            ft.Column([
-                main_info.build(),
-                hourly_forecast,
-                air_condition.build(),
-            ])
+            ft.Column(
+                controls=[
+                    main_info.build(),
+                    hourly_forecast_container, # Use the new container
+                    air_condition.build(),
+                ],
+                expand=True, # Ensure this column also expands
+                spacing=10 # Add some spacing between sections
+            )
         )
 
     async def _update_weekly_forecast(self) -> None:

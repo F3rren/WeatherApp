@@ -14,7 +14,6 @@ class MainWeatherInfo:
         self.weather_icon = weather_icon
         self.text_color = text_color
         self.page = page # Store page to access state_manager if needed for observing theme
-        #print(self.city)
 
         # Text controls that need dynamic color updates
         self.city_text = ft.Text(self.city.split(", ")[0], size=40, weight="bold", color=self.text_color) # Use self.city directly

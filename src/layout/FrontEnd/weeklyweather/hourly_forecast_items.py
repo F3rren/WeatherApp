@@ -38,20 +38,25 @@ class HourlyForecastItems:
                 if self.temp_text.page:
                     self.temp_text.update()
 
-    def build(self) -> ft.Column:
+    def build(self) -> ft.Container:
         """Build the hourly forecast item"""
-        return ft.Column(
-            controls=[
-                self.time_text,
-                ft.Image(
-                    src=f"https://openweathermap.org/img/wn/{self.icon_code}@2x.png",
-                    width=100,
-                    height=100,
-                ),
-                self.temp_text
-            ],
-            expand=True,
-            spacing=0,
-            alignment=ft.MainAxisAlignment.SPACE_EVENLY,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    self.time_text,
+                    ft.Image(
+                        src=f"https://openweathermap.org/img/wn/{self.icon_code}@2x.png",
+                        width=100,  # Restored image size
+                        height=100, # Restored image size
+                    ),
+                    self.temp_text
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                expand=True  # Inner column expands to fill this container
+            ),
+            expand=True, # Crucial: Allow this container to expand within the parent Row
+            alignment=ft.alignment.center, # Aligns the Column within this Container
+            padding=10, # Restored padding
+            border_radius=10
         )

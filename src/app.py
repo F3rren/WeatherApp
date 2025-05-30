@@ -9,12 +9,11 @@ from config import (
     DEFAULT_CITY,
     DEFAULT_LANGUAGE,
     DEFAULT_UNIT,
-    DEFAULT_THEME_MODE,
-    LIGHT_THEME,
-    DARK_THEME
+    DEFAULT_THEME_MODE
 )
 
-from layout.frontend.sidebar.sidebar import Sidebar
+from layout.frontend.layout_manager import LayoutManager
+from layout.frontend.sidebar.sidebar_manager import SidebarManager
 from state_manager import StateManager
 from services.geolocation_service import GeolocationService
 from services.location_toggle_service import LocationToggleService
@@ -43,32 +42,15 @@ class MeteoApp:
         self.air_pollution_chart_container_wrapper = None
         self.air_pollution_container_wrapper = None
         self.page = None
-
+        self.layout_manager = None
+        
     async def _update_container_colors(self, event_data=None):
         """Updates the background colors of main containers based on the theme."""
-        if not self.page:
+        if not self.page or not hasattr(self, 'layout_manager'):
             return
-
-        theme = LIGHT_THEME if self.page.theme_mode == ft.ThemeMode.LIGHT else DARK_THEME
-        page_bg_color = theme.get("BACKGROUND", "#f5f5f5" if self.page.theme_mode == ft.ThemeMode.LIGHT else "#1a1a1a")
-        card_bg_color = theme.get("CARD_BACKGROUND", "#ffffff" if self.page.theme_mode == ft.ThemeMode.LIGHT else "#262626")
-
-        self.page.bgcolor = page_bg_color
         
-        containers_to_update = [
-            self.sidebar_container,
-            self.info_container_wrapper,
-            self.weekly_container_wrapper,
-            self.chart_container_wrapper,
-            self.air_pollution_chart_container_wrapper,
-            self.air_pollution_container_wrapper
-        ]
-
-        for container in containers_to_update:
-            if container:
-                container.bgcolor = card_bg_color
-                container.update() # Corrected: use update() instead of update_async()
-        self.page.update()
+        # Delega l'aggiornamento dei colori al layout manager
+        self.layout_manager.update_container_colors(self.page.theme_mode)
 
     async def main(self, page: ft.Page) -> None:
         """
@@ -107,123 +89,43 @@ class MeteoApp:
         self.theme_toggle_service = ThemeToggleService(
             page=page,
             state_manager=self.state_manager
+        )        # Inizializzazione del gestore della sidebar
+        self.sidebar_manager = SidebarManager(
+            page=page,
+            state_manager=self.state_manager,
+            location_toggle_service=self.location_toggle_service,
+            theme_toggle_service=self.theme_toggle_service,
+            update_weather_callback=weather_view.update_by_city
         )
-
-        async def handle_city_change(city: str):
-            """Callback per il cambio città."""
-            try:
-                # Aggiorna lo stato: quando si seleziona una città, disabilita la localizzazione
-                await self.state_manager.update_state({
-                    "city": city,
-                    "using_location": False
-                })
-                
-                # Aggiorna la UI: se esiste l'istanza della sidebar, aggiorna il toggle
-                if hasattr(sidebar, 'update_location_toggle'):
-                    sidebar.update_location_toggle(False)
-                
-                # Aggiorna la visualizzazione del meteo con la città selezionata
-                await weather_view.update_by_city(
-                    city=city,
-                    language=self.state_manager.get_state("language"),
-                    unit=self.state_manager.get_state("unit")
-                )
-                
-                logging.info(f"Città cambiata: {city}, localizzazione disattivata")
-            except Exception as e:
-                logging.error(f"Errore nel cambio città: {e}")
-
-        # Le funzioni di gestione della posizione sono state spostate nel LocationToggleService
-
-        sidebar = Sidebar(
-            page=page, 
-            on_city_selected=handle_city_change,
-            handle_location_toggle=self.location_toggle_service.handle_location_toggle,
-            location_toggle_value=self.state_manager.get_state("using_location") or False,
-            handle_theme_toggle=self.theme_toggle_service.handle_theme_toggle,
-            theme_toggle_value=self.state_manager.get_state("using_theme") or False
+        
+        # Ottieni l'istanza della sidebar dal gestore
+        sidebar = self.sidebar_manager.initialize_sidebar()
+        
+        # Le funzioni di gestione della posizione e del cambio città sono state spostate nei rispettivi servizi
+          # Inizializza il layout manager
+        self.layout_manager = LayoutManager(page)
+        
+        # Crea i contenitori del layout
+        self.layout_manager.create_containers(
+            sidebar_content=sidebar,
+            info_content=info_container,
+            weekly_content=weekly_container,
+            chart_content=chart_container,
+            air_pollution_chart_content=air_pollution_chart_container,
+            air_pollution_content=air_pollution_container
         )
-
-        def build_layout():
-            animation_duration = 500
-            animation_curve = ft.AnimationCurve.EASE_IN_OUT
-
-            self.sidebar_container = ft.Container(
-                content=sidebar.build(),
-                col={"xs": 12},
-                margin=10,
-                padding=10,
-                border_radius=15,
-                animate=ft.Animation(animation_duration, animation_curve)
-            )
-            self.info_container_wrapper = ft.Container(
-                content=info_container,
-                col={"xs": 12},
-                margin=10,
-                padding=10,
-                border_radius=15,
-                animate=ft.Animation(animation_duration, animation_curve)
-            )
-            self.weekly_container_wrapper = ft.Container(
-                content=weekly_container,
-                col={"xs": 8},
-                margin=10,
-                padding=10,
-                border_radius=15,
-                animate=ft.Animation(animation_duration, animation_curve)
-            )
-            self.chart_container_wrapper = ft.Container(
-                content=chart_container,
-                col={"xs": 4},
-                margin=10,
-                padding=10,
-                border_radius=15,
-                animate=ft.Animation(animation_duration, animation_curve)
-            )
-            self.air_pollution_chart_container_wrapper = ft.Container(
-                content=air_pollution_chart_container,
-                col={"xs": 7},
-                margin=10,
-                padding=10,
-                border_radius=15,
-                animate=ft.Animation(animation_duration, animation_curve)
-            )
-            self.air_pollution_container_wrapper = ft.Container(
-                content=air_pollution_container,
-                col={"xs": 5},
-                margin=10,
-                padding=10,
-                border_radius=15,
-                animate=ft.Animation(animation_duration, animation_curve)
-            )
-
-            return ft.ListView(
-                expand=True,
-                spacing=10,
-                auto_scroll=True,
-                controls=[
-                    ft.ResponsiveRow(
-                        controls=[self.sidebar_container]
-                    ),
-                    ft.ResponsiveRow(
-                        controls=[self.info_container_wrapper]
-                    ),
-                    ft.ResponsiveRow(
-                        controls=[
-                            self.weekly_container_wrapper,
-                            self.chart_container_wrapper
-                        ]
-                    ),
-                    ft.ResponsiveRow(
-                        controls=[
-                            self.air_pollution_chart_container_wrapper,
-                            self.air_pollution_container_wrapper
-                        ]
-                    )
-                ]
-            )
-
-        page.add(build_layout())
+        
+        # Memorizza riferimenti ai contenitori per la loro gestione
+        containers = self.layout_manager.get_all_containers()
+        self.sidebar_container = containers['sidebar']
+        self.info_container_wrapper = containers['info']
+        self.weekly_container_wrapper = containers['weekly']
+        self.chart_container_wrapper = containers['chart']
+        self.air_pollution_chart_container_wrapper = containers['air_pollution_chart']
+        self.air_pollution_container_wrapper = containers['air_pollution']
+        
+        # Costruisce e aggiunge il layout alla pagina
+        page.add(self.layout_manager.build_layout())
         
         # Initial update of container colors
         await self._update_container_colors()

@@ -40,7 +40,7 @@ DARK_THEME = {
     "BUTTON_TEXT": "#ffffff",
     "BUTTON_BACKGROUND": "#8b5cf6",  # Cambiato da azzurro a viola più chiaro
     "DIALOG_BACKGROUND": "#262626",
-    "DIALOG_TEXT": "#ff0101",
+    "DIALOG_TEXT": "#ffffff",
 
 }
 

@@ -17,6 +17,7 @@ LIGHT_THEME = {
     "SECONDARY_TEXT": "#555555",
     "ACCENT": "#6b46c1",  # Cambiato da azzurro a viola
     "CARD_BACKGROUND": "#ffffff",
+    "MAIN_CARD_BACKGROUND": "#37acbb",  # Changed from #ffffff00
     "HOURLY_FORECAST_CARD": "#ffffff",  # Changed from #ffffff00
     "BORDER": "#e0e0e0",
     "ICON": "#333333",

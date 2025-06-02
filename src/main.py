@@ -27,9 +27,7 @@ logging.basicConfig(
 )
 
 class MeteoApp:
-    """
-    Main application class for the MeteoApp.
-    """
+
     def __init__(self):
         self.geolocation_service = GeolocationService()
         self.state_manager = None
@@ -48,7 +46,6 @@ class MeteoApp:
         """Updates the background colors of main containers based on the theme."""
         if not self.page or not hasattr(self, 'layout_manager'):
             return
-        
         # Delega l'aggiornamento dei colori al layout manager
         self.layout_manager.update_container_colors(self.page.theme_mode)
 

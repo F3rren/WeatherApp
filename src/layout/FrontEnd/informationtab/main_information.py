@@ -1,5 +1,6 @@
 import flet as ft
-from config import LIGHT_THEME, DARK_THEME # Ensure these are imported
+from config import LIGHT_THEME, DARK_THEME
+from components.responsive_text_handler import ResponsiveTextHandler # Ensure these are imported
 
 class MainWeatherInfo:
     """
@@ -14,17 +15,68 @@ class MainWeatherInfo:
         self.weather_icon = weather_icon
         self.text_color = text_color
         self.page = page # Store page to access state_manager if needed for observing theme
+        
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'title': 50,  # Dimensioni personalizzate per questo componente
+                'label': 40,  # Etichette
+                'icon': 250   # Dimensione icona (aumentata da 200 a 250)
+            }
+        )
+        
+        # Dizionario dei controlli di testo per aggiornamento facile
+        self.text_controls = {}
 
         # Text controls that need dynamic color updates
-        self.city_text = ft.Text(self.city.split(", ")[0], size=40, weight="bold", color=self.text_color) # Use self.city directly
-        self.location_text = ft.Text(self.location, size=20, color=self.text_color)
-        self.temperature_text = ft.Text(f"{self.temperature}°", size=60, weight="bold", color=self.text_color)
+        self.city_text = ft.Text(
+            self.city.split(", ")[0], 
+            size=self.text_handler.get_size('title'), 
+            weight="bold", 
+            color=self.text_color
+        ) 
         
+        self.location_text = ft.Text(
+            self.location, 
+            size=self.text_handler.get_size('label'), 
+            color=self.text_color
+        )
+        
+        self.temperature_text = ft.Text(
+            f"{self.temperature}°", 
+            size=self.text_handler.get_size('title'), 
+            weight="bold", 
+            color=self.text_color
+        )
+        
+        self.icon_size = self.text_handler.get_size('icon')
+
+        # Aggiungi i controlli al dizionario per l'aggiornamento dinamico
+        self.text_controls[self.city_text] = 'title'
+        self.text_controls[self.location_text] = 'label'
+        self.text_controls[self.temperature_text] = 'title'
+
         # Register for theme change events if page and state_manager are available
         if self.page:
             state_manager = self.page.session.get('state_manager')
             if state_manager:
                 state_manager.register_observer("theme_event", self.handle_theme_change)
+                
+            # Registra l'evento di ridimensionamento personalizzato
+            original_resize_handler = self.page.on_resize
+            
+            def combined_resize_handler(e):
+                # Aggiorna le dimensioni del testo
+                self.text_handler._handle_resize(e)
+                # Aggiorna i controlli di testo
+                self.text_handler.update_text_controls(self.text_controls)
+                # Aggiorna la dimensione dell'icona
+                self.icon_size = self.text_handler.get_size('icon')
+                # Chiama anche l'handler originale se esiste
+                if original_resize_handler:
+                    original_resize_handler(e)
+            
+            self.page.on_resize = combined_resize_handler
     
     def handle_theme_change(self, event_data=None):
         """Handles theme change events by updating text color."""
@@ -36,40 +88,54 @@ class MainWeatherInfo:
             # Update text colors of the controls
             if hasattr(self, 'city_text'): # Check if attribute exists
                 self.city_text.color = self.text_color
-                if self.city_text.page: self.city_text.update()
+                if self.city_text.page: 
+                    self.city_text.update()
+                    
             if hasattr(self, 'location_text'):
                 self.location_text.color = self.text_color
-                if self.location_text.page: self.location_text.update()
+                if self.location_text.page: 
+                    self.location_text.update()
+                    
             if hasattr(self, 'temperature_text'):
                 self.temperature_text.color = self.text_color
-                if self.temperature_text.page: self.temperature_text.update()
+                if self.temperature_text.page:
+                    self.temperature_text.update()
+            
+            # Aggiorna anche le dimensioni del testo
+            self.text_handler.update_text_controls(self.text_controls)
 
     def build(self) -> ft.Container:
         """Build the main weather information"""
         return ft.Container(
-            content=ft.Row(
-            controls=[
-                ft.Column(
-                    controls=[
-                        self.city_text,
-                        self.location_text,
-                        self.temperature_text,
-                    ],
-                    expand=True, 
-                ),
-                ft.Column(
-                    controls=[
-                        ft.Image(
-                            src=f"https://openweathermap.org/img/wn/{self.weather_icon}@4x.png",
-                            width=150,
-                            height=150,
-                        )
-                    ],
-                    horizontal_alignment=ft.CrossAxisAlignment.END,
-                    expand=True 
-                )
-            ],
-            expand=True,
-        ),
-        padding=20
+            content=ft.ResponsiveRow(
+                [
+                    ft.Container(
+                        ft.Column(
+                            controls=[
+                                self.city_text,
+                                self.location_text,
+                                self.temperature_text,
+                            ],
+                            expand=True, 
+                        ),
+                        padding=5,
+                        col={"xs": 12, "md": 6, "lg": 11},
+                    ),
+                    ft.Container(
+                        ft.Column(
+                            controls=[
+                                ft.Image(
+                                    src=f"https://openweathermap.org/img/wn/{self.weather_icon}@4x.png",
+                                    width=self.icon_size,
+                                    height=self.icon_size
+                                )
+                            ],
+                            expand=True 
+                        ),
+                        col={"xs": 12, "md": 6, "lg": 1},
+                    ),
+                ],
+                expand=True,
+            ),
+            padding=20
         )

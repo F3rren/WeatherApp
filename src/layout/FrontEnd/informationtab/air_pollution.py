@@ -1,6 +1,7 @@
 import flet as ft
-from layout.backend.air_pollution_operation import AirPollutionOperation
-from config import LIGHT_THEME, DARK_THEME # Import theme configurations
+from services.api_service import ApiService
+from config import LIGHT_THEME, DARK_THEME
+from components.responsive_text_handler import ResponsiveTextHandler # Import theme configurations
 
 class AirPollution:
     """
@@ -27,7 +28,7 @@ class AirPollution:
         else:
             self.text_color = DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"]
         
-        self.api = AirPollutionOperation()
+        self.api = ApiService()
         self.pollution_data = {}
         
         # Initialize with default values
@@ -40,9 +41,15 @@ class AirPollution:
         self.pm2_5 = 0
         self.pm10 = 0
         self.nh3 = 0
-        
-        # Get gradient based on theme mode
-        # self.gradient = self._get_gradient() # Gradient seems unused, can be removed or reimplemented if needed
+
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'title': 20,   # Titolo "Condizioni Atmosferiche" (aumentato da 20 a 40)
+                'label': 15,   # Etichette come "Percepita", "Umidità" (aumentato da 16 a 35)
+                'value': 15    # Valori come temperature, percentuali (aumentato da 14 a 40)
+            }
+        )
 
         # Update data if coordinates are provided
         if lat is not None and lon is not None:
@@ -59,32 +66,7 @@ class AirPollution:
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
             self.text_color = current_theme_config["TEXT"]
-            
-            # Update text colors of the dynamically created text controls
-            # This requires re-building or having references to the text controls.
-            # For simplicity, we'll assume the parent will trigger a rebuild or update.
-            # If direct update is needed, store references to text controls during creation.
-            if self.page: # Trigger a page update to reflect changes if controls are rebuilt
-                # self.page.update() # This might be too broad, ideally update specific controls
-                # For now, we rely on WeatherView to refresh this component
-                pass 
-
-    # def _get_gradient(self) -> ft.LinearGradient: # Gradient seems unused
-    #     """Get the gradient based on the current theme"""
-    #     if self.page.theme_mode == ft.ThemeMode.DARK:
-    #         return ft.LinearGradient(
-    #             begin=ft.alignment.top_left,
-    #             end=ft.alignment.bottom_right,
-    #             colors=[ft.Colors.BLUE, ft.Colors.YELLOW]
-    #         )
-    #     else:
-    #         return ft.LinearGradient(
-    #             begin=ft.alignment.top_left,
-    #             end=ft.alignment.bottom_right,
-    #             colors=["#1a1a1a", "#333333"],
-    #         )
-
-
+   
     def update_data(self, lat, lon):
         """
         Update air pollution data with new coordinates.
@@ -138,11 +120,11 @@ class AirPollution:
         """Create the air pollution tab content"""
         # AQI indicator
         aqi_row = ft.Row([
-            ft.Text("Air Quality Index:", size=20, weight="bold", color=self.text_color), # Apply text_color
+            ft.Text("Air Quality Index:", size=self.text_handler.get_size('title'), weight="bold", color=self.text_color), # Apply text_color
             ft.Container(
                 content=ft.Text(
                     self._get_aqi_description(),
-                    size=20,
+                    size=self.text_handler.get_size('title'),
                     weight="bold",
                     color=self.text_color if self.aqi <= 2 else "#ffffff" # AQI desc color logic
                 ),
@@ -177,9 +159,9 @@ class AirPollution:
             row_items.append(
                 ft.Container(
                     content=ft.Column([
-                        ft.Text(name1, weight="bold", size=16, color=self.text_color), # Apply text_color
-                        ft.Text(f"{value1} {unit1}", size=14, color=self.text_color), # Apply text_color
-                        ft.Text(desc1, size=12, color=self.text_color, italic=True), # Apply text_color
+                        ft.Text(name1, weight="bold", size=self.text_handler.get_size('label'), color=self.text_color), # Apply text_color
+                        ft.Text(f"{value1} {unit1}", size=self.text_handler.get_size('value'), color=self.text_color), # Apply text_color
+                        ft.Text(desc1, size=self.text_handler.get_size('value'), color=self.text_color, italic=True), # Apply text_color
                     ]),
                     padding=10,
                     border_radius=10,
@@ -194,9 +176,9 @@ class AirPollution:
                 row_items.append(
                     ft.Container(
                         content=ft.Column([
-                            ft.Text(name2, weight="bold", size=16, color=self.text_color), # Apply text_color
-                            ft.Text(f"{value2} {unit2}", size=14, color=self.text_color), # Apply text_color
-                            ft.Text(desc2, size=12, color=self.text_color, italic=True), # Apply text_color
+                            ft.Text(name2, weight="bold", size=self.text_handler.get_size('label'), color=self.text_color), # Apply text_color
+                            ft.Text(f"{value2} {unit2}", size=self.text_handler.get_size('value'), color=self.text_color), # Apply text_color
+                            ft.Text(desc2, size=self.text_handler.get_size('value'), color=self.text_color, italic=True), # Apply text_color
                         ]),
                         padding=10,
                         border_radius=10,
@@ -219,7 +201,6 @@ class AirPollution:
     def build(self):
         """Build the air pollution component"""
         return ft.Container(
-            #gradient=self.gradient,
             border_radius=15,
             padding=20,
             content=self.createAirPollutionTab(),

@@ -13,11 +13,38 @@ class HourlyForecastDisplay:
         self.page = page
         self.built_item_containers = [] # To store references to individual item containers
         self.main_container_ref = None # To store reference to the main container
+        
+        # Inizializza il gestore del testo responsive
+        from components.responsive_text_handler import ResponsiveTextHandler
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'title': 40,   # Dimensione orario (aumentato da 25 a 40)
+                'value': 40    # Dimensione temperatura (aumentato da 20 a 40)
+            }
+        )
+        
+        # Dizionario dei controlli di testo per aggiornamento facile
+        self.text_controls = {}
 
         if self.page:
             state_manager = self.page.session.get('state_manager')
             if state_manager:
                 state_manager.register_observer("theme_event", self.handle_theme_change)
+            
+            # Registra l'evento di ridimensionamento personalizzato
+            original_resize_handler = self.page.on_resize
+            
+            def combined_resize_handler(e):
+                # Aggiorna le dimensioni del testo
+                self.text_handler._handle_resize(e)
+                # Aggiorna i controlli di testo
+                self.update_text_controls()
+                # Chiama anche l'handler originale se esiste
+                if original_resize_handler:
+                    original_resize_handler(e)
+            
+            self.page.on_resize = combined_resize_handler
 
     def handle_theme_change(self, event_data=None):
         """Handles theme change events by updating text color and item backgrounds."""
@@ -50,9 +77,12 @@ class HourlyForecastDisplay:
                 item_container.update()
         
         # Update the main HourlyForecastDisplay container's background
-        if hasattr(self, 'built_item_containers') and self.built_item_containers:
-            self.built_item_containers.bgcolor = current_theme_config.get("HOURLY_FORECAST_CARD",) 
-            self.built_item_containers.update()
+        if hasattr(self, 'main_container_ref') and self.main_container_ref:
+            self.main_container_ref.bgcolor = current_theme_config.get("HOURLY_FORECAST_CARD",) 
+            self.main_container_ref.update()
+            
+        # Aggiorna anche le dimensioni del testo
+        self.update_text_controls()
 
     def _create_item_column(self, item_data: dict) -> ft.Container:
         """Helper method to create a single forecast item's visual representation."""
@@ -62,17 +92,36 @@ class HourlyForecastDisplay:
         
         item_bgcolor = DARK_THEME["HOURLY_FORECAST_CARD"] if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["HOURLY_FORECAST_CARD"]
 
+        # Creare i controlli di testo con dimensioni responsive
+        time_text = ft.Text(
+            time_str, 
+            size=self.text_handler.get_size('title'), 
+            weight=ft.FontWeight.BOLD, 
+            color=self.text_color
+        )
+        
+        temp_text = ft.Text(
+            f"{temp}°", 
+            size=self.text_handler.get_size('value'), 
+            weight=ft.FontWeight.BOLD, 
+            color=self.text_color
+        )
+        
+        # Aggiungi i controlli al dizionario per l'aggiornamento dinamico
+        self.text_controls[time_text] = 'title'
+        self.text_controls[temp_text] = 'value'
+
         return ft.Container(
             bgcolor=item_bgcolor,
             content=ft.Column(
                 controls=[
-                    ft.Text(time_str, size=20, weight=ft.FontWeight.BOLD, color=self.text_color),
+                    time_text,
                     ft.Image(
                         src=f"https://openweathermap.org/img/wn/{icon}@2x.png",
-                        width=100,
-                        height=100,
+                        width=50,
+                        height=50,
                     ),
-                    ft.Text(f"{temp}°", size=20, weight=ft.FontWeight.BOLD, color=self.text_color)
+                    temp_text
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -100,3 +149,7 @@ class HourlyForecastDisplay:
             
         )
         return self.main_container_ref
+
+    def update_text_controls(self):
+        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
+        self.text_handler.update_text_controls(self.text_controls)

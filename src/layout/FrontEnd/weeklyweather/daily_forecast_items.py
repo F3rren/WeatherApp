@@ -1,5 +1,6 @@
 import flet as ft
 from config import LIGHT_THEME, DARK_THEME
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class DailyForecastItems:
     """
@@ -16,17 +17,38 @@ class DailyForecastItems:
         self.text_color = text_color
         self.page = page
 
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'title': 15,    # Etichette come "Giorni della Settimana" (aumentato da 10 a 40)
+                                # Icona (dimensione base)
+                'label': 15,    # Previsione (sole, pioggia, ecc)
+                'value': 15     # Valori come temperature, percentuali (aumentato da 10 a 40)
+            }
+        )
+
         self.day_text = ft.Text(
             self.day, 
-            size=20, 
+            size=self.text_handler.get_size('title'), 
             weight="bold", 
             width=100,
             text_align=ft.TextAlign.START,
             color=self.text_color
         )
+
+        self.icon = ft.Container(
+            content=ft.Image(
+                src=f"https://openweathermap.org/img/wn/{self.icon_code}@4x.png",
+                width=80,
+                height=80,
+            ),
+            expand=True,
+            alignment=ft.alignment.center
+        )
+
         self.description_text = ft.Text(
             self.description.upper(), 
-            size=20,
+            size=self.text_handler.get_size('label'),
             weight="bold", 
             text_align=ft.TextAlign.START,
             color=self.text_color
@@ -34,22 +56,22 @@ class DailyForecastItems:
         self.temp_span_min = ft.TextSpan(
             f"{self.temp_min}°",
             ft.TextStyle(
-                size=20,
+                size=self.text_handler.get_size('value'),
                 weight=ft.FontWeight.BOLD,
                 color=ft.Colors.BLUE, # Keep specific Colors for min/max temp for now
             )
         )
         self.temp_span_separator = ft.TextSpan(" / ",
             ft.TextStyle(
-                size=20,
+                size=self.text_handler.get_size('value'),
                 weight=ft.FontWeight.BOLD,
-                color=self.text_color # Separator should follow theme
+                color=self.text_color # Separator sahould follow theme
             )
         )
         self.temp_span_max = ft.TextSpan(
             f"{self.temp_max}°",
             ft.TextStyle(
-                size=20,
+                size=self.text_handler.get_size('value'),
                 weight=ft.FontWeight.BOLD,
                 color=ft.Colors.RED, # Keep specific Colors for min/max temp for now
             )
@@ -97,15 +119,7 @@ class DailyForecastItems:
         return ft.Row(
             controls=[
                 self.day_text,
-                ft.Container(
-                    content=ft.Image(
-                        src=f"https://openweathermap.org/img/wn/{self.icon_code}@4x.png",
-                        width=80,
-                        height=80,
-                    ),
-                    expand=True,
-                    alignment=ft.alignment.center
-                ),
+                self.icon,
                 self.description_text,
                 self.temperature_text
             ],

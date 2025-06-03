@@ -1,7 +1,8 @@
 import flet as ft
 import math # Added import math
-from layout.backend.air_pollution_operation import AirPollutionOperation
-from config import LIGHT_THEME, DARK_THEME # Import theme configurations
+from services.api_service import ApiService # Import ApiService instead of AirPollutionOperation
+from config import LIGHT_THEME, DARK_THEME
+from components.responsive_text_handler import ResponsiveTextHandler # Import theme configurations
 
 class AirPollutionChart:
     """
@@ -17,7 +18,7 @@ class AirPollutionChart:
         else:
             self.text_color = DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"]
         
-        self.api = AirPollutionOperation()
+        self.api = ApiService()
         self.pollution_data = {}
         
         # Initialize with default values
@@ -31,7 +32,13 @@ class AirPollutionChart:
         self.pm10 = 0
         self.nh3 = 0
 
-        # self.gradient = self._get_gradient() # Gradient seems unused, can be removed or updated
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'label': 12,      # Etichette
+                'subtitle': 15,   # Sottotitoli
+            }
+        )
 
         # Register for theme change events
         state_manager = self.page.session.get('state_manager')
@@ -135,7 +142,7 @@ class AirPollutionChart:
                             to_y=self.co, # Use float value
                             width=40,
                             color=ft.Colors.RED,
-                            tooltip=f"{self.co}",
+                            tooltip=round(self.co), 
                             border_radius=0,
                         ),
                     ],
@@ -148,7 +155,7 @@ class AirPollutionChart:
                             to_y=self.no, # Use float value
                             width=40,
                             color=ft.Colors.ORANGE,
-                            tooltip=f"{self.no}",
+                            tooltip=round(self.no),
                             border_radius=0,
                         ),
                     ],
@@ -161,7 +168,7 @@ class AirPollutionChart:
                             to_y=self.no2, # Use float value
                             width=40,
                             color=ft.Colors.YELLOW,
-                            tooltip=f"{self.no2}",
+                            tooltip=round(self.no2),
                             border_radius=0,
                         ),
                     ],
@@ -174,7 +181,7 @@ class AirPollutionChart:
                             to_y=self.o3, # Use float value
                             width=40,
                             color=ft.Colors.GREEN,
-                            tooltip=f"{self.o3}",
+                            tooltip=round(self.o3),
                             border_radius=0,
                         ),
                     ],
@@ -187,7 +194,7 @@ class AirPollutionChart:
                             to_y=self.so2, # Use float value
                             width=40,
                             color=ft.Colors.BLUE,
-                            tooltip=f"{self.so2}",
+                            tooltip=round(self.so2),
                             border_radius=0,
                         ),
                     ],
@@ -200,7 +207,7 @@ class AirPollutionChart:
                             to_y=self.pm2_5, # Use float value
                             width=40,
                             color=ft.Colors.INDIGO,
-                            tooltip=f"{self.pm2_5}",
+                            tooltip=round(self.pm2_5),
                             border_radius=0,
                         ),
                     ],
@@ -213,7 +220,7 @@ class AirPollutionChart:
                             to_y=self.pm10, # Use float value
                             width=40,
                             color=ft.Colors.PURPLE,
-                            tooltip=f"{self.pm10}",
+                            tooltip=round(self.pm10),
                             border_radius=0,
                         ),
                     ],
@@ -226,7 +233,7 @@ class AirPollutionChart:
                             to_y=self.nh3, # Use float value
                             width=40,
                             color=ft.Colors.BLACK,
-                            tooltip=f"{self.nh3}",
+                            tooltip=round(self.nh3),
                             border_radius=0,
                             
                         ),
@@ -236,34 +243,34 @@ class AirPollutionChart:
             border=ft.border.all(1, ft.Colors.GREY_400), # Consider theme for border
             left_axis=ft.ChartAxis(
                 labels_size=40, 
-                title=ft.Text("Air Pollution (μg/m³)", color=self.text_color), # Apply text_color
+                title=ft.Text("Air Pollution (μg/m³)", size=self.text_handler.get_size('subtitle'), color=self.text_color), # Apply text_color
                 title_size=16 # Changed from 40 to 16
             ),
             bottom_axis=ft.ChartAxis(
                 labels=[
                     ft.ChartAxisLabel(
-                        value=0, label=ft.Container(ft.Text("CO", color=self.text_color, size=12), padding=10) # Apply text_color and size
+                        value=0, label=ft.Container(ft.Text("CO", color=self.text_color, size=self.text_handler.get_size('label')), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=1, label=ft.Container(ft.Text("NO", color=self.text_color, size=12), padding=10) # Apply text_color and size
+                        value=1, label=ft.Container(ft.Text("NO", color=self.text_color, size=self.text_handler.get_size('label')), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=2, label=ft.Container(ft.Text("NO₂", color=self.text_color, size=12), padding=10) # Apply text_color and size
+                        value=2, label=ft.Container(ft.Text("NO₂", color=self.text_color, size=self.text_handler.get_size('label')), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=3, label=ft.Container(ft.Text("O₃", color=self.text_color, size=12), padding=10) # Apply text_color and size
+                        value=3, label=ft.Container(ft.Text("O₃", color=self.text_color, size=self.text_handler.get_size('label')), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=4, label=ft.Container(ft.Text("SO₂", color=self.text_color, size=12), padding=10) # Apply text_color and size
+                        value=4, label=ft.Container(ft.Text("SO₂", color=self.text_color, size=self.text_handler.get_size('label')), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=5, label=ft.Container(ft.Text("PM2.5", color=self.text_color, size=12), padding=10) # Apply text_color and size
+                        value=5, label=ft.Container(ft.Text("PM2.5", color=self.text_color, size=self.text_handler.get_size('label')), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=6, label=ft.Container(ft.Text("PM10", color=self.text_color, size=12), padding=10) # Apply text_color and size
+                        value=6, label=ft.Container(ft.Text("PM10", color=self.text_color, size=self.text_handler.get_size('label')), padding=10) # Apply text_color and size
                     ),
                     ft.ChartAxisLabel(
-                        value=7, label=ft.Container(ft.Text("NH₃", color=self.text_color, size=12), padding=10) # Apply text_color and size
+                        value=7, label=ft.Container(ft.Text("NH₃", color=self.text_color, size=self.text_handler.get_size('label')), padding=10) # Apply text_color and size
                     ),
                 ],
                 labels_size=50, # Restored and set to 50 to ensure space for labels
@@ -284,7 +291,6 @@ class AirPollutionChart:
     def build(self, lat, long):
         # Store the container for potential updates (e.g. gradient)
         self.container_control = ft.Container(
-            # gradient=self.gradient, # Gradient is currently unused
             border_radius=15,
             padding=30,
             content=self.createAirPollutionChart(lat, long),

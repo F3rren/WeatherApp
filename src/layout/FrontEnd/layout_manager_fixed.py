@@ -117,7 +117,7 @@ class LayoutManager:
         """
         return self.containers
     
-    def update_container_colors(self, theme_mode: ft.ThemeMode):
+    def update_container_colors(self, theme_mode: ft.ThemeMode) -> None:
         """
         Aggiorna i colori dei contenitori in base al tema.
         
@@ -128,38 +128,12 @@ class LayoutManager:
             logging.warning("Containers not initialized. Cannot update colors.")
             return
 
-        # Seleziona il tema appropriato
-        theme = LIGHT_THEME if theme_mode == ft.ThemeMode.LIGHT else DARK_THEME
-        card_bg_color = theme.get("CARD_BACKGROUND", "#ffffff" if theme_mode == ft.ThemeMode.LIGHT else "#262626")
-        
-        # Aggiorna il colore di sfondo di tutti i container
-        for name, container in self.containers.items():
-            if container:
-                container.bgcolor = card_bg_color
-                container.update()
+        # Aggiorna i container con i gradienti
+        self.update_container_gradients(theme_mode)
         
         # Aggiorna anche il colore di sfondo della pagina
+        theme = LIGHT_THEME if theme_mode == ft.ThemeMode.LIGHT else DARK_THEME
         self.page.bgcolor = theme.get("BACKGROUND", "#f5f5f5" if theme_mode == ft.ThemeMode.LIGHT else "#1a1a1a")
         self.page.update()
         
-    def update_container_gradients(self, theme_mode: ft.ThemeMode) -> None:
-        """
-        Aggiorna i gradienti dei contenitori in base al tema.
-        
-        Args:
-            theme_mode: Modalità tema (chiaro/scuro)
-        """
-        if not self.containers:
-            logging.warning("Containers not initialized. Cannot update gradients.")
-            return
-        
-        # Seleziona il tema appropriato
-        theme = LIGHT_THEME if theme_mode == ft.ThemeMode.LIGHT else DARK_THEME
-        card_bg_color = theme.get("CARD_BACKGROUND", "#ffffff" if theme_mode == ft.ThemeMode.LIGHT else "#262626")
-        
-        # Update all containers with standard background color (no gradients)
-        for name, container in self.containers.items():
-            if container:
-                container.bgcolor = card_bg_color
-                container.gradient = None
-                container.update()
+    

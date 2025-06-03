@@ -5,7 +5,7 @@ Handles the sidebar functionality.
 
 import flet as ft
 from typing import List, Callable, Optional
-from layout.backend.sidebar.sidebarquery import SidebarQuery
+from services.sidebar_service import SidebarService 
 from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
 from layout.frontend.sidebar.searchbar import SearchBar
 from layout.frontend.sidebar.filter.filter import Filter
@@ -23,7 +23,7 @@ class Sidebar:
         self.location_toggle_value = location_toggle_value
         self.handle_theme_toggle = handle_theme_toggle
         self.theme_toggle_value = theme_toggle_value
-        self.query = SidebarQuery()
+        self.query = SidebarService()
         self.search_bar = None
         self.cities = self._load_cities()
 

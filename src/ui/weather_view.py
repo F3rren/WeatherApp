@@ -4,13 +4,12 @@ Handles the display of weather information.
 """
 
 import flet as ft
-from datetime import datetime
 from config import LIGHT_THEME, DARK_THEME
 
 from services.api_service import ApiService
 
 from layout.frontend.weather_card import WeatherCard
-from layout.frontend.weeklyweather.hourly_forecast_items import HourlyForecastDisplay # Importa la nuova classe
+from layout.frontend.informationtab.hourly_forecast import HourlyForecastDisplay # Importa la nuova classe
 from layout.frontend.weeklyweather.daily_forecast_items import DailyForecastItems
 from layout.frontend.informationtab.main_information import MainWeatherInfo
 from layout.frontend.informationtab.air_condition import AirConditionInfo
@@ -199,7 +198,7 @@ class WeatherView:
             forecast_item_obj = DailyForecastItems( # Create instance
                 day=day_data["day_name"],
                 icon_code=day_data["icon"],
-                description=day_data["description"],
+                description="",  # Empty description as requested
                 temp_min=day_data["temp_min"],
                 temp_max=day_data["temp_max"],
                 text_color=self.text_color,

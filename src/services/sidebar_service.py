@@ -3,7 +3,7 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 
 
-class SidebarQuery:
+class SidebarService:
 
     #dalla searchbar, i dati devono essere sputati fuori così:
     #nome città: regione (se possibile), stato, ma da dietro le quinte
@@ -41,8 +41,4 @@ class SidebarQuery:
 
         return response.data
 
-
-p = SidebarQuery()
-#p.loadCityAdmin()
-p.loadCityCapital()
     

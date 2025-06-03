@@ -1,5 +1,5 @@
 import flet as ft
-from layout.backend.api_operation import APIOperation
+from services.api_service import ApiService
 
 class DailyForecast:
 
@@ -11,7 +11,7 @@ class DailyForecast:
         self.city = city
         self.language = language
         self.unit = unit
-        self.api = APIOperation(page, city, language, unit)
+        self.api = ApiService(page, city, language, unit)
 
     def update_city(self, new_city):
         self.city = new_city
@@ -28,7 +28,7 @@ class DailyForecast:
         self.language = language
         self.unit = unit
         # Update the API instance with the new parameters
-        self.api = APIOperation(self.page, city, language, unit)
+        self.api = ApiService(self.page, city, language, unit)
         
 
     def createHourlyForecast(self):

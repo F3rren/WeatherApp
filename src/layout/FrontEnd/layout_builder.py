@@ -34,7 +34,7 @@ class LayoutBuilder:
         )
     
     @staticmethod
-    def build_content_container(content, col={"xs": 12}, 
+    def build_content_container(content, col={"xs": 12},
                               animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT):
         """
         Build a content container with standard styling.
@@ -42,6 +42,7 @@ class LayoutBuilder:
         Args:
             content: The content to place in the container
             col: Column specification for the responsive row
+            bgcolor: Background color for the container (hex string, ft.colors.*, or None)
             animation_duration: Duration for animations in milliseconds
             animation_curve: Animation curve type
             

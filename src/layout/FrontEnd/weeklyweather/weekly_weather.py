@@ -1,12 +1,12 @@
 import flet as ft
 
-from layout.backend.api_operation import APIOperation
+from services.api_service import ApiService
 from layout.frontend.informationtab.air_condition import AirConditionInfo
 from layout.frontend.informationtab.daily_forecast import DailyForecast
 from layout.frontend.informationtab.main_information import MainWeatherInfo
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class WeeklyWeather:
-
     def __init__(self, page, city, language, unit):
         #self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
         #self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
@@ -17,7 +17,38 @@ class WeeklyWeather:
         self.mainInformation = MainWeatherInfo(page, city, language, unit)
         self.dailyForecast = DailyForecast(page, city, language, unit)
         self.airCondition = AirConditionInfo(page, city, language, unit)
-        self.api = APIOperation(page, city, language, unit)
+        self.api = ApiService(page, city, language, unit)
+        
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'label': 120,      # Etichette
+                'icon': 100,       # Icone (dimensione base),
+                'body': 20,       # Testo normale
+                'value': 20,       # Valori (es. temperature, percentuali)
+            },
+            breakpoints=[600, 900, 1200, 1600]  # Breakpoint per il ridimensionamento
+        )
+
+
+        # Dizionario dei controlli di testo per aggiornamento facile
+        self.text_controls = {}
+        
+        # Sovrascrivi il gestore di ridimensionamento della pagina
+        if self.page:
+            # Salva l'handler originale se presente
+            original_resize_handler = self.page.on_resize
+            
+            def combined_resize_handler(e):
+                # Aggiorna le dimensioni del testo
+                self.text_handler._handle_resize(e)
+                # Aggiorna i controlli di testo
+                self.update_text_controls()
+                # Chiama anche l'handler originale se esiste
+                if original_resize_handler:
+                    original_resize_handler(e)
+            
+            self.page.on_resize = combined_resize_handler
 
     def update_city(self, new_city):
         self.city = new_city
@@ -35,21 +66,105 @@ class WeeklyWeather:
         self.airCondition.update_by_coordinates(lat, lon)
 
     def createWeeklyForecast(self):
+        """Crea il componente per le previsioni settimanali"""
+        # Ottieni prima i dati meteo generali
+        weather_data = self.api.get_weather_data(self.city)
+        
+        # Poi ottieni i dati delle previsioni settimanali
+        forecast_days = self.api.get_weekly_forecast_data(weather_data) if weather_data else []
+        
+        if not forecast_days:
+            return ft.Text("Dati previsioni meteo non disponibili.")
+        
+        forecast_cards = []
+        
+        # Per ogni giorno, crea una riga con le relative informazioni
+        for i, day_data in enumerate(forecast_days):
+            # Crea i controlli di testo con dimensioni responsive
+            day_text = ft.Text(
+                day_data["day"],
+                size=self.text_handler.get_size('label'),
+                weight="bold", 
+                text_align=ft.TextAlign.START
+            )
+            temp_text = ft.Text(
+                spans=[
+                    ft.TextSpan(
+                        f"{day_data['temp_min']}°",
+                        ft.TextStyle(
+                            size=self.text_handler.get_size('value'),
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.BLUE,
+                        )
+                    ),
+                    ft.TextSpan(" / ",
+                        ft.TextStyle(
+                            size=self.text_handler.get_size('value'),
+                            weight=ft.FontWeight.BOLD,
+                        )),
+                    ft.TextSpan(
+                        f"{day_data['temp_max']}°",
+                        ft.TextStyle(
+                            size=self.text_handler.get_size('value'),
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.RED,
+                        )
+                    ),
+                ],
+                expand=True,
+                text_align=ft.TextAlign.END
+            )
+            
+            # Aggiungi i controlli al dizionario per l'aggiornamento dinamico
+            self.text_controls[day_text] = 'title'
+            self.text_controls[temp_text] = 'value'
+            
+            row = ft.Row(
+                controls=[
+                    day_text,
+                    ft.Container(
+                        content=ft.Image(
+                            src=f"https://openweathermap.org/img/wn/{day_data['icon']}@4x.png",
+                            width=self.text_handler.get_size('icon'),
+                            height=self.text_handler.get_size('icon'),
+                        ),
+                        expand=True,
+                        alignment=ft.alignment.center
+                    ),
+                    temp_text
+                ],
+                expand=True,
+                spacing=0,
+                alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER
+            )
+
+            forecast_cards.append(ft.Container(content=row))
+
+            # Aggiungi un divisore tra le righe (tranne che dopo l'ultima)
+            if i < len(forecast_days) - 1:
+                forecast_cards.append(
+                    ft.Container(
+                        content=ft.Divider(thickness=0.5, color="white", opacity=1),
+                    )
+                )
+                
         return ft.Container(
             alignment=ft.alignment.center,
             content=ft.Column(
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[
-                    self.api.getWeeklyForecast()
-                    ]
-                )
+                controls=forecast_cards,
+                expand=True
             )
+        )
+
+    def update_text_controls(self):
+        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
+        self.text_handler.update_text_controls(self.text_controls)
 
     def build(self):
         return ft.Container(
-            #bgcolor=self.bgcolor,
-            #gradient=self.gradient,
             border_radius=15,
             padding=20,
             content=ft.Column(

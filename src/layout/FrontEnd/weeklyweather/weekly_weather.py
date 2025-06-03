@@ -22,11 +22,10 @@ class WeeklyWeather:
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes={
-                'title': 10,      # Giorni della Settimana - dimensione di base adeguata
-                'icon': 10,      # Icone (dimensione base)
-                'label': 10,      # Descrizione previsioni giornaliere
-                'value': 10,      # Valori (es. temperature, percentuali)
-                'body': 10        # Per altri tipi di testo
+                'label': 120,      # Etichette
+                'icon': 100,       # Icone (dimensione base),
+                'body': 20,       # Testo normale
+                'value': 20,       # Valori (es. temperature, percentuali)
             },
             breakpoints=[600, 900, 1200, 1600]  # Breakpoint per il ridimensionamento
         )
@@ -84,18 +83,10 @@ class WeeklyWeather:
             # Crea i controlli di testo con dimensioni responsive
             day_text = ft.Text(
                 day_data["day"],
-                size=self.text_handler.get_size('title'),
+                size=self.text_handler.get_size('label'),
                 weight="bold", 
                 text_align=ft.TextAlign.START
             )
-            
-            description_text = ft.Text(
-                day_data["description"], 
-                size=self.text_handler.get_size('label'),                       
-                weight="bold", 
-                text_align=ft.TextAlign.START
-            )
-            
             temp_text = ft.Text(
                 spans=[
                     ft.TextSpan(
@@ -126,7 +117,6 @@ class WeeklyWeather:
             
             # Aggiungi i controlli al dizionario per l'aggiornamento dinamico
             self.text_controls[day_text] = 'title'
-            self.text_controls[description_text] = 'body'
             self.text_controls[temp_text] = 'value'
             
             row = ft.Row(
@@ -141,7 +131,6 @@ class WeeklyWeather:
                         expand=True,
                         alignment=ft.alignment.center
                     ),
-                    description_text,
                     temp_text
                 ],
                 expand=True,
@@ -176,8 +165,6 @@ class WeeklyWeather:
 
     def build(self):
         return ft.Container(
-            #bgcolor=self.bgcolor,
-            #gradient=self.gradient,
             border_radius=15,
             padding=20,
             content=ft.Column(

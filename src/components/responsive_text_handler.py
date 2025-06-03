@@ -26,11 +26,11 @@ class ResponsiveTextHandler:
         
         # Dimensioni predefinite se non specificate
         self.base_sizes = base_sizes or {
-            'title': 25,      # Titoli principali
+            'title': 30,      # Titoli principali
             'subtitle': 20,   # Sottotitoli
-            'label': 16,      # Etichette
-            'body': 14,       # Testo normale
-            'caption': 12,    # Testo piccolo/caption
+            'label': 20,      # Etichette
+            'body': 15,       # Testo normale
+            'caption': 15,    # Testo piccolo/caption
             'value': 20,       # Valori (es. temperature, percentuali)
             'icon': 100       # Icone (dimensione base),
         }

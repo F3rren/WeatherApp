@@ -14,32 +14,52 @@ class AirConditionInfo:
         self.wind_speed = wind_speed
         self.pressure = pressure
         self.text_color = text_color
-        self.page = page # Store page
+        self.page = page 
         
-        # Inizializza il gestore del testo responsive
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
-            base_sizes={
-                'title': 45,   # Titolo "Condizioni Atmosferiche" (aumentato da 25 a 45)
-                'label': 40,   # Etichette come "Percepita", "Umidità" (aumentato da 20 a 40)
-                'value': 40    # Valori come temperature, percentuali (aumentato da 20 a 40)
+            base_sizes= {
+                'title': 30,      # Titoli principali
+                'label': 20,      # Etichette
+                'value': 20,       # Valori (es. temperature, percentuali)
             }
         )
 
-        # Store text controls that need dynamic color updates
         self.title_text = ft.Text("Condizioni Atmosferiche", size=self.text_handler.get_size('title'), weight="bold", color=self.text_color)
         self.divider = ft.Divider(height=1, color=self.text_color)
+        
+        self.feels_like_label = ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.THERMOSTAT, size=self.text_handler.get_size('label'), color=self.text_color, ),
+                ft.Text("Percepita", size=self.text_handler.get_size('label'), weight=ft.FontWeight.BOLD, color=self.text_color)
+            ]
+        )
+        self.feels_like_value = ft.Text(f"{self.feels_like}°", size=self.text_handler.get_size('value'), italic=True, color=self.text_color)
+        
+        self.humidity_label = ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.WATER_DROP, size=self.text_handler.get_size('label'), color=self.text_color),
+                ft.Text("Umidità", size=self.text_handler.get_size('label'), weight=ft.FontWeight.BOLD, color=self.text_color)
+            ]
+        )
+        self.humidity_value = ft.Text(f"{self.humidity}%", size=self.text_handler.get_size('value'),  italic=True, color=self.text_color)
 
-        self.feels_like_label = ft.Text("Percepita", size=self.text_handler.get_size('label'), color=self.text_color)
-        self.feels_like_value = ft.Text(f"{self.feels_like}°", size=self.text_handler.get_size('value'), weight="bold", color=self.text_color)
-        self.humidity_label = ft.Text("Umidità", size=self.text_handler.get_size('label'), color=self.text_color)
-        self.humidity_value = ft.Text(f"{self.humidity}%", size=self.text_handler.get_size('value'), weight="bold", color=self.text_color)
-        
-        self.wind_label = ft.Text("Vento", size=self.text_handler.get_size('label'), color=self.text_color)
-        self.wind_value = ft.Text(f"{self.wind_speed} km/h", size=self.text_handler.get_size('value'), weight="bold", color=self.text_color)
-        self.pressure_label = ft.Text("Pressione", size=self.text_handler.get_size('label'), color=self.text_color)
-        self.pressure_value = ft.Text(f"{self.pressure} hPa", size=self.text_handler.get_size('value'), weight="bold", color=self.text_color)
-        
+        self.wind_label = ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.WIND_POWER, size=self.text_handler.get_size('label'), color=self.text_color),
+                ft.Text("Vento", size=self.text_handler.get_size('label'), weight=ft.FontWeight.BOLD, color=self.text_color)
+            ]
+        )
+        self.wind_value = ft.Text(f"{self.wind_speed} km/h", size=self.text_handler.get_size('value'), italic=True, color=self.text_color)
+
+        self.pressure_label = ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.COMPRESS, size=self.text_handler.get_size('label'), color=self.text_color),
+                ft.Text("Pressione", size=self.text_handler.get_size('label'), weight=ft.FontWeight.BOLD, color=self.text_color)
+            ]
+        )
+        self.pressure_value = ft.Text(f"{self.pressure} hPa", size=self.text_handler.get_size('value'), italic=True, color=self.text_color)
+
         # Dizionario dei controlli per aggiornamento facile
         self.text_controls = {
             self.title_text: 'title',
@@ -79,28 +99,34 @@ class AirConditionInfo:
         if self.page:
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-            self.text_color = current_theme_config["TEXT"]
-
-            # Update colors of all relevant controls
+            self.text_color = current_theme_config["TEXT"]            # Update colors of all relevant controls
             controls_to_update = list(self.text_controls.keys())
             
             for control in controls_to_update:
                 if hasattr(control, 'color'):
                     control.color = self.text_color
+                if isinstance(control, ft.Row):
+                    # Update colors for controls inside Row
+                    for row_control in control.controls:
+                        if hasattr(row_control, 'color'):
+                            row_control.color = self.text_color
+                        if hasattr(row_control, 'page') and row_control.page:
+                            row_control.update()
                 if hasattr(control, 'page') and control.page:
                     control.update()
             
             if hasattr(self.divider, 'color'): # Divider color
                 self.divider.color = self.text_color
-                if hasattr(self.divider, 'page') and self.divider.page:
-                    self.divider.update()
+            if hasattr(self.divider, 'page') and self.divider.page:
+                self.divider.update()
                     
-            # Aggiorna anche le dimensioni del testo
+            # Aggiorna anche le dimensioni deltesto
             self.text_handler.update_text_controls(self.text_controls)
 
     def build(self) -> ft.Container:
         """Build the air condition information"""
         return ft.Container(
+            padding=20,
             content=ft.Column(
                 controls=[
                     self.title_text,

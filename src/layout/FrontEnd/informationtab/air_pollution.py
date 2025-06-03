@@ -45,9 +45,10 @@ class AirPollution:
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes={
-                'title': 20,   # Titolo "Condizioni Atmosferiche" (aumentato da 20 a 40)
-                'label': 15,   # Etichette come "Percepita", "Umidità" (aumentato da 16 a 35)
-                'value': 15    # Valori come temperature, percentuali (aumentato da 14 a 40)
+                'title': 20,      # Titoli principali
+                'label': 15,      # Etichette
+                'value': 15,       # Valori (es. temperature, percentuali)
+                'subtitle': 15,   # Sottotitoli
             }
         )
 

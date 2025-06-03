@@ -35,9 +35,8 @@ class AirPollutionChart:
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes={
-                'title': 40,   # Titolo "Condizioni Atmosferiche" (aumentato da 20 a 40)
-                'label': 35,   # Etichette come "Percepita", "Umidità" (aumentato da 15 a 35)
-                'value': 35    # Valori come temperature, percentuali (aumentato da 15 a 35)
+                'label': 12,      # Etichette
+                'subtitle': 15,   # Sottotitoli
             }
         )
 
@@ -143,7 +142,7 @@ class AirPollutionChart:
                             to_y=self.co, # Use float value
                             width=40,
                             color=ft.Colors.RED,
-                            tooltip=f"{self.co}",
+                            tooltip=round(self.co), 
                             border_radius=0,
                         ),
                     ],
@@ -156,7 +155,7 @@ class AirPollutionChart:
                             to_y=self.no, # Use float value
                             width=40,
                             color=ft.Colors.ORANGE,
-                            tooltip=f"{self.no}",
+                            tooltip=round(self.no),
                             border_radius=0,
                         ),
                     ],
@@ -169,7 +168,7 @@ class AirPollutionChart:
                             to_y=self.no2, # Use float value
                             width=40,
                             color=ft.Colors.YELLOW,
-                            tooltip=f"{self.no2}",
+                            tooltip=round(self.no2),
                             border_radius=0,
                         ),
                     ],
@@ -182,7 +181,7 @@ class AirPollutionChart:
                             to_y=self.o3, # Use float value
                             width=40,
                             color=ft.Colors.GREEN,
-                            tooltip=f"{self.o3}",
+                            tooltip=round(self.o3),
                             border_radius=0,
                         ),
                     ],
@@ -195,7 +194,7 @@ class AirPollutionChart:
                             to_y=self.so2, # Use float value
                             width=40,
                             color=ft.Colors.BLUE,
-                            tooltip=f"{self.so2}",
+                            tooltip=round(self.so2),
                             border_radius=0,
                         ),
                     ],
@@ -208,7 +207,7 @@ class AirPollutionChart:
                             to_y=self.pm2_5, # Use float value
                             width=40,
                             color=ft.Colors.INDIGO,
-                            tooltip=f"{self.pm2_5}",
+                            tooltip=round(self.pm2_5),
                             border_radius=0,
                         ),
                     ],
@@ -221,7 +220,7 @@ class AirPollutionChart:
                             to_y=self.pm10, # Use float value
                             width=40,
                             color=ft.Colors.PURPLE,
-                            tooltip=f"{self.pm10}",
+                            tooltip=round(self.pm10),
                             border_radius=0,
                         ),
                     ],
@@ -234,7 +233,7 @@ class AirPollutionChart:
                             to_y=self.nh3, # Use float value
                             width=40,
                             color=ft.Colors.BLACK,
-                            tooltip=f"{self.nh3}",
+                            tooltip=round(self.nh3),
                             border_radius=0,
                             
                         ),
@@ -244,7 +243,7 @@ class AirPollutionChart:
             border=ft.border.all(1, ft.Colors.GREY_400), # Consider theme for border
             left_axis=ft.ChartAxis(
                 labels_size=40, 
-                title=ft.Text("Air Pollution (μg/m³)", color=self.text_color), # Apply text_color
+                title=ft.Text("Air Pollution (μg/m³)", size=self.text_handler.get_size('subtitle'), color=self.text_color), # Apply text_color
                 title_size=16 # Changed from 40 to 16
             ),
             bottom_axis=ft.ChartAxis(

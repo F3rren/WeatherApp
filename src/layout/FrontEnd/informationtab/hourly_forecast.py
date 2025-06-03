@@ -18,9 +18,10 @@ class HourlyForecastDisplay:
         from components.responsive_text_handler import ResponsiveTextHandler
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
-            base_sizes={
-                'title': 40,   # Dimensione orario (aumentato da 25 a 40)
-                'value': 40    # Dimensione temperatura (aumentato da 20 a 40)
+            base_sizes= {
+                'icon': 150,      # Icone (dimensione base),
+                'title': 30,      # Titoli principali
+                'value': 30,       # Valori (es. temperature, percentuali)
             }
         )
         
@@ -57,32 +58,28 @@ class HourlyForecastDisplay:
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             
         current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-        
         self.text_color = current_theme_config["TEXT"]
-        new_item_bgcolor = current_theme_config["HOURLY_FORECAST_CARD"] # Use config color for both themes
 
         if hasattr(self, 'built_item_containers') and self.built_item_containers:
             for item_container in self.built_item_containers:
-                item_container.bgcolor = new_item_bgcolor
-                
                 # item_container.content is the ft.Column
                 if isinstance(item_container.content, ft.Column) and item_container.content.controls:
                     column_controls = item_container.content.controls
                     # Update text color for ft.Text elements
-                    if len(column_controls) > 0 and isinstance(column_controls[0], ft.Text): # Time text
-                        column_controls[0].color = self.text_color
+                    if len(column_controls) > 1 and isinstance(column_controls[1], ft.Text): # Temperature text
+                        column_controls[1].color = self.text_color
                     if len(column_controls) > 2 and isinstance(column_controls[2], ft.Text): # Temperature text
                         column_controls[2].color = self.text_color
-                
+
                 item_container.update()
         
-        # Update the main HourlyForecastDisplay container's background
-        if hasattr(self, 'main_container_ref') and self.main_container_ref:
-            self.main_container_ref.bgcolor = current_theme_config.get("HOURLY_FORECAST_CARD",) 
-            self.main_container_ref.update()
             
         # Aggiorna anche le dimensioni del testo
         self.update_text_controls()
+
+    def update_text_controls(self):
+        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
+        self.text_handler.update_text_controls(self.text_controls)
 
     def _create_item_column(self, item_data: dict) -> ft.Container:
         """Helper method to create a single forecast item's visual representation."""
@@ -90,7 +87,7 @@ class HourlyForecastDisplay:
         icon = item_data["weather"][0]["icon"]
         temp = round(item_data["main"]["temp"])
         
-        item_bgcolor = DARK_THEME["HOURLY_FORECAST_CARD"] if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["HOURLY_FORECAST_CARD"]
+        #item_bgcolor = DARK_THEME["HOURLY_FORECAST_CARD"] if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["HOURLY_FORECAST_CARD"]
 
         # Creare i controlli di testo con dimensioni responsive
         time_text = ft.Text(
@@ -104,7 +101,11 @@ class HourlyForecastDisplay:
             f"{temp}°", 
             size=self.text_handler.get_size('value'), 
             weight=ft.FontWeight.BOLD, 
-            color=self.text_color
+            color=(
+                ft.Colors.RED if temp >= 30 else
+                self.text_color if temp >= 15 and temp < 30 else
+                ft.Colors.BLUE
+            )
         )
         
         # Aggiungi i controlli al dizionario per l'aggiornamento dinamico
@@ -112,15 +113,16 @@ class HourlyForecastDisplay:
         self.text_controls[temp_text] = 'value'
 
         return ft.Container(
-            bgcolor=item_bgcolor,
+            #bgcolor=item_bgcolor,
             content=ft.Column(
                 controls=[
-                    time_text,
                     ft.Image(
                         src=f"https://openweathermap.org/img/wn/{icon}@2x.png",
-                        width=50,
-                        height=50,
+                        width=self.text_handler.get_size('icon'),  # Use the base size for icon
+                        height=self.text_handler.get_size('icon'),  # Use the base size for icon
+                        fit=ft.ImageFit.CONTAIN
                     ),
+                    time_text,
                     temp_text
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
@@ -143,6 +145,7 @@ class HourlyForecastDisplay:
             content=ft.Row(
                 controls=self.built_item_containers, # Use the stored list
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN, # Keep items spaced out
+                scroll=ft.ScrollMode.ADAPTIVE, # Hide scrollbars
             ),
             expand=True,
             padding=ft.padding.symmetric(vertical=10), # Restore padding
@@ -150,6 +153,3 @@ class HourlyForecastDisplay:
         )
         return self.main_container_ref
 
-    def update_text_controls(self):
-        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
-        self.text_handler.update_text_controls(self.text_controls)

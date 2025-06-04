@@ -9,6 +9,7 @@ DEFAULT_LANGUAGE = "it"
 DEFAULT_UNIT = "metric"  # "metric", "imperial", or "standard"
 DEFAULT_THEME_MODE = "light"  # "light" or "dark"
 
+# Theme colors
 # Colori per il tema chiaro
 LIGHT_THEME = {
     "BACKGROUND": "#f5f5f5",

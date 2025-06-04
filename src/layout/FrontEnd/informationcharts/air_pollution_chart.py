@@ -1,14 +1,14 @@
 import flet as ft
-import math # Added import math
-from services.api_service import ApiService # Import ApiService instead of AirPollutionOperation
+import math
+from services.api_service import ApiService
 from config import LIGHT_THEME, DARK_THEME
-from components.responsive_text_handler import ResponsiveTextHandler # Import theme configurations
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class AirPollutionChart:
     """
     Air Pollution chart display.
     """
-    def __init__(self, page, lat=None, lon=None, text_color: str = None): # Added text_color
+    def __init__(self, page, lat=None, lon=None, text_color: str = None):
         self.page = page
         self.lat = lat
         self.lon = lon
@@ -37,9 +37,33 @@ class AirPollutionChart:
             base_sizes={
                 'label': 12,      # Etichette
                 'subtitle': 15,   # Sottotitoli
-            }
+                'icon': 40,       # Icone (se necessarie)
+            },
+            breakpoints=[600, 900, 1200, 1600]  # Aggiunti breakpoint per il ridimensionamento
         )
 
+        # Dizionario dei controlli di testo per aggiornamento facile
+        self.text_controls = {}
+        
+        # Sovrascrivi il gestore di ridimensionamento della pagina
+        if self.page:
+            # Salva l'handler originale se presente
+            original_resize_handler = self.page.on_resize
+            
+            def combined_resize_handler(e):
+                # Aggiorna le dimensioni del testo
+                self.text_handler._handle_resize(e)
+                # Aggiorna i controlli di testo
+                self.update_text_controls()
+                # Chiama anche l'handler originale se esiste
+                if original_resize_handler:
+                    original_resize_handler(e)
+            
+            self.page.on_resize = combined_resize_handler
+            
+        # Rimuoviamo la chiamata a add_load_complete_callback che non esiste
+        # Invece, chiamiamo update_text_controls direttamente quando il chart viene creato
+        
         # Register for theme change events
         state_manager = self.page.session.get('state_manager')
         if state_manager:
@@ -78,7 +102,11 @@ class AirPollutionChart:
             # Update left axis title
             if self.chart_control.left_axis and isinstance(self.chart_control.left_axis.title, ft.Text):
                 self.chart_control.left_axis.title.color = self.text_color
-            
+                
+            # Aggiorna anche i controlli di testo dopo aver cambiato il colore
+            self._register_chart_text_controls()
+            self.update_text_controls()
+
     def createAirPollutionChart(self, lat, lon):
 
         self.lat = lat
@@ -243,13 +271,17 @@ class AirPollutionChart:
             border=ft.border.all(1, ft.Colors.GREY_400), # Consider theme for border
             left_axis=ft.ChartAxis(
                 labels_size=40, 
-                title=ft.Text("Air Pollution (μg/m³)", size=self.text_handler.get_size('subtitle'), color=self.text_color), # Apply text_color
-                title_size=16 # Changed from 40 to 16
+                title=ft.Text("Air Pollution (μg/m³)", size=self.text_handler.get_size('subtitle'), color=self.text_color),
+                title_size=16
             ),
             bottom_axis=ft.ChartAxis(
                 labels=[
                     ft.ChartAxisLabel(
-                        value=0, label=ft.Container(ft.Text("CO", color=self.text_color, size=self.text_handler.get_size('label')), padding=10) # Apply text_color and size
+                        value=0, 
+                        label=ft.Container(
+                            ft.Text("CO", color=self.text_color, size=self.text_handler.get_size('label')), 
+                            padding=10
+                        )
                     ),
                     ft.ChartAxisLabel(
                         value=1, label=ft.Container(ft.Text("NO", color=self.text_color, size=self.text_handler.get_size('label')), padding=10) # Apply text_color and size
@@ -283,11 +315,49 @@ class AirPollutionChart:
             interactive=True,
             expand=True,
         )
-
+        
+        # Registra i controlli di testo per l'aggiornamento dinamico
+        self._register_chart_text_controls()
+        
         return ft.Column([ 
             self.chart_control # Return stored chart reference
         ])
 
+    def _register_chart_text_controls(self):
+        """Registra tutti i controlli di testo del grafico per l'aggiornamento responsive."""
+        if hasattr(self, 'chart_control'):
+            # Registra il titolo dell'asse sinistro
+            if self.chart_control.left_axis and isinstance(self.chart_control.left_axis.title, ft.Text):
+                self.text_controls[self.chart_control.left_axis.title] = 'subtitle'
+            
+            # Registra le etichette dell'asse inferiore
+            if self.chart_control.bottom_axis and self.chart_control.bottom_axis.labels:
+                for label in self.chart_control.bottom_axis.labels:
+                    if isinstance(label.label, ft.Container) and isinstance(label.label.content, ft.Text):
+                        self.text_controls[label.label.content] = 'label'
+    
+    def update_text_controls(self):
+        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
+        for control, size_category in self.text_controls.items():
+            if size_category == 'icon':
+                # Per le icone, aggiorna width e height
+                control.width = self.text_handler.get_size(size_category)
+                control.height = self.text_handler.get_size(size_category)
+            else:
+                # Per i testi, aggiorna size
+                if hasattr(control, 'size'):
+                    control.size = self.text_handler.get_size(size_category)
+                elif hasattr(control, 'style') and hasattr(control.style, 'size'):
+                    control.style.size = self.text_handler.get_size(size_category)
+                # Aggiorna anche i TextSpan se presenti
+                if hasattr(control, 'spans'):
+                    for span in control.spans:
+                        span.style.size = self.text_handler.get_size(size_category)
+        
+        # Richiedi l'aggiornamento della pagina
+        if self.page:
+            self.page.update()
+    
     def build(self, lat, long):
         # Store the container for potential updates (e.g. gradient)
         self.container_control = ft.Container(

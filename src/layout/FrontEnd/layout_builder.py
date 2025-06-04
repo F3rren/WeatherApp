@@ -4,101 +4,72 @@ Centralizes layout building functions for different UI components.
 """
 
 import flet as ft
+from typing import Dict, Any
 
 class LayoutBuilder:
     """
-    Layout builder class for the MeteoApp.
-    Handles the construction of layout components.
+    Classe utility per costruire elementi di layout per l'applicazione.
     """
     
     @staticmethod
-    def build_sidebar_container(sidebar, animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT):
+    def build_content_container(content, col_size, animation_duration=500, 
+                               animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> ft.Container:
         """
-        Build the sidebar container.
+        Crea un container responsive con animazioni.
         
         Args:
-            sidebar: La sidebar da inserire nel container
-            animation_duration: Duration for animations in milliseconds
-            animation_curve: Animation curve type
+            content: Contenuto del container
+            col_size: Dizionario delle dimensioni colonna per vari breakpoint
+            animation_duration: Durata delle animazioni
+            animation_curve: Curva di animazione
             
         Returns:
-            ft.Container: The sidebar container
-        """
-        return ft.Container(
-            content=sidebar.build(),
-            col={"xs": 12},
-            margin=10,
-            padding=10,
-            border_radius=15,
-            animate=ft.Animation(animation_duration, animation_curve)
-        )
-    
-    @staticmethod
-    def build_content_container(content, col={"xs": 12},
-                              animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT):
-        """
-        Build a content container with standard styling.
-        
-        Args:
-            content: The content to place in the container
-            col: Column specification for the responsive row
-            bgcolor: Background color for the container (hex string, ft.colors.*, or None)
-            animation_duration: Duration for animations in milliseconds
-            animation_curve: Animation curve type
-            
-        Returns:
-            ft.Container: The content container
+            ft.Container: Container configurato
         """
         return ft.Container(
             content=content,
-            col=col,
-            margin=10,
-            padding=10,
+            animate=ft.Animation(animation_duration, animation_curve),
             border_radius=15,
-            expand=True,  # <--- ADD THIS LINE
-            animate=ft.Animation(animation_duration, animation_curve)
+            padding=10,
+            col=col_size
         )
-    
+
     @staticmethod
-    def build_main_layout(sidebar_container, info_container_wrapper, 
-                        weekly_container_wrapper, chart_container_wrapper,
-                        air_pollution_chart_container_wrapper, air_pollution_container_wrapper):
+    def build_main_layout(sidebar, info, weekly, air_pollution, chart, air_pollution_chart) -> ft.Control:
         """
-        Build the main application layout.
+        Costruisce il layout principale responsivo dell'applicazione.
         
         Args:
-            sidebar_container: The container for the sidebar
-            info_container_wrapper: The container for weather information
-            weekly_container_wrapper: The container for weekly forecast
-            chart_container_wrapper: The container for charts
-            air_pollution_chart_container_wrapper: The container for air pollution chart
-            air_pollution_container_wrapper: The container for air pollution info
+            sidebar: Container della barra laterale
+            info: Container delle informazioni principali meteo
+            weekly: Container delle previsioni settimanali
+            air_pollution: Container delle informazioni sull'inquinamento
+            chart: Container del grafico temperature
+            air_pollution_chart: Container del grafico inquinamento
             
         Returns:
-            ft.ListView: The main layout of the application
+            ft.ResponsiveRow: Layout principale responsivo
         """
-        return ft.ListView(
-            expand=True,
-            spacing=10,
-            auto_scroll=True,
-            controls=[
-                ft.ResponsiveRow(
-                    controls=[sidebar_container]
-                ),
-                ft.ResponsiveRow(
-                    controls=[info_container_wrapper]
-                ),
-                ft.ResponsiveRow(
-                    controls=[
-                        weekly_container_wrapper,
-                        chart_container_wrapper
-                    ]
-                ),
-                ft.ResponsiveRow(
-                    controls=[
-                        air_pollution_chart_container_wrapper,
-                        air_pollution_container_wrapper
-                    ]
-                )
-            ]
-        )
+        return ft.Column([
+            # Prima riga: sidebar
+            ft.ResponsiveRow([
+                sidebar
+            ]),
+            
+            # Seconda riga: info
+            ft.ResponsiveRow([
+                info
+            ]),
+            
+            # Terza riga: previsioni settimanali + inquinamento aria
+            ft.ResponsiveRow([
+                weekly,
+                air_pollution
+            ]),
+            
+            # Quarta riga: grafici
+            ft.ResponsiveRow([
+                chart,
+                air_pollution_chart
+            ])
+        ])

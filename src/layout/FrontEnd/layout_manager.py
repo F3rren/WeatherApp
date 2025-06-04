@@ -51,46 +51,45 @@ class LayoutManager:
         """
         self.containers['sidebar'] = LayoutBuilder.build_content_container(
             sidebar_content, 
-            {"xs": 12},
+            {"xs": 12}, 
             animation_duration,
             animation_curve
         )
         
         self.containers['info'] = LayoutBuilder.build_content_container(
             info_content,
-            {"xs": 12, "md": 12, "lg": 12},
+            {"xs": 12, "sm": 12},
             animation_duration,
             animation_curve
         )
         
         self.containers['weekly'] = LayoutBuilder.build_content_container(
             weekly_content,
-            {"xs": 12, "md": 5, "lg": 7},
+            {"xs": 12, "sm": 12, "lg": 8},
             animation_duration,
             animation_curve
         )
         
         self.containers['air_pollution'] = LayoutBuilder.build_content_container(
             air_pollution_content,
-            {"xs": 12, "md": 4, "lg": 5},
-            animation_duration,
-            animation_curve
-        )
-
-        self.containers['air_pollution_chart'] = LayoutBuilder.build_content_container(
-            air_pollution_chart_content,
-            {"xs": 12, "md": 5, "lg": 6},
+            {"xs": 12, "sm": 12, "lg": 4},
             animation_duration,
             animation_curve
         )
 
         self.containers['chart'] = LayoutBuilder.build_content_container(
             chart_content,
-            {"xs": 12, "md": 5, "lg": 6},
+            {"xs": 12, "sm": 12, "md": 12, "lg": 5},
             animation_duration,
             animation_curve
         )
-        
+
+        self.containers['air_pollution_chart'] = LayoutBuilder.build_content_container(
+            air_pollution_chart_content,
+            {"xs": 12, "sm": 12, "md": 12, "lg": 7},
+            animation_duration,
+            animation_curve
+            )        
     def build_layout(self) -> ft.Control:
         """
         Costruisce il layout principale dell'applicazione.
@@ -117,7 +116,7 @@ class LayoutManager:
         """
         return self.containers
     
-    def update_container_colors(self, theme_mode: ft.ThemeMode):
+    def update_container_colors(self, theme_mode: ft.ThemeMode) -> None:
         """
         Aggiorna i colori dei contenitori in base al tema.
         
@@ -128,38 +127,36 @@ class LayoutManager:
             logging.warning("Containers not initialized. Cannot update colors.")
             return
 
-        # Seleziona il tema appropriato
+        # Determina lo schema di colori basato sul tema
         theme = LIGHT_THEME if theme_mode == ft.ThemeMode.LIGHT else DARK_THEME
-        card_bg_color = theme.get("CARD_BACKGROUND", "#ffffff" if theme_mode == ft.ThemeMode.LIGHT else "#262626")
         
-        # Aggiorna il colore di sfondo di tutti i container
+        # Applica il colore di sfondo a tutti i container
+        card_background = theme.get("CARD_BACKGROUND", "#ffffff" if theme_mode == ft.ThemeMode.LIGHT else "#262626")
+        
+        # Aggiorna tutti i container con lo stesso colore di sfondo
         for name, container in self.containers.items():
             if container:
-                container.bgcolor = card_bg_color
-                container.update()
-        
+                # Il container 'info' avrà un gradiente speciale
+                if name == 'info' and 'INFO_GRADIENT' in theme:
+                    gradient_start = theme["INFO_GRADIENT"]["start"]
+                    gradient_end = theme["INFO_GRADIENT"]["end"]
+                    
+                    # Applica il gradiente al container info
+                    container.gradient = ft.LinearGradient(
+                        begin=ft.alignment.top_center,
+                        end=ft.alignment.bottom_center,
+                        colors=[gradient_start, gradient_end]
+                    )
+                    
+                    # Rimuovi il background solido quando si applica il gradiente
+                    container.bgcolor = None
+                else:
+                    # Tutti gli altri container hanno un colore solido
+                    container.bgcolor = card_background
+                    # Assicurati che non ci sia alcun gradiente residuo
+                    container.gradient = None
+    
         # Aggiorna anche il colore di sfondo della pagina
         self.page.bgcolor = theme.get("BACKGROUND", "#f5f5f5" if theme_mode == ft.ThemeMode.LIGHT else "#1a1a1a")
         self.page.update()
-        
-    def update_container_gradients(self, theme_mode: ft.ThemeMode) -> None:
-        """
-        Aggiorna i gradienti dei contenitori in base al tema.
-        
-        Args:
-            theme_mode: Modalità tema (chiaro/scuro)
-        """
-        if not self.containers:
-            logging.warning("Containers not initialized. Cannot update gradients.")
-            return
-        
-        # Seleziona il tema appropriato
-        theme = LIGHT_THEME if theme_mode == ft.ThemeMode.LIGHT else DARK_THEME
-        card_bg_color = theme.get("CARD_BACKGROUND", "#ffffff" if theme_mode == ft.ThemeMode.LIGHT else "#262626")
-        
-        # Update all containers with standard background color (no gradients)
-        for name, container in self.containers.items():
-            if container:
-                container.bgcolor = card_bg_color
-                container.gradient = None
-                container.update()
+

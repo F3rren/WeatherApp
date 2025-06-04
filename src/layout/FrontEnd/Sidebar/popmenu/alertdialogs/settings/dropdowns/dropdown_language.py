@@ -1,6 +1,6 @@
 ﻿import flet as ft
-
 from config import LANGUAGES, LIGHT_THEME, DARK_THEME
+import os
 
 class DropdownLanguage:
     
@@ -13,6 +13,29 @@ class DropdownLanguage:
         if state_manager:
             state_manager.register_observer("theme_event", self.handle_theme_change)
 
+        # Aggiungi un metodo per verificare l'esistenza delle immagini delle bandiere
+        self._verify_flag_images()
+
+    def _verify_flag_images(self):
+        """Verifica che le immagini delle bandiere esistano."""
+        # Percorso base per le bandiere
+        base_path = os.path.join("assets", "flags")
+        
+        # Log delle bandiere mancanti
+        missing_flags = []
+        for lang in LANGUAGES:
+            flag_file = lang.get("flag", "")
+            if flag_file:
+                # Controlla se il file esiste
+                flag_path = os.path.join(base_path, flag_file)
+                if not os.path.isfile(flag_path):
+                    missing_flags.append(flag_file)
+        
+        # Se ci sono bandiere mancanti, registra un avviso
+        if missing_flags:
+            print(f"WARNING: The following flag images are missing: {', '.join(missing_flags)}")
+            print(f"Searched in: {os.path.abspath(base_path)}")
+
     def get_language_name_by_code(self, code):
         """Restituisce il nome della lingua dato il codice"""
         for language in LANGUAGES:
@@ -23,43 +46,55 @@ class DropdownLanguage:
 
     def get_options(self):
         options = []
-        for language in LANGUAGES: 
-            # Crea il contenuto con bandiera e testo
-            content = ft.Row(
-                controls=[
-                    ft.Image(
-                        src=f"flags/{language['code']}.png",
-                        width=40,
-                        height=20,
-                        # Fallback in caso l'immagine non si carichi
-                        error_content=ft.Container(
-                            width=30,
-                            height=20,
-                            bgcolor=ft.Colors.GREY_300,
-                            border_radius=ft.border_radius.all(2),
-                            content=ft.Text(
-                                language['code'][:2], 
-                                size=8, 
-                                text_align=ft.TextAlign.CENTER
-                            )
-                        )
-                    ),
-                    ft.Text(
-                        value=language["name"],
-                        size=14,
-                    ),
-                ],
+        
+        # Usa un percorso assoluto rispetto alla cartella assets dell'applicazione
+        # Flet cerca le risorse nella cartella assets specificata nell'ft.app() in main.py
+        base_path = "/flags/"
+        
+        for lang in LANGUAGES:
+            code = lang["code"]
+            name = lang["name"]
+            flag = lang.get("flag", "")
+            
+            # Crea l'opzione con un'immagine per la bandiera e il nome della lingua
+            option_content = ft.Row(
+                controls=[],  # Inizia con una lista vuota
                 spacing=10,
+                alignment=ft.MainAxisAlignment.START,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             )
             
+            # Aggiungi l'immagine della bandiera, se disponibile
+            if flag:
+                try:
+                    flag_path = f"{base_path}{flag}"
+                    flag_image = ft.Image(
+                        src=flag_path,
+                        width=24,
+                        height=16,
+                        fit=ft.ImageFit.CONTAIN,
+                    )
+                    option_content.controls.append(flag_image)
+                except Exception as e:
+                    print(f"Error loading flag for {code}: {e}")
+                    # Aggiungi un placeholder se l'immagine non può essere caricata
+                    option_content.controls.append(ft.Container(width=24, height=16))
+            else:
+                # Aggiungi un placeholder se non è specificata alcuna bandiera
+                option_content.controls.append(ft.Container(width=24, height=16))
+            
+            # Aggiungi il testo del nome della lingua
+            option_content.controls.append(ft.Text(name))
+            
+            # Aggiungi l'opzione al dropdown
             options.append(
-                ft.DropdownOption(
-                    key=language["code"],  # Usa il codice come key
-                    text=language["name"],  # Testo che verrà mostrato quando selezionato
-                    content=content,
+                ft.dropdown.Option(
+                    key=code,
+                    text=name,
+                    content=option_content,
                 )
             )
+        
         return options
 
     def createDropdown(self):
@@ -161,14 +196,12 @@ class DropdownLanguage:
             
             # Update label and hint text colors
             # Ensure label_style and hint_style are initialized if they are None
-            if self.dropdown.label_style is None:
-                self.dropdown.label_style = ft.TextStyle()
-            self.dropdown.label_style.color = theme.get("SECONDARY_TEXT", ft.colors.GRAY_700)
-
+            self.dropdown.hint_style.color = theme.get("SECONDARY_TEXT", ft.colors.GRAY_700)
             if self.dropdown.hint_style is None:
                 self.dropdown.hint_style = ft.TextStyle()
-            self.dropdown.hint_style.color = theme.get("SECONDARY_TEXT", ft.colors.GRAY_700)
-
+            self.dropdown.label_style.color = theme.get("SECONDARY_TEXT", ft.colors.GRAY_700)
+            if self.dropdown.label_style is None:
+                self.dropdown.label_style = ft.TextStyle()
             # Request update of the dropdown
             self.dropdown.update()
             

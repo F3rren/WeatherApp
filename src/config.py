@@ -73,7 +73,7 @@ MEASUREMENT_UNITS = [
 
 LANGUAGES = [
     {"code": "AL", "name": "Shqip", "flag": "al.png"},
-    {"code": "AR", "name": "العربية", "flag": "ae.png"},
+    {"code": "AR", "name": "العربية", "flag": "ar.png"},
     {"code": "BG", "name": "Български", "flag": "bg.png"},
     {"code": "CA", "name": "Català", "flag": "es.png"},
     {"code": "CZ", "name": "Čeština", "flag": "cz.png"},

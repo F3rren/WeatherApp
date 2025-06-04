@@ -51,46 +51,45 @@ class LayoutManager:
         """
         self.containers['sidebar'] = LayoutBuilder.build_content_container(
             sidebar_content, 
-            {"xs": 12},
+            {"xs": 12}, 
             animation_duration,
             animation_curve
         )
         
         self.containers['info'] = LayoutBuilder.build_content_container(
             info_content,
-            {"xs": 12, "md": 12, "lg": 12},
+            {"xs": 12, "sm": 12},
             animation_duration,
             animation_curve
         )
         
         self.containers['weekly'] = LayoutBuilder.build_content_container(
             weekly_content,
-            {"xs": 12, "md": 8, "lg": 7},
+            {"xs": 12, "sm": 12, "lg": 8},
             animation_duration,
             animation_curve
         )
         
         self.containers['air_pollution'] = LayoutBuilder.build_content_container(
             air_pollution_content,
-            {"xs": 12, "md": 4, "lg": 5},
-            animation_duration,
-            animation_curve
-        )
-
-        self.containers['air_pollution_chart'] = LayoutBuilder.build_content_container(
-            air_pollution_chart_content,
-            {"xs": 12, "sm": 6, "md": 12, "lg": 6},
+            {"xs": 12, "sm": 12, "lg": 4},
             animation_duration,
             animation_curve
         )
 
         self.containers['chart'] = LayoutBuilder.build_content_container(
             chart_content,
-            {"xs": 12, "sm": 6, "md": 6, "lg": 6},
+            {"xs": 12, "sm": 12, "md": 12, "lg": 5},
             animation_duration,
             animation_curve
         )
-        
+
+        self.containers['air_pollution_chart'] = LayoutBuilder.build_content_container(
+            air_pollution_chart_content,
+            {"xs": 12, "sm": 12, "md": 12, "lg": 7},
+            animation_duration,
+            animation_curve
+            )        
     def build_layout(self) -> ft.Control:
         """
         Costruisce il layout principale dell'applicazione.

@@ -127,11 +127,36 @@ class LayoutManager:
             logging.warning("Containers not initialized. Cannot update colors.")
             return
 
-        # Aggiorna i container con i gradienti
-        #self.update_container_gradients(theme_mode)
-        
-        # Aggiorna anche il colore di sfondo della pagina
+        # Determina lo schema di colori basato sul tema
         theme = LIGHT_THEME if theme_mode == ft.ThemeMode.LIGHT else DARK_THEME
+        
+        # Applica il colore di sfondo a tutti i container
+        card_background = theme.get("CARD_BACKGROUND", "#ffffff" if theme_mode == ft.ThemeMode.LIGHT else "#262626")
+        
+        # Aggiorna tutti i container con lo stesso colore di sfondo
+        for name, container in self.containers.items():
+            if container:
+                # Il container 'info' avrà un gradiente speciale
+                if name == 'info' and 'INFO_GRADIENT' in theme:
+                    gradient_start = theme["INFO_GRADIENT"]["start"]
+                    gradient_end = theme["INFO_GRADIENT"]["end"]
+                    
+                    # Applica il gradiente al container info
+                    container.gradient = ft.LinearGradient(
+                        begin=ft.alignment.top_center,
+                        end=ft.alignment.bottom_center,
+                        colors=[gradient_start, gradient_end]
+                    )
+                    
+                    # Rimuovi il background solido quando si applica il gradiente
+                    container.bgcolor = None
+                else:
+                    # Tutti gli altri container hanno un colore solido
+                    container.bgcolor = card_background
+                    # Assicurati che non ci sia alcun gradiente residuo
+                    container.gradient = None
+    
+        # Aggiorna anche il colore di sfondo della pagina
         self.page.bgcolor = theme.get("BACKGROUND", "#f5f5f5" if theme_mode == ft.ThemeMode.LIGHT else "#1a1a1a")
         self.page.update()
 

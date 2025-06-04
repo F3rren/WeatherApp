@@ -17,13 +17,10 @@ LIGHT_THEME = {
     "SECONDARY_TEXT": "#555555",
     "ACCENT": "#6b46c1",  # Cambiato da azzurro a viola
     "CARD_BACKGROUND": "#ffffff",
-    "MAIN_CARD_BACKGROUND": {
-        "gradient": [
-            "#ffffffff",  # Cambiato da #ffffff00 a #ffffff per il tema chiaro
-            "#ffffff00",  # Cambiato da #ffffff00 a #ffffff per il tema chiaro
-        ],
-        "light": "#ffffff",  # Cambiato da #ffffff00 a #ffffff per il tema chiaro
-        "dark": "#262626",  # Cambiato da #00000000 a #262626 per il tema scuro
+    # Aggiungo il gradiente per il container info (main meteo container)
+    "INFO_GRADIENT": {
+        "start": "#78bff1",  # Azzurro chiaro
+        "end": "#ffffff"     # Bianco
     },
     "BORDER": "#e0e0e0",
     "ICON": "#333333",
@@ -40,6 +37,11 @@ DARK_THEME = {
     "SECONDARY_TEXT": "#cccccc",
     "ACCENT": "#8b5cf6",  # Cambiato da azzurro a viola più chiaro per il tema scuro
     "CARD_BACKGROUND": "#262626",
+    # Aggiungo il gradiente per il container info (main meteo container) nel tema scuro
+    "INFO_GRADIENT": {
+        "start": "#78bff1",  # Blu scuro
+        "end": "#262626"     # Nero
+    },
     "BORDER": "#444444",
     "ICON": "#ffffff",
     "BUTTON_TEXT": "#ffffff",

@@ -1,6 +1,7 @@
 import flet as ft
 from datetime import datetime
 from config import LIGHT_THEME, DARK_THEME
+from components.responsive_text_handler import ResponsiveTextHandler  # Spostato qui l'import
 
 class HourlyForecastDisplay:
     """
@@ -15,14 +16,14 @@ class HourlyForecastDisplay:
         self.main_container_ref = None # To store reference to the main container
         
         # Inizializza il gestore del testo responsive
-        from components.responsive_text_handler import ResponsiveTextHandler
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes= {
-                'icon': 150,      # Icone (dimensione base),
-                'title': 30,      # Titoli principali
-                'value': 30,       # Valori (es. temperature, percentuali)
-            }
+                'icon': 70,        # Ridotto da 150 per schermi più piccoli
+                'title': 16,       # Ridotto da 30 per schermi più piccoli
+                'value': 20,       # Ridotto da 30 per schermi più piccoli
+            },
+            breakpoints=[600, 900, 1200, 1600]  # Aggiunti breakpoint per il ridimensionamento
         )
         
         # Dizionario dei controlli di testo per aggiornamento facile
@@ -79,7 +80,20 @@ class HourlyForecastDisplay:
 
     def update_text_controls(self):
         """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
-        self.text_handler.update_text_controls(self.text_controls)
+        for control, size_category in self.text_controls.items():
+            if size_category == 'icon':
+                # Per le icone, aggiorna width e height
+                if hasattr(control, 'width') and hasattr(control, 'height'):
+                    control.width = self.text_handler.get_size(size_category)
+                    control.height = self.text_handler.get_size(size_category)
+            else:
+                # Per i testi, aggiorna size
+                if hasattr(control, 'size'):
+                    control.size = self.text_handler.get_size(size_category)
+        
+        # Richiedi l'aggiornamento della pagina
+        if self.page:
+            self.page.update()
 
     def _create_item_column(self, item_data: dict) -> ft.Container:
         """Helper method to create a single forecast item's visual representation."""
@@ -87,8 +101,6 @@ class HourlyForecastDisplay:
         icon = item_data["weather"][0]["icon"]
         temp = round(item_data["main"]["temp"])
         
-        #item_bgcolor = DARK_THEME["HOURLY_FORECAST_CARD"] if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["HOURLY_FORECAST_CARD"]
-
         # Creare i controlli di testo con dimensioni responsive
         time_text = ft.Text(
             time_str, 
@@ -108,20 +120,23 @@ class HourlyForecastDisplay:
             )
         )
         
+        # Crea l'icona meteo con dimensioni responsive
+        weather_icon = ft.Image(
+            src=f"https://openweathermap.org/img/wn/{icon}@2x.png",
+            width=self.text_handler.get_size('icon'),
+            height=self.text_handler.get_size('icon'),
+            fit=ft.ImageFit.CONTAIN
+        )
+        
         # Aggiungi i controlli al dizionario per l'aggiornamento dinamico
         self.text_controls[time_text] = 'title'
         self.text_controls[temp_text] = 'value'
+        self.text_controls[weather_icon] = 'icon'
 
         return ft.Container(
-            #bgcolor=item_bgcolor,
             content=ft.Column(
                 controls=[
-                    ft.Image(
-                        src=f"https://openweathermap.org/img/wn/{icon}@2x.png",
-                        width=self.text_handler.get_size('icon'),  # Use the base size for icon
-                        height=self.text_handler.get_size('icon'),  # Use the base size for icon
-                        fit=ft.ImageFit.CONTAIN
-                    ),
+                    weather_icon,
                     time_text,
                     temp_text
                 ],
@@ -134,6 +149,8 @@ class HourlyForecastDisplay:
 
     def build(self) -> ft.Container:
         """Builds the hourly forecast container with a scrollable row of items."""
+        # Reset text controls before rebuilding
+        self.text_controls = {}
         self.built_item_containers.clear() # Clear previous items if any (e.g., on a rebuild)
         
         if self.hourly_data_list:
@@ -149,7 +166,6 @@ class HourlyForecastDisplay:
             ),
             expand=True,
             padding=ft.padding.symmetric(vertical=10), # Restore padding
-            
         )
         return self.main_container_ref
 

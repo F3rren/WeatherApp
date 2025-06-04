@@ -19,8 +19,8 @@ LIGHT_THEME = {
     "CARD_BACKGROUND": "#ffffff",
     "MAIN_CARD_BACKGROUND": {
         "gradient": [
-            "#9df1f7ff",  # Cambiato da #ffffff00 a #ffffff per il tema chiaro
             "#ffffffff",  # Cambiato da #ffffff00 a #ffffff per il tema chiaro
+            "#ffffff00",  # Cambiato da #ffffff00 a #ffffff per il tema chiaro
         ],
         "light": "#ffffff",  # Cambiato da #ffffff00 a #ffffff per il tema chiaro
         "dark": "#262626",  # Cambiato da #00000000 a #262626 per il tema scuro
@@ -31,7 +31,6 @@ LIGHT_THEME = {
     "BUTTON_BACKGROUND": "#6b46c1",  # Cambiato da azzurro a viola
     "DIALOG_BACKGROUND": "#ffffff",
     "DIALOG_TEXT": "#000000",
-
 }
 
 # Colori per il tema scuro
@@ -41,17 +40,10 @@ DARK_THEME = {
     "SECONDARY_TEXT": "#cccccc",
     "ACCENT": "#8b5cf6",  # Cambiato da azzurro a viola più chiaro per il tema scuro
     "CARD_BACKGROUND": "#262626",
-    "MAIN_CARD_BACKGROUND": {
-        "gradient": [
-            "#ffffffff",  # Cambiato da #ffffff00 a #ffffff per il tema chiaro
-            "#ffffff00",  # Cambiato da #ffffff00 a #ffffff per il tema chiaro
-        ],
-        "light": "#ffffff",  # Cambiato da #ffffff00 a #ffffff per il tema chiaro
-        "dark": "#262626",  # Cambiato da #00000000 a #262626 per il tema scuro
-    },
     "BORDER": "#444444",
     "ICON": "#ffffff",
-    "BUTTON_TEXT": "#ffffff",    "BUTTON_BACKGROUND": "#8b5cf6",  # Cambiato da azzurro a viola più chiaro
+    "BUTTON_TEXT": "#ffffff",
+    "BUTTON_BACKGROUND": "#8b5cf6",  # Cambiato da azzurro a viola più chiaro
     "DIALOG_BACKGROUND": "#262626",
     "DIALOG_TEXT": "#ffffff",
 }
@@ -79,48 +71,43 @@ MEASUREMENT_UNITS = [
 
 LANGUAGES = [
     {"code": "AL", "name": "Shqip", "flag": "al.png"},
-    {"code": "ZA", "name": "Afrikaans", "flag": "za.png"},
-    {"code": "SA", "name": "العربية", "flag": "sa.png"},
-    {"code": "AZ", "name": "Azərbaycan dili", "flag": "az.png"},
-    {"code": "ES", "name": "Español", "flag": "es.png"},
-    {"code": "BY", "name": "Беларуская", "flag": "by.png"},
+    {"code": "AR", "name": "العربية", "flag": "ae.png"},
     {"code": "BG", "name": "Български", "flag": "bg.png"},
-    {"code": "CN", "name": "简体中文", "flag": "cn.png"},
-    {"code": "TW", "name": "繁體中文", "flag": "tw.png"},
-    {"code": "HR", "name": "Hrvatski", "flag": "hr.png"},
+    {"code": "CA", "name": "Català", "flag": "es.png"},
     {"code": "CZ", "name": "Čeština", "flag": "cz.png"},
-    {"code": "DK", "name": "Dansk", "flag": "dk.png"},
-    {"code": "NL", "name": "Nederlands", "flag": "nl.png"},
-    {"code": "GB", "name": "English", "flag": "gb.png"},
+    {"code": "DA", "name": "Dansk", "flag": "dk.png"},
+    {"code": "DE", "name": "Deutsch", "flag": "de.png"},
+    {"code": "EL", "name": "Ελληνικά", "flag": "gr.png"},
+    {"code": "EN", "name": "English", "flag": "gb.png"},
+    {"code": "FA", "name": "فارسی", "flag": "ir.png"},
     {"code": "FI", "name": "Suomi", "flag": "fi.png"},
     {"code": "FR", "name": "Français", "flag": "fr.png"},
-    {"code": "DE", "name": "Deutsch", "flag": "de.png"},
-    {"code": "GR", "name": "Ελληνικά", "flag": "gr.png"},
-    {"code": "IL", "name": "עברית", "flag": "il.png"},
-    {"code": "IN", "name": "हिन्दी", "flag": "in.png"},
+    {"code": "GL", "name": "Galego", "flag": "es.png"},
+    {"code": "HE", "name": "עברית", "flag": "il.png"},
+    {"code": "HI", "name": "हिन्दी", "flag": "in.png"},
+    {"code": "HR", "name": "Hrvatski", "flag": "hr.png"},
     {"code": "HU", "name": "Magyar", "flag": "hu.png"},
-    {"code": "IS", "name": "Íslenska", "flag": "is.png"},
     {"code": "ID", "name": "Bahasa Indonesia", "flag": "id.png"},
     {"code": "IT", "name": "Italiano", "flag": "it.png"},
-    {"code": "JP", "name": "日本語", "flag": "jp.png"},
+    {"code": "JA", "name": "日本語", "flag": "jp.png"},
     {"code": "KR", "name": "한국어", "flag": "kr.png"},
-    {"code": "TR", "name": "Türkçe", "flag": "tr.png"},
-    {"code": "LV", "name": "Latviešu", "flag": "lv.png"},
+    {"code": "LA", "name": "Latviski", "flag": "lv.png"},
     {"code": "LT", "name": "Lietuvių", "flag": "lt.png"},
-    {"code": "MK", "name": "Македонски", "flag": "mk.png"},
-    {"code": "NO", "name": "Norsk", "flag": "no.png"},
-    {"code": "IR", "name": "فارسی", "flag": "ir.png"},
+    {"code": "MK", "name": "македонски", "flag": "mk.png"},
+    {"code": "NL", "name": "Nederlands", "flag": "nl.png"},
     {"code": "PL", "name": "Polski", "flag": "pl.png"},
     {"code": "PT", "name": "Português", "flag": "pt.png"},
-    {"code": "BR", "name": "Português (Brasil)", "flag": "br.png"},
     {"code": "RO", "name": "Română", "flag": "ro.png"},
     {"code": "RU", "name": "Русский", "flag": "ru.png"},
-    {"code": "RS", "name": "Српски", "flag": "rs.png"},
+    {"code": "SV", "name": "Svenska", "flag": "se.png"},
     {"code": "SK", "name": "Slovenčina", "flag": "sk.png"},
-    {"code": "SI", "name": "Slovenščina", "flag": "si.png"},
-    {"code": "SE", "name": "Svenska", "flag": "se.png"},
-    {"code": "TH", "name": "ไทย", "flag": "th.png"},
+    {"code": "SL", "name": "Slovenščina", "flag": "si.png"},
+    {"code": "ES", "name": "Español", "flag": "es.png"},
+    {"code": "SR", "name": "Српски", "flag": "rs.png"},
+    {"code": "TH", "name": "ภาษาไทย", "flag": "th.png"},
+    {"code": "TR", "name": "Türkçe", "flag": "tr.png"},
     {"code": "UA", "name": "Українська", "flag": "ua.png"},
-    {"code": "VN", "name": "Tiếng Việt", "flag": "vn.png"}
+    {"code": "VI", "name": "Tiếng Việt", "flag": "vn.png"},
+    {"code": "ZH_CN", "name": "简体中文", "flag": "cn.png"},
+    {"code": "ZH_TW", "name": "繁體中文", "flag": "tw.png"}
 ]
-

@@ -1,6 +1,7 @@
 import flet as ft
 from typing import List
-from config import LIGHT_THEME, DARK_THEME # Import theme configurations
+from config import LIGHT_THEME, DARK_THEME
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class TemperatureChart:
     """
@@ -15,16 +16,73 @@ class TemperatureChart:
         self.temp_max = temp_max
         self.text_color = text_color # Initial text color
 
-        # Store references to text elements that need color updates
-        self.legend_max_text = ft.Text("Max", color=self.text_color)
-        self.legend_min_text = ft.Text("Min", color=self.text_color)
-        # Axis labels are more complex as they are generated in build()
-        # We will need to re-generate them or update their color in handle_theme_change
+        # Inizializzazione del ResponsiveTextHandler
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'label': 12,      # Etichette degli assi
+                'legend': 14,     # Testo legenda
+                'icon': 20,       # Dimensione icone
+            },
+            breakpoints=[600, 900, 1200, 1600]  # Breakpoint per il ridimensionamento
+        )
+
+        # Dizionario dei controlli di testo per aggiornamento facile
+        self.text_controls = {}
+        
+        # Sovrascrivi il gestore di ridimensionamento della pagina
+        if self.page:
+            # Salva l'handler originale se presente
+            original_resize_handler = self.page.on_resize
+            
+            def combined_resize_handler(e):
+                # Aggiorna le dimensioni del testo
+                self.text_handler._handle_resize(e)
+                # Aggiorna i controlli di testo
+                self.update_text_controls()
+                # Chiama anche l'handler originale se esiste
+                if original_resize_handler:
+                    original_resize_handler(e)
+            
+            self.page.on_resize = combined_resize_handler
+            
+        # Rimuoviamo la chiamata a add_load_complete_callback che non esiste
+        # Le dimensioni iniziali verranno applicate quando build() viene chiamato
+        
+        # Store references to text elements that need color updates - ora con dimensioni responsive
+        self.legend_max_text = ft.Text("Max", color=self.text_color, size=self.text_handler.get_size('legend'))
+        self.legend_min_text = ft.Text("Min", color=self.text_color, size=self.text_handler.get_size('legend'))
+        
+        # Aggiungi i controlli al dizionario per l'aggiornamento dinamico
+        self.text_controls[self.legend_max_text] = 'legend'
+        self.text_controls[self.legend_min_text] = 'legend'
 
         # Register for theme change events
         state_manager = self.page.session.get('state_manager')
         if state_manager:
             state_manager.register_observer("theme_event", self.handle_theme_change)
+    
+    def update_text_controls(self):
+        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
+        for control, size_category in self.text_controls.items():
+            if size_category == 'icon':
+                # Per le icone, aggiorna size
+                if hasattr(control, 'size'):
+                    control.size = self.text_handler.get_size(size_category)
+            else:
+                # Per i testi, aggiorna size
+                if hasattr(control, 'size'):
+                    control.size = self.text_handler.get_size(size_category)
+                elif hasattr(control, 'style') and hasattr(control.style, 'size'):
+                    control.style.size = self.text_handler.get_size(size_category)
+                # Aggiorna anche i TextSpan se presenti
+                if hasattr(control, 'spans'):
+                    for span in control.spans:
+                        span.style.size = self.text_handler.get_size(size_category)
+        
+        # Richiedi l'aggiornamento della pagina
+        if self.page:
+            self.page.update()
     
     def handle_theme_change(self, event_data=None):
         """Handles theme change events by updating text color and chart elements."""
@@ -44,13 +102,10 @@ class TemperatureChart:
                 if self.legend_min_text.page:
                     self.legend_min_text.update()
 
-            # For axis labels, the chart might need to be rebuilt or its components updated directly.
-            # This example assumes the parent (WeatherView) will refresh the chart component,
-            # which will then call build() again with the new text_color.
-            # If more direct control is needed, store and update axis label Text objects.
+            # For axis labels, the chart might need to be rebuilt
             if hasattr(self, 'chart_control') and self.chart_control.page:
-                 # Update axis label colors directly if possible, or trigger a rebuild
-                 self._update_chart_axis_colors() # Implement this method
+                 # Update axis label colors directly
+                 self._update_chart_axis_colors()
                  self.chart_control.update()
 
     def _update_chart_axis_colors(self):
@@ -61,11 +116,21 @@ class TemperatureChart:
                 for label in self.chart_control.bottom_axis.labels:
                     if isinstance(label.label, ft.Container) and isinstance(label.label.content, ft.Text):
                         label.label.content.color = self.text_color
+                        
+                        # Aggiorna il dizionario dei controlli di testo
+                        self.text_controls[label.label.content] = 'label'
+            
             # Update Y-axis labels
             if self.chart_control.left_axis and self.chart_control.left_axis.labels:
                 for label in self.chart_control.left_axis.labels:
                     if isinstance(label.label, ft.Text):
                         label.label.color = self.text_color
+                        
+                        # Aggiorna il dizionario dei controlli di testo
+                        self.text_controls[label.label] = 'label'
+            
+            # Aggiorna le dimensioni dopo aver cambiato colore
+            self.update_text_controls()
 
     def build(self) -> ft.Column:
         """Build the temperature chart"""
@@ -94,16 +159,16 @@ class TemperatureChart:
             ),
         ]
         
-        # X-axis labels
+        # X-axis labels with responsive text size
         x_labels = [
             ft.ChartAxisLabel(
                 value=i + 1,
                 label=ft.Container(
                     ft.Text(
                         day,
-                        size=12,
+                        size=self.text_handler.get_size('label'),
                         weight=ft.FontWeight.BOLD,
-                        color=self.text_color # Apply text_color
+                        color=self.text_color
                     ),
                     margin=ft.margin.only(top=10),
                 )
@@ -111,17 +176,17 @@ class TemperatureChart:
             for i, day in enumerate(self.days)
         ]
         
-        # Y-axis labels
+        # Y-axis labels with responsive text size
         y_labels = [
             ft.ChartAxisLabel(
                 value=y,
-                label=ft.Text(str(y), size=12, color=self.text_color) # Apply text_color
+                label=ft.Text(str(y), size=self.text_handler.get_size('label'), color=self.text_color)
             )
             for y in range(min_y, max_y + 1, 5)
         ]
         
         # Chart
-        self.chart_control = ft.LineChart( # Store chart for potential direct updates
+        self.chart_control = ft.LineChart(
             data_series=data_series,
             border=ft.border.all(3, ft.Colors.with_opacity(0.2, ft.Colors.ON_SURFACE)),
             horizontal_grid_lines=ft.ChartGridLines(
@@ -143,16 +208,33 @@ class TemperatureChart:
             expand=True,
         )
         
+        # Registra i controlli di testo per il grafico
+        self._register_chart_text_controls()
+        
         return ft.Column([
             ft.Row(
                 [
-                    ft.Icon(name=ft.Icons.SQUARE, color=ft.Colors.RED),
-                    self.legend_max_text, # Use stored text control
-                    ft.Icon(name=ft.Icons.SQUARE, color=ft.Colors.BLUE),
-                    self.legend_min_text, # Use stored text control
+                    ft.Icon(name=ft.Icons.SQUARE, color=ft.Colors.RED, size=self.text_handler.get_size('icon')),
+                    self.legend_max_text,
+                    ft.Icon(name=ft.Icons.SQUARE, color=ft.Colors.BLUE, size=self.text_handler.get_size('icon')),
+                    self.legend_min_text,
                 ], 
-            spacing=20
-        ),
-            self.chart_control # Use stored chart control
-        ]
-    )
+                spacing=20
+            ),
+            self.chart_control
+        ])
+    
+    def _register_chart_text_controls(self):
+        """Registra tutti i controlli di testo del grafico per l'aggiornamento responsive."""
+        if hasattr(self, 'chart_control'):
+            # Registra le etichette dell'asse X
+            if self.chart_control.bottom_axis and self.chart_control.bottom_axis.labels:
+                for label in self.chart_control.bottom_axis.labels:
+                    if isinstance(label.label, ft.Container) and isinstance(label.label.content, ft.Text):
+                        self.text_controls[label.label.content] = 'label'
+            
+            # Registra le etichette dell'asse Y
+            if self.chart_control.left_axis and self.chart_control.left_axis.labels:
+                for label in self.chart_control.left_axis.labels:
+                    if isinstance(label.label, ft.Text):
+                        self.text_controls[label.label] = 'label'

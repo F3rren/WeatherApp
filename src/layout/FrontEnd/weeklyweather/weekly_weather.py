@@ -8,8 +8,6 @@ from components.responsive_text_handler import ResponsiveTextHandler
 
 class WeeklyWeather:
     def __init__(self, page, city, language, unit):
-        #self.bgcolor = "#ffff80" if page.theme_mode == ft.ThemeMode.LIGHT else "#262626" #"#262626",
-        #self.txtcolor= "#000000" if page.theme_mode == ft.ThemeMode.LIGHT else "#ffffff" #"#262626",
         self.page = page
         self.language = language
         self.unit = unit
@@ -22,14 +20,13 @@ class WeeklyWeather:
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes={
-                'label': 120,      # Etichette
-                'icon': 100,       # Icone (dimensione base),
-                'body': 20,       # Testo normale
-                'value': 20,       # Valori (es. temperature, percentuali)
+                'label': 20,       # Etichette (dimensione base più piccola per mobile)
+                'icon': 50,        # Icone (dimensione base)
+                'body': 14,        # Testo normale
+                'value': 16,       # Valori (es. temperature, percentuali)
             },
             breakpoints=[600, 900, 1200, 1600]  # Breakpoint per il ridimensionamento
         )
-
 
         # Dizionario dei controlli di testo per aggiornamento facile
         self.text_controls = {}
@@ -49,7 +46,7 @@ class WeeklyWeather:
                     original_resize_handler(e)
             
             self.page.on_resize = combined_resize_handler
-
+            
     def update_city(self, new_city):
         self.city = new_city
         self.mainInformation.update_city(new_city)
@@ -115,19 +112,23 @@ class WeeklyWeather:
                 text_align=ft.TextAlign.END
             )
             
+            # Crea l'icona meteo con dimensioni responsive
+            weather_icon = ft.Image(
+                src=f"https://openweathermap.org/img/wn/{day_data['icon']}@4x.png",
+                width=self.text_handler.get_size('icon'),
+                height=self.text_handler.get_size('icon'),
+            )
+            
             # Aggiungi i controlli al dizionario per l'aggiornamento dinamico
-            self.text_controls[day_text] = 'title'
+            self.text_controls[day_text] = 'label'
             self.text_controls[temp_text] = 'value'
+            self.text_controls[weather_icon] = 'icon'
             
             row = ft.Row(
                 controls=[
                     day_text,
                     ft.Container(
-                        content=ft.Image(
-                            src=f"https://openweathermap.org/img/wn/{day_data['icon']}@4x.png",
-                            width=self.text_handler.get_size('icon'),
-                            height=self.text_handler.get_size('icon'),
-                        ),
+                        content=weather_icon,
                         expand=True,
                         alignment=ft.alignment.center
                     ),
@@ -149,6 +150,9 @@ class WeeklyWeather:
                     )
                 )
                 
+        # Dopo aver creato tutti i controlli, aggiorna le dimensioni del testo
+        self.update_text_controls()
+        
         return ft.Container(
             alignment=ft.alignment.center,
             content=ft.Column(
@@ -161,7 +165,25 @@ class WeeklyWeather:
 
     def update_text_controls(self):
         """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
-        self.text_handler.update_text_controls(self.text_controls)
+        for control, size_category in self.text_controls.items():
+            if size_category == 'icon':
+                # Per le icone, aggiorna width e height
+                control.width = self.text_handler.get_size(size_category)
+                control.height = self.text_handler.get_size(size_category)
+            else:
+                # Per i testi, aggiorna size
+                if hasattr(control, 'size'):
+                    control.size = self.text_handler.get_size(size_category)
+                elif hasattr(control, 'style') and hasattr(control.style, 'size'):
+                    control.style.size = self.text_handler.get_size(size_category)
+                # Aggiorna anche i TextSpan se presenti
+                if hasattr(control, 'spans'):
+                    for span in control.spans:
+                        span.style.size = self.text_handler.get_size(size_category)
+        
+        # Richiedi l'aggiornamento della pagina
+        if self.page:
+            self.page.update()
 
     def build(self):
         return ft.Container(

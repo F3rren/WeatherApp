@@ -153,9 +153,10 @@ class SettingsAlertDialog:
         # Dialog semplificato per test
         self.dialog = ft.AlertDialog( # Changed from self.dlg to self.dialog
             title=ft.Text("Settings", size=20, weight=ft.FontWeight.BOLD, color=self.text_color),
+            scrollable=True,
             bgcolor=bg_color,
             content=ft.Container(
-                width=400,  # Imposta una larghezza fissa per il dialogo
+                width=500,  # Imposta una larghezza fissa per il dialogo
                 content=ft.Column(
                 controls=[
                     # Sezione lingua
@@ -170,6 +171,7 @@ class SettingsAlertDialog:
                             ),
                             self.language_dropdown.build(),
                         ],
+                        
                         spacing=10,
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -186,6 +188,7 @@ class SettingsAlertDialog:
                             ),
                             self.measurement_dropdown.build(),
                         ],
+                        
                         spacing=10,
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,

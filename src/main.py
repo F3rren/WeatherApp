@@ -18,6 +18,7 @@ from state_manager import StateManager
 from services.geolocation_service import GeolocationService
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
+from services.language_toggle_service import LanguageToggleService
 from ui.weather_view import WeatherView
 
 # Configure logging
@@ -33,6 +34,7 @@ class MeteoApp:
         self.state_manager = None
         self.location_toggle_service = None
         self.theme_toggle_service = None
+        self.language_toggle_service = None
         self.sidebar_container = None
         self.info_container_wrapper = None
         self.weekly_container_wrapper = None
@@ -86,12 +88,19 @@ class MeteoApp:
         self.theme_toggle_service = ThemeToggleService(
             page=page,
             state_manager=self.state_manager
-        )        # Inizializzazione del gestore della sidebar
+        )
+        # Initialize the language toggle service
+        self.language_toggle_service = LanguageToggleService(
+            state_manager=self.state_manager,
+            page=page  # Pass the page object
+        )
+        # Inizializzazione del gestore della sidebar
         self.sidebar_manager = SidebarManager(
             page=page,
             state_manager=self.state_manager,
             location_toggle_service=self.location_toggle_service,
             theme_toggle_service=self.theme_toggle_service,
+            language_toggle_service=self.language_toggle_service, # Add this line
             update_weather_callback=weather_view.update_by_city
         )
         
@@ -138,6 +147,9 @@ class MeteoApp:
         
         # Inizializza il tema dell'applicazione
         await self.theme_toggle_service.initialize_theme()
+
+        # Initialize the application language
+        await self.language_toggle_service.initialize_language()
 
 
 def main():

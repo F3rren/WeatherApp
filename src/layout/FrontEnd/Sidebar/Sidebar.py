@@ -5,7 +5,8 @@ Handles the sidebar functionality.
 
 import flet as ft
 from typing import List, Callable, Optional
-from services.sidebar_service import SidebarService 
+from services.sidebar_service import SidebarService
+from services.language_toggle_service import LanguageToggleService # Added import
 from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
 from layout.frontend.sidebar.searchbar import SearchBar
 from layout.frontend.sidebar.filter.filter import Filter
@@ -16,13 +17,15 @@ class Sidebar:
     """
     def __init__(self, page: ft.Page, on_city_selected: Optional[Callable] = None, 
                 handle_location_toggle: Optional[Callable] = None, location_toggle_value: bool = False,
-                handle_theme_toggle: Optional[Callable] = None, theme_toggle_value: bool = False):
+                handle_theme_toggle: Optional[Callable] = None, theme_toggle_value: bool = False,
+                language_toggle_service: Optional[LanguageToggleService] = None): # Added language_toggle_service
         self.page = page
         self.on_city_selected = on_city_selected
         self.handle_location_toggle = handle_location_toggle
         self.location_toggle_value = location_toggle_value
         self.handle_theme_toggle = handle_theme_toggle
         self.theme_toggle_value = theme_toggle_value
+        self.language_toggle_service = language_toggle_service # Stored service
         self.query = SidebarService()
         self.search_bar = None
         self.cities = self._load_cities()
@@ -63,6 +66,7 @@ class Sidebar:
             state_manager=self.page.session.get('state_manager'),
             handle_location_toggle=self.handle_location_toggle,
             handle_theme_toggle=self.handle_theme_toggle,
+            language_toggle_service=self.language_toggle_service, # Pass it here
             theme_toggle_value=self.theme_toggle_value,
             location_toggle_value=self.location_toggle_value
         )

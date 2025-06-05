@@ -3,16 +3,20 @@ from config import LIGHT_THEME, DARK_THEME # Import theme configurations
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
+from services.language_toggle_service import LanguageToggleService # Added import
+from typing import Optional # Added import
 
 
 class PopMenu:
 
     def __init__(self, page: ft.Page = None, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None, 
+                language_toggle_service: Optional[LanguageToggleService] = None, # Added language_toggle_service
                 theme_toggle_value=False, location_toggle_value=False, text_color: str = None):
         self.page = page
         self.state_manager = state_manager
         self.handle_location_toggle = handle_location_toggle
         self.handle_theme_toggle = handle_theme_toggle
+        self.language_toggle_service = language_toggle_service # Stored service
         self.theme_toggle_value = theme_toggle_value
         self.location_toggle_value = location_toggle_value
         
@@ -28,6 +32,7 @@ class PopMenu:
             state_manager=state_manager, 
             handle_location_toggle=handle_location_toggle,
             handle_theme_toggle=handle_theme_toggle,
+            language_toggle_service=self.language_toggle_service, # Pass it here
             text_color=self.text_color # Pass text_color
         )
 

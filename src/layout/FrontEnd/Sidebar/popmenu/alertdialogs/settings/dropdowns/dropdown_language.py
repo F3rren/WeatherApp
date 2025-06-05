@@ -1,17 +1,23 @@
 ﻿import flet as ft
 from config import LANGUAGES, LIGHT_THEME, DARK_THEME
 import os
+import asyncio
+from services.language_toggle_service import LanguageToggleService
 
 class DropdownLanguage:
     
-    def __init__(self, state_manager=None):
+    def __init__(self, state_manager=None, language_toggle_service: LanguageToggleService = None):
         self.selected_language = None
         self.state_manager = state_manager
+        self.language_toggle_service = language_toggle_service
         self.dropdown = None
         
         # Register for theme change events if state_manager is available
-        if state_manager:
-            state_manager.register_observer("theme_event", self.handle_theme_change)
+        if self.state_manager:
+            # Keep theme observer if needed for dropdown's own styling
+            self.state_manager.register_observer("theme_event", self.handle_theme_change)
+            # Add observer for language changes
+            self.state_manager.register_observer("language_changed", self.handle_language_changed_event)
 
         # Aggiungi un metodo per verificare l'esistenza delle immagini delle bandiere
         self._verify_flag_images()
@@ -105,7 +111,9 @@ class DropdownLanguage:
             selected_code = e.control.value
             print(f'Lingua selezionata dal dropdown: {selected_code}')
             print(f'Nome lingua: {self.get_language_name_by_code(selected_code)}')
-            self.set_language(selected_code)
+            # self.set_language(selected_code) # Removed direct call
+            if self.language_toggle_service:
+                asyncio.create_task(self.language_toggle_service.handle_language_toggle(selected_code))
             if hasattr(self, 'parent') and self.parent:
                 self.parent.update()
 
@@ -113,8 +121,8 @@ class DropdownLanguage:
         current_language_code = 'en'  # Valore predefinito
         if self.state_manager:
             current_language_code = self.state_manager.get_state('language') or 'en'
-            self.selected_language = current_language_code
-            print(f'Lingua corrente dallo state manager: {current_language_code}')
+            # self.selected_language = current_language_code # selected_language is not used anymore
+            print(f'Lingua corrente dallo state manager per il valore iniziale del dropdown: {current_language_code}')
         
         # Assumiamo che il valore nel dropdown debba essere il codice lingua
         # dato che abbiamo impostato key=language["code"] nelle opzioni
@@ -150,32 +158,13 @@ class DropdownLanguage:
                 return language["code"]
         return "en"  # Default
 
-    def set_language(self, language):
-        self.selected_language = language
-        print(f'Impostazione lingua: {language} - {self.get_language_name_by_code(language)}')
-        
-        # Aggiorna lo stato dell'applicazione se state_manager è disponibile
-        if self.state_manager:
-            import asyncio
-            
-            # Funzione wrapper per gestire chiamate asincrone in modo sicuro
-            def call_async_safely(coro):
-                try:
-                    loop = asyncio.get_event_loop()
-                except RuntimeError:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                
-                if not loop.is_running():
-                    return loop.run_until_complete(coro)
-                else:
-                    return asyncio.create_task(coro)
-            
-            # Aggiorna lo stato con il nuovo linguaggio
-            call_async_safely(self.state_manager.set_state("language", language))
-            print(f'Stato aggiornato con lingua: {language}')
-        
-        print(f'Lingua impostata con successo: {self.selected_language} - {self.get_language_name_by_code(self.selected_language)}')
+    async def handle_language_changed_event(self, event_data):
+        new_language_code = event_data.get("new_language")
+        if new_language_code and self.dropdown:
+            if self.dropdown.value != new_language_code:
+                self.dropdown.value = new_language_code
+                if self.dropdown.page: # Check if page is available
+                    self.dropdown.update()
 
     def handle_theme_change(self, event_data=None):
         """Handle theme change events by updating the dropdown appearance"""

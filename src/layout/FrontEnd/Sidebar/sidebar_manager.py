@@ -12,6 +12,7 @@ from layout.frontend.sidebar.sidebar import Sidebar
 from state_manager import StateManager
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
+from services.language_toggle_service import LanguageToggleService
 
 class SidebarManager:
     """
@@ -24,6 +25,7 @@ class SidebarManager:
                  state_manager: StateManager, 
                  location_toggle_service: LocationToggleService,
                  theme_toggle_service: ThemeToggleService,
+                 language_toggle_service: LanguageToggleService,
                  update_weather_callback: Optional[Callable] = None):
         """
         Inizializza il gestore della sidebar.
@@ -39,6 +41,7 @@ class SidebarManager:
         self.state_manager = state_manager
         self.location_toggle_service = location_toggle_service
         self.theme_toggle_service = theme_toggle_service
+        self.language_toggle_service = language_toggle_service
         self.update_weather_callback = update_weather_callback
         self.sidebar = None
     
@@ -86,7 +89,8 @@ class SidebarManager:
             handle_location_toggle=self.location_toggle_service.handle_location_toggle,
             location_toggle_value=self.state_manager.get_state("using_location") or False,
             handle_theme_toggle=self.theme_toggle_service.handle_theme_toggle,
-            theme_toggle_value=self.state_manager.get_state("using_theme") or False
+            theme_toggle_value=self.state_manager.get_state("using_theme") or False,
+            language_toggle_service=self.language_toggle_service # Pass it here
         ).build()
         
         return self.sidebar

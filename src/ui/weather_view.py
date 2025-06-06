@@ -39,6 +39,7 @@ class WeatherView:
         state_manager = self.page.session.get('state_manager')
         if state_manager:
             state_manager.register_observer("theme_event", self.handle_theme_change)
+            state_manager.register_observer("language_event", self.handle_language_change)
 
         self.info_container = ft.Container(content=ft.Text("Caricamento...", color=self.text_color)) # Apply initial text color
         self.weekly_container = ft.Container()
@@ -81,6 +82,17 @@ class WeatherView:
         
         self.page.update()
 
+    def handle_language_change(self, event_data=None):
+        """Aggiorna i contenuti della UI quando cambia la lingua."""
+        # Forza il rebuild dei componenti principali con la nuova lingua
+        if self.current_city:
+            # Recupera la lingua e l'unità correnti dallo state_manager
+            state_manager = self.page.session.get('state_manager')
+            language = state_manager.get_state('language') if state_manager else 'en'
+            unit = state_manager.get_state('unit') if state_manager else 'metric'
+            # Aggiorna la UI principale
+            import asyncio
+            asyncio.create_task(self.update_by_city(self.current_city, language, unit))
 
     async def update_by_city(self, city: str, language: str, unit: str) -> None:
         """Frontend: Triggers backend to fetch weather by city, then updates UI"""

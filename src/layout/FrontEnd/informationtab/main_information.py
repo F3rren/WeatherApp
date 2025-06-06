@@ -77,6 +77,15 @@ class MainWeatherInfo:
                     original_resize_handler(e)
             
             self.page.on_resize = combined_resize_handler
+
+        self.language = None
+        if self.page:
+            state_manager = self.page.session.get('state_manager')
+            if state_manager:
+                self.language = state_manager.get_state('language') or 'en'
+                state_manager.register_observer("language_event", self.handle_language_change)
+        else:
+            self.language = 'en'
     
     def update_text_controls(self):
         """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
@@ -126,6 +135,16 @@ class MainWeatherInfo:
             
             # Aggiorna anche le dimensioni del testo
             self.update_text_controls()
+            
+    def handle_language_change(self, event_data=None):
+        if self.page:
+            state_manager = self.page.session.get('state_manager')
+            if state_manager:
+                self.language = state_manager.get_state('language') or 'en'
+        # Se ci sono label traducibili, aggiornale qui (es: self.location_text se serve traduzione)
+        self.update_text_controls()
+        if hasattr(self, 'location_text'):
+            self.location_text.update()
             
     def build(self) -> ft.Container:
         """Build the main weather information"""

@@ -1,5 +1,6 @@
 ﻿import flet as ft
 from config import LIGHT_THEME, DARK_THEME
+from services.translation_service import TranslationService
 
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
@@ -23,6 +24,14 @@ class SettingsAlertDialog:
         # Register for theme change events if state_manager is available
         if state_manager:
             state_manager.register_observer("theme_event", self.handle_theme_event) # Renamed for clarity
+
+        # Language initialization
+        self.language = None
+        if state_manager:
+            self.language = state_manager.get_state('language') or 'en'
+            state_manager.register_observer("language_event", self.handle_language_change)
+        else:
+            self.language = 'en'
 
     def create_location_toggle(self):
         # Ottieni il valore corrente dallo state manager, se disponibile
@@ -141,6 +150,42 @@ class SettingsAlertDialog:
 
             self.dialog.update()
 
+    def handle_language_change(self, event_data=None):
+        if self.state_manager:
+            self.language = self.state_manager.get_state('language') or 'en'
+        # Aggiorna le label del dialogo
+        if self.dialog:
+            if isinstance(self.dialog.title, ft.Text):
+                self.dialog.title.value = TranslationService.get_text("settings", self.language)
+                self.dialog.title.update()
+            # Aggiorna le label delle sezioni
+            if self.dialog.content and hasattr(self.dialog.content, 'content') and isinstance(self.dialog.content.content, ft.Column):
+                rows = self.dialog.content.content.controls
+                # Language
+                if len(rows) > 0 and isinstance(rows[0].controls[0].controls[1], ft.Text):
+                    rows[0].controls[0].controls[1].value = TranslationService.get_text("language", self.language)
+                    rows[0].controls[0].controls[1].update()
+                # Measurement
+                if len(rows) > 1 and isinstance(rows[1].controls[0].controls[1], ft.Text):
+                    rows[1].controls[0].controls[1].value = TranslationService.get_text("measurement", self.language)
+                    rows[1].controls[0].controls[1].update()
+                # Use current location
+                if len(rows) > 2 and isinstance(rows[2].controls[0].controls[1], ft.Text):
+                    rows[2].controls[0].controls[1].value = TranslationService.get_text("use_current_location", self.language)
+                    rows[2].controls[0].controls[1].update()
+                # Dark theme
+                if len(rows) > 3 and isinstance(rows[3].controls[0].controls[1], ft.Text):
+                    rows[3].controls[0].controls[1].value = TranslationService.get_text("dark_theme", self.language)
+                    rows[3].controls[0].controls[1].update()
+            # Aggiorna il testo del pulsante Close
+            if self.dialog.actions and len(self.dialog.actions) > 0:
+                btn = self.dialog.actions[0]
+                if hasattr(btn, 'content') and isinstance(btn.content, ft.Text):
+                    btn.content.value = TranslationService.get_text("close", self.language)
+                    btn.content.update()
+        if self.dialog:
+            self.dialog.update()
+
     def createAlertDialog(self, page):
         # Determina i colori in base al tema corrente
         is_dark = page.theme_mode == ft.ThemeMode.DARK
@@ -152,7 +197,7 @@ class SettingsAlertDialog:
 
         # Dialog semplificato per test
         self.dialog = ft.AlertDialog( # Changed from self.dlg to self.dialog
-            title=ft.Text("Settings", size=20, weight=ft.FontWeight.BOLD, color=self.text_color),
+            title=ft.Text(TranslationService.get_text("settings", self.language), size=20, weight=ft.FontWeight.BOLD, color=self.text_color),
             scrollable=True,
             bgcolor=bg_color,
             content=ft.Container(
@@ -165,7 +210,7 @@ class SettingsAlertDialog:
                             ft.Row(
                                 controls=[
                                     ft.Icon(ft.Icons.LANGUAGE, size=20, color="#ff6b35"),  # Arancione personalizzato
-                                    ft.Text("Language:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
+                                    ft.Text(TranslationService.get_text("language", self.language), size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
                             ),
@@ -182,7 +227,7 @@ class SettingsAlertDialog:
                             ft.Row(
                                 controls=[
                                     ft.Icon(ft.Icons.STRAIGHTEN, size=20, color="#22c55e"),  # Verde personalizzato
-                                    ft.Text("Measurement:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
+                                    ft.Text(TranslationService.get_text("measurement", self.language), size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
                             ),
@@ -199,7 +244,7 @@ class SettingsAlertDialog:
                             ft.Row(
                                 controls=[
                                     ft.Icon(ft.Icons.LOCATION_ON, size=20, color="#ef4444"),  # Rosso personalizzato
-                                    ft.Text("Use current location:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
+                                    ft.Text(TranslationService.get_text("use_current_location", self.language), size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
                             ),
@@ -214,7 +259,7 @@ class SettingsAlertDialog:
                             ft.Row(
                                 controls=[
                                     ft.Icon(ft.Icons.DARK_MODE, size=20, color="#3b82f6"),  # Blu personalizzato
-                                    ft.Text("Dark theme:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
+                                    ft.Text(TranslationService.get_text("dark_theme", self.language), size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
                             ),
@@ -232,8 +277,8 @@ class SettingsAlertDialog:
             ),
             actions=[
                 ft.TextButton(
-                    "Close",
-                    content=ft.Text("Close", color=current_theme["ACCENT"]), # Ensure text color is applied
+                    TranslationService.get_text("close", self.language),
+                    content=ft.Text(TranslationService.get_text("close", self.language), color=current_theme["ACCENT"]), # Ensure text color is applied
                     style=ft.ButtonStyle(
                         color=current_theme["ACCENT"],
                         overlay_color=ft.Colors.with_opacity(0.1, current_theme["ACCENT"]),

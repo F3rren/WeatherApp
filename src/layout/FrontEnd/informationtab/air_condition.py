@@ -1,6 +1,7 @@
 import flet as ft
 from config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
+from services.translation_service import TranslationService
 
 class AirConditionInfo:
     """
@@ -8,13 +9,14 @@ class AirConditionInfo:
     """
     
     def __init__(self, feels_like: int, humidity: int, wind_speed: int, 
-                 pressure: int, text_color: str, page: ft.Page = None): # Added page
+                 pressure: int, text_color: str, page: ft.Page = None):
         self.feels_like = feels_like
         self.humidity = humidity
         self.wind_speed = wind_speed
         self.pressure = pressure
         self.text_color = text_color
         self.page = page 
+        self.language = "fr"  # Default language
         
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
@@ -31,7 +33,7 @@ class AirConditionInfo:
         self.text_controls = {}
 
         # Creazione dei controlli UI con dimensioni responsive
-        self.title_text = ft.Text("Condizioni Atmosferiche", size=self.text_handler.get_size('title'), weight="bold", color=self.text_color)
+        self.title_text = ft.Text(TranslationService.get_text("air_condition_title", self.language), size=self.text_handler.get_size('title'), weight="bold", color=self.text_color)
         self.divider = ft.Divider(height=1, color=self.text_color)
         
         # Creazione delle icone con dimensioni responsive
@@ -41,10 +43,10 @@ class AirConditionInfo:
         pressure_icon = ft.Icon(ft.Icons.COMPRESS, size=self.text_handler.get_size('icon'), color=self.text_color)
         
         # Creazione delle etichette con dimensioni responsive
-        feels_like_text = ft.Text("Percepita", size=self.text_handler.get_size('label'), weight=ft.FontWeight.BOLD, color=self.text_color)
-        humidity_text = ft.Text("Umidità", size=self.text_handler.get_size('label'), weight=ft.FontWeight.BOLD, color=self.text_color)
-        wind_text = ft.Text("Vento", size=self.text_handler.get_size('label'), weight=ft.FontWeight.BOLD, color=self.text_color)
-        pressure_text = ft.Text("Pressione", size=self.text_handler.get_size('label'), weight=ft.FontWeight.BOLD, color=self.text_color)
+        feels_like_text = ft.Text(TranslationService.get_text("feels_like", self.language), size=self.text_handler.get_size('label'), weight=ft.FontWeight.BOLD, color=self.text_color)
+        humidity_text = ft.Text(TranslationService.get_text("humidity", self.language), size=self.text_handler.get_size('label'), weight=ft.FontWeight.BOLD, color=self.text_color)
+        wind_text = ft.Text(TranslationService.get_text("wind", self.language), size=self.text_handler.get_size('label'), weight=ft.FontWeight.BOLD, color=self.text_color)
+        pressure_text = ft.Text(TranslationService.get_text("pressure", self.language), size=self.text_handler.get_size('label'), weight=ft.FontWeight.BOLD, color=self.text_color)
         
         self.feels_like_label = ft.Row(
             controls=[feels_like_icon, feels_like_text]
@@ -102,6 +104,14 @@ class AirConditionInfo:
             
             self.page.on_resize = combined_resize_handler
 
+        # Inizializza sempre self.language
+        self.language = 'en'
+        if self.page:
+            state_manager = self.page.session.get('state_manager')
+            if state_manager:
+                self.language = state_manager.get_state('language') or 'en'
+                state_manager.register_observer("language_event", self.handle_language_change)
+
     def update_text_controls(self):
         """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
         for control, size_category in self.text_controls.items():
@@ -145,6 +155,21 @@ class AirConditionInfo:
                     
             # Aggiorna anche le dimensioni del testo
             self.update_text_controls()
+
+    def handle_language_change(self, event_data=None):
+        """Aggiorna le label quando cambia la lingua."""
+        if self.page:
+            state_manager = self.page.session.get('state_manager')
+            if state_manager:
+                self.language = state_manager.get_state('language') or 'en'
+        self.title_text.value = TranslationService.get_text("air_condition_title", self.language)
+        # Aggiorna le label delle righe
+        for row, key in zip([self.feels_like_label, self.humidity_label, self.wind_label, self.pressure_label], ["feels_like", "humidity", "wind", "pressure"]):
+            if isinstance(row.controls[1], ft.Text):
+                row.controls[1].value = TranslationService.get_text(key, self.language)
+                row.controls[1].update()
+        self.title_text.update()
+        self.update_text_controls()
 
     def build(self) -> ft.Container:
         """Build the air condition information"""

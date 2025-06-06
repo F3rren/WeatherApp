@@ -92,7 +92,14 @@ class WeatherView:
             unit = state_manager.get_state('unit') if state_manager else 'metric'
             # Aggiorna la UI principale
             import asyncio
-            asyncio.create_task(self.update_by_city(self.current_city, language, unit))
+            task = asyncio.create_task(self.update_by_city(self.current_city, language, unit))
+            # Salva il task per evitare che venga garbage-collectato prematuramente
+            if not hasattr(self, '_pending_tasks'):
+                self._pending_tasks = []
+            self._pending_tasks.append(task)
+            def _on_task_done(t):
+                self._pending_tasks.remove(t)
+            task.add_done_callback(_on_task_done)
 
     async def update_by_city(self, city: str, language: str, unit: str) -> None:
         """Frontend: Triggers backend to fetch weather by city, then updates UI"""
@@ -254,7 +261,6 @@ class WeatherView:
             text_color=self.text_color, # Pass text_color
         )
         self.air_pollution_container.content = air_pollution.build()
-
     async def _update_air_pollution_chart(self, lat: float, lon: float) -> None:
         """Frontend: Updates air pollution chart UI"""
         self._update_text_color() # Ensure text_color is current

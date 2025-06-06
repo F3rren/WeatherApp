@@ -59,7 +59,6 @@ class DropdownMeasurement:
         
         return ft.Dropdown(
             autofocus=True,
-            label="Measurement Unit",
             hint_text="Select measurement system",
             options=self.get_options(),
             on_change=dropdown_changed,

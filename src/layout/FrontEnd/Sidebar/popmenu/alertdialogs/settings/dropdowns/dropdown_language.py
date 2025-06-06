@@ -129,7 +129,6 @@ class DropdownLanguage:
         
         return ft.Dropdown(
             autofocus=True,
-            label='Language',
             hint_text='Select language',
             options=self.get_options(),
             on_change=dropdown_changed,

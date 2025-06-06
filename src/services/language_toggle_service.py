@@ -3,6 +3,7 @@ import flet as ft
 
 from utils.config import DEFAULT_LANGUAGE
 from state_manager import StateManager
+from services.translation_service import TranslationService
 
 class LanguageToggleService:
     def __init__(self, state_manager: StateManager, page):
@@ -16,6 +17,8 @@ class LanguageToggleService:
         Args:
             e: Evento di controllo Flet
         """
+        # Pulisci la cache delle traduzioni quando la lingua cambia
+        TranslationService.clear_cache()
         try:
             using_language = e.control.value
             

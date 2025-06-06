@@ -28,6 +28,15 @@ TRANSLATIONS = {
         "language": "Language:",
         "close": "Close",
         "temperature": "Temperature",
+        "air_quality_index": "Air Quality Index",
+        "aqi_descriptions": [
+            "N/A",
+            "Good",
+            "Fair",
+            "Moderate",
+            "Poor",
+            "Very Poor"
+        ]
     },
     "zh_CN": {
         "feels_like": "体感温度",
@@ -42,6 +51,15 @@ TRANSLATIONS = {
         "language": "语言：",
         "close": "关闭",
         "temperature": "温度",
+        "air_quality_index": "空气质量指数",
+        "aqi_descriptions": [
+            "无数据",
+            "优",
+            "良",
+            "中等",
+            "差",
+            "非常差"
+        ]
     },
     "hi": {
         "feels_like": "अनुभूत तापमान",
@@ -56,6 +74,15 @@ TRANSLATIONS = {
         "language": "भाषा:",
         "close": "बंद करें",
         "temperature": "तापमान",
+        "air_quality_index": "सूचकांक वायु गुणवत्ता",
+        "aqi_descriptions": [
+            "अज्ञात",
+            "अच्छा",
+            "ठीक",
+            "मध्यम",
+            "खराब",
+            "बहुत खराब"
+        ]
     },
     "es": {
         "feels_like": "Sensación térmica",
@@ -70,6 +97,15 @@ TRANSLATIONS = {
         "language": "Idioma:",
         "close": "Cerrar",
         "temperature": "Temperatura",
+        "air_quality_index": "Índice de calidad del aire",
+        "aqi_descriptions": [
+            "Buena",
+            "Buena",
+            "Aceptable",
+            "Moderada",
+            "Mala",
+            "Muy mala"
+        ]
     },
     "ar": {
         "feels_like": "يشعر كأنها",
@@ -84,6 +120,7 @@ TRANSLATIONS = {
         "language": "اللغة:",
         "close": "إغلاق",
         "temperature": "درجة الحرارة",
+        "air_quality_index": "مؤشر جودة الهواء",
     },
     "fr": {
         "feels_like": "Ressenti",
@@ -98,6 +135,15 @@ TRANSLATIONS = {
         "language": "Langue:",
         "close": "Fermer",
         "temperature": "Température",
+        "air_quality_index": "Indice de qualité de l'air",
+        "aqi_descriptions": [
+            "Bonne",
+            "Bonne",
+            "Moyenne",
+            "Modérée",
+            "Mauvaise",
+            "Très mauvaise"
+        ]
     },
     "pt": {
         "feels_like": "Sensação térmica",
@@ -112,6 +158,7 @@ TRANSLATIONS = {
         "language": "Idioma:",
         "close": "Fechar",
         "temperature": "Temperatura",
+        "air_quality_index": "Índice de qualidade do ar",
     },
     "ru": {
         "feels_like": "Ощущается как",
@@ -126,6 +173,7 @@ TRANSLATIONS = {
         "language": "Язык:",
         "close": "Закрыть",
         "temperature": "Температура",
+        "air_quality_index": "Индекс качества воздуха",
     },
     "id": {
         "feels_like": "Terasa seperti",
@@ -140,6 +188,7 @@ TRANSLATIONS = {
         "language": "Bahasa:",
         "close": "Tutup",
         "temperature": "Suhu",
+        "air_quality_index": "Indeks kualitas udara",
     },
     "de": {
         "feels_like": "Gefühlt",
@@ -154,6 +203,15 @@ TRANSLATIONS = {
         "language": "Sprache:",
         "close": "Schließen",
         "temperature": "Temperatur",
+        "air_quality_index": "Luftqualitätsindex",
+        "aqi_descriptions": [
+            "Gut",
+            "Gut",
+            "Befriedigend",
+            "Mäßig",
+            "Schlecht",
+            "Sehr schlecht"
+        ]
     },
     "ja": {
         "feels_like": "体感温度",
@@ -168,6 +226,7 @@ TRANSLATIONS = {
         "language": "言語：",
         "close": "閉じる",
         "temperature": "温度",
+        "air_quality_index": "空気質指数",
     },
     "it": {
         "feels_like": "Percepita",
@@ -182,5 +241,14 @@ TRANSLATIONS = {
         "language": "Lingua:",
         "close": "Chiudi",
         "temperature": "Temperatura",
+        "air_quality_index": "Indice qualità dell'aria",
+        "aqi_descriptions": [
+            "N/D",
+            "Buona",
+            "Discreta",
+            "Moderata",
+            "Scarsa",
+            "Molto scarsa"
+        ]
     },
 }

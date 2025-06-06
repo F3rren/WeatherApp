@@ -1,7 +1,7 @@
 import logging
 import flet as ft
 
-from config import DEFAULT_LANGUAGE
+from utils.config import DEFAULT_LANGUAGE
 from state_manager import StateManager
 
 class LanguageToggleService:

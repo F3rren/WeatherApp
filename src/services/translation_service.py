@@ -1,25 +1,42 @@
 from deep_translator import GoogleTranslator
-from .translations_data import TRANSLATIONS
-
+from utils.translations_data import TRANSLATIONS
 
 class TranslationService:
+    TRANSLATIONS = TRANSLATIONS
+
+    @classmethod
+    def _normalize_lang_code(cls, code):
+        """
+        Normalizza il codice lingua per l'accesso al dizionario locale.
+        Esempio: 'zh-cn', 'ZH_CN', 'zh_CN' -> 'zh_CN'
+        """
+        if not code:
+            return "en"
+        code = code.replace("-", "_").lower()
+        # Gestione speciale per cinese semplificato
+        if code in ("zh_cn", "zh-hans", "zh_sg"):
+            return "zh_CN"
+        # Gestione speciale per cinese tradizionale (se aggiungi zh_TW)
+        if code in ("zh_tw", "zh-hant"):
+            return "zh_TW"
+        # Altri codici: usa solo la parte principale (es: 'it', 'fr')
+        return code.upper() if code.upper() in cls.TRANSLATIONS else code.split("_")[0]
+
     @classmethod
     def get_text(cls, key_or_text, target_language, source_language="en"):
         """
-        Traduci in modo intelligente:
         1. Se la lingua è supportata e la chiave è presente, usa la traduzione locale.
         2. Altrimenti, traduci il testo passato con deep-translator.
         3. Mantieni la maiuscola iniziale se il testo originale la aveva.
         """
-        # Normalizza lingua
-        target = (target_language or "en").split("-")[0].lower()
-        source = (source_language or "en").split("-")[0].lower()
-        # Prova dizionario centralizzato
-        if target in TRANSLATIONS and key_or_text in TRANSLATIONS[target]:
-            translated = TRANSLATIONS[target][key_or_text]
-        elif source in TRANSLATIONS and key_or_text in TRANSLATIONS[source]:
+        target = cls._normalize_lang_code(target_language)
+        source = cls._normalize_lang_code(source_language)
+        # Prova dizionario locale
+        if target in cls.TRANSLATIONS and key_or_text in cls.TRANSLATIONS[target]:
+            translated = cls.TRANSLATIONS[target][key_or_text]
+        elif source in cls.TRANSLATIONS and key_or_text in cls.TRANSLATIONS[source]:
             # Se la chiave esiste solo in inglese, traduci il valore inglese
-            base_text = TRANSLATIONS[source][key_or_text]
+            base_text = cls.TRANSLATIONS[source][key_or_text]
             if target == source:
                 translated = base_text
             else:

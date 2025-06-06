@@ -1,5 +1,5 @@
 import flet as ft
-from config import DARK_THEME, LIGHT_THEME
+from utils.config import DARK_THEME, LIGHT_THEME
 
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement

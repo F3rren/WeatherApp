@@ -11,7 +11,7 @@ from typing import Dict, Any, Tuple, List, Optional
 from dotenv import load_dotenv
 import unicodedata
 
-from config import (
+from utils.config import (
     API_BASE_URL,
     API_WEATHER_ENDPOINT,
     API_GEO_ENDPOINT,

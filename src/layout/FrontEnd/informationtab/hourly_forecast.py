@@ -1,6 +1,6 @@
 import flet as ft
 from datetime import datetime
-from config import LIGHT_THEME, DARK_THEME
+from utils.config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler  # Spostato qui l'import
 
 class HourlyForecastDisplay:

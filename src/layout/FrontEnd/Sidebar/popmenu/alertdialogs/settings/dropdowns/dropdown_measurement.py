@@ -1,6 +1,6 @@
 ﻿# filepath: c:\Users\Utente\Desktop\Progetti\Python\MeteoApp\src\layout\frontend\sidebar\popmenu\alertdialogs\settings\dropdowns\dropdown_measurement.py
 import flet as ft
-from config import MEASUREMENT_UNITS, LIGHT_THEME, DARK_THEME
+from utils.config import MEASUREMENT_UNITS, LIGHT_THEME, DARK_THEME
 
 class DropdownMeasurement:
 

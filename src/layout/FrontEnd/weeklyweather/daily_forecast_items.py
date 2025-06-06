@@ -1,5 +1,5 @@
 import flet as ft
-from config import LIGHT_THEME, DARK_THEME
+from utils.config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class DailyForecastItems:
@@ -20,9 +20,9 @@ class DailyForecastItems:
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes={
-                'label': 20,      # Etichette
+                'label': 30,      # Etichette
                 'icon': 100,       # Icone (dimensione base),
-                'value': 20,       # Valori (es. temperature, percentuali)
+                'value': 18,       # Valori (es. temperature, percentuali)
             },
             breakpoints=[600, 900, 1200, 1600]  # Breakpoint per il ridimensionamento
         )        
@@ -30,10 +30,10 @@ class DailyForecastItems:
 
         self.day_text = ft.Text(
             self.day, 
-            size=self.text_handler.get_size('title'), 
+            size=self.text_handler.get_size('value'),
             weight="bold", 
             color=self.text_color,
-            width=80  # Fissa una larghezza per il testo del giorno
+            #width=80  # Fissa una larghezza per il testo del giorno
         )
 
         self.icon = ft.Container(

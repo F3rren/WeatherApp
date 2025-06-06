@@ -4,7 +4,7 @@ Handles the display of weather information.
 """
 
 import flet as ft
-from config import LIGHT_THEME, DARK_THEME
+from utils.config import LIGHT_THEME, DARK_THEME
 
 from services.api_service import ApiService
 

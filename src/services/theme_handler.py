@@ -4,10 +4,9 @@ Centralizes theme management and container color updating based on theme changes
 """
 
 import flet as ft
-import logging
 from typing import Dict, Optional, Any
 
-from config import LIGHT_THEME, DARK_THEME
+from utils.config import LIGHT_THEME, DARK_THEME
 
 class ThemeHandler:
     """

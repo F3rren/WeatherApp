@@ -1,6 +1,6 @@
 import flet as ft
 from services.api_service import ApiService
-from config import LIGHT_THEME, DARK_THEME
+from utils.config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class AirPollution:

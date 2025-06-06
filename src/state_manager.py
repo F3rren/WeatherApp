@@ -7,7 +7,7 @@ import flet as ft
 from typing import Callable, Dict, Any, List
 import asyncio
 
-from config import DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT
+from utils.config import DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT
 
 class StateManager:
     """

@@ -8,7 +8,7 @@ import logging
 from typing import Dict
 
 from layout.frontend.layout_builder import LayoutBuilder
-from config import LIGHT_THEME, DARK_THEME
+from utils.config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class LayoutManager:

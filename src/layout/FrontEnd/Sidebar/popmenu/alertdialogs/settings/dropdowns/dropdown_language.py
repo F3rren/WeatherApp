@@ -1,6 +1,8 @@
 ﻿import flet as ft
-from config import LANGUAGES, LIGHT_THEME, DARK_THEME
 import os
+
+from utils.config import LIGHT_THEME, DARK_THEME
+from utils.translations_data import LANGUAGES 
 
 class DropdownLanguage:
     

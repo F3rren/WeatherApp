@@ -44,4 +44,7 @@ class TranslationService:
 
     @classmethod
     def get_text(cls, key, language):
-        return cls._translations.get(language, {}).get(key, key)
+        lang = (language or "en").lower()
+        if lang not in cls._translations:
+            lang = "en"
+        return cls._translations[lang].get(key, cls._translations["en"].get(key, key))

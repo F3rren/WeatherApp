@@ -16,8 +16,15 @@ class AirConditionInfo:
         self.pressure = pressure
         self.text_color = text_color
         self.page = page 
-        self.language = "fr"  # Default language
         
+        # Inizializza la lingua dinamicamente PRIMA di usarla
+        if page and hasattr(page, 'session') and page.session.get('state_manager'):
+            state_manager = page.session.get('state_manager')
+            self.language = state_manager.get_state('language') or 'en'
+            state_manager.register_observer("language_event", self.handle_language_change)
+        else:
+            self.language = 'en'
+
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes= {
@@ -103,14 +110,6 @@ class AirConditionInfo:
                     original_resize_handler(e)
             
             self.page.on_resize = combined_resize_handler
-
-        # Inizializza sempre self.language
-        self.language = 'en'
-        if self.page:
-            state_manager = self.page.session.get('state_manager')
-            if state_manager:
-                self.language = state_manager.get_state('language') or 'en'
-                state_manager.register_observer("language_event", self.handle_language_change)
 
     def update_text_controls(self):
         """Aggiorna le dimensioni del testo per tutti i controlli registrati"""

@@ -17,62 +17,70 @@ class DropdownMeasurement:
         if state_manager:
             state_manager.register_observer("theme_event", self.handle_theme_change)
 
-    def get_options(self):
+    def get_options(self, theme=None):
+        # Accept theme so we can set the correct color for option content
+        if theme is None:
+            is_dark = False
+            if self.state_manager and hasattr(self.state_manager, 'page'):
+                is_dark = self.state_manager.page.theme_mode == ft.ThemeMode.DARK
+            theme = DARK_THEME if is_dark else LIGHT_THEME
         options = []
         for unit in self.units:
             code = unit["code"]
             name = unit["name"]
             options.append(
-                ft.DropdownOption(
-                    key=code,  # Usa il codice come chiave
-                    text=name,  # Il testo visualizzato è il nome completo
+                ft.dropdown.Option(
+                    key=code,
+                    text=name,
                     content=ft.Text(
                         value=name,
+                        color=theme["TEXT"]
                     ),
                 )
             )
         return options
     
     def createDropdown(self):
-        
         def dropdown_changed(e):
-            # Usa direttamente il valore, che sarà il codice dell'unità
             unit_code = e.control.value
             self.set_unit(unit_code)
-            print(f"Unit set to: {unit_code} ({self.unit_labels.get(unit_code, 'Unknown')})")
-            # Aggiornato solo se il parent è stato impostato
             if hasattr(self, 'parent') and self.parent:
                 self.parent.update()
 
-        # Ottieni il valore corrente dell'unità di misura dallo state manager, se disponibile
-        current_unit = "metric"  # Valore predefinito
+        current_unit = "metric"
         if self.state_manager:
             current_unit = self.state_manager.get_state('unit') or "metric"
             self.selected_unit = current_unit
-            print(f"Current unit from state manager: {current_unit}")
 
-        # Determina i colori in base al tema corrente
         is_dark = False
         if self.state_manager and hasattr(self.state_manager, 'page'):
             is_dark = self.state_manager.page.theme_mode == ft.ThemeMode.DARK
         theme = DARK_THEME if is_dark else LIGHT_THEME
-        
-        return ft.Dropdown(
+
+        dropdown = ft.Dropdown(
             autofocus=True,
             hint_text="Select measurement system",
-            options=self.get_options(),
+            options=self.get_options(theme),
             on_change=dropdown_changed,
-            expand=True,  # Usa tutto lo spazio disponibile
+            expand=True,
             value=current_unit,
-            # text_size rimosso poiché non supportato in Flet 0.28.2
             border_width=2,
             border_color=theme["BORDER"],
             focused_border_color=theme["ACCENT"],
             focused_border_width=2,
             bgcolor=theme["CARD_BACKGROUND"],
             color=theme["TEXT"],
-            content_padding=ft.padding.all(8)
+            content_padding=ft.padding.all(8),
         )
+        # Imposta label_style e hint_style come nel dropdown lingua
+        if dropdown.hint_style is None:
+            dropdown.hint_style = ft.TextStyle()
+        dropdown.hint_style.color = theme.get("SECONDARY_TEXT", ft.Colors.GREY_700)
+        if dropdown.label_style is None:
+            dropdown.label_style = ft.TextStyle()
+        dropdown.label_style.color = theme.get("SECONDARY_TEXT", ft.Colors.GREY_700)
+        self.dropdown = dropdown
+        return dropdown
 
     def set_unit(self, unit_code):
         self.selected_unit = unit_code
@@ -106,30 +114,24 @@ class DropdownMeasurement:
                 is_dark = event_data["is_dark"]
             elif hasattr(self.state_manager, 'page'):  # Fallback
                 is_dark = self.state_manager.page.theme_mode == ft.ThemeMode.DARK
-            
             theme = DARK_THEME if is_dark else LIGHT_THEME
-            
-            # Update dropdown appearance with the new theme colors
             self.dropdown.border_color = theme.get("BORDER", ft.colors.BLACK)
             self.dropdown.focused_border_color = theme.get("ACCENT", ft.colors.BLUE)
             self.dropdown.bgcolor = theme.get("CARD_BACKGROUND", ft.colors.WHITE)
             self.dropdown.color = theme.get("TEXT", ft.colors.BLACK)
-
-            # Update label and hint text colors
-            # Ensure label_style and hint_style are initialized if they are None
-            if self.dropdown.label_style is None:
-                self.dropdown.label_style = ft.TextStyle()
-            self.dropdown.label_style.color = theme.get("SECONDARY_TEXT", ft.colors.GRAY_700)
-
+            # Imposta label_style e hint_style come nel dropdown lingua
             if self.dropdown.hint_style is None:
                 self.dropdown.hint_style = ft.TextStyle()
-            self.dropdown.hint_style.color = theme.get("SECONDARY_TEXT", ft.colors.GRAY_700)
-            
-            # Request update of the dropdown
+            self.dropdown.hint_style.color = theme.get("SECONDARY_TEXT", ft.Colors.GREY_700)
+            if self.dropdown.label_style is None:
+                self.dropdown.label_style = ft.TextStyle()
+            self.dropdown.label_style.color = theme.get("SECONDARY_TEXT", ft.Colors.GREY_700)
+            self.dropdown.options = self.get_options(theme)
             self.dropdown.update()
 
     def get_selected_unit(self):
         return self.selected_unit
 
     def build(self):
-        return self.createDropdown()
+        self.dropdown = self.createDropdown()
+        return self.dropdown

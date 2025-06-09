@@ -17,7 +17,6 @@ class LocationToggle:
         """Build the location toggle"""
         
         def handle_toggle_change(e):
-            print(f"Toggle changed to: {e.control.value}")
             if self.on_change:
                 # Usando una funzione wrapper che gestisce sia funzioni sincrone che asincrone
                 # senza richiedere un event loop esistente

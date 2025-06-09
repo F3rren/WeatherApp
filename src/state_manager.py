@@ -3,6 +3,7 @@ State Manager for the MeteoApp.
 Centralizes all application state and provides methods to update it.
 """
 
+import logging
 import flet as ft
 from typing import Callable, Dict, Any, List
 import asyncio
@@ -76,8 +77,8 @@ class StateManager:
                     # Create a task to run the callback asynchronously
                     asyncio.create_task(self._run_callback(callback, value))
                 except Exception as e:
-                    print(f"Error notifying observer: {e}")
-    
+                    logging.error(f"Error notifying observer: {e}")
+
     async def _run_callback(self, callback: Callable, value: Any) -> None:
         """Run a callback, handling both async and sync callbacks"""
         try:
@@ -86,8 +87,8 @@ class StateManager:
             else:
                 callback(value)
         except Exception as e:
-            print(f"Error in observer callback: {e}")
-            
+            logging.error(f"Error in observer callback: {e}")
+
     async def notify_all(self, event_type: str, data: Any) -> None:
         """
         Notifica tutti gli osservatori di un evento generico.
@@ -103,4 +104,4 @@ class StateManager:
                     # Crea un task per eseguire il callback in modo asincrono
                     asyncio.create_task(self._run_callback(callback, data))
                 except Exception as e:
-                    print(f"Errore nella notifica dell'evento {event_type}: {e}")
+                    logging.error(f"Errore nella notifica dell'evento {event_type}: {e}")

@@ -1,5 +1,6 @@
 ﻿# filepath: c:\Users\Utente\Desktop\Progetti\Python\MeteoApp\src\layout\frontend\sidebar\popmenu\alertdialogs\settings\dropdowns\dropdown_measurement.py
 import flet as ft
+import logging
 from utils.config import MEASUREMENT_UNITS, LIGHT_THEME, DARK_THEME
 
 class DropdownMeasurement:
@@ -62,7 +63,8 @@ class DropdownMeasurement:
             hint_text="Select measurement system",
             options=self.get_options(theme),
             on_change=dropdown_changed,
-            expand=True,
+            # expand=True, # Removed to allow custom width
+            width=200, # Set a common width
             value=current_unit,
             border_width=2,
             border_color=theme["BORDER"],
@@ -70,7 +72,7 @@ class DropdownMeasurement:
             focused_border_width=2,
             bgcolor=theme["CARD_BACKGROUND"],
             color=theme["TEXT"],
-            content_padding=ft.padding.all(8),
+            content_padding=ft.padding.symmetric(horizontal=10, vertical=8), # Adjusted padding
         )
         # Imposta label_style e hint_style come nel dropdown lingua
         if dropdown.hint_style is None:
@@ -104,7 +106,7 @@ class DropdownMeasurement:
             
             # Aggiorna lo stato con la nuova unità di misura
             call_async_safely(self.state_manager.set_state("unit", unit_code))
-            print(f"State updated with unit: {unit_code}")
+            logging.info(f"State updated with unit: {unit_code}")
 
     def handle_theme_change(self, event_data=None):
         """Handle theme change events by updating the dropdown appearance"""
@@ -133,5 +135,6 @@ class DropdownMeasurement:
         return self.selected_unit
 
     def build(self):
-        self.dropdown = self.createDropdown()
+        if not self.dropdown: # Create dropdown only if it doesn't exist
+            self.dropdown = self.createDropdown()
         return self.dropdown

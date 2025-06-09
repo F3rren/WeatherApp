@@ -44,6 +44,8 @@ TRANSLATIONS = {
         "friday": "Friday",
         "saturday": "Saturday",
         "sunday": "Sunday",
+        "max": "Max",
+        "min": "Min",
     },
     "zh_cn": {
         "feels_like": "体感温度",
@@ -74,6 +76,8 @@ TRANSLATIONS = {
         "friday": "星期五",
         "saturday": "星期六",
         "sunday": "星期日",
+        "max": "最大值",
+        "min": "最小值",
     },
     "hi": {
         "feels_like": "अनुभूत तापमान",
@@ -104,6 +108,8 @@ TRANSLATIONS = {
         "friday": "शुक्रवार",
         "saturday": "शनिवार",
         "sunday": "रविवार",
+        "max": "अधिकतम",
+        "min": "न्यूनतम",
     },
     "es": {
         "feels_like": "Sensación térmica",
@@ -134,6 +140,8 @@ TRANSLATIONS = {
         "friday": "Viernes",
         "saturday": "Sábado",
         "sunday": "Domingo",
+        "max": "Máx",
+        "min": "Mín",
     },
     "ar": {
         "feels_like": "يشعر كأنها",
@@ -156,6 +164,8 @@ TRANSLATIONS = {
         "friday": "الجمعة",
         "saturday": "السبت",
         "sunday": "الأحد",
+        "max": "الأعلى",
+        "min": "الأدنى",
     },
     "fr": {
         "feels_like": "Ressenti",
@@ -186,6 +196,8 @@ TRANSLATIONS = {
         "friday": "Vendredi",
         "saturday": "Samedi",
         "sunday": "Dimanche",
+        "max": "Max",
+        "min": "Min",
     },
     "pt": {
         "feels_like": "Sensação térmica",
@@ -208,6 +220,8 @@ TRANSLATIONS = {
         "friday": "Sexta-feira",
         "saturday": "Sábado",
         "sunday": "Domingo",
+        "max": "Máx",
+        "min": "Mín",
     },
     "ru": {
         "feels_like": "Ощущается как",
@@ -230,6 +244,8 @@ TRANSLATIONS = {
         "friday": "Пятница",
         "saturday": "Суббота",
         "sunday": "Воскресенье",
+        "max": "Макс",
+        "min": "Мин",
     },
     "id": {
         "feels_like": "Terasa seperti",
@@ -252,6 +268,8 @@ TRANSLATIONS = {
         "friday": "Jumat",
         "saturday": "Sabtu",
         "sunday": "Minggu",
+        "max": "Maks",
+        "min": "Min",
     },
     "de": {
         "feels_like": "Gefühlt",
@@ -282,6 +300,8 @@ TRANSLATIONS = {
         "friday": "Freitag",
         "saturday": "Samstag",
         "sunday": "Sonntag",
+        "max": "Max",
+        "min": "Min",
     },
     "ja": {
         "feels_like": "体感温度",
@@ -304,6 +324,8 @@ TRANSLATIONS = {
         "friday": "金曜日",
         "saturday": "土曜日",
         "sunday": "日曜日",
+        "max": "最大",
+        "min": "最小",
     },
     "it": {
         "feels_like": "Percepita",
@@ -334,5 +356,7 @@ TRANSLATIONS = {
         "friday": "Venerdì",
         "saturday": "Sabato",
         "sunday": "Domenica",
+        "max": "Max",
+        "min": "Min",
     },
 }

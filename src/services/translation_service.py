@@ -135,12 +135,6 @@ class TranslationService:
                 if not isinstance(translated_list, list):
                     raise ValueError('Batch translation did not return a list')
             except Exception:
-                # Silenzia il log batch translation per lingue non supportate
-                # (Se vuoi loggare solo in debug, puoi usare: if __debug__)
-                # if "text must be a valid text" in str(e):
-                #     pass  # Silenzioso
-                # else:
-                #     print(f"[TranslationService] Batch translation error for '{google_code}': {e}")
                 translated_list = []
                 for desc in descriptions:
                     try:

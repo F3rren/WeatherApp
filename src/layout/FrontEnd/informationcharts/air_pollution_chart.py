@@ -311,8 +311,8 @@ class AirPollutionChart:
                 color=ft.Colors.GREY_300, width=1, dash_pattern=[9, 4]
             ),
             tooltip_bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_300),
-            max_y=final_max_y, # Use calculated and rounded final_max_y
-            interactive=True,
+            max_y=final_max_y,  # Use the calculated dynamic max_y
+            interactive=False,  # Disable hover/tooltips
             expand=True,
         )
         

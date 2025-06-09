@@ -49,9 +49,9 @@ class ApiService:
                 params = {
                     "lat": lat,
                     "lon": lon,
-                    "appid": self._api_key,
                     "units": unit,
-                    "lang": language
+                    "lang": language,
+                    "appid": self._api_key
                 }
                 response = requests.get(url, params=params)
                 if response.status_code == 200:
@@ -311,18 +311,13 @@ class ApiService:
         Returns:
             Dictionary containing processed air pollution data
         """
-        print(f"ApiService.get_air_pollution called with lat={lat}, lon={lon}")
         try:
             url = f"{API_BASE_URL}{API_AIR_POLLUTION_ENDPOINT}"
             params = {"lat": lat, "lon": lon, "appid": self._api_key}
-            print(f"Making API request to: {url} with params: {params}")
-            
             response = requests.get(url, params=params)
             response.raise_for_status()
             
             data = response.json()
-            print(f"Raw API response: {data}")
-            
             # Process the data to extract useful information
             if "list" in data and len(data["list"]) > 0:
                 # Get the first forecast item (current or nearest time)
@@ -344,13 +339,10 @@ class ApiService:
                     "pm10": components.get("pm10", 0),  # Coarse particles, μg/m3
                     "nh3": components.get("nh3", 0)  # Ammonia, μg/m3
                 }
-                print(f"Processed air pollution data: {result}")
                 return result
             
-            print("No air pollution data found in API response")
-            return {}
+            return None
         
         except requests.exceptions.RequestException as e:
             logging.error(f"Error fetching air pollution data: {e}")
-            print(f"Error fetching air pollution data: {e}")
             return {}

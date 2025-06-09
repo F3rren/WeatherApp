@@ -306,7 +306,6 @@ class SettingsAlertDialog:
                     on_click=lambda e: page.close(self.dialog)
                 ),
             ],
-            on_dismiss=lambda e: print("Dialog closed"),
         )
         
         # Rimosso: return ft.ElevatedButton(...)

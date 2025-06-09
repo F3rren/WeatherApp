@@ -116,7 +116,7 @@ class WeatherAlertDialog:
             title=title_text,
             bgcolor=bg_color,
             content=ft.Container(
-                width=400,  # Imposta una larghezza fissa per il dialogo
+                #width=400,  # Imposta una larghezza fissa per il dialogo
                 content=ft.Column(
                 controls=[
                     # Sezione lingua
@@ -174,7 +174,7 @@ class WeatherAlertDialog:
                 height=280,
                 expand=True,
                 spacing=20,
-            ),
+                ),
             ),
             actions=[
                 ft.TextButton(
@@ -187,7 +187,6 @@ class WeatherAlertDialog:
                     on_click=lambda e: page.close(self.dialog)
                 ),
             ],
-            on_dismiss=lambda e: print("Dialog closed"),
         )
         
         return self.dialog

@@ -192,5 +192,4 @@ class MapsAlertDialog:
                     on_click=lambda e: page.close(self.dialog) # Changed from self.dlg to self.dialog
                 ),
             ],
-            on_dismiss=lambda e: print("Dialog closed"),
         )

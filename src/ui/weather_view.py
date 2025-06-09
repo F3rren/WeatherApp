@@ -4,6 +4,7 @@ Handles the display of weather information.
 """
 
 import flet as ft
+import logging
 from utils.config import LIGHT_THEME, DARK_THEME
 
 from services.api_service import ApiService
@@ -164,9 +165,9 @@ class WeatherView:
                 await self._update_air_pollution(lat, lon)
                 await self._update_air_pollution_chart(lat, lon)
             else:
-                print("No coordinates available for air pollution data")
+                logging.error("No coordinates available for air pollution data")
         except (KeyError, IndexError, TypeError) as e:
-            print(f"Error getting coordinates for air pollution: {e}")
+            logging.error(f"Error getting coordinates for air pollution: {e}")
         self.page.update()
 
     async def _update_main_info(self, city: str, is_current_location: bool) -> None:
@@ -192,21 +193,28 @@ class WeatherView:
         hourly_data = self.api_service.get_hourly_forecast_data(self.weather_data)[:6]
         
         # Utilizza la nuova classe per costruire la sezione delle previsioni orarie
-        hourly_forecast = HourlyForecastDisplay(
+        hourly_forecast_display = HourlyForecastDisplay(
             hourly_data=hourly_data,
             text_color=self.text_color,
             page=self.page
-        ).build()
+        )
+        hourly_forecast_control = hourly_forecast_display.build()
 
         # Costruisce le sezioni dell'interfaccia
-        main_info = MainWeatherInfo(city, location, temperature, icon_code, self.text_color, self.page).build()
+        # Before creating a new MainWeatherInfo, clean up the old one if it exists
+        if hasattr(self, 'main_weather_info_instance') and self.main_weather_info_instance:
+            self.main_weather_info_instance.cleanup() # Call the new cleanup method
 
-        air_condition = AirConditionInfo(feels_like, humidity, wind_speed, pressure, self.text_color, self.page).build()
+        self.main_weather_info_instance = MainWeatherInfo(city, location, temperature, icon_code, self.text_color, self.page)
+        main_info_control = self.main_weather_info_instance.build()
+
+        air_condition_info = AirConditionInfo(feels_like, humidity, wind_speed, pressure, self.text_color, self.page)
+        air_condition_control = air_condition_info.build()
 
         # Assembla il contenuto e aggiorna il contenitore
         self.info_container.content = WeatherCard(self.page).build(
             ft.Column(
-                controls=[main_info, hourly_forecast, air_condition],
+                controls=[main_info_control, hourly_forecast_control, air_condition_control],
                 expand=True,
                 spacing=10,
                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH  # Assicura che i figli si estendano

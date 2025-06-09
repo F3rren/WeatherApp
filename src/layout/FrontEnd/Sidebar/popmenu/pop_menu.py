@@ -1,4 +1,5 @@
 import flet as ft
+import logging
 from utils.config import LIGHT_THEME, DARK_THEME # Import theme configurations
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
@@ -94,12 +95,14 @@ class PopMenu:
             
             # Propagate theme change to SettingsAlertDialog
             if hasattr(self, 'setting_alert'):
-                self.setting_alert.handle_theme_change(event_data) # Pass event_data
+                # Use the correct method name for theme change
+                if hasattr(self.setting_alert, 'handle_theme_event'):
+                    self.setting_alert.handle_theme_event(event_data)
 
     def _open_alert_dialog(self, alert_instance):
         """Helper method to create (if needed) and open an alert dialog."""
         if not self.page:
-            print("Error: Page context not available for opening dialog.")
+            logging.error("Error: Page context not available for opening dialog.")
             return
         if not hasattr(alert_instance, 'dialog') or not alert_instance.dialog:
             alert_instance.createAlertDialog(self.page)
@@ -108,14 +111,14 @@ class PopMenu:
         if hasattr(alert_instance, 'dialog') and alert_instance.dialog:
             self.page.open(alert_instance.dialog)
         else:
-            print(f"Error: Dialog for {type(alert_instance).__name__} could not be created or found for opening.")
+            logging.error(f"Error: Dialog for {type(alert_instance).__name__} could not be created or found for opening.")
 
     def createPopMenu(self, page=None): # page arg can be removed if self.page is always set
         if page is None: 
             page = self.page # Use self.page if available
         
         if not page: # Ensure we have a page context
-            print("Error: Page context is required to create PopMenu and its dialogs.")
+            logging.error("Error: Page context is required to create PopMenu and its dialogs.")
             return ft.Container(ft.Text("Error: Page context missing"))
 
 

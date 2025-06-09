@@ -1,6 +1,6 @@
 import flet as ft
 from services.translation_service import TranslationService
-from utils.config import LIGHT_THEME, DARK_THEME
+from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class DailyForecastItems:
@@ -29,10 +29,10 @@ class DailyForecastItems:
         # Inizializza la lingua dinamicamente PRIMA di usarla
         if page and hasattr(page, 'session') and page.session.get('state_manager'):
             state_manager = page.session.get('state_manager')
-            self.language = state_manager.get_state('language') or 'en'
+            self.language = state_manager.get_state('language') or DEFAULT_LANGUAGE
             state_manager.register_observer("language_event", self.handle_language_change)
         else:
-            self.language = 'en'
+            self.language = DEFAULT_LANGUAGE
 
         # Traduci il giorno della settimana nella lingua selezionata
         self.day_text = ft.Text(

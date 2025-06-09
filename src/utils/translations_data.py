@@ -1,16 +1,16 @@
 LANGUAGES = [
-    {"code": "AR", "name": "العربية", "flag": "ar.png"},
-    {"code": "ID", "name": "Bahasa Indonesia", "flag": "id.png"},
-    {"code": "DE", "name": "Deutsch", "flag": "de.png"},
-    {"code": "EN", "name": "English", "flag": "gb.png"},
-    {"code": "FR", "name": "Français", "flag": "fr.png"},
-    {"code": "HI", "name": "हिन्दी", "flag": "in.png"},
-    {"code": "IT", "name": "Italiano", "flag": "it.png"},
-    {"code": "JA", "name": "日本語", "flag": "jp.png"},
-    {"code": "PT", "name": "Português", "flag": "pt.png"},
-    {"code": "RU", "name": "Русский", "flag": "ru.png"},
-    {"code": "ES", "name": "Español", "flag": "es.png"},
-    {"code": "ZH_CN", "name": "简体中文", "flag": "cn.png"},
+    {"code": "ar", "name": "العربية", "flag": "ar.png"},
+    {"code": "id", "name": "Bahasa Indonesia", "flag": "id.png"},
+    {"code": "de", "name": "Deutsch", "flag": "de.png"},
+    {"code": "en", "name": "English", "flag": "gb.png"},
+    {"code": "fr", "name": "Français", "flag": "fr.png"},
+    {"code": "hi", "name": "हिन्दी", "flag": "in.png"},
+    {"code": "it", "name": "Italiano", "flag": "it.png"},
+    {"code": "ja", "name": "日本語", "flag": "jp.png"},
+    {"code": "pt", "name": "Português", "flag": "pt.png"},
+    {"code": "ru", "name": "Русский", "flag": "ru.png"},
+    {"code": "es", "name": "Español", "flag": "es.png"},
+    {"code": "zh_cn", "name": "简体中文", "flag": "cn.png"},
 ]
 
 
@@ -36,9 +36,16 @@ TRANSLATIONS = {
             "Moderate",
             "Poor",
             "Very Poor"
-        ]
+        ],
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday",
     },
-    "zh_CN": {
+    "zh_cn": {
         "feels_like": "体感温度",
         "humidity": "湿度",
         "wind": "风速",
@@ -59,7 +66,14 @@ TRANSLATIONS = {
             "中等",
             "差",
             "非常差"
-        ]
+        ],
+        "monday": "星期一",
+        "tuesday": "星期二",
+        "wednesday": "星期三",
+        "thursday": "星期四",
+        "friday": "星期五",
+        "saturday": "星期六",
+        "sunday": "星期日",
     },
     "hi": {
         "feels_like": "अनुभूत तापमान",
@@ -82,7 +96,14 @@ TRANSLATIONS = {
             "मध्यम",
             "खराब",
             "बहुत खराब"
-        ]
+        ],
+        "monday": "सोमवार",
+        "tuesday": "मंगलवार",
+        "wednesday": "बुधवार",
+        "thursday": "गुरुवार",
+        "friday": "शुक्रवार",
+        "saturday": "शनिवार",
+        "sunday": "रविवार",
     },
     "es": {
         "feels_like": "Sensación térmica",
@@ -105,7 +126,14 @@ TRANSLATIONS = {
             "Moderada",
             "Mala",
             "Muy mala"
-        ]
+        ],
+        "monday": "Lunes",
+        "tuesday": "Martes",
+        "wednesday": "Miércoles",
+        "thursday": "Jueves",
+        "friday": "Viernes",
+        "saturday": "Sábado",
+        "sunday": "Domingo",
     },
     "ar": {
         "feels_like": "يشعر كأنها",
@@ -121,6 +149,13 @@ TRANSLATIONS = {
         "close": "إغلاق",
         "temperature": "درجة الحرارة",
         "air_quality_index": "مؤشر جودة الهواء",
+        "monday": "الاثنين",
+        "tuesday": "الثلاثاء",
+        "wednesday": "الأربعاء",
+        "thursday": "الخميس",
+        "friday": "الجمعة",
+        "saturday": "السبت",
+        "sunday": "الأحد",
     },
     "fr": {
         "feels_like": "Ressenti",
@@ -143,7 +178,14 @@ TRANSLATIONS = {
             "Modérée",
             "Mauvaise",
             "Très mauvaise"
-        ]
+        ],
+        "monday": "Lundi",
+        "tuesday": "Mardi",
+        "wednesday": "Mercredi",
+        "thursday": "Jeudi",
+        "friday": "Vendredi",
+        "saturday": "Samedi",
+        "sunday": "Dimanche",
     },
     "pt": {
         "feels_like": "Sensação térmica",
@@ -159,6 +201,13 @@ TRANSLATIONS = {
         "close": "Fechar",
         "temperature": "Temperatura",
         "air_quality_index": "Índice de qualidade do ar",
+        "monday": "Segunda-feira",
+        "tuesday": "Terça-feira",
+        "wednesday": "Quarta-feira",
+        "thursday": "Quinta-feira",
+        "friday": "Sexta-feira",
+        "saturday": "Sábado",
+        "sunday": "Domingo",
     },
     "ru": {
         "feels_like": "Ощущается как",
@@ -174,6 +223,13 @@ TRANSLATIONS = {
         "close": "Закрыть",
         "temperature": "Температура",
         "air_quality_index": "Индекс качества воздуха",
+        "monday": "Понедельник",
+        "tuesday": "Вторник",
+        "wednesday": "Среда",
+        "thursday": "Четверг",
+        "friday": "Пятница",
+        "saturday": "Суббота",
+        "sunday": "Воскресенье",
     },
     "id": {
         "feels_like": "Terasa seperti",
@@ -189,6 +245,13 @@ TRANSLATIONS = {
         "close": "Tutup",
         "temperature": "Suhu",
         "air_quality_index": "Indeks kualitas udara",
+        "monday": "Senin",
+        "tuesday": "Selasa",
+        "wednesday": "Rabu",
+        "thursday": "Kamis",
+        "friday": "Jumat",
+        "saturday": "Sabtu",
+        "sunday": "Minggu",
     },
     "de": {
         "feels_like": "Gefühlt",
@@ -211,7 +274,14 @@ TRANSLATIONS = {
             "Mäßig",
             "Schlecht",
             "Sehr schlecht"
-        ]
+        ],
+        "monday": "Montag",
+        "tuesday": "Dienstag",
+        "wednesday": "Mittwoch",
+        "thursday": "Donnerstag",
+        "friday": "Freitag",
+        "saturday": "Samstag",
+        "sunday": "Sonntag",
     },
     "ja": {
         "feels_like": "体感温度",
@@ -227,6 +297,13 @@ TRANSLATIONS = {
         "close": "閉じる",
         "temperature": "温度",
         "air_quality_index": "空気質指数",
+        "monday": "月曜日",
+        "tuesday": "火曜日",
+        "wednesday": "水曜日",
+        "thursday": "木曜日",
+        "friday": "金曜日",
+        "saturday": "土曜日",
+        "sunday": "日曜日",
     },
     "it": {
         "feels_like": "Percepita",
@@ -249,6 +326,13 @@ TRANSLATIONS = {
             "Moderata",
             "Scarsa",
             "Molto scarsa"
-        ]
+        ],
+        "monday": "Lunedì",
+        "tuesday": "Martedì",
+        "wednesday": "Mercoledì",
+        "thursday": "Giovedì",
+        "friday": "Venerdì",
+        "saturday": "Sabato",
+        "sunday": "Domenica",
     },
 }

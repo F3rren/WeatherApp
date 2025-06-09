@@ -192,17 +192,17 @@ class DropdownLanguage:
             theme = DARK_THEME if is_dark else LIGHT_THEME
             
             # Update dropdown appearance with the new theme colors
-            self.dropdown.border_color = theme.get("BORDER", ft.colors.BLACK)
-            self.dropdown.focused_border_color = theme.get("ACCENT", ft.colors.BLUE)
-            self.dropdown.bgcolor = theme.get("CARD_BACKGROUND", ft.colors.WHITE)
-            self.dropdown.color = theme.get("TEXT", ft.colors.BLACK)
+            self.dropdown.border_color = theme.get("BORDER", ft.Colors.BLACK)
+            self.dropdown.focused_border_color = theme.get("ACCENT", ft.Colors.BLUE)
+            self.dropdown.bgcolor = theme.get("CARD_BACKGROUND", ft.Colors.WHITE)
+            self.dropdown.color = theme.get("TEXT", ft.Colors.BLACK)
             
             # Update label and hint text colors
             # Ensure label_style and hint_style are initialized if they are None
-            self.dropdown.hint_style.color = theme.get("SECONDARY_TEXT", ft.colors.GRAY_700)
+            self.dropdown.hint_style.color = theme.get("SECONDARY_TEXT", ft.Colors.GRAY_700)
             if self.dropdown.hint_style is None:
                 self.dropdown.hint_style = ft.TextStyle()
-            self.dropdown.label_style.color = theme.get("SECONDARY_TEXT", ft.colors.GRAY_700)
+            self.dropdown.label_style.color = theme.get("SECONDARY_TEXT", ft.Colors.GRAY_700)
             if self.dropdown.label_style is None:
                 self.dropdown.label_style = ft.TextStyle()
             # Request update of the dropdown

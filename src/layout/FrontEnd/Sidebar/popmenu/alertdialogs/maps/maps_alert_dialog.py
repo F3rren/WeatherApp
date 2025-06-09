@@ -82,7 +82,7 @@ class MapsAlertDialog:
 
         # Aggiorna l'aspetto del dialogo
         if self.dialog:
-            self.dialog.bgcolor = current_theme.get("DIALOG_BACKGROUND", ft.colors.WHITE)
+            self.dialog.bgcolor = current_theme.get("DIALOG_BACKGROUND", ft.Colors.WHITE)
             if isinstance(self.dialog.title, ft.Text):
                 self.dialog.title.color = self.text_color 
             

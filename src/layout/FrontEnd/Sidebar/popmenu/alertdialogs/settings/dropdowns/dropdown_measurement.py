@@ -115,10 +115,10 @@ class DropdownMeasurement:
             elif hasattr(self.state_manager, 'page'):  # Fallback
                 is_dark = self.state_manager.page.theme_mode == ft.ThemeMode.DARK
             theme = DARK_THEME if is_dark else LIGHT_THEME
-            self.dropdown.border_color = theme.get("BORDER", ft.colors.BLACK)
-            self.dropdown.focused_border_color = theme.get("ACCENT", ft.colors.BLUE)
-            self.dropdown.bgcolor = theme.get("CARD_BACKGROUND", ft.colors.WHITE)
-            self.dropdown.color = theme.get("TEXT", ft.colors.BLACK)
+            self.dropdown.border_color = theme.get("BORDER", ft.Colors.BLACK)
+            self.dropdown.focused_border_color = theme.get("ACCENT", ft.Colors.BLUE)
+            self.dropdown.bgcolor = theme.get("CARD_BACKGROUND", ft.Colors.WHITE)
+            self.dropdown.color = theme.get("TEXT", ft.Colors.BLACK)
             # Imposta label_style e hint_style come nel dropdown lingua
             if self.dropdown.hint_style is None:
                 self.dropdown.hint_style = ft.TextStyle()

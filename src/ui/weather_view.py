@@ -7,6 +7,7 @@ import flet as ft
 from utils.config import LIGHT_THEME, DARK_THEME
 
 from services.api_service import ApiService
+from services.translation_service import TranslationService
 
 from layout.frontend.weather_card import WeatherCard
 from layout.frontend.informationtab.hourly_forecast import HourlyForecastDisplay # Importa la nuova classe
@@ -41,7 +42,13 @@ class WeatherView:
             state_manager.register_observer("theme_event", self.handle_theme_change)
             state_manager.register_observer("language_event", self.handle_language_change)
 
-        self.info_container = ft.Container(content=ft.Text("Caricamento...", color=self.text_color)) # Apply initial text color
+        # Get current language
+        if page and hasattr(page, 'session') and page.session.get('state_manager'):
+            state_manager = page.session.get('state_manager')
+            self.language = state_manager.get_state('language') or 'en'
+        else:
+            self.language = 'en'
+        self.info_container = ft.Container(content=ft.Text(TranslationService.get_text("loading", self.language), color=self.text_color)) # Apply initial text color
         self.weekly_container = ft.Container()
         self.chart_container = ft.Container()
         self.air_pollution_container = ft.Container()
@@ -217,7 +224,6 @@ class WeatherView:
             forecast_item_obj = DailyForecastItems( # Create instance
                 day=day_data["day_name"],
                 icon_code=day_data["icon"],
-                description="",  # Empty description as requested
                 temp_min=day_data["temp_min"],
                 temp_max=day_data["temp_max"],
                 text_color=self.text_color,

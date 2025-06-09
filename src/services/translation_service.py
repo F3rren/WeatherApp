@@ -151,3 +151,23 @@ class TranslationService:
             elements = [(symbol, translated) for (symbol, _), translated in zip(cls.CHEMICAL_ELEMENTS, translated_list)]
         cls._translation_cache[cache_key] = elements
         return elements
+
+    @staticmethod
+    def translate_weekday(day_key, language):
+        """
+        Restituisce la traduzione del giorno della settimana (accetta sia abbreviazioni che nomi estesi).
+        """
+        day_map = {
+            "Mon": "Monday",
+            "Tue": "Tuesday",
+            "Wed": "Wednesday", 
+            "Thu": "Thursday", 
+            "Fri": "Friday",
+            "Sat": "Saturday",
+            "Sun": "Sunday",
+        }
+
+        
+        key = day_map.get(day_key, day_key) #giorni
+        # Normalizza la chiave per il lookup (es: Monday -> monday)
+        return TranslationService.get_text(key.lower(), language)

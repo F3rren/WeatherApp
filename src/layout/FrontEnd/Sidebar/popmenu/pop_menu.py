@@ -3,6 +3,7 @@ from utils.config import LIGHT_THEME, DARK_THEME # Import theme configurations
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
+from services.translation_service import TranslationService
 
 
 class PopMenu:
@@ -47,10 +48,17 @@ class PopMenu:
             text_color=self.text_color # Pass text_color
         )
 
+        # Get current language
+        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+            state_manager = self.page.session.get('state_manager')
+            self.language = state_manager.get_state('language') or 'en'
+        else:
+            self.language = 'en'
+
         # Store PopupMenuItems for color updates
-        self.meteo_item_text = ft.Text("Meteo", size=20, color=self.text_color)
-        self.map_item_text = ft.Text("Mappa", size=20, color=self.text_color)
-        self.settings_item_text = ft.Text("Impostazioni", size=20, color=self.text_color) # Added for settings
+        self.meteo_item_text = ft.Text(TranslationService.get_text("weather", self.language), size=20, color=self.text_color)
+        self.map_item_text = ft.Text(TranslationService.get_text("map", self.language), size=20, color=self.text_color)
+        self.settings_item_text = ft.Text(TranslationService.get_text("settings", self.language), size=20, color=self.text_color) # Added for settings
         self.popup_menu_button_icon = ft.Icon(ft.Icons.MENU, size=50, color=self.text_color) # Apply text_color to icon
 
         if self.page and self.state_manager:

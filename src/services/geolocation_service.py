@@ -9,7 +9,7 @@ import time
 import logging
 from typing import Callable, Optional, Tuple
 
-from config import GEO_ACCURACY, GEO_DISTANCE_FILTER, GEO_UPDATE_INTERVAL
+from utils.config import GEO_ACCURACY, GEO_DISTANCE_FILTER, GEO_UPDATE_INTERVAL
 
 class GeolocationService:
     """

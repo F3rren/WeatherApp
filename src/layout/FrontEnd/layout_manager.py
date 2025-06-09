@@ -8,7 +8,7 @@ import logging
 from typing import Dict
 
 from layout.frontend.layout_builder import LayoutBuilder
-from config import LIGHT_THEME, DARK_THEME
+from utils.config import LIGHT_THEME, DARK_THEME
 
 class LayoutManager:
     """
@@ -135,7 +135,7 @@ class LayoutManager:
         
         # Aggiorna tutti i container con lo stesso colore di sfondo
         for name, container in self.containers.items():
-            if container:
+            if container:  # Check if container is not None
                 # Il container 'info' avrà un gradiente speciale
                 if name == 'info' and 'INFO_GRADIENT' in theme:
                     gradient_start = theme["INFO_GRADIENT"]["start"]
@@ -155,8 +155,16 @@ class LayoutManager:
                     container.bgcolor = card_background
                     # Assicurati che non ci sia alcun gradiente residuo
                     container.gradient = None
+                
+                # Only update if the container is attached to the page
+                if getattr(container, 'page', None):
+                    container.update()
+            else:
+                logging.warning(f"Container '{name}' is None, skipping color update.")
     
         # Aggiorna anche il colore di sfondo della pagina
-        self.page.bgcolor = theme.get("BACKGROUND", "#f5f5f5" if theme_mode == ft.ThemeMode.LIGHT else "#1a1a1a")
-        self.page.update()
+        if self.page:
+            self.page.bgcolor = theme.get("BACKGROUND", "#f5f5f5" if theme_mode == ft.ThemeMode.LIGHT else "#1a1a1a")
+            if getattr(self.page, 'update', None):
+                self.page.update()
 

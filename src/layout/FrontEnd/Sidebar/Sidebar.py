@@ -3,6 +3,7 @@ Sidebar for the MeteoApp.
 Handles the sidebar functionality.
 """
 
+import logging
 import flet as ft
 from typing import List, Callable, Optional
 from services.sidebar_service import SidebarService 
@@ -38,7 +39,7 @@ class Sidebar:
             cities = [f"{name}, {admin}, {country}" for name, admin, country in cities_info]
             return cities
         except Exception as e:
-            print(f"Errore nel caricamento delle città: {e}")
+            logging.error(f"Errore nel caricamento delle città: {e}")
             return []
 
         

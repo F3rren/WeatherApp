@@ -1,6 +1,8 @@
 ﻿import flet as ft
-from config import LANGUAGES, LIGHT_THEME, DARK_THEME
-import os
+import logging
+
+from utils.config import LIGHT_THEME, DARK_THEME
+from utils.translations_data import LANGUAGES 
 
 class DropdownLanguage:
     
@@ -12,29 +14,6 @@ class DropdownLanguage:
         # Register for theme change events if state_manager is available
         if state_manager:
             state_manager.register_observer("theme_event", self.handle_theme_change)
-
-        # Aggiungi un metodo per verificare l'esistenza delle immagini delle bandiere
-        self._verify_flag_images()
-
-    def _verify_flag_images(self):
-        """Verifica che le immagini delle bandiere esistano."""
-        # Percorso base per le bandiere
-        base_path = os.path.join("assets", "flags")
-        
-        # Log delle bandiere mancanti
-        missing_flags = []
-        for lang in LANGUAGES:
-            flag_file = lang.get("flag", "")
-            if flag_file:
-                # Controlla se il file esiste
-                flag_path = os.path.join(base_path, flag_file)
-                if not os.path.isfile(flag_path):
-                    missing_flags.append(flag_file)
-        
-        # Se ci sono bandiere mancanti, registra un avviso
-        if missing_flags:
-            print(f"WARNING: The following flag images are missing: {', '.join(missing_flags)}")
-            print(f"Searched in: {os.path.abspath(base_path)}")
 
     def get_language_name_by_code(self, code):
         """Restituisce il nome della lingua dato il codice"""
@@ -76,7 +55,7 @@ class DropdownLanguage:
                     )
                     option_content.controls.append(flag_image)
                 except Exception as e:
-                    print(f"Error loading flag for {code}: {e}")
+                    logging.error(f"Error loading flag for {code}: {e}")
                     # Aggiungi un placeholder se l'immagine non può essere caricata
                     option_content.controls.append(ft.Container(width=24, height=16))
             else:
@@ -103,8 +82,6 @@ class DropdownLanguage:
             # Ottieni direttamente il codice lingua dalla selezione
             # Poiché hai impostato key=language["code"] nelle opzioni
             selected_code = e.control.value
-            print(f'Lingua selezionata dal dropdown: {selected_code}')
-            print(f'Nome lingua: {self.get_language_name_by_code(selected_code)}')
             self.set_language(selected_code)
             if hasattr(self, 'parent') and self.parent:
                 self.parent.update()
@@ -114,8 +91,8 @@ class DropdownLanguage:
         if self.state_manager:
             current_language_code = self.state_manager.get_state('language') or 'en'
             self.selected_language = current_language_code
-            print(f'Lingua corrente dallo state manager: {current_language_code}')
-        
+            logging.info(f'Lingua corrente dallo state manager: {current_language_code}')
+
         # Assumiamo che il valore nel dropdown debba essere il codice lingua
         # dato che abbiamo impostato key=language["code"] nelle opzioni
 
@@ -125,23 +102,23 @@ class DropdownLanguage:
             is_dark = self.state_manager.page.theme_mode == ft.ThemeMode.DARK
         theme = DARK_THEME if is_dark else LIGHT_THEME
         
-        return ft.Dropdown(
+        self.dropdown = ft.Dropdown(
             autofocus=True,
-            label='Language',
             hint_text='Select language',
             options=self.get_options(),
             on_change=dropdown_changed,
-            expand=True,  # Usa tutto lo spazio disponibile
-            value=current_language_code,  # Usando direttamente il codice
-            # text_size rimosso poiché non supportato in Flet 0.28.2
+            # expand=True, # Removed to allow custom width
+            width=200, # Set a common width
+            value=current_language_code,
             border_width=2,
             border_color=theme["BORDER"],
             focused_border_color=theme["ACCENT"],
             focused_border_width=2,
             bgcolor=theme["CARD_BACKGROUND"],
             color=theme["TEXT"],
-            content_padding=ft.padding.all(8)
+            content_padding=ft.padding.symmetric(horizontal=10, vertical=8) # Adjusted padding
         )
+        return self.dropdown # Return the created dropdown
 
     def get_language_code_by_name(self, name):
         """Restituisce il codice lingua dato il nome"""
@@ -152,8 +129,8 @@ class DropdownLanguage:
 
     def set_language(self, language):
         self.selected_language = language
-        print(f'Impostazione lingua: {language} - {self.get_language_name_by_code(language)}')
-        
+        logging.info(f'Impostazione lingua: {language} - {self.get_language_name_by_code(language)}')
+
         # Aggiorna lo stato dell'applicazione se state_manager è disponibile
         if self.state_manager:
             import asyncio
@@ -173,9 +150,11 @@ class DropdownLanguage:
             
             # Aggiorna lo stato con il nuovo linguaggio
             call_async_safely(self.state_manager.set_state("language", language))
-            print(f'Stato aggiornato con lingua: {language}')
+            logging.info(f'Stato aggiornato con lingua: {language}')
+            # Notifica anche l'evento language_event
+            call_async_safely(self.state_manager.notify_all("language_event", language))
         
-        print(f'Lingua impostata con successo: {self.selected_language} - {self.get_language_name_by_code(self.selected_language)}')
+        logging.info(f'Lingua impostata con successo: {self.selected_language} - {self.get_language_name_by_code(self.selected_language)}')
 
     def handle_theme_change(self, event_data=None):
         """Handle theme change events by updating the dropdown appearance"""
@@ -189,22 +168,23 @@ class DropdownLanguage:
             theme = DARK_THEME if is_dark else LIGHT_THEME
             
             # Update dropdown appearance with the new theme colors
-            self.dropdown.border_color = theme.get("BORDER", ft.colors.BLACK)
-            self.dropdown.focused_border_color = theme.get("ACCENT", ft.colors.BLUE)
-            self.dropdown.bgcolor = theme.get("CARD_BACKGROUND", ft.colors.WHITE)
-            self.dropdown.color = theme.get("TEXT", ft.colors.BLACK)
+            self.dropdown.border_color = theme.get("BORDER", ft.Colors.BLACK)
+            self.dropdown.focused_border_color = theme.get("ACCENT", ft.Colors.BLUE)
+            self.dropdown.bgcolor = theme.get("CARD_BACKGROUND", ft.Colors.WHITE)
+            self.dropdown.color = theme.get("TEXT", ft.Colors.BLACK)
             
             # Update label and hint text colors
             # Ensure label_style and hint_style are initialized if they are None
-            self.dropdown.hint_style.color = theme.get("SECONDARY_TEXT", ft.colors.GRAY_700)
+            self.dropdown.hint_style.color = theme.get("SECONDARY_TEXT", ft.Colors.GREY_700)
             if self.dropdown.hint_style is None:
                 self.dropdown.hint_style = ft.TextStyle()
-            self.dropdown.label_style.color = theme.get("SECONDARY_TEXT", ft.colors.GRAY_700)
+            self.dropdown.label_style.color = theme.get("SECONDARY_TEXT", ft.Colors.GREY_700)
             if self.dropdown.label_style is None:
                 self.dropdown.label_style = ft.TextStyle()
             # Request update of the dropdown
             self.dropdown.update()
             
     def build(self):
-        self.dropdown = self.createDropdown()
+        if not self.dropdown: # Create dropdown only if it doesn't exist
+            self.dropdown = self.createDropdown()
         return self.dropdown

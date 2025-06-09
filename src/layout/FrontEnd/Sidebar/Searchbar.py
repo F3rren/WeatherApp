@@ -1,3 +1,4 @@
+import logging
 import flet as ft
 from typing import Callable, Optional, List
 
@@ -25,7 +26,7 @@ class SearchBar:
                         if hasattr(res, '__await__'):
                             await res
             except Exception as ex:
-                print(f"Errore in handle_select: {ex}")
+                logging.error(f"Errore in handle_select: {ex}")
 
         # Crea le suggestions dall'elenco delle città
         suggestions = [

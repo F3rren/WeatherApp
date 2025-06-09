@@ -1,6 +1,7 @@
 import flet as ft
-from config import LIGHT_THEME, DARK_THEME
+from utils.config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
+from services.translation_service import TranslationService
 
 class WeatherAlertDialog:
         
@@ -71,10 +72,17 @@ class WeatherAlertDialog:
         bg_color = current_theme["DIALOG_BACKGROUND"]
 
         # Creare i controlli di testo con dimensioni responsive
+        # Get current language
+        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+            state_manager = self.page.session.get('state_manager')
+            self.language = state_manager.get_state('language') or 'en'
+        else:
+            self.language = 'en'
+            
         title_text = ft.Text(
-            "Weather", 
-            size=self.text_handler.get_size('title'), 
-            weight=ft.FontWeight.BOLD, 
+            TranslationService.get_text("weather", self.language),
+            size=self.text_handler.get_size('title'),
+            weight=ft.FontWeight.BOLD,
             color=self.text_color
         )
         
@@ -85,13 +93,11 @@ class WeatherAlertDialog:
         theme_icon = ft.Icon(ft.Icons.DARK_MODE, size=self.text_handler.get_size('icon'), color="#3b82f6")
         
         # Creazione dei testi con dimensioni responsive
-        language_text = ft.Text("Language:", size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
-        measurement_text = ft.Text("Measurement:", size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
-        location_text = ft.Text("Use current location:", size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
-        theme_text = ft.Text("Dark theme:", size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
-        
-        # Pulsante di chiusura con dimensioni responsive
-        close_button_text = ft.Text("Close", color=current_theme["ACCENT"], size=self.text_handler.get_size('body'))
+        language_text = ft.Text(TranslationService.get_text("language", self.language), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
+        measurement_text = ft.Text(TranslationService.get_text("measurement", self.language), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
+        location_text = ft.Text(TranslationService.get_text("use_current_location", self.language), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
+        theme_text = ft.Text(TranslationService.get_text("dark_theme", self.language), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
+        close_button_text = ft.Text(TranslationService.get_text("close", self.language), color=current_theme["ACCENT"], size=self.text_handler.get_size('body'))
         
         # Registra i controlli nel dizionario
         self.text_controls[title_text] = 'title'
@@ -110,7 +116,7 @@ class WeatherAlertDialog:
             title=title_text,
             bgcolor=bg_color,
             content=ft.Container(
-                width=400,  # Imposta una larghezza fissa per il dialogo
+                #width=400,  # Imposta una larghezza fissa per il dialogo
                 content=ft.Column(
                 controls=[
                     # Sezione lingua
@@ -168,11 +174,11 @@ class WeatherAlertDialog:
                 height=280,
                 expand=True,
                 spacing=20,
-            ),
+                ),
             ),
             actions=[
                 ft.TextButton(
-                    "Close",
+                    TranslationService.get_text("close", self.language),
                     content=close_button_text,
                     style=ft.ButtonStyle(
                         color=current_theme["ACCENT"],
@@ -181,7 +187,6 @@ class WeatherAlertDialog:
                     on_click=lambda e: page.close(self.dialog)
                 ),
             ],
-            on_dismiss=lambda e: print("Dialog closed"),
         )
         
         return self.dialog

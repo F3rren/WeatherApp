@@ -4,10 +4,9 @@ Centralizes theme management and container color updating based on theme changes
 """
 
 import flet as ft
-import logging
 from typing import Dict, Optional, Any
 
-from config import LIGHT_THEME, DARK_THEME
+from utils.config import LIGHT_THEME, DARK_THEME
 
 class ThemeHandler:
     """
@@ -60,7 +59,9 @@ class ThemeHandler:
                 else:
                     container.gradient = None
                     container.bgcolor = card_bg_color
-                container.update()
+                # Only update if the container is attached to the page
+                if getattr(container, 'page', None):
+                    container.update()
         
         # Update page background
         self.page.bgcolor = theme.get("BACKGROUND", "#f5f5f5" if theme_mode == ft.ThemeMode.LIGHT else "#1a1a1a")

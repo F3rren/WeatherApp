@@ -1,6 +1,7 @@
 import flet as ft
 from services.api_service import ApiService
-from config import LIGHT_THEME, DARK_THEME
+from services.translation_service import TranslationService
+from utils.config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class AirPollution:
@@ -27,7 +28,7 @@ class AirPollution:
             self.text_color = text_color
         else:
             self.text_color = DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"]
-        
+    
         self.api = ApiService()
         self.pollution_data = {}
         
@@ -41,6 +42,15 @@ class AirPollution:
         self.pm2_5 = 0
         self.pm10 = 0
         self.nh3 = 0
+
+
+         # Inizializza la lingua dinamicamente PRIMA di usarla
+        if page and hasattr(page, 'session') and page.session.get('state_manager'):
+            state_manager = page.session.get('state_manager')
+            self.language = state_manager.get_state('language') or 'en'
+            state_manager.register_observer("language_event", self.handle_language_change)
+        else:
+            self.language = 'en'
 
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
@@ -76,10 +86,6 @@ class AirPollution:
         if lat is not None and lon is not None:
             self.update_data(lat, lon)
 
-        # Register for theme change events
-        state_manager = self.page.session.get('state_manager')
-        if state_manager:
-            state_manager.register_observer("theme_event", self.handle_theme_change)
 
     def update_text_controls(self):
         """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
@@ -92,10 +98,7 @@ class AirPollution:
             if hasattr(control, 'spans'):
                 for span in control.spans:
                     span.style.size = self.text_handler.get_size(size_category)
-        
-        # Richiedi l'aggiornamento della pagina
-        if self.page:
-            self.page.update()
+        # Non chiamare self.page.update() qui per evitare errori se i controlli non sono ancora nella pagina
 
     def handle_theme_change(self, event_data=None):
         """Handles theme change events by updating text color and relevant UI elements."""
@@ -137,16 +140,16 @@ class AirPollution:
         self.nh3 = self.pollution_data.get("nh3", 0)
     
     def _get_aqi_description(self) -> str:
-        """Get description based on Air Quality Index"""
-        descriptions = [
-            "N/A",
-            "Good",
-            "Fair",
-            "Moderate",
-            "Poor",
-            "Very Poor"
-        ]
-        return descriptions[min(self.aqi, 5)]
+        """Get localized description based on Air Quality Index"""
+        lang_code = TranslationService.normalize_lang_code(self.language)
+        aqi_descriptions = TranslationService.TRANSLATIONS.get(lang_code, TranslationService.TRANSLATIONS["en"]).get("aqi_descriptions", [])
+        # Ensure the list has at least 6 elements, fallback to English or generic labels if not
+        if len(aqi_descriptions) < 6:
+            aqi_descriptions = TranslationService.TRANSLATIONS["en"].get("aqi_descriptions", ["N/A", "Good", "Fair", "Moderate", "Poor", "Very Poor"])
+        idx = min(self.aqi, 5)
+        if idx >= len(aqi_descriptions):
+            return aqi_descriptions[0] if aqi_descriptions else "N/A"
+        return aqi_descriptions[idx]
     
     def _get_aqi_color(self) -> str:
         """Get color based on Air Quality Index"""
@@ -166,7 +169,8 @@ class AirPollution:
         self.text_controls = {}
         
         # AQI indicator
-        aqi_title = ft.Text("Air Quality Index:", size=self.text_handler.get_size('title'), weight="bold", color=self.text_color)
+        aqi_title = ft.Text(TranslationService.get_text("air_quality_index", self.language),size=self.text_handler.get_size('title'), weight="bold", color=self.text_color)
+
         aqi_value = ft.Text(
             self._get_aqi_description(),
             size=self.text_handler.get_size('title'),
@@ -190,17 +194,12 @@ class AirPollution:
             )
         ])
         
-        # Create pollution data rows
-        pollution_data = [
-            ("CO", self.co, "μg/m³", "Carbon monoxide"),
-            ("NO", self.no, "μg/m³", "Nitrogen monoxide"),
-            ("NO₂", self.no2, "μg/m³", "Nitrogen dioxide"),
-            ("O₃", self.o3, "μg/m³", "Ozone"),
-            ("SO₂", self.so2, "μg/m³", "Sulphur dioxide"),
-            ("PM2.5", self.pm2_5, "μg/m³", "Fine particles"),
-            ("PM10", self.pm10, "μg/m³", "Coarse particles"),
-            ("NH₃", self.nh3, "μg/m³", "Ammonia")
-        ]
+        # Ottieni la lista delle descrizioni localizzate degli elementi chimici tramite deep_translator
+        elements = TranslationService.get_chemical_elements(self.language)
+        pollution_data = []
+        values = [self.co, self.no, self.no2, self.o3, self.so2, self.pm2_5, self.pm10, self.nh3]
+        for (symbol, desc), value in zip(elements, values):
+            pollution_data.append((symbol, value, "μg/m³", desc))
         
         pollution_rows = []
         divider = ft.Divider(height=20, color=self.text_color)
@@ -213,16 +212,16 @@ class AirPollution:
             name1, value1, unit1, desc1 = pollution_data[i]
             name1_text = ft.Text(name1, weight="bold", size=self.text_handler.get_size('label'), color=self.text_color)
             value1_text = ft.Text(f"{value1} {unit1}", size=self.text_handler.get_size('value'), color=self.text_color)
-            desc1_text = ft.Text(desc1, size=self.text_handler.get_size('value'), color=self.text_color, italic=True)
-            
+            desc1_text_control = ft.Text(desc1, size=self.text_handler.get_size('value'), color=self.text_color, italic=True)
+
             # Register text controls
             self.text_controls[name1_text] = 'label'
             self.text_controls[value1_text] = 'value'
-            self.text_controls[desc1_text] = 'value'
+            self.text_controls[desc1_text_control] = 'value'
             
             row_items.append(
                 ft.Container(
-                    content=ft.Column([name1_text, value1_text, desc1_text]),
+                    content=ft.Column([name1_text, value1_text, desc1_text_control]),
                     padding=10,
                     border_radius=10,
                     expand=True
@@ -234,16 +233,16 @@ class AirPollution:
                 name2, value2, unit2, desc2 = pollution_data[i+1]
                 name2_text = ft.Text(name2, weight="bold", size=self.text_handler.get_size('label'), color=self.text_color)
                 value2_text = ft.Text(f"{value2} {unit2}", size=self.text_handler.get_size('value'), color=self.text_color)
-                desc2_text = ft.Text(desc2, size=self.text_handler.get_size('value'), color=self.text_color, italic=True)
+                desc2_text_control = ft.Text(desc2, size=self.text_handler.get_size('value'), color=self.text_color, italic=True)
                 
                 # Register text controls
                 self.text_controls[name2_text] = 'label'
                 self.text_controls[value2_text] = 'value'
-                self.text_controls[desc2_text] = 'value'
+                self.text_controls[desc2_text_control] = 'value'
                 
                 row_items.append(
                     ft.Container(
-                        content=ft.Column([name2_text, value2_text, desc2_text]),
+                        content=ft.Column([name2_text, value2_text, desc2_text_control]),
                         padding=10,
                         border_radius=10,
                         expand=True
@@ -262,6 +261,28 @@ class AirPollution:
             #expand=True # remove expand true if it causes issues
         )
     
+    def handle_language_change(self, event_data=None):
+        """Aggiorna le label quando cambia la lingua, mostrando un messaggio di caricamento durante la traduzione."""
+        if self.page:
+            state_manager = self.page.session.get('state_manager')
+            if state_manager:
+                self.language = state_manager.get_state('language') or 'en'
+        # Mostra messaggio di caricamento se il controllo è già renderizzato
+        if hasattr(self, 'container_control') and getattr(self.container_control, 'page', None) is not None:
+            self.container_control.content = ft.Column([
+                ft.Text("Traduzione in corso...", italic=True, color=self.text_color)
+            ])
+            self.container_control.update()
+            # Ricostruisci il contenuto reale dopo un breve delay per permettere il rendering del messaggio
+            import threading
+            def delayed_update():
+                import time
+                time.sleep(0.05)  # 50ms per mostrare il messaggio
+                if hasattr(self, 'container_control') and getattr(self.container_control, 'page', None) is not None:
+                    self.container_control.content = self.createAirPollutionTab()
+                    self.container_control.update()
+            threading.Thread(target=delayed_update).start()
+
     def build(self):
         """Build the air pollution component"""
         self.container_control = ft.Container(

@@ -4,9 +4,11 @@ Handles the display of weather information.
 """
 
 import flet as ft
-from config import LIGHT_THEME, DARK_THEME
+import logging
+from utils.config import LIGHT_THEME, DARK_THEME
 
 from services.api_service import ApiService
+from services.translation_service import TranslationService
 
 from layout.frontend.weather_card import WeatherCard
 from layout.frontend.informationtab.hourly_forecast import HourlyForecastDisplay # Importa la nuova classe
@@ -39,8 +41,15 @@ class WeatherView:
         state_manager = self.page.session.get('state_manager')
         if state_manager:
             state_manager.register_observer("theme_event", self.handle_theme_change)
+            state_manager.register_observer("language_event", self.handle_language_change)
 
-        self.info_container = ft.Container(content=ft.Text("Caricamento...", color=self.text_color)) # Apply initial text color
+        # Get current language
+        if page and hasattr(page, 'session') and page.session.get('state_manager'):
+            state_manager = page.session.get('state_manager')
+            self.language = state_manager.get_state('language') or 'en'
+        else:
+            self.language = 'en'
+        self.info_container = ft.Container(content=ft.Text(TranslationService.get_text("loading", self.language), color=self.text_color)) # Apply initial text color
         self.weekly_container = ft.Container()
         self.chart_container = ft.Container()
         self.air_pollution_container = ft.Container()
@@ -81,6 +90,24 @@ class WeatherView:
         
         self.page.update()
 
+    def handle_language_change(self, event_data=None):
+        """Aggiorna i contenuti della UI quando cambia la lingua."""
+        # Forza il rebuild dei componenti principali con la nuova lingua
+        if self.current_city:
+            # Recupera la lingua e l'unità correnti dallo state_manager
+            state_manager = self.page.session.get('state_manager')
+            language = state_manager.get_state('language') if state_manager else 'en'
+            unit = state_manager.get_state('unit') if state_manager else 'metric'
+            # Aggiorna la UI principale
+            import asyncio
+            task = asyncio.create_task(self.update_by_city(self.current_city, language, unit))
+            # Salva il task per evitare che venga garbage-collectato prematuramente
+            if not hasattr(self, '_pending_tasks'):
+                self._pending_tasks = []
+            self._pending_tasks.append(task)
+            def _on_task_done(t):
+                self._pending_tasks.remove(t)
+            task.add_done_callback(_on_task_done)
 
     async def update_by_city(self, city: str, language: str, unit: str) -> None:
         """Frontend: Triggers backend to fetch weather by city, then updates UI"""
@@ -138,9 +165,9 @@ class WeatherView:
                 await self._update_air_pollution(lat, lon)
                 await self._update_air_pollution_chart(lat, lon)
             else:
-                print("No coordinates available for air pollution data")
+                logging.error("No coordinates available for air pollution data")
         except (KeyError, IndexError, TypeError) as e:
-            print(f"Error getting coordinates for air pollution: {e}")
+            logging.error(f"Error getting coordinates for air pollution: {e}")
         self.page.update()
 
     async def _update_main_info(self, city: str, is_current_location: bool) -> None:
@@ -166,21 +193,28 @@ class WeatherView:
         hourly_data = self.api_service.get_hourly_forecast_data(self.weather_data)[:6]
         
         # Utilizza la nuova classe per costruire la sezione delle previsioni orarie
-        hourly_forecast = HourlyForecastDisplay(
+        hourly_forecast_display = HourlyForecastDisplay(
             hourly_data=hourly_data,
             text_color=self.text_color,
             page=self.page
-        ).build()
+        )
+        hourly_forecast_control = hourly_forecast_display.build()
 
         # Costruisce le sezioni dell'interfaccia
-        main_info = MainWeatherInfo(city, location, temperature, icon_code, self.text_color, self.page).build()
+        # Before creating a new MainWeatherInfo, clean up the old one if it exists
+        if hasattr(self, 'main_weather_info_instance') and self.main_weather_info_instance:
+            self.main_weather_info_instance.cleanup() # Call the new cleanup method
 
-        air_condition = AirConditionInfo(feels_like, humidity, wind_speed, pressure, self.text_color, self.page).build()
+        self.main_weather_info_instance = MainWeatherInfo(city, location, temperature, icon_code, self.text_color, self.page)
+        main_info_control = self.main_weather_info_instance.build()
+
+        air_condition_info = AirConditionInfo(feels_like, humidity, wind_speed, pressure, self.text_color, self.page)
+        air_condition_control = air_condition_info.build()
 
         # Assembla il contenuto e aggiorna il contenitore
         self.info_container.content = WeatherCard(self.page).build(
             ft.Column(
-                controls=[main_info, hourly_forecast, air_condition],
+                controls=[main_info_control, hourly_forecast_control, air_condition_control],
                 expand=True,
                 spacing=10,
                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH  # Assicura che i figli si estendano
@@ -198,7 +232,6 @@ class WeatherView:
             forecast_item_obj = DailyForecastItems( # Create instance
                 day=day_data["day_name"],
                 icon_code=day_data["icon"],
-                description="",  # Empty description as requested
                 temp_min=day_data["temp_min"],
                 temp_max=day_data["temp_max"],
                 text_color=self.text_color,
@@ -242,7 +275,6 @@ class WeatherView:
             text_color=self.text_color, # Pass text_color
         )
         self.air_pollution_container.content = air_pollution.build()
-
     async def _update_air_pollution_chart(self, lat: float, lon: float) -> None:
         """Frontend: Updates air pollution chart UI"""
         self._update_text_color() # Ensure text_color is current

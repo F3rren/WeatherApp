@@ -1,5 +1,5 @@
 import flet as ft
-from config import DARK_THEME, LIGHT_THEME
+from utils.config import DARK_THEME, LIGHT_THEME
 
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
@@ -82,7 +82,7 @@ class MapsAlertDialog:
 
         # Aggiorna l'aspetto del dialogo
         if self.dialog:
-            self.dialog.bgcolor = current_theme.get("DIALOG_BACKGROUND", ft.colors.WHITE)
+            self.dialog.bgcolor = current_theme.get("DIALOG_BACKGROUND", ft.Colors.WHITE)
             if isinstance(self.dialog.title, ft.Text):
                 self.dialog.title.color = self.text_color 
             
@@ -192,5 +192,4 @@ class MapsAlertDialog:
                     on_click=lambda e: page.close(self.dialog) # Changed from self.dlg to self.dialog
                 ),
             ],
-            on_dismiss=lambda e: print("Dialog closed"),
         )

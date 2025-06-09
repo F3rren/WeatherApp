@@ -1,5 +1,6 @@
 import flet as ft
-from config import LIGHT_THEME, DARK_THEME
+from services.translation_service import TranslationService
+from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class DailyForecastItems:
@@ -7,11 +8,9 @@ class DailyForecastItems:
     An item displaying daily forecast information.
     """
     
-    def __init__(self, day: str, icon_code: str, description: str, 
-                 temp_min: int, temp_max: int, text_color: str, page: ft.Page = None):
+    def __init__(self, day: str, icon_code: str, temp_min: int, temp_max: int, text_color: str, page: ft.Page = None):
         self.day = day
         self.icon_code = icon_code
-        # description is no longer used as requested
         self.temp_min = temp_min
         self.temp_max = temp_max
         self.text_color = text_color
@@ -20,30 +19,27 @@ class DailyForecastItems:
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes={
-                'label': 20,      # Etichette
+                'label': 30,      # Etichette
                 'icon': 100,       # Icone (dimensione base),
-                'value': 20,       # Valori (es. temperature, percentuali)
+                'value': 18,       # Valori (es. temperature, percentuali)
             },
             breakpoints=[600, 900, 1200, 1600]  # Breakpoint per il ridimensionamento
         )        
 
+        # Inizializza la lingua dinamicamente PRIMA di usarla
+        if page and hasattr(page, 'session') and page.session.get('state_manager'):
+            state_manager = page.session.get('state_manager')
+            self.language = state_manager.get_state('language') or DEFAULT_LANGUAGE
+            state_manager.register_observer("language_event", self.handle_language_change)
+        else:
+            self.language = DEFAULT_LANGUAGE
 
+        # Traduci il giorno della settimana nella lingua selezionata
         self.day_text = ft.Text(
-            self.day, 
-            size=self.text_handler.get_size('title'), 
-            weight="bold", 
-            color=self.text_color,
-            width=80  # Fissa una larghezza per il testo del giorno
-        )
-
-        self.icon = ft.Container(
-            content=ft.Image(
-                src=f"https://openweathermap.org/img/wn/{self.icon_code}@4x.png",
-                width=self.text_handler.get_size('icon'), 
-                height=self.text_handler.get_size('icon'),
-            ),
-            width=100,  # Fissa una larghezza per l'icona
-            alignment=ft.alignment.center,
+            TranslationService.translate_weekday(self.day, self.language),
+            size=self.text_handler.get_size('value'),
+            weight="bold",
+            color=self.text_color
         )
 
         self.temp_span_min = ft.TextSpan(
@@ -83,6 +79,19 @@ class DailyForecastItems:
             if state_manager:
                 state_manager.register_observer("theme_event", self.handle_theme_change)
 
+
+    def handle_language_change(self, event_data=None):
+        """Aggiorna il giorno quando cambia la lingua."""
+        if self.page:
+            state_manager = self.page.session.get('state_manager')
+            if state_manager:
+                self.language = state_manager.get_state('language') or 'en'
+        # Aggiorna solo il testo del giorno della settimana con la traduzione corretta
+        self.day_text.value = TranslationService.translate_weekday(self.day, self.language)
+        # Aggiorna solo se il controllo è già aggiunto alla pagina
+        if hasattr(self.day_text, 'page') and self.day_text.page:
+            self.day_text.update()
+
     def handle_theme_change(self, event_data=None):
         """Handles theme change events by updating text color."""
         if self.page:
@@ -92,14 +101,14 @@ class DailyForecastItems:
 
             if hasattr(self, 'day_text'):
                 self.day_text.color = self.text_color
-                if self.day_text.page:
+                if getattr(self.day_text, 'page', None):
                     self.day_text.update()
 
             if hasattr(self, 'temp_span_separator'):
-                 self.temp_span_separator.style.color = self.text_color
-                 # We need to update the parent Text control for TextSpan changes to be visible
-                 if hasattr(self, 'temperature_text') and self.temperature_text.page:
-                     self.temperature_text.update()
+                self.temp_span_separator.style.color = self.text_color
+                # We need to update the parent Text control for TextSpan changes to be visible
+                if hasattr(self, 'temperature_text') and getattr(self.temperature_text, 'page', None):
+                    self.temperature_text.update()
 
     def build(self) -> ft.Row:
         """Build the daily forecast item"""
@@ -110,15 +119,21 @@ class DailyForecastItems:
                     # Contenitore per il giorno con larghezza fissa
                     ft.Container(
                         content=self.day_text,
-                        width=100,
                         alignment=ft.alignment.center_left
                     ),
                     # Icona al centro
-                    self.icon,
+                    ft.Container(
+                        content=ft.Image(
+                            src=f"https://openweathermap.org/img/wn/{self.icon_code}@4x.png",
+                            width=self.text_handler.get_size('icon'), 
+                            height=self.text_handler.get_size('icon'),
+                        ),
+                        width=100,  # Fissa una larghezza per l'icona
+                        alignment=ft.alignment.center,
+                    ),
                     # Contenitore per la temperatura con larghezza fissa
                     ft.Container(
                         content=self.temperature_text,
-                        width=120,
                         alignment=ft.alignment.center_right
                     )
                 ],

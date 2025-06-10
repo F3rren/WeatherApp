@@ -23,12 +23,19 @@ class SettingsAlertDialog:
         
         # Register for theme change events if state_manager is available
         if state_manager:
-            # Rimuovi eventuali registrazioni errate
+            # Ensure correct unregistration and registration
             try:
-                state_manager.unregister_observer("theme_event", self.handle_theme_change)
+                # Attempt to unregister the potentially problematic old name if it was ever registered
+                state_manager.unregister_observer("theme_event", self.handle_theme_change) 
+            except Exception: # Broad exception as we don't know if it was registered
+                pass
+            try:
+                # Unregister the correct one if it was somehow registered multiple times
+                state_manager.unregister_observer("theme_event", self.handle_theme_event)
             except Exception:
                 pass
-            state_manager.register_observer("theme_event", self.handle_theme_event) # Correct method name
+            # Register the correct event handler
+            state_manager.register_observer("theme_event", self.handle_theme_event)
 
         # Language initialization
         self.language = None
@@ -107,6 +114,10 @@ class SettingsAlertDialog:
             self.theme_toggle.update()
 
     def handle_theme_event(self, event_data=None): # Renamed from handle_theme_toggle
+        # First, check if the dialog has been initialized
+        if not self.dialog:
+            return # Do nothing if the dialog isn't built yet
+
         # Determina lo stato del tema dai dati dell'evento o dallo state_manager
         is_dark = False
         if event_data and "is_dark" in event_data:

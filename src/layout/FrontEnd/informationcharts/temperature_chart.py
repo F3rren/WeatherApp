@@ -73,7 +73,13 @@ class TemperatureChart:
             self.page.on_resize = combined_resize_handler
             
         if self.state_manager:
-            self.state_manager.register_observer("theme_event", self._handle_state_change)
+            # Make sure to register for "theme_event" specifically if not already covered by _handle_state_change
+            # If _handle_state_change already correctly updates colors based on theme_mode from state_manager,
+            # then explicitly registering handle_theme_change might be redundant or could conflict.
+            # For now, let's assume _handle_state_change is comprehensive.
+            # If direct theme handling is needed:
+            # self.state_manager.register_observer("theme_event", self.handle_theme_change) 
+            self.state_manager.register_observer("theme_event", self.handle_theme_change) # Renamed to avoid conflict
             self.state_manager.register_observer("language_event", self._handle_state_change)
             self.state_manager.register_observer("unit_system_event", self._handle_state_change)
 
@@ -117,13 +123,12 @@ class TemperatureChart:
                 self.chart_control.update()
 
 
-    def _handle_state_change(self, event_data=None):
+    def _handle_state_change(self, event_data=None):        
         if not self.page or not self.state_manager or not self.translation_service:
             return
 
         new_language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
         new_unit_system = self.state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM
-        
         language_changed = self.language != new_language
         unit_system_changed = self.unit_system != new_unit_system
         
@@ -137,7 +142,7 @@ class TemperatureChart:
             self.unit_symbol = self.translation_service.get_unit_symbol("temperature", self.unit_system, self.language)
             self.legend_max_text.value = self.translation_service.get_text("max", self.language)
             self.legend_min_text.value = self.translation_service.get_text("min", self.language)
-            self._update_y_axis_title_text() 
+            self._update_y_axis_title_text()
 
         self.legend_max_text.color = self.text_color
         self.legend_min_text.color = self.text_color
@@ -150,7 +155,7 @@ class TemperatureChart:
             self.chart_control.left_axis.title = self.y_axis_title
             self.chart_control.update()
         
-        self.update_text_controls() 
+        self.update_text_controls()
         
         if self.legend_max_text.page: 
             self.legend_max_text.update()
@@ -166,21 +171,29 @@ class TemperatureChart:
             self.text_color = current_theme_config["TEXT"]
 
             # Update legend text colors
-            if hasattr(self, 'legend_max_text'):
+            if hasattr(self, 'legend_max_text') and self.legend_max_text:
                 self.legend_max_text.color = self.text_color
                 if self.legend_max_text.page:
                     self.legend_max_text.update()
             
-            if hasattr(self, 'legend_min_text'):
+            if hasattr(self, 'legend_min_text') and self.legend_min_text:
                 self.legend_min_text.color = self.text_color
                 if self.legend_min_text.page:
                     self.legend_min_text.update()
 
-            # For axis labels, the chart might need to be rebuilt
-            if hasattr(self, 'chart_control') and self.chart_control.page:
-                 # Update axis label colors directly
-                 self._update_chart_axis_colors()
-                 self.chart_control.update()
+            # Update Y-axis title color (temperature text on Y axis)
+            if hasattr(self, 'y_axis_title') and self.y_axis_title:
+                self.y_axis_title.color = self.text_color
+                if self.y_axis_title.page:
+                    self.y_axis_title.update()
+
+            # Update chart axis labels and rebuild chart if necessary
+            if hasattr(self, 'chart_control') and self.chart_control and self.chart_control.page:
+                # Update axis label colors directly
+                self._update_chart_axis_colors()
+                # Update the chart's left axis title reference
+                self.chart_control.left_axis.title = self.y_axis_title
+                self.chart_control.update()
 
     def _update_chart_axis_colors(self):
         """Updates the colors of chart axis labels."""

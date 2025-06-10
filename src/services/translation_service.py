@@ -6,23 +6,37 @@ class TranslationService:
     
     TRANSLATIONS = TRANSLATIONS
 
+    def __init__(self, session=None):  # Modified to accept session
+        self.session = session
+
+    def get_current_language(self):  # Added instance method
+        if self.session:
+            lang = self.session.get("current_language")
+            return lang if lang is not None else DEFAULT_LANGUAGE
+        return DEFAULT_LANGUAGE
+
     @classmethod
     def normalize_lang_code(cls, code):  # Renamed from _normalize_lang_code
         """
         Normalizza il codice lingua per l'accesso al dizionario locale.
-        Esempio: 'zh-cn', 'ZH_CN', 'zh_CN' -> 'zh_CN'
+        Esempio: 'en', 'En', 'en-US' -> 'en'. 'zh-cn' -> 'zh_cn'
         """
         if not code:
-            return "en"
-        code = code.replace("-", "_").lower()
-        # Gestione speciale per cinese semplificato
-        if code in ("zh_cn", "zh-hans", "zh_sg"):
-            return "zh_CN"
-        # Gestione speciale per cinese tradizionale (se aggiungi zh_TW)
-        if code in ("zh_tw", "zh-hant"):
-            return "zh_TW"
-        # Altri codici: usa solo la parte principale (es: 'it', 'fr')
-        return code.upper() if code.upper() in cls.TRANSLATIONS else code.split("_")[0]
+            return "en"  # Default to lowercase 'en'
+        
+        normalized_code = code.replace("-", "_").lower()
+        
+        # Special cases like zh_cn should be preserved if they exist as keys
+        if normalized_code in cls.TRANSLATIONS:
+            return normalized_code
+        
+        # General case: try the main part of the language code (e.g., 'en' from 'en_us')
+        main_lang_part = normalized_code.split("_")[0]
+        if main_lang_part in cls.TRANSLATIONS:
+            return main_lang_part
+            
+        # Fallback if no specific or main part match is found
+        return "en" # Default to 'en' if no match
 
     @classmethod
     def get_text(cls, key_or_text, target_language, source_language="en"):
@@ -65,23 +79,18 @@ class TranslationService:
     @classmethod
     def get_unit_symbol(cls, quantity: str, unit_system: str, language: str = None) -> str:
         """Get the translation for a unit symbol."""
-        # Use the provided language, or fall back to the default language.
-        # Ensure that language normalization is handled if necessary, similar to get_text.
-        # This example assumes direct use of language codes as keys in TRANSLATIONS.
-        target_lang = cls.normalize_lang_code(language if language else DEFAULT_LANGUAGE) # Updated call
+        target_lang = cls.normalize_lang_code(language if language else DEFAULT_LANGUAGE)
 
         try:
-            # Navigate through the translations dictionary to find the unit symbol.
             return cls.TRANSLATIONS[target_lang]["unit_symbols"][unit_system][quantity]
         except KeyError:
-            # Fallback for missing translations: return an empty string or a default symbol.
-            # Consider logging this event for missing translations.
             print(f"[TranslationService] Unit symbol not found for lang='{target_lang}', unit_system='{unit_system}', quantity='{quantity}'")
-            # Fallback to English if the specific language symbol is not found
-            if target_lang != 'en':
+            # Fallback to English (lowercase 'en') if the specific language symbol is not found
+            if target_lang != 'en': # Compare with lowercase 'en'
                 try:
-                    return cls.TRANSLATIONS['en']["unit_symbols"][unit_system][quantity]
+                    return cls.TRANSLATIONS['en']["unit_symbols"][unit_system][quantity] # Use lowercase 'en' for fallback
                 except KeyError:
+                    print(f"[TranslationService] English fallback failed for unit_system='{unit_system}', quantity='{quantity}'")
                     pass # English fallback also failed
             return "" # Default empty string if no symbol is found
 
@@ -89,7 +98,7 @@ class TranslationService:
     def translate_weekday(cls, day_key: str, language: str) -> str:
         """Translates a weekday key (e.g., 'mon', 'tue') to the target language."""
         target_lang = cls.normalize_lang_code(language) # Updated call
-        day_key_lower = day_key.lower() # Ensure key is lowercase for matching
+        day_key_lower = str(day_key).lower() # Ensure key is lowercased string
 
         try:
             # Attempt to find the translation directly under the language key
@@ -100,41 +109,46 @@ class TranslationService:
             # Fallback to English if the specific language translation is not found
             if target_lang != 'en':
                 try:
-                    return cls.TRANSLATIONS['en'][day_key_lower]
+                    return cls.TRANSLATIONS['en'][day_key_lower] # Use lowercase 'en' for fallback
                 except KeyError:
                     # If English fallback also fails, return the original key or a placeholder
-                    return day_key_lower.capitalize() # Capitalize as a simple default
-            return day_key_lower.capitalize() # Default if English key is also missing
+                    print(f"[TranslationService] English fallback failed for weekday_key=\'{day_key_lower}\'")
+                    pass # Fallback failed
+            return day_key_lower.capitalize() # Capitalize as a last resort if no translation found
 
     @classmethod
-    def get_chemical_elements(cls, language: str) -> list[tuple[str, str]]:
-        """Gets the translated list of chemical element symbols and their descriptions."""
-        target_lang = cls.normalize_lang_code(language)
-        default_elements = [
-            ("CO", "Carbon Monoxide"),
-            ("NO", "Nitrogen Monoxide"),
-            ("NO2", "Nitrogen Dioxide"),
-            ("O3", "Ozone"),
-            ("SO2", "Sulphur Dioxide"),
-            ("PM2.5", "Fine Particulate Matter"),
-            ("PM10", "Coarse Particulate Matter"),
-            ("NH3", "Ammonia"),
-        ]
-
+    def get_chemical_elements(cls, language_code: str) -> dict: # Added class method
+        """Returns the dictionary of chemical elements for the given language."""
+        target_lang = cls.normalize_lang_code(language_code)
         try:
-            elements = cls.TRANSLATIONS[target_lang]["chemical_elements"]
-            # Ensure it's a list of tuples/lists with 2 strings each
-            if not isinstance(elements, list) or not all(isinstance(el, (list, tuple)) and len(el) == 2 and isinstance(el[0], str) and isinstance(el[1], str) for el in elements):
-                print(f"[TranslationService] chemical_elements for lang='{target_lang}' is not in the expected format. Using English fallback.")
-                return cls.TRANSLATIONS['en'].get("chemical_elements", default_elements)
+            elements = cls.TRANSLATIONS.get(target_lang, {}).get("chemical_elements", {})
+            if not elements and target_lang != 'en': # Fallback to English
+                elements = cls.TRANSLATIONS.get('en', {}).get("chemical_elements", {})
             return elements
         except KeyError:
-            print(f"[TranslationService] Chemical elements not found for lang='{target_lang}'. Using English fallback.")
-            # Fallback to English if the specific language elements are not found
-            if target_lang != 'en':
-                try:
-                    return cls.TRANSLATIONS['en']["chemical_elements"]
-                except KeyError:
-                    print("[TranslationService] English chemical_elements also not found. Using hardcoded default.")
-                    return default_elements # Hardcoded default as ultimate fallback
-            return default_elements # Default if English key is also missing
+            # Fallback to English if the language itself is not found or chemical_elements key is missing
+            return cls.TRANSLATIONS.get('en', {}).get("chemical_elements", {})
+
+    @classmethod
+    def get_aqi_description(cls, aqi_value: int, lang_code: str) -> str:
+        """Returns the translated description for an AQI value."""
+        lang_code = cls.normalize_lang_code(lang_code)
+        try:
+            # Assuming AQI descriptions are structured as {range: description}
+            for aqi_range, description in TRANSLATIONS[lang_code]["aqi_descriptions"].items():
+                min_aqi, max_aqi = map(int, aqi_range.split("-"))
+                if min_aqi <= aqi_value <= max_aqi:
+                    return description
+        except Exception as e:
+            print(f"[TranslationService] Error getting AQI description: {e}")
+        
+        # Fallback to English if no suitable description is found
+        try:
+            for aqi_range, description in TRANSLATIONS["en"]["aqi_descriptions"].items():
+                min_aqi, max_aqi = map(int, aqi_range.split("-"))
+                if min_aqi <= aqi_value <= max_aqi:
+                    return description
+        except Exception as e:
+            print(f"[TranslationService] Error in English AQI description fallback: {e}")
+        
+        return TRANSLATIONS["en"]["aqi_descriptions"].get("default", "")

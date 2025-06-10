@@ -174,37 +174,32 @@ class SettingsAlertDialog:
 
     def handle_language_change(self, event_data=None):
         if self.state_manager:
-            self.language = self.state_manager.get_state('language') or 'en'        # Aggiorna le label del dialogo
+            self.language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE # Ensure self.language is updated
         if self.dialog:
             if isinstance(self.dialog.title, ft.Text):
                 self.dialog.title.value = self._get_translation("settings")
-                self.dialog.title.update()
-            # Aggiorna le label delle sezioni
+                # self.dialog.title.update() # Update is handled by dialog.update() at the end
+
             if self.dialog.content and hasattr(self.dialog.content, 'content') and isinstance(self.dialog.content.content, ft.Column):
                 rows = self.dialog.content.content.controls
-                # Language
-                if len(rows) > 0 and isinstance(rows[0].controls[0].controls[1], ft.Text):
-                    rows[0].controls[0].controls[1].value = self._get_translation("language_setting")
-                    rows[0].controls[0].controls[1].update()
-                # Measurement
-                if len(rows) > 1 and isinstance(rows[1].controls[0].controls[1], ft.Text):
-                    rows[1].controls[0].controls[1].value = self._get_translation("measurement_setting")
-                    rows[1].controls[0].controls[1].update()
-                # Use current location
-                if len(rows) > 2 and isinstance(rows[2].controls[0].controls[1], ft.Text):
-                    rows[2].controls[0].controls[1].value = self._get_translation("use_current_location_setting")
-                    rows[2].controls[0].controls[1].update()
-                # Dark theme
-                if len(rows) > 3 and isinstance(rows[3].controls[0].controls[1], ft.Text):
-                    rows[3].controls[0].controls[1].value = self._get_translation("dark_theme_setting")
-                    rows[3].controls[0].controls[1].update()
-            # Aggiorna il testo del pulsante Close
+                
+                # Section labels
+                section_keys = ["language_setting", "measurement_setting", "use_current_location_setting", "dark_theme_setting"]
+                for i, key in enumerate(section_keys):
+                    if len(rows) > i and isinstance(rows[i], ft.Row) and \
+                       len(rows[i].controls) > 0 and isinstance(rows[i].controls[0], ft.Row) and \
+                       len(rows[i].controls[0].controls) > 1 and isinstance(rows[i].controls[0].controls[1], ft.Text):
+                        rows[i].controls[0].controls[1].value = self._get_translation(key)
+                        # rows[i].controls[0].controls[1].update() # Update is handled by dialog.update()
+
             if self.dialog.actions and len(self.dialog.actions) > 0:
-                btn = self.dialog.actions[0]
-                if hasattr(btn, 'content') and isinstance(btn.content, ft.Text):
-                    btn.content.value = self._get_translation("close_button")
-                    btn.content.update()
-        if self.dialog:
+                action_button = self.dialog.actions[0]
+                if isinstance(action_button, ft.TextButton) and hasattr(action_button, 'content') and isinstance(action_button.content, ft.Text):
+                    action_button.content.value = self._get_translation("close_button")
+                    # action_button.content.update() # Update is handled by dialog.update()
+                elif isinstance(action_button, ft.TextButton): # If content is not ft.Text but a string
+                    action_button.text = self._get_translation("close_button") # For TextButton, text property might be used
+            
             self.dialog.update()
 
     def createAlertDialog(self, page):
@@ -301,7 +296,7 @@ class SettingsAlertDialog:
             ),
             actions=[
                 ft.TextButton(
-                    self._get_translation("close_button"),
+                    # self._get_translation("close_button"), # Text property for TextButton
                     content=ft.Text(self._get_translation("close_button"), color=current_theme["ACCENT"]),
                     style=ft.ButtonStyle(
                         color=current_theme["ACCENT"],

@@ -197,12 +197,18 @@ class AirPollution:
         column1_controls = []
         column2_controls = []
 
-        num_elements = len(elements)
+        num_elements = len(elements) # elements is a dict here
         mid_point = (num_elements + 1) // 2
 
-        for i, (symbol_desc_pair) in enumerate(elements):
-            symbol, description = symbol_desc_pair
-            value = pollution_values[i]
+        # Iterate over dictionary items (key-value pairs)
+        # The order of elements.items() should be consistent with pollution_values
+        # if Python version is 3.7+ and the dictionary in translations_data.py has a fixed order.
+        for i, (symbol, description) in enumerate(elements.items()):
+            # symbol is the key (e.g., "CO"), description is the value (e.g., "Carbon Monoxide")
+            if i < len(pollution_values): # Ensure we don't go out of bounds for pollution_values
+                value = pollution_values[i]
+            else:
+                value = 0 # Default value if pollution_values is shorter for some reason
             
             value_str = f"{value:.2f} μg/m³"
             
@@ -271,6 +277,3 @@ class AirPollution:
         if self._state_manager:
             self._state_manager.unregister_observer("language_event", self._handle_state_change)
             self._state_manager.unregister_observer("theme_event", self._handle_state_change)
-        # print("AirPollution cleaned up") # For debugging
-
-    # Removed update_text_controls, handle_theme_change as logic is now in _handle_state_change, _rebuild_ui, and _update_text_sizes_and_colors

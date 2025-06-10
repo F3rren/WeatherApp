@@ -1,9 +1,9 @@
 import flet as ft
 import math
 from services.api_service import ApiService
-from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE # Added DEFAULT_LANGUAGE
+from services.translation_service import TranslationService
+from utils.config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
-# Removed: from services.translation_service import TranslationService # Not used directly for chart labels yet
 
 class AirPollutionChart:
     """
@@ -13,10 +13,6 @@ class AirPollutionChart:
         self.page = page
         self.lat = lat
         self.lon = lon
-        self._state_manager = None
-        self.chart_control = None # Ensure chart_control is initialized
-        self.container_control = None # Ensure container_control is initialized
-
         # Set initial text_color or derive from theme
         if text_color:
             self.text_color = text_color
@@ -37,101 +33,98 @@ class AirPollutionChart:
         self.pm10 = 0
         self.nh3 = 0
 
-        self.language = DEFAULT_LANGUAGE # Initialize language
-
-        if self.page and hasattr(self.page, 'session'):
-            self._state_manager = self.page.session.get('state_manager')
-            if self._state_manager:
-                self.language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
-                # Update text_color based on initial theme from state_manager if possible, or page
-                current_theme_mode = self._state_manager.get_state('theme_mode') or self.page.theme_mode
-                self.text_color = DARK_THEME["TEXT"] if current_theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"]
-                
-                self._state_manager.register_observer("theme_event", self._handle_state_change)
-                self._state_manager.register_observer("language_event", self._handle_state_change)
+        self.translation_service = TranslationService(page.session) # Add this line
+        self.language = self.translation_service.get_current_language() # Add this line
 
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes={
-                'label': 12,
-                'subtitle': 15,
-                'icon': 40,
+                'label': 12,      # Etichette
+                'subtitle': 15,   # Sottotitoli
+                'icon': 40,       # Icone (se necessarie)
             },
-            breakpoints=[600, 900, 1200, 1600]
+            breakpoints=[600, 900, 1200, 1600]  # Aggiunti breakpoint per il ridimensionamento
         )
 
+        # Dizionario dei controlli di testo per aggiornamento facile
         self.text_controls = {}
         
+        # Sovrascrivi il gestore di ridimensionamento della pagina
         if self.page:
-            def combined_resize_handler(e):
-                self.text_handler._handle_resize(e)
-                if hasattr(self, 'chart_control') and self.chart_control and self.chart_control.page:
-                     self._update_chart_text_colors()
-                     self.chart_control.update()
-                elif hasattr(self, 'container_control') and self.container_control and self.container_control.page:
-                    if self.lat is not None and self.lon is not None:
-                        new_chart_column = self.createAirPollutionChart(self.lat, self.lon)
-                        self.container_control.content = new_chart_column
-                        self.container_control.update()
-
-            self.page.on_resize = combined_resize_handler
-
-    def _determine_text_color(self): # Helper to get current theme's text color
-        if self.page:
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-            return current_theme_config["TEXT"]
-        return LIGHT_THEME["TEXT"] # Fallback
-
-    def _handle_state_change(self, event_data=None): # Renamed from handle_theme_change
-        """Handles theme or language change events."""
-        if self._state_manager:
-            self.language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
-            # Potentially update other language-dependent things here if chart labels were translated
-
-        # Update text_color based on the current theme from the page
-        self.text_color = self._determine_text_color()
+            # Salva l'handler originale se presente
+            original_resize_handler = self.page.on_resize
             
-        if hasattr(self, 'chart_control') and self.chart_control and self.chart_control.page:
-            self._update_chart_text_colors() # This updates colors and calls update_text_controls for sizes
-            if hasattr(self.chart_control, 'page') and self.chart_control.page:
-                self.chart_control.update()
-        elif hasattr(self, 'container_control') and self.container_control and self.container_control.page:
-            # Fallback to rebuild if chart_control isn't directly accessible or on page
+            def combined_resize_handler(e):
+                # Aggiorna le dimensioni del testo
+                self.text_handler._handle_resize(e)
+                # Aggiorna i controlli di testo
+                self.update_text_controls()
+                # Chiama anche l'handler originale se esiste
+                if original_resize_handler:
+                    original_resize_handler(e)
+            
+            self.page.on_resize = combined_resize_handler
+            
+        # Rimuoviamo la chiamata a add_load_complete_callback che non esiste
+        # Invece, chiamiamo update_text_controls direttamente quando il chart viene creato
+        
+        # Register for theme change events
+        state_manager = self.page.session.get('state_manager')
+        if state_manager:
+            state_manager.register_observer("theme_event", self.handle_theme_change)
+            state_manager.register_observer("language_event", self._handle_language_change) # Add this line
+
+    def _handle_language_change(self, event_data=None): # Add this method
+        """Handles language change events."""
+        self.language = self.translation_service.get_current_language()
+        if hasattr(self, 'container_control') and self.container_control.page:
             if self.lat is not None and self.lon is not None:
                 new_chart_column = self.createAirPollutionChart(self.lat, self.lon)
                 self.container_control.content = new_chart_column
-                if hasattr(self.container_control, 'page') and self.container_control.page:
+                self.container_control.update()
+        elif hasattr(self, 'chart_control') and self.chart_control.page:
+            # If only chart exists, try to update its elements directly or rebuild
+            self._update_chart_text_colors() # This might re-translate titles/labels
+            self.chart_control.update()
+
+
+    def handle_theme_change(self, event_data=None):
+        """Handles theme change events by updating text color and chart elements."""
+        if self.page:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
+            self.text_color = current_theme_config["TEXT"]
+            
+            # self.gradient = self._get_gradient() # Update gradient if it were used
+
+            # Update chart axis and title colors
+            if hasattr(self, 'chart_control') and self.chart_control.page:
+                self._update_chart_text_colors() # Implement this method
+                self.chart_control.update()
+            elif hasattr(self, 'container_control') and self.container_control.page:
+                # If chart is not yet built but container is, trigger rebuild of content
+                if self.lat is not None and self.lon is not None:
+                    new_chart_column = self.createAirPollutionChart(self.lat, self.lon)
+                    self.container_control.content = new_chart_column
+                    # self.container_control.gradient = self._get_gradient() # Update gradient if used
                     self.container_control.update()
-    # ...existing code...
+
     def _update_chart_text_colors(self):
-        """Updates the text colors of the chart's axes, title, and border."""
-        if hasattr(self, 'chart_control') and self.chart_control:
-            current_text_color = self._determine_text_color() # Get up-to-date text color
+        """Updates the text colors of the chart's axes and title."""
+        if hasattr(self, 'chart_control'):
             # Update bottom axis labels
             if self.chart_control.bottom_axis and self.chart_control.bottom_axis.labels:
-                for label_obj in self.chart_control.bottom_axis.labels:
-                    if isinstance(label_obj.label, ft.Container) and isinstance(label_obj.label.content, ft.Text):
-                        label_obj.label.content.color = current_text_color
+                for label in self.chart_control.bottom_axis.labels:
+                    if isinstance(label.label, ft.Container) and isinstance(label.label.content, ft.Text):
+                        label.label.content.color = self.text_color
             
             # Update left axis title
             if self.chart_control.left_axis and isinstance(self.chart_control.left_axis.title, ft.Text):
-                self.chart_control.left_axis.title.color = current_text_color
-
-            # Update left axis labels style
-            if self.chart_control.left_axis:
-                if self.chart_control.left_axis.labels_style:
-                    self.chart_control.left_axis.labels_style.color = current_text_color
-                else:
-                    self.chart_control.left_axis.labels_style = ft.TextStyle(color=current_text_color)
-
-            # Update chart border color
-            border_color = DARK_THEME.get("BORDER", ft.Colors.GREY_700) if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME.get("BORDER", ft.Colors.GREY_400)
-            self.chart_control.border = ft.border.all(1, border_color)
+                self.chart_control.left_axis.title.color = self.text_color
                 
-            # Re-register and update text controls for size adjustments if necessary
-            self._register_chart_text_controls() 
-            self.update_text_controls() 
+            # Aggiorna anche i controlli di testo dopo aver cambiato il colore
+            self._register_chart_text_controls()
+            self.update_text_controls()
 
     def createAirPollutionChart(self, lat, lon):
 
@@ -174,7 +167,7 @@ class AirPollutionChart:
             raw_dynamic_max_y = max(raw_dynamic_max_y, 20.0)
 
         # Round up to the nearest nice number (10, 20, 50)
-        if raw_dynamic_max_y <= 0: 
+        if raw_dynamic_max_y <= 0: # Handle edge case of zero or negative before rounding
             final_max_y = 50.0
         elif raw_dynamic_max_y <= 50:
             final_max_y = math.ceil(raw_dynamic_max_y / 10) * 10
@@ -183,12 +176,13 @@ class AirPollutionChart:
         else:
             final_max_y = math.ceil(raw_dynamic_max_y / 50) * 50
         
+        # Ensure final_max_y is at least a small default if all calculations result in very low numbers
         final_max_y = max(final_max_y, 10.0) 
 
-        current_text_color = self._determine_text_color() # Get current text color for initial setup
-        border_color = DARK_THEME.get("BORDER", ft.Colors.GREY_700) if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME.get("BORDER", ft.Colors.GREY_400)
+        # Get the translated unit for tooltips
+        unit_text = self.translation_service.get_text("micrograms_per_cubic_meter_short", self.language)
 
-        self.chart_control = ft.BarChart(
+        self.chart_control = ft.BarChart( # Store chart reference
             bar_groups=[
                 ft.BarChartGroup(
                     x=0,
@@ -198,7 +192,7 @@ class AirPollutionChart:
                             to_y=self.co, # Use float value
                             width=40,
                             color=ft.Colors.RED,
-                            tooltip=round(self.co), 
+                            tooltip=f"{round(self.co)} {unit_text}", # Updated tooltip
                             border_radius=0,
                         ),
                     ],
@@ -211,7 +205,7 @@ class AirPollutionChart:
                             to_y=self.no, # Use float value
                             width=40,
                             color=ft.Colors.ORANGE,
-                            tooltip=round(self.no),
+                            tooltip=f"{round(self.no)} {unit_text}", # Updated tooltip
                             border_radius=0,
                         ),
                     ],
@@ -224,7 +218,7 @@ class AirPollutionChart:
                             to_y=self.no2, # Use float value
                             width=40,
                             color=ft.Colors.YELLOW,
-                            tooltip=round(self.no2),
+                            tooltip=f"{round(self.no2)} {unit_text}", # Updated tooltip
                             border_radius=0,
                         ),
                     ],
@@ -237,7 +231,7 @@ class AirPollutionChart:
                             to_y=self.o3, # Use float value
                             width=40,
                             color=ft.Colors.GREEN,
-                            tooltip=round(self.o3),
+                            tooltip=f"{round(self.o3)} {unit_text}", # Updated tooltip
                             border_radius=0,
                         ),
                     ],
@@ -250,7 +244,7 @@ class AirPollutionChart:
                             to_y=self.so2, # Use float value
                             width=40,
                             color=ft.Colors.BLUE,
-                            tooltip=round(self.so2),
+                            tooltip=f"{round(self.so2)} {unit_text}", # Updated tooltip
                             border_radius=0,
                         ),
                     ],
@@ -263,7 +257,7 @@ class AirPollutionChart:
                             to_y=self.pm2_5, # Use float value
                             width=40,
                             color=ft.Colors.INDIGO,
-                            tooltip=round(self.pm2_5),
+                            tooltip=f"{round(self.pm2_5)} {unit_text}", # Updated tooltip
                             border_radius=0,
                         ),
                     ],
@@ -276,7 +270,7 @@ class AirPollutionChart:
                             to_y=self.pm10, # Use float value
                             width=40,
                             color=ft.Colors.PURPLE,
-                            tooltip=round(self.pm10),
+                            tooltip=f"{round(self.pm10)} {unit_text}", # Updated tooltip
                             border_radius=0,
                         ),
                     ],
@@ -289,109 +283,108 @@ class AirPollutionChart:
                             to_y=self.nh3, # Use float value
                             width=40,
                             color=ft.Colors.BLACK,
-                            tooltip=round(self.nh3),
+                            tooltip=f"{round(self.nh3)} {unit_text}", # Updated tooltip
                             border_radius=0,
                             
                         ),
                     ],
                 ),
             ],
-            border=ft.border.all(1, border_color), 
+            border=ft.border.all(1, ft.Colors.GREY_400), # Consider theme for border
             left_axis=ft.ChartAxis(
-                labels_size=40, 
-                title=ft.Text("Air Pollution (μg/m³)", size=self.text_handler.get_size('subtitle'), color=current_text_color),
+                labels_size=40,
+                title=ft.Text(
+                        value=self.translation_service.get_text("air_pollution_chart_y_axis_title", self.language),
+                        size=self.text_handler.get_size('subtitle'),
+                        color=self.text_color,
+                    ),
                 title_size=20
-            ),
+                ),
             bottom_axis=ft.ChartAxis(
                 labels=[
                     ft.ChartAxisLabel(
-                        value=0, 
-                        label=ft.Container(
-                            ft.Text("CO", color=current_text_color, size=self.text_handler.get_size('label')), 
-                            padding=20
-                        )
+                        value=0, label=ft.Container(ft.Text("CO", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=1, label=ft.Container(ft.Text("NO", color=current_text_color, size=self.text_handler.get_size('label')), padding=20)
+                        value=1, label=ft.Container(ft.Text("NO", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=2, label=ft.Container(ft.Text("NO2", color=current_text_color, size=self.text_handler.get_size('label')), padding=20)
+                        value=2, label=ft.Container(ft.Text("NO₂", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=3, label=ft.Container(ft.Text("O3", color=current_text_color, size=self.text_handler.get_size('label')), padding=20)
+                        value=3, label=ft.Container(ft.Text("O₃", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=4, label=ft.Container(ft.Text("SO2", color=current_text_color, size=self.text_handler.get_size('label')), padding=20)
+                        value=4, label=ft.Container(ft.Text("SO₂", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=5, label=ft.Container(ft.Text("PM2.5", color=current_text_color, size=self.text_handler.get_size('label')), padding=20)
+                        value=5, label=ft.Container(ft.Text("PM2.5", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=6, label=ft.Container(ft.Text("PM10", color=current_text_color, size=self.text_handler.get_size('label')), padding=20)
+                        value=6, label=ft.Container(ft.Text("PM10", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=7, label=ft.Container(ft.Text("NH3", color=current_text_color, size=self.text_handler.get_size('label')), padding=20)
+                        value=7, label=ft.Container(ft.Text("NH₃", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
                     ),
                 ],
-                labels_size=40 # Ensure this is applied if not overridden by individual label styles
+                labels_size=50, # Restored and set to 50 to ensure space for labels
             ),
             horizontal_grid_lines=ft.ChartGridLines(
-                interval=final_max_y / 5,  # Adjust interval based on max_y for better readability
-                color=border_color,  # Use theme-based color for grid lines
-                width=1
+                color=ft.Colors.GREY_300, width=1, dash_pattern=[9, 4]
             ),
-            tooltip_bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.BLACK),
-            max_y=final_max_y,
-            interactive=False, # Set to False as per previous requirements
+            tooltip_bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_300),
+            max_y=final_max_y,  # Use the calculated dynamic max_y
+            interactive=False,  # Disable hover/tooltips
             expand=True,
         )
-        self._register_chart_text_controls() # Register controls for size updates
-        self.update_text_controls() # Apply initial sizes
-        return ft.Column(controls=[self.chart_control], expand=True)
+        
+        # Registra i controlli di testo per l'aggiornamento dinamico
+        self._register_chart_text_controls()
+        
+        return ft.Column([ 
+            self.chart_control # Return stored chart reference
+        ])
 
     def _register_chart_text_controls(self):
-        """Registers chart text elements for responsive size updates."""
-        self.text_controls.clear() # Clear previous controls
-        if hasattr(self, 'chart_control') and self.chart_control:
-            if self.chart_control.left_axis and isinstance(self.chart_control.left_axis.title, ft.Text):
-                self.text_controls[self.chart_control.left_axis.title] = 'subtitle'
+        """Registra tutti i controlli di testo del grafico per l'aggiornamento responsive."""
+        if hasattr(self, 'chart_control'):
+            # Registra il titolo dell'asse sinistro
+            if self.chart_control.left_axis and isinstance(self.chart_control.left_axis.title, ft.Container) and isinstance(self.chart_control.left_axis.title.content, ft.Text):
+                self.text_controls[self.chart_control.left_axis.title.content] = 'subtitle'
+            
+            # Registra le etichette dell'asse inferiore
             if self.chart_control.bottom_axis and self.chart_control.bottom_axis.labels:
-                for label_obj in self.chart_control.bottom_axis.labels:
-                    if isinstance(label_obj.label, ft.Container) and isinstance(label_obj.label.content, ft.Text):
-                        self.text_controls[label_obj.label.content] = 'label'
-        # Note: Left axis numeric labels are styled via labels_style, not individual controls in text_controls
-
+                for label in self.chart_control.bottom_axis.labels:
+                    if isinstance(label.label, ft.Container) and isinstance(label.label.content, ft.Text):
+                        self.text_controls[label.label.content] = 'label'
+    
     def update_text_controls(self):
-        """Aggiorna le dimensioni del testo per tutti i controlli registrati."""
+        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
         for control, size_category in self.text_controls.items():
-            new_size = self.text_handler.get_size(size_category)
-            if hasattr(control, 'size'):
-                control.size = new_size
-            # No need to update color here as it's handled by _update_chart_text_colors
-            if hasattr(control, 'page') and control.page: # Guard update
-                control.update()
-        # Update left axis labels_size directly if needed, though title_size and labels_style are more common for axes
-        if hasattr(self, 'chart_control') and self.chart_control:
-            if self.chart_control.left_axis:
-                # self.chart_control.left_axis.labels_size = self.text_handler.get_size('label') # Example if needed
-                pass
-            if self.chart_control.bottom_axis:
-                # self.chart_control.bottom_axis.labels_size = self.text_handler.get_size('label') # Example if needed
-                pass
-
-    def build(self, lat=None, lon=None):
+            if size_category == 'icon':
+                # Per le icone, aggiorna width e height
+                control.width = self.text_handler.get_size(size_category)
+                control.height = self.text_handler.get_size(size_category)
+            else:
+                # Per i testi, aggiorna size
+                if hasattr(control, 'size'):
+                    control.size = self.text_handler.get_size(size_category)
+                elif hasattr(control, 'style') and hasattr(control.style, 'size'):
+                    control.style.size = self.text_handler.get_size(size_category)
+                # Aggiorna anche i TextSpan se presenti
+                if hasattr(control, 'spans'):
+                    for span in control.spans:
+                        span.style.size = self.text_handler.get_size(size_category)
+        
+        # Richiedi l'aggiornamento della pagina
+        if self.page:
+            self.page.update()
+    
+    def build(self, lat, long):
         # Store the container for potential updates (e.g. gradient)
         self.container_control = ft.Container(
             border_radius=15,
             padding=30,
-            # Create chart content. lat, long are used here.
-            content=self.createAirPollutionChart(lat, lon), 
+            content=self.createAirPollutionChart(lat, long),
         )
         return self.container_control
-
-    def cleanup(self):
-        """Unregister observers to prevent memory leaks."""
-        if hasattr(self, '_state_manager') and self._state_manager:
-            self._state_manager.unregister_observer("theme_event", self._handle_state_change)
-            self._state_manager.unregister_observer("language_event", self._handle_state_change)
-        # print("AirPollutionChart cleaned up") # For debugging

@@ -1,7 +1,7 @@
 import flet as ft
 from typing import List
 from services.translation_service import TranslationService
-from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME
+from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME, DEFAULT_UNIT_SYSTEM # Added DEFAULT_UNIT_SYSTEM
 from components.responsive_text_handler import ResponsiveTextHandler
 import logging # Added import for logging
 
@@ -18,13 +18,20 @@ class TemperatureChart:
         self.temp_max = temp_max
         self.text_color = text_color # Initial text color
 
-        # Inizializza la lingua dinamicamente PRIMA di usarla
+        state_manager = None
         if page and hasattr(page, 'session') and page.session.get('state_manager'):
             state_manager = page.session.get('state_manager')
             self.language = state_manager.get_state('language') or DEFAULT_LANGUAGE
+            self.unit_system = state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM
+            # Assuming theme is handled by page.theme_mode directly in handle_theme_change
             state_manager.register_observer("language_event", self.handle_language_change)
+            state_manager.register_observer("theme_event", self.handle_theme_change)
+            state_manager.register_observer("unit_event", self.handle_unit_change) # New observer
         else:
             self.language = DEFAULT_LANGUAGE
+            self.unit_system = DEFAULT_UNIT_SYSTEM
+        
+        self.unit_symbol = TranslationService.get_unit_symbol(self.unit_system, "temperature")
 
         # Inizializzazione del ResponsiveTextHandler
         self.text_handler = ResponsiveTextHandler(
@@ -58,8 +65,10 @@ class TemperatureChart:
             
         # Store references to text elements that need color updates
         # Use TranslationService for legend text - Use lowercase keys "max" and "min"
-        self.legend_max_text = ft.Text(TranslationService.get_text("max", self.language), color=self.text_color, size=self.text_handler.get_size('legend'))
-        self.legend_min_text = ft.Text(TranslationService.get_text("min", self.language), color=self.text_color, size=self.text_handler.get_size('legend'))
+        max_label = TranslationService.get_text("max", self.language)
+        min_label = TranslationService.get_text("min", self.language)
+        self.legend_max_text = ft.Text(f"{max_label} ({self.unit_symbol})", color=self.text_color, size=self.text_handler.get_size('legend'))
+        self.legend_min_text = ft.Text(f"{min_label} ({self.unit_symbol})", color=self.text_color, size=self.text_handler.get_size('legend'))
         
         # Aggiungi i controlli al dizionario per l'aggiornamento dinamico
         self.text_controls[self.legend_max_text] = 'legend'
@@ -97,24 +106,26 @@ class TemperatureChart:
         if self.page:
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-            self.text_color = current_theme_config["TEXT"]
+            new_text_color = current_theme_config["TEXT"]
 
-            # Update legend text colors
-            if hasattr(self, 'legend_max_text'):
-                self.legend_max_text.color = self.text_color
-                if self.legend_max_text.page:
-                    self.legend_max_text.update()
-            
-            if hasattr(self, 'legend_min_text'):
-                self.legend_min_text.color = self.text_color
-                if self.legend_min_text.page:
-                    self.legend_min_text.update()
+            if self.text_color != new_text_color:
+                self.text_color = new_text_color
 
-            # For axis labels, the chart might need to be rebuilt
-            if hasattr(self, 'chart_control') and self.chart_control.page:
-                 # Update axis label colors directly
-                 self._update_chart_axis_colors()
-                 self.chart_control.update()
+                # Update legend text colors
+                if hasattr(self, 'legend_max_text'):
+                    self.legend_max_text.color = self.text_color
+                    if self.legend_max_text.page:
+                        self.legend_max_text.update()
+                
+                if hasattr(self, 'legend_min_text'):
+                    self.legend_min_text.color = self.text_color
+                    if self.legend_min_text.page:
+                        self.legend_min_text.update()
+
+                # For axis labels, the chart might need to be rebuilt or colors updated
+                if hasattr(self, 'chart_control') and self.chart_control.page:
+                    self._update_chart_axis_colors() # This updates colors and calls update_text_controls
+                    self.chart_control.update() # Ensure chart itself updates
 
     def _update_chart_axis_colors(self):
         """Updates the colors of chart axis labels."""
@@ -264,30 +275,67 @@ class TemperatureChart:
                                 if text_control.page: # Update if on page
                                      text_control.update()
                     
-                    # Update legend texts - Use lowercase keys "max" and "min"
-                    if hasattr(self, 'legend_max_text'):
-                        translated_max = TranslationService.get_text("max", self.language)
-                        logging.info(f"TemperatureChart: Translating 'max' to {translated_max} for language {self.language}")
-                        self.legend_max_text.value = translated_max
-                        if self.legend_max_text.page:
-                            self.legend_max_text.update()
-                            logging.info("TemperatureChart: legend_max_text updated.")
-                        else:
-                            logging.warning("TemperatureChart: legend_max_text not on page, not updated.")
-                    
-                    if hasattr(self, 'legend_min_text'):
-                        translated_min = TranslationService.get_text("min", self.language)
-                        logging.info(f"TemperatureChart: Translating 'min' to {translated_min} for language {self.language}")
-                        self.legend_min_text.value = translated_min
-                        if self.legend_min_text.page:
-                            self.legend_min_text.update()
-                            logging.info("TemperatureChart: legend_min_text updated.")
-                        else:
-                            logging.warning("TemperatureChart: legend_min_text not on page, not updated.")
+                    # Update legend texts
+                    self._update_legend_display() # Call new method
 
-                        # If individual updates don't refresh the chart view correctly, 
-                        # or if the number of labels could change (not the case here),
-                        # an update to the whole chart might be needed.
-                        if hasattr(self, 'chart_control') and self.chart_control.page:
-                            self.chart_control.update()
-                            logging.info("TemperatureChart: chart_control updated.")
+                    if hasattr(self, 'chart_control') and self.chart_control.page:
+                        self.chart_control.update()
+                        logging.info("TemperatureChart: chart_control updated after language change.")
+
+    def handle_unit_change(self, event_data=None):
+        """Handles unit system change events by updating the legend."""
+        if self.page:
+            state_manager = self.page.session.get('state_manager')
+            if state_manager:
+                new_unit_system = state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM
+                if new_unit_system != self.unit_system:
+                    self.unit_system = new_unit_system
+                    self.unit_symbol = TranslationService.get_unit_symbol(self.unit_system, "temperature")
+                    logging.info(f"TemperatureChart: Unit system changed to {self.unit_system}, symbol: {self.unit_symbol}")
+                    
+                    self._update_legend_display() # Call new method
+
+                    if hasattr(self, 'chart_control') and self.chart_control.page:
+                        self.chart_control.update()
+                        logging.info("TemperatureChart: chart_control updated after unit change.")
+
+    def _update_legend_display(self):
+        """Updates the legend texts based on current language and unit symbol."""
+        if not hasattr(self, 'legend_max_text') or not hasattr(self, 'legend_min_text'):
+            return
+
+        max_label = TranslationService.get_text("max", self.language)
+        min_label = TranslationService.get_text("min", self.language)
+        
+        new_max_value = f"{max_label} ({self.unit_symbol})"
+        new_min_value = f"{min_label} ({self.unit_symbol})"
+
+        if self.legend_max_text.value != new_max_value:
+            self.legend_max_text.value = new_max_value
+            logging.info(f"TemperatureChart: Updating legend_max_text to {new_max_value}")
+            if self.legend_max_text.page:
+                self.legend_max_text.update()
+
+        if self.legend_min_text.value != new_min_value:
+            self.legend_min_text.value = new_min_value
+            logging.info(f"TemperatureChart: Updating legend_min_text to {new_min_value}")
+            if self.legend_min_text.page:
+                self.legend_min_text.update()
+    
+    def cleanup(self):
+        """Unregisters observers to prevent memory leaks."""
+        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+            state_manager = self.page.session.get('state_manager')
+            if state_manager:
+                logging.info("TemperatureChart: Cleaning up observers.")
+                state_manager.unregister_observer("language_event", self.handle_language_change)
+                state_manager.unregister_observer("theme_event", self.handle_theme_change)
+                state_manager.unregister_observer("unit_event", self.handle_unit_change)
+        
+        # Consider if page.on_resize needs specific cleanup if it was overridden
+        # For now, assuming Flet handles it or it's not causing issues.
+        # If self.page.on_resize was set to combined_resize_handler,
+        # and original_resize_handler was stored, it might be good practice to restore it,
+        # but only if this component's lifecycle is managed such that it's truly "destroyed"
+        # and its on_resize should no longer be active.
+        # Given Flet's declarative nature, simply not including it in a new page build might be enough.

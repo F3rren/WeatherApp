@@ -5,7 +5,7 @@ Main application file for the MeteoApp.
 import flet as ft
 import logging
 
-from utils.config import (DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT, DEFAULT_THEME_MODE)
+from utils.config import (DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, DEFAULT_THEME_MODE)
 
 from layout.frontend.layout_manager import LayoutManager
 from layout.frontend.sidebar.sidebar_manager import SidebarManager
@@ -13,6 +13,7 @@ from state_manager import StateManager
 from services.geolocation_service import GeolocationService
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
+from services.translation_service import TranslationService # Add this import
 from ui.weather_view import WeatherView
 
 # Configure logging
@@ -36,7 +37,9 @@ class MeteoApp:
         self.air_pollution_container_wrapper = None
         self.page = None
         self.layout_manager = None
-        
+        self.weather_view_instance = None # Add to store WeatherView instance
+        self.translation_service = None # Add to store TranslationService instance
+
     async def _update_container_colors(self, event_data=None):
         """Updates the background colors of main containers based on the theme."""
         if not self.page or not hasattr(self, 'layout_manager'):
@@ -63,31 +66,35 @@ class MeteoApp:
         # Salva lo state_manager nella sessione per accedervi da altre parti dell'app
         page.session.set('state_manager', self.state_manager)
         
+        # Initialize TranslationService
+        self.translation_service = TranslationService()
+        page.session.set('translation_service', self.translation_service) # Optionally store in session
+
         # Register theme update handler for containers
         self.state_manager.register_observer("theme_event", self._update_container_colors)
 
-        weather_view = WeatherView(page)
-        info_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = weather_view.get_containers()
+        self.weather_view_instance = WeatherView(page) # Store instance
+        info_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = self.weather_view_instance.get_containers()
         
         # Inizializza il servizio di location toggle
         self.location_toggle_service = LocationToggleService(
             page=page,
             geolocation_service=self.geolocation_service,
             state_manager=self.state_manager,
-            update_weather_callback=weather_view.update_by_coordinates
+            update_weather_callback=self.weather_view_instance.update_by_coordinates # Use instance
         )
         
         # Inizializza il servizio di theme toggle
         self.theme_toggle_service = ThemeToggleService(
-            page=page,
-            state_manager=self.state_manager
-        )        # Inizializzazione del gestore della sidebar
+            page=page, state_manager=self.state_manager
+        )
+        # Inizializzazione del gestore della sidebar
         self.sidebar_manager = SidebarManager(
             page=page,
             state_manager=self.state_manager,
             location_toggle_service=self.location_toggle_service,
             theme_toggle_service=self.theme_toggle_service,
-            update_weather_callback=weather_view.update_by_city
+            update_weather_callback=self.weather_view_instance.update_by_city # Use instance
         )
         
         # Ottieni l'istanza della sidebar dal gestore
@@ -122,10 +129,10 @@ class MeteoApp:
         # Initial update of container colors
         await self._update_container_colors()
 
-        await weather_view.update_by_city(
+        await self.weather_view_instance.update_by_city( # Use instance
             city=DEFAULT_CITY,
             language=DEFAULT_LANGUAGE,
-            unit=DEFAULT_UNIT
+            unit=DEFAULT_UNIT_SYSTEM
         )
 
         # Inizializza il tracking della posizione
@@ -133,6 +140,24 @@ class MeteoApp:
         
         # Inizializza il tema dell'applicazione
         await self.theme_toggle_service.initialize_theme()
+
+        # Register cleanup function for page disconnect or window close
+        async def on_disconnect_or_close(e):
+            logging.info("Page disconnected or window closed, performing cleanup...")
+            if self.weather_view_instance:
+                self.weather_view_instance.cleanup()
+            if self.state_manager:
+                # Potentially unregister other global observers if any were set directly on state_manager here
+                pass # No other global observers to unregister from MeteoApp directly for now
+            logging.info("Cleanup complete.")
+
+        page.on_disconnect = on_disconnect_or_close
+        # For desktop, on_window_event might be more reliable for cleanup before exit
+        if page.platform == ft.PagePlatform.WINDOWS or page.platform == ft.PagePlatform.LINUX or page.platform == ft.PagePlatform.MACOS:
+            async def window_event_handler(e):
+                if e.data == "close": # Or other relevant events like 'destroy'
+                    await on_disconnect_or_close(e)
+            page.on_window_event = window_event_handler
 
 
 def main():

@@ -1,167 +1,140 @@
-from utils.translations_data import TRANSLATIONS
 from deep_translator import GoogleTranslator
+from utils.translations_data import TRANSLATIONS
+from utils.config import DEFAULT_LANGUAGE
 
 class TranslationService:
+    
     TRANSLATIONS = TRANSLATIONS
-    CHEMICAL_ELEMENTS = [
-        ("CO", "Carbon monoxide"),
-        ("NO", "Nitrogen monoxide"),
-        ("NO₂", "Nitrogen dioxide"),
-        ("O₃", "Ozone"),
-        ("SO₂", "Sulphur dioxide"),
-        ("PM2.5", "Fine particles (PM2.5)"),
-        ("PM10", "Coarse particles (PM10)"),
-        ("NH₃", "Ammonia"),
-    ]
 
-    # Mapping of app language codes to GoogleTranslator supported codes
-    GOOGLE_TRANSLATOR_LANG_CODES = {
-        'af': 'af', 'sq': 'sq', 'am': 'am', 'ar': 'ar', 'hy': 'hy', 'as': 'as', 'ay': 'ay', 'az': 'az', 'bm': 'bm',
-        'eu': 'eu', 'be': 'be', 'bn': 'bn', 'bho': 'bho', 'bs': 'bs', 'bg': 'bg', 'ca': 'ca', 'ceb': 'ceb', 'ny': 'ny',
-        'zh': 'zh-CN', 'zh_cn': 'zh-CN', 'zh-cn': 'zh-CN', 'zh_tw': 'zh-TW', 'zh-tw': 'zh-TW', 'co': 'co', 'hr': 'hr',
-        'cs': 'cs', 'da': 'da', 'dv': 'dv', 'doi': 'doi', 'nl': 'nl', 'en': 'en', 'eo': 'eo', 'et': 'et', 'ee': 'ee',
-        'tl': 'tl', 'fi': 'fi', 'fr': 'fr', 'fy': 'fy', 'gl': 'gl', 'ka': 'ka', 'de': 'de', 'el': 'el', 'gn': 'gn',
-        'gu': 'gu', 'ht': 'ht', 'ha': 'ha', 'haw': 'haw', 'iw': 'iw', 'he': 'iw', 'hi': 'hi', 'hmn': 'hmn', 'hu': 'hu',
-        'is': 'is', 'ig': 'ig', 'ilo': 'ilo', 'id': 'id', 'ga': 'ga', 'it': 'it', 'ja': 'ja', 'jw': 'jw', 'kn': 'kn',
-        'kk': 'kk', 'km': 'km', 'rw': 'rw', 'gom': 'gom', 'ko': 'ko', 'kri': 'kri', 'ku': 'ku', 'ckb': 'ckb', 'ky': 'ky',
-        'lo': 'lo', 'la': 'la', 'lv': 'lv', 'ln': 'ln', 'lt': 'lt', 'lg': 'lg', 'lb': 'lb', 'mk': 'mk', 'mai': 'mai',
-        'mg': 'mg', 'ms': 'ms', 'ml': 'ml', 'mt': 'mt', 'mi': 'mi', 'mr': 'mr', 'mni-mtei': 'mni-Mtei', 'lus': 'lus',
-        'mn': 'mn', 'my': 'my', 'ne': 'ne', 'no': 'no', 'or': 'or', 'om': 'om', 'ps': 'ps', 'fa': 'fa', 'pl': 'pl',
-        'pt': 'pt', 'pt_br': 'pt', 'pt-pt': 'pt', 'pa': 'pa', 'qu': 'qu', 'ro': 'ro', 'ru': 'ru', 'sm': 'sm', 'sa': 'sa',
-        'gd': 'gd', 'nso': 'nso', 'sr': 'sr', 'st': 'st', 'sn': 'sn', 'sd': 'sd', 'si': 'si', 'sk': 'sk', 'sl': 'sl',
-        'so': 'so', 'es': 'es', 'su': 'su', 'sw': 'sw', 'sv': 'sv', 'tg': 'tg', 'ta': 'ta', 'tt': 'tt', 'te': 'te',
-        'th': 'th', 'ti': 'ti', 'ts': 'ts', 'tr': 'tr', 'tk': 'tk', 'ak': 'ak', 'uk': 'uk', 'ur': 'ur', 'ug': 'ug',
-        'uz': 'uz', 'vi': 'vi', 'cy': 'cy', 'xh': 'xh', 'yi': 'yi', 'yo': 'yo', 'zu': 'zu'
-    }
-
-    _translation_cache = {}
-
-    @staticmethod
-    def normalize_lang_code(code):
+    @classmethod
+    def normalize_lang_code(cls, code):  # Renamed from _normalize_lang_code
         """
-        Normalizza il codice lingua per l'accesso al dizionario delle traduzioni.
-        Esempi:
-        - 'it-IT', 'it_IT', 'IT' -> 'it'
-        - 'zh-cn', 'zh_CN', 'zh-hans' -> 'zh_CN'
-        - 'en' -> 'en'
+        Normalizza il codice lingua per l'accesso al dizionario locale.
+        Esempio: 'zh-cn', 'ZH_CN', 'zh_CN' -> 'zh_CN'
         """
         if not code:
-            return 'en'
-        code = code.replace('-', '_').lower()
+            return "en"
+        code = code.replace("-", "_").lower()
         # Gestione speciale per cinese semplificato
         if code in ("zh_cn", "zh-hans", "zh_sg"):
-            return "zh-CN"
+            return "zh_CN"
         # Gestione speciale per cinese tradizionale (se aggiungi zh_TW)
         if code in ("zh_tw", "zh-hant"):
-            return "zh-TW"
+            return "zh_TW"
         # Altri codici: usa solo la parte principale (es: 'it', 'fr')
-        base = code.split('_')[0]
-        if base in TranslationService.TRANSLATIONS:
-            return base
-        # Fallback su inglese
-        return 'en'
-
-    @staticmethod
-    def map_language_code_for_google(code: str) -> str:
-        """
-        Map app language code to GoogleTranslator supported code.
-        Handles region codes and falls back to English if not supported.
-        """
-        if not code:
-            return 'en'
-        code = code.replace('-', '_').lower()
-        # Direct match
-        if code in TranslationService.GOOGLE_TRANSLATOR_LANG_CODES:
-            return TranslationService.GOOGLE_TRANSLATOR_LANG_CODES[code]
-        # Try base language (e.g., 'pt_br' -> 'pt')
-        base = code.split('_')[0]
-        if base in TranslationService.GOOGLE_TRANSLATOR_LANG_CODES:
-            return TranslationService.GOOGLE_TRANSLATOR_LANG_CODES[base]
-        # Try with dash
-        code_dash = code.replace('_', '-')
-        if code_dash in TranslationService.GOOGLE_TRANSLATOR_LANG_CODES:
-            return TranslationService.GOOGLE_TRANSLATOR_LANG_CODES[code_dash]
-        # Fallback to English
-        return 'en'
+        return code.upper() if code.upper() in cls.TRANSLATIONS else code.split("_")[0]
 
     @classmethod
-    def get_text(cls, key, language):
+    def get_text(cls, key_or_text, target_language, source_language="en"):
         """
-        Restituisce la traduzione per la chiave e la lingua specificata.
-        Se non trovata, ritorna la chiave stessa.
+        1. Se la lingua è supportata e la chiave è presente, usa la traduzione locale.
+        2. Altrimenti, traduci il testo passato con deep-translator.
+        3. Mantieni la maiuscola iniziale se il testo originale la aveva.
         """
-        lang_code = cls.normalize_lang_code(language)
-        return cls.TRANSLATIONS.get(lang_code, cls.TRANSLATIONS['en']).get(key, key)
-
-    @classmethod
-    def get_pollution_elements(cls, language):
-        """
-        Restituisce la lista degli elementi di inquinamento tradotti per la lingua.
-        """
-        lang_code = cls.normalize_lang_code(language)
-        return cls.TRANSLATIONS.get(lang_code, cls.TRANSLATIONS['en']).get('pollution_elements', [])
-
-    @classmethod
-    def get_aqi_descriptions(cls, language):
-        """
-        Restituisce la lista delle descrizioni AQI tradotte per la lingua.
-        """
-        lang_code = cls.normalize_lang_code(language)
-        return cls.TRANSLATIONS.get(lang_code, cls.TRANSLATIONS['en']).get('aqi_descriptions', [])
-
-    @classmethod
-    def clear_cache(cls):
-        cls._translation_cache.clear()
-
-    @classmethod
-    def get_chemical_elements(cls, language):
-        """
-        Restituisce la lista degli elementi chimici tradotti per la lingua.
-        Usa una cache per evitare chiamate ripetute eccessive.
-        Ottimizzato: usa batch translation se possibile, fallback su traduzione singola se necessario.
-        """
-        google_code = cls.map_language_code_for_google(language)
-        cache_key = f"chem_elements_{google_code}"
-        if cache_key in cls._translation_cache:
-            return cls._translation_cache[cache_key]
-        elements = []
-        descriptions = [desc for _, desc in cls.CHEMICAL_ELEMENTS]
-        if google_code in ('en', 'en-us', 'en-gb'):
-            elements = [(symbol, desc) for symbol, desc in cls.CHEMICAL_ELEMENTS]
+        target = cls.normalize_lang_code(target_language)  # Updated call
+        source = cls.normalize_lang_code(source_language)  # Updated call
+        # Prova dizionario locale
+        if target in cls.TRANSLATIONS and key_or_text in cls.TRANSLATIONS[target]:
+            translated = cls.TRANSLATIONS[target][key_or_text]
+        elif source in cls.TRANSLATIONS and key_or_text in cls.TRANSLATIONS[source]:
+            # Se la chiave esiste solo in inglese, traduci il valore inglese
+            base_text = cls.TRANSLATIONS[source][key_or_text]
+            if target == source:
+                translated = base_text
+            else:
+                try:
+                    translated = GoogleTranslator(source=source, target=target).translate(base_text)
+                except Exception as e:
+                    print(f"[TranslationService] Translation error: {e}")
+                    translated = base_text
         else:
-            try:
-                # Batch translation: GoogleTranslator accetta una lista (ma non per tutte le lingue)
-                translated_list = GoogleTranslator(source='en', target=google_code).translate(descriptions)
-                if not isinstance(translated_list, list):
-                    raise ValueError('Batch translation did not return a list')
-            except Exception:
-                translated_list = []
-                for desc in descriptions:
-                    try:
-                        translated = GoogleTranslator(source='en', target=google_code).translate(desc)
-                    except Exception:
-                        translated = desc
-                    translated_list.append(translated)
-            elements = [(symbol, translated) for (symbol, _), translated in zip(cls.CHEMICAL_ELEMENTS, translated_list)]
-        cls._translation_cache[cache_key] = elements
-        return elements
+            # Fallback: traduci direttamente il testo passato
+            if target == source:
+                translated = key_or_text
+            else:
+                try:
+                    translated = GoogleTranslator(source=source, target=target).translate(key_or_text)
+                except Exception as e:
+                    print(f"[TranslationService] Translation error: {e}")
+                    translated = key_or_text
+        # Mantieni la maiuscola iniziale se il testo originale la aveva
+        if key_or_text and key_or_text[0].isupper() and translated:
+            return translated[0].upper() + translated[1:]
+        return translated
 
-    @staticmethod
-    def translate_weekday(day_key, language):
-        """
-        Restituisce la traduzione del giorno della settimana (accetta sia abbreviazioni che nomi estesi).
-        """
-        day_map = {
-            "Mon": "Monday",
-            "Tue": "Tuesday",
-            "Wed": "Wednesday", 
-            "Thu": "Thursday", 
-            "Fri": "Friday",
-            "Sat": "Saturday",
-            "Sun": "Sunday",
-        }
+    @classmethod
+    def get_unit_symbol(cls, quantity: str, unit_system: str, language: str = None) -> str:
+        """Get the translation for a unit symbol."""
+        # Use the provided language, or fall back to the default language.
+        # Ensure that language normalization is handled if necessary, similar to get_text.
+        # This example assumes direct use of language codes as keys in TRANSLATIONS.
+        target_lang = cls.normalize_lang_code(language if language else DEFAULT_LANGUAGE) # Updated call
 
-        
-        key = day_map.get(day_key, day_key) #giorni
-        # Normalizza la chiave per il lookup (es: Monday -> monday)
-        return TranslationService.get_text(key.lower(), language)
+        try:
+            # Navigate through the translations dictionary to find the unit symbol.
+            return cls.TRANSLATIONS[target_lang]["unit_symbols"][unit_system][quantity]
+        except KeyError:
+            # Fallback for missing translations: return an empty string or a default symbol.
+            # Consider logging this event for missing translations.
+            print(f"[TranslationService] Unit symbol not found for lang='{target_lang}', unit_system='{unit_system}', quantity='{quantity}'")
+            # Fallback to English if the specific language symbol is not found
+            if target_lang != 'en':
+                try:
+                    return cls.TRANSLATIONS['en']["unit_symbols"][unit_system][quantity]
+                except KeyError:
+                    pass # English fallback also failed
+            return "" # Default empty string if no symbol is found
+
+    @classmethod
+    def translate_weekday(cls, day_key: str, language: str) -> str:
+        """Translates a weekday key (e.g., 'mon', 'tue') to the target language."""
+        target_lang = cls.normalize_lang_code(language) # Updated call
+        day_key_lower = day_key.lower() # Ensure key is lowercase for matching
+
+        try:
+            # Attempt to find the translation directly under the language key
+            return cls.TRANSLATIONS[target_lang][day_key_lower]
+        except KeyError:
+            # Fallback for missing translations
+            print(f"[TranslationService] Weekday translation not found for lang='{target_lang}', day_key='{day_key_lower}'")
+            # Fallback to English if the specific language translation is not found
+            if target_lang != 'en':
+                try:
+                    return cls.TRANSLATIONS['en'][day_key_lower]
+                except KeyError:
+                    # If English fallback also fails, return the original key or a placeholder
+                    return day_key_lower.capitalize() # Capitalize as a simple default
+            return day_key_lower.capitalize() # Default if English key is also missing
+
+    @classmethod
+    def get_chemical_elements(cls, language: str) -> list[tuple[str, str]]:
+        """Gets the translated list of chemical element symbols and their descriptions."""
+        target_lang = cls.normalize_lang_code(language)
+        default_elements = [
+            ("CO", "Carbon Monoxide"),
+            ("NO", "Nitrogen Monoxide"),
+            ("NO2", "Nitrogen Dioxide"),
+            ("O3", "Ozone"),
+            ("SO2", "Sulphur Dioxide"),
+            ("PM2.5", "Fine Particulate Matter"),
+            ("PM10", "Coarse Particulate Matter"),
+            ("NH3", "Ammonia"),
+        ]
+
+        try:
+            elements = cls.TRANSLATIONS[target_lang]["chemical_elements"]
+            # Ensure it's a list of tuples/lists with 2 strings each
+            if not isinstance(elements, list) or not all(isinstance(el, (list, tuple)) and len(el) == 2 and isinstance(el[0], str) and isinstance(el[1], str) for el in elements):
+                print(f"[TranslationService] chemical_elements for lang='{target_lang}' is not in the expected format. Using English fallback.")
+                return cls.TRANSLATIONS['en'].get("chemical_elements", default_elements)
+            return elements
+        except KeyError:
+            print(f"[TranslationService] Chemical elements not found for lang='{target_lang}'. Using English fallback.")
+            # Fallback to English if the specific language elements are not found
+            if target_lang != 'en':
+                try:
+                    return cls.TRANSLATIONS['en']["chemical_elements"]
+                except KeyError:
+                    print("[TranslationService] English chemical_elements also not found. Using hardcoded default.")
+                    return default_elements # Hardcoded default as ultimate fallback
+            return default_elements # Default if English key is also missing

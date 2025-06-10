@@ -1,7 +1,7 @@
 import flet as ft
 from services.api_service import ApiService
 from services.translation_service import TranslationService
-from utils.config import LIGHT_THEME, DARK_THEME
+from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME, DEFAULT_UNIT_SYSTEM # Added DEFAULT_UNIT_SYSTEM
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class AirPollution:
@@ -23,12 +23,8 @@ class AirPollution:
         self.page = page
         self.lat = lat
         self.lon = lon
-        # Set initial text_color or derive from theme
-        if text_color:
-            self.text_color = text_color
-        else:
-            self.text_color = DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"]
-    
+        self.initial_text_color = text_color # Store initial text color
+        self._state_manager = None
         self.api = ApiService()
         self.pollution_data = {}
         
@@ -43,14 +39,19 @@ class AirPollution:
         self.pm10 = 0
         self.nh3 = 0
 
-
-         # Inizializza la lingua dinamicamente PRIMA di usarla
         if page and hasattr(page, 'session') and page.session.get('state_manager'):
-            state_manager = page.session.get('state_manager')
-            self.language = state_manager.get_state('language') or 'en'
-            state_manager.register_observer("language_event", self.handle_language_change)
+            self._state_manager = page.session.get('state_manager')
+            self.language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
+            self.unit_system = self._state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM # Added
+            self.text_color = self._determine_text_color()
+
+            self._state_manager.register_observer("language_event", self._handle_state_change)
+            self._state_manager.register_observer("theme_event", self._handle_state_change) # Combined handler
+            # No unit_event needed here as air pollution units (μg/m³) are standard and not switchable by user
         else:
-            self.language = 'en'
+            self.language = DEFAULT_LANGUAGE
+            self.unit_system = DEFAULT_UNIT_SYSTEM # Added
+            self.text_color = self.initial_text_color if self.initial_text_color else (DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"])
 
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
@@ -63,72 +64,73 @@ class AirPollution:
             breakpoints=[600, 900, 1200, 1600]  # Aggiunti breakpoint per il ridimensionamento
         )
 
-        # Dizionario dei controlli di testo per aggiornamento facile
-        self.text_controls = {}
+        self.text_controls_map = {} # To store {control: category} for resize updates
+        self.container_control = None # Will hold the main ft.Container
         
-        # Sovrascrivi il gestore di ridimensionamento della pagina
-        if self.page:
-            # Salva l'handler originale se presente
-            original_resize_handler = self.page.on_resize
-            
-            def combined_resize_handler(e):
-                # Aggiorna le dimensioni del testo
-                self.text_handler._handle_resize(e)
-                # Aggiorna i controlli di testo
-                self.update_text_controls()
-                # Chiama anche l'handler originale se esiste
-                if original_resize_handler:
-                    original_resize_handler(e)
-            
-            self.page.on_resize = combined_resize_handler
+        original_resize_handler = self.page.on_resize
+        def combined_resize_handler(e):
+            self.text_handler._handle_resize(e)
+            self._update_text_sizes_and_colors() # Update on resize
+            if original_resize_handler:
+                original_resize_handler(e)
+        self.page.on_resize = combined_resize_handler
 
-        # Update data if coordinates are provided
         if lat is not None and lon is not None:
-            self.update_data(lat, lon)
+            self.update_data(lat, lon) # This will also trigger a build if container_control exists
 
-
-    def update_text_controls(self):
-        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
-        for control, size_category in self.text_controls.items():
-            if hasattr(control, 'size'):
-                control.size = self.text_handler.get_size(size_category)
-            elif hasattr(control, 'style') and hasattr(control.style, 'size'):
-                control.style.size = self.text_handler.get_size(size_category)
-            # Aggiorna anche i TextSpan se presenti
-            if hasattr(control, 'spans'):
-                for span in control.spans:
-                    span.style.size = self.text_handler.get_size(size_category)
-        # Non chiamare self.page.update() qui per evitare errori se i controlli non sono ancora nella pagina
-
-    def handle_theme_change(self, event_data=None):
-        """Handles theme change events by updating text color and relevant UI elements."""
+    def _determine_text_color(self):
         if self.page:
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-            self.text_color = current_theme_config["TEXT"]
+            return current_theme_config["TEXT"]
+        return self.initial_text_color
+
+    def _handle_state_change(self, event_data=None):
+        """Handles language or theme changes."""
+        if self._state_manager:
+            self.language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
+            # self.unit_system remains as air pollution units are fixed
+        self.text_color = self._determine_text_color()
+        self._rebuild_ui() # Rebuild UI to reflect changes
+
+    def _update_text_sizes_and_colors(self):
+        """Updates sizes and colors of all registered text controls."""
+        for control, category in self.text_controls_map.items():
+            new_size = self.text_handler.get_size(category)
+            if hasattr(control, 'size'):
+                control.size = new_size
+            if hasattr(control, 'color'): # Update color for simple Text controls
+                 if not (control == self.aqi_value_text and self.aqi > 2): # Special case for AQI value background
+                    control.color = self.text_color
             
-            # Aggiorna il colore e le dimensioni del testo per tutti gli elementi
-            if hasattr(self, 'container_control') and self.container_control.page:
-                # Ricostruisci il contenuto con i nuovi colori
-                if self.lat is not None and self.lon is not None:
-                    self.container_control.content = self.createAirPollutionTab()
-                    self.container_control.update()
+            # Handle TextSpans within a Text control (e.g., pollution details)
+            if hasattr(control, 'spans'):
+                for span in control.spans:
+                    if hasattr(span, 'style') and span.style:
+                        span.style.size = new_size
+                        # Color for spans is handled during creation based on context
+                        # or updated directly if needed (e.g. a general text color change)
+                        if span != self.value_span: # Assuming value_span might have specific color logic
+                             span.style.color = self.text_color
+            if hasattr(control, 'page') and control.page: # Guard update
+                control.update()
+        # Removed self.page.update() - let higher level components manage page updates if needed
+
+    def _rebuild_ui(self):
+        """Reconstructs the UI elements when language or theme changes."""
+        if self.container_control and self.lat is not None and self.lon is not None:
+            # Pollution data itself doesn't change with language/theme, only its display
+            new_content = self.createAirPollutionTab() # This now calls _update_text_sizes_and_colors internally at the end
+            self.container_control.content = new_content
+            if hasattr(self.container_control, 'page') and self.container_control.page: # Guard update
+                self.container_control.update()
+            # REMOVED: self._update_text_sizes_and_colors() call from here as it's in createAirPollutionTab
 
     def update_data(self, lat, lon):
-        """
-        Update air pollution data with new coordinates.
-        
-        Args:
-            lat: Latitude
-            lon: Longitude
-        """
         self.lat = lat
         self.lon = lon
+        self.pollution_data = self.api.get_air_pollution(lat, lon) or {}
         
-        # Get air pollution data
-        self.pollution_data = self.api.get_air_pollution(lat, lon)
-        
-        # Update component properties
         self.aqi = self.pollution_data.get("aqi", 0)
         self.co = self.pollution_data.get("co", 0)
         self.no = self.pollution_data.get("no", 0)
@@ -138,6 +140,8 @@ class AirPollution:
         self.pm2_5 = self.pollution_data.get("pm2_5", 0)
         self.pm10 = self.pollution_data.get("pm10", 0)
         self.nh3 = self.pollution_data.get("nh3", 0)
+        
+        self._rebuild_ui() # Rebuild UI with new data
     
     def _get_aqi_description(self) -> str:
         """Get localized description based on Air Quality Index"""
@@ -164,130 +168,109 @@ class AirPollution:
         return colors[min(self.aqi, 5)]
     
     def createAirPollutionTab(self):
-        """Create the air pollution tab content"""
-        # Reset text controls dictionary before rebuilding
-        self.text_controls = {}
+        self.text_controls_map.clear()
         
-        # AQI indicator
-        aqi_title = ft.Text(TranslationService.get_text("air_quality_index", self.language),size=self.text_handler.get_size('title'), weight="bold", color=self.text_color)
+        aqi_title_text = TranslationService.get_text("air_quality_index", self.language)
+        aqi_title = ft.Text(aqi_title_text, weight="bold", color=self.text_color)
+        self.text_controls_map[aqi_title] = 'title'
 
-        aqi_value = ft.Text(
-            self._get_aqi_description(),
-            size=self.text_handler.get_size('title'),
-            weight="bold",
-            color=self.text_color if self.aqi <= 2 else "#ffffff"
+        aqi_desc = self._get_aqi_description()
+        self.aqi_value_text = ft.Text(
+            aqi_desc, weight="bold", 
+            color=self.text_color if self.aqi <= 2 else "#ffffff" # White text on darker backgrounds
         )
-        
-        # Register text controls
-        self.text_controls[aqi_title] = 'title'
-        self.text_controls[aqi_value] = 'title'
+        self.text_controls_map[self.aqi_value_text] = 'title' 
         
         aqi_row = ft.Row([
             aqi_title,
             ft.Container(
-                content=aqi_value,
+                content=self.aqi_value_text,
                 bgcolor=self._get_aqi_color(),
-                border_radius=10,
-                padding=10,
-                alignment=ft.alignment.center,
-                expand=True
+                border_radius=10, padding=10, alignment=ft.alignment.center, expand=True
             )
         ])
         
-        # Ottieni la lista delle descrizioni localizzate degli elementi chimici tramite deep_translator
         elements = TranslationService.get_chemical_elements(self.language)
-        pollution_data = []
-        values = [self.co, self.no, self.no2, self.o3, self.so2, self.pm2_5, self.pm10, self.nh3]
-        for (symbol, desc), value in zip(elements, values):
-            pollution_data.append((symbol, value, "μg/m³", desc))
+        pollution_values = [self.co, self.no, self.no2, self.o3, self.so2, self.pm2_5, self.pm10, self.nh3]
         
-        pollution_rows = []
-        divider = ft.Divider(height=20, color=self.text_color)
-        
-        # Create rows with 2 items per row
-        for i in range(0, len(pollution_data), 2):
-            row_items = []
-            
-            # Add first item
-            name1, value1, unit1, desc1 = pollution_data[i]
-            name1_text = ft.Text(name1, weight="bold", size=self.text_handler.get_size('label'), color=self.text_color)
-            value1_text = ft.Text(f"{value1} {unit1}", size=self.text_handler.get_size('value'), color=self.text_color)
-            desc1_text_control = ft.Text(desc1, size=self.text_handler.get_size('value'), color=self.text_color, italic=True)
+        # Create two columns for pollutant details
+        column1_controls = []
+        column2_controls = []
 
-            # Register text controls
-            self.text_controls[name1_text] = 'label'
-            self.text_controls[value1_text] = 'value'
-            self.text_controls[desc1_text_control] = 'value'
+        num_elements = len(elements)
+        mid_point = (num_elements + 1) // 2
+
+        for i, (symbol_desc_pair) in enumerate(elements):
+            symbol, description = symbol_desc_pair
+            value = pollution_values[i]
             
-            row_items.append(
-                ft.Container(
-                    content=ft.Column([name1_text, value1_text, desc1_text_control]),
-                    padding=10,
-                    border_radius=10,
-                    expand=True
-                )
+            value_str = f"{value:.2f} μg/m³"
+            
+            desc_text = ft.Text(description, color=self.text_color)
+            self.text_controls_map[desc_text] = 'label'
+            
+            # Using separate Text controls for symbol and value for clarity
+            symbol_text = ft.Text(f"{symbol}:", weight=ft.FontWeight.BOLD, color=self.text_color)
+            self.text_controls_map[symbol_text] = 'value' 
+            
+            value_text_control = ft.Text(value_str, color=self.text_color) # Renamed from item_text to avoid confusion
+            self.text_controls_map[value_text_control] = 'value'
+
+            pollutant_item_column = ft.Column(
+                controls=[
+                    desc_text,
+                    ft.Row([symbol_text, value_text_control], spacing=5) # Symbol and value in a row
+                ],
+                spacing=2, # Reduced spacing within the item
+                alignment=ft.MainAxisAlignment.START,
+                horizontal_alignment=ft.CrossAxisAlignment.START
+            )
+
+            item_container = ft.Container(
+                content=pollutant_item_column,
+                padding=ft.padding.symmetric(vertical=5) # Add some vertical padding
             )
             
-            # Add second item if exists
-            if i + 1 < len(pollution_data):
-                name2, value2, unit2, desc2 = pollution_data[i+1]
-                name2_text = ft.Text(name2, weight="bold", size=self.text_handler.get_size('label'), color=self.text_color)
-                value2_text = ft.Text(f"{value2} {unit2}", size=self.text_handler.get_size('value'), color=self.text_color)
-                desc2_text_control = ft.Text(desc2, size=self.text_handler.get_size('value'), color=self.text_color, italic=True)
-                
-                # Register text controls
-                self.text_controls[name2_text] = 'label'
-                self.text_controls[value2_text] = 'value'
-                self.text_controls[desc2_text_control] = 'value'
-                
-                row_items.append(
-                    ft.Container(
-                        content=ft.Column([name2_text, value2_text, desc2_text_control]),
-                        padding=10,
-                        border_radius=10,
-                        expand=True
-                    )
-                )
-            
-            pollution_rows.append(ft.Row(row_items, spacing=10))
-
-        return ft.Column(
+            if i < mid_point:
+                column1_controls.append(item_container)
+            else:
+                column2_controls.append(item_container)
+        
+        pollutants_row = ft.Row(
             controls=[
-                aqi_row,
-                divider,
-                *pollution_rows
+                ft.Column(column1_controls, spacing=10, expand=True),
+                ft.Column(column2_controls, spacing=10, expand=True)
             ],
-            spacing=10,
-            #expand=True # remove expand true if it causes issues
+            spacing=20 # Spacing between the two main columns
         )
-    
-    def handle_language_change(self, event_data=None):
-        """Aggiorna le label quando cambia la lingua, mostrando un messaggio di caricamento durante la traduzione."""
-        if self.page:
-            state_manager = self.page.session.get('state_manager')
-            if state_manager:
-                self.language = state_manager.get_state('language') or 'en'
-        # Mostra messaggio di caricamento se il controllo è già renderizzato
-        if hasattr(self, 'container_control') and getattr(self.container_control, 'page', None) is not None:
-            self.container_control.content = ft.Column([
-                ft.Text("Traduzione in corso...", italic=True, color=self.text_color)
-            ])
-            self.container_control.update()
-            # Ricostruisci il contenuto reale dopo un breve delay per permettere il rendering del messaggio
-            import threading
-            def delayed_update():
-                import time
-                time.sleep(0.05)  # 50ms per mostrare il messaggio
-                if hasattr(self, 'container_control') and getattr(self.container_control, 'page', None) is not None:
-                    self.container_control.content = self.createAirPollutionTab()
-                    self.container_control.update()
-            threading.Thread(target=delayed_update).start()
+        
+        main_column = ft.Column(
+            controls=[aqi_row, ft.Divider(height=1, color=self.text_color), pollutants_row],
+            spacing=15, # Increased spacing between AQI and pollutants
+            expand=True
+        )
+        return main_column
 
     def build(self):
-        """Build the air pollution component"""
+        # Initial build, or rebuild if called directly
+        # Create content first
+        content = self.createAirPollutionTab()
         self.container_control = ft.Container(
-            border_radius=15,
-            padding=20,
-            content=self.createAirPollutionTab(),
+            content=content,
+            expand=True,
+            padding=10
         )
+        # After container_control is created and has content, if it were added to the page here,
+        # then a call to _update_text_sizes_and_colors would be appropriate.
+        # Since build() just returns the control, the caller (WeatherView) is responsible for adding it.
+        # WeatherView should then trigger an update if necessary, or rely on state changes.
         return self.container_control
+
+    def cleanup(self):
+        """Unregister observers."""
+        if self._state_manager:
+            self._state_manager.unregister_observer("language_event", self._handle_state_change)
+            self._state_manager.unregister_observer("theme_event", self._handle_state_change)
+        # print("AirPollution cleaned up") # For debugging
+
+    # Removed update_text_controls, handle_theme_change as logic is now in _handle_state_change, _rebuild_ui, and _update_text_sizes_and_colors

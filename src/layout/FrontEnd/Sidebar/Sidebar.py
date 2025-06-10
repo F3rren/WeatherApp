@@ -57,11 +57,11 @@ class Sidebar:
         """Build the sidebar"""
         # Create search bar
         self.search_bar = SearchBar(self.cities, self.on_city_selected)
-        
-        # Create pop menu with location toggle callback
+          # Create pop menu with location toggle callback
         self.pop_menu = PopMenu(
             page=self.page,
             state_manager=self.page.session.get('state_manager'),
+            translation_service=self.page.session.get('translation_service'),
             handle_location_toggle=self.handle_location_toggle,
             handle_theme_toggle=self.handle_theme_toggle,
             theme_toggle_value=self.theme_toggle_value,

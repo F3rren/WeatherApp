@@ -40,11 +40,11 @@ class ApiService:
                         language: str = "en", unit: str = "metric") -> Dict[str, Any]:
         """
         Get weather forecast data for a city or coordinates.
-        Tenta prima con coordinate, poi con nome città se le coordinate non sono disponibili.
+        Attempts first with coordinates, then with city name if coordinates are not available.
         """
         try:
             url = f"{API_BASE_URL}{API_WEATHER_ENDPOINT}"
-            # Prima tenta con coordinate
+            # First attempt with coordinates
             if lat is not None and lon is not None:
                 params = {
                     "lat": lat,
@@ -54,11 +54,13 @@ class ApiService:
                     "appid": self._api_key
                 }
                 response = requests.get(url, params=params)
-                if response.status_code == 200:
-                    return response.json()
-                # Se la richiesta con coordinate fallisce, tenta con nome città
-                logging.warning("Coordinate non valide o nessun dato trovato, provo con nome città...")
-            # Poi tenta con nome città
+                response.raise_for_status() # Added for consistent error handling
+                # if response.status_code == 200: # No longer needed due to raise_for_status
+                return response.json()
+                # If the request with coordinates fails (e.g. 4xx, 5xx), raise_for_status will throw an exception
+                # logging.warning("Coordinate non valide o nessun dato trovato, provo con nome città...") # Commented out, error handled by exception
+            
+            # Then attempt with city name if lat/lon failed or were not provided
             if city:
                 city = self._normalize_city_name(city)
                 params = {
@@ -71,9 +73,38 @@ class ApiService:
                 response.raise_for_status()
                 return response.json()
             else:
-                logging.error("Either city or lat/lon must be provided")
+                # This case should ideally not be reached if called from WeatherView,
+                # as WeatherView ensures either city or lat/lon.
+                # If coordinate request failed above, and no city was provided, this is an issue.
+                # However, the original logic would attempt city if coordinate call returned non-200,
+                # but if city is None here, it's an issue.
+                # For now, keeping the original error log if no city and no successful coord fetch.
+                logging.error("Either city or lat/lon must be provided and result in a successful API call.")
+                return {}
+        except requests.exceptions.HTTPError as http_err:
+            # Specific handling for HTTP errors (4xx, 5xx)
+            if lat is not None and lon is not None and city:
+                # This block means coordinate call failed, now try city
+                logging.warning(f"Coordinate call failed ({http_err}), trying with city name '{city}'...")
+                try:
+                    city_normalized = self._normalize_city_name(city)
+                    params = {
+                        "q": city_normalized,
+                        "appid": self._api_key,
+                        "units": unit,
+                        "lang": language
+                    }
+                    response = requests.get(url, params=params)
+                    response.raise_for_status()
+                    return response.json()
+                except requests.exceptions.RequestException as e_city:
+                    logging.error(f"Error fetching weather data for city '{city}' after coordinate failure: {e_city}")
+                    return {}
+            else:
+                logging.error(f"HTTP error fetching weather data: {http_err}")
                 return {}
         except requests.exceptions.RequestException as e:
+            # General request exceptions (network issues, etc.)
             logging.error(f"Error fetching weather data: {e}")
             return {}
     
@@ -191,9 +222,10 @@ class ApiService:
             return "Unknown"
     
     def get_upcoming_days(self, days: int = 5) -> List[str]:
-        """Get list of upcoming day names"""
+        """Get list of upcoming day name keys (lowercase English full name)."""
         today = datetime.now()
-        return [(today + timedelta(days=i)).strftime("%a") for i in range(days)]
+        # Return lowercase English full day name as key for TranslationService
+        return [(today + timedelta(days=i)).strftime("%A").lower() for i in range(days)]
     
     def get_daily_forecast_data(self, data: Dict[str, Any], days: int = 5) -> Dict[str, List]:
         """
@@ -255,7 +287,7 @@ class ApiService:
         Process weather data to get daily forecast for multiple days
         
         Returns:
-            List of dictionaries with daily forecast data
+            List of dictionaries with daily forecast data, including a 'day_key'
         """
         try:
             items = data["list"]
@@ -265,16 +297,16 @@ class ApiService:
             for item in items:
                 dt_txt = item["dt_txt"]
                 date_obj = datetime.strptime(dt_txt, "%Y-%m-%d %H:%M:%S")
-                day_key = date_obj.strftime("%Y-%m-%d")
+                day_key_str = date_obj.strftime("%Y-%m-%d") # Internal key for grouping
                 
-                if day_key not in daily_data:
-                    daily_data[day_key] = []
-                daily_data[day_key].append(item)
+                if day_key_str not in daily_data:
+                    daily_data[day_key_str] = []
+                daily_data[day_key_str].append(item)
             
             # Process data for each day
             result = []
-            for i, (day_key, items_in_day) in enumerate(sorted(daily_data.items())[:days]):
-                date_obj = datetime.strptime(day_key, "%Y-%m-%d")
+            for i, (day_key_str, items_in_day) in enumerate(sorted(daily_data.items())[:days]):
+                date_obj = datetime.strptime(day_key_str, "%Y-%m-%d")
                 
                 # Calculate min and max temperatures for the day
                 temp_min = min([x["main"]["temp_min"] for x in items_in_day])
@@ -287,7 +319,8 @@ class ApiService:
                 
                 result.append({
                     "date": date_obj,
-                    "day_name": date_obj.strftime("%A"),
+                    # Use lowercase English full day name as key for TranslationService
+                    "day_key": date_obj.strftime("%A").lower(), 
                     "temp_min": round(temp_min),
                     "temp_max": round(temp_max),
                     "icon": icon,
@@ -309,7 +342,7 @@ class ApiService:
             lon: Longitude
             
         Returns:
-            Dictionary containing processed air pollution data
+            Dictionary containing processed air pollution data, or empty dict on error/no data.
         """
         try:
             url = f"{API_BASE_URL}{API_AIR_POLLUTION_ENDPOINT}"
@@ -328,7 +361,7 @@ class ApiService:
                 aqi = pollution.get("main", {}).get("aqi", 0)
                 
                 # Return processed data
-                result = {
+                result_data = { # Renamed to avoid conflict with outer 'result' in other methods
                     "aqi": aqi,  # Air Quality Index (1-5)
                     "co": components.get("co", 0),  # Carbon monoxide, μg/m3
                     "no": components.get("no", 0),  # Nitrogen monoxide, μg/m3
@@ -339,9 +372,9 @@ class ApiService:
                     "pm10": components.get("pm10", 0),  # Coarse particles, μg/m3
                     "nh3": components.get("nh3", 0)  # Ammonia, μg/m3
                 }
-                return result
+                return result_data
             
-            return None
+            return {} # Return empty dict if no data in list
         
         except requests.exceptions.RequestException as e:
             logging.error(f"Error fetching air pollution data: {e}")

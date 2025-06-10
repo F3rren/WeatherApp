@@ -8,7 +8,7 @@ import flet as ft
 from typing import Callable, Dict, Any, List
 import asyncio
 
-from utils.config import DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT
+from utils.config import DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 
 class StateManager:
     """
@@ -23,7 +23,7 @@ class StateManager:
         self._state = {
             "city": DEFAULT_CITY,
             "language": DEFAULT_LANGUAGE,
-            "unit": DEFAULT_UNIT,
+            "unit": DEFAULT_UNIT_SYSTEM,
             "using_location": False,
             "current_lat": None,
             "current_lon": None,

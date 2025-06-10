@@ -1,32 +1,33 @@
-import logging
 import flet as ft
 from utils.config import LIGHT_THEME, DARK_THEME # Import theme configurations
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
 
-class Filter:
-    def __init__(self, page: ft.Page = None, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None, 
+
+class PopMenu:
+
+    def __init__(self, page: ft.Page = None, state_manager=None, translation_service=None, handle_location_toggle=None, handle_theme_toggle=None, 
                 theme_toggle_value=False, location_toggle_value=False, text_color: str = None):
         self.page = page
         self.state_manager = state_manager
-        self.translation_service = page.session.get('translation_service') if page else None
+        self.translation_service = translation_service # Initialize translation_service
         self.handle_location_toggle = handle_location_toggle
         self.handle_theme_toggle = handle_theme_toggle
         self.theme_toggle_value = theme_toggle_value
         self.location_toggle_value = location_toggle_value
         
         if text_color:
-            self.text_color = text_color        
+            self.text_color = text_color
         elif self.page:
             self.text_color = DARK_THEME["TEXT"] if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"]
         else:
             self.text_color = LIGHT_THEME["TEXT"] # Default if no page context
-        
+
         self.weather_alert = WeatherAlertDialog(
             page=self.page, # Pass page to SettingsAlertDialog
             state_manager=state_manager, 
-            translation_service=self.translation_service,
+            translation_service=self.translation_service, # Pass translation_service
             handle_location_toggle=handle_location_toggle,
             handle_theme_toggle=handle_theme_toggle,
             text_color=self.text_color # Pass text_color
@@ -35,7 +36,7 @@ class Filter:
         self.map_alert = MapsAlertDialog(
             page=self.page, # Pass page to MapsAlertDialog
             state_manager=state_manager,
-            translation_service=self.translation_service,
+            translation_service=self.translation_service, # Pass translation_service
             handle_location_toggle=handle_location_toggle,
             handle_theme_toggle=handle_theme_toggle,
             text_color=self.text_color
@@ -44,27 +45,37 @@ class Filter:
         self.setting_alert = SettingsAlertDialog(
             page=self.page, # Pass page to SettingsAlertDialog
             state_manager=state_manager, 
-            translation_service=self.translation_service,
+            translation_service=self.translation_service, # Pass translation_service
             handle_location_toggle=handle_location_toggle,
             handle_theme_toggle=handle_theme_toggle,
             text_color=self.text_color # Pass text_color
         )
 
-        # Store PopupMenuItems for color updates
-        self.meteo_item_text = ft.Text(self._get_translation("weather"), size=20, color=self.text_color)
-        self.map_item_text = ft.Text(self._get_translation("map"), size=20, color=self.text_color)
-        self.settings_item_text = ft.Text(self._get_translation("settings"), size=20, color=self.text_color) # Added for settings
-        self.popup_menu_button_icon = ft.Icon(ft.Icons.FILTER_ALT_OUTLINED, size=40, color=self.text_color) # Apply text_color to icon
+        # Store PopupMenuItems for color updates with language-aware fallbacks
+        current_language = self.state_manager.get_state("language") if self.state_manager else "en"
+        
+        # Define fallback translations
+        translations = {
+            "en": {"weather": "Weather", "map": "Map", "settings": "Settings"},
+            "it": {"weather": "Meteo", "map": "Mappa", "settings": "Impostazioni"},
+            "fr": {"weather": "Météo", "map": "Carte", "settings": "Paramètres"},
+            "es": {"weather": "Clima", "map": "Mapa", "settings": "Configuración"},
+            "de": {"weather": "Wetter", "map": "Karte", "settings": "Einstellungen"}
+        }
+        
+        # Get translations with fallbacks
+        lang_translations = translations.get(current_language, translations["en"])
+        weather_text = lang_translations["weather"]
+        map_text = lang_translations["map"]
+        settings_text = lang_translations["settings"]
+        
+        self.meteo_item_text = ft.Text(weather_text, size=20, color=self.text_color)
+        self.map_item_text = ft.Text(map_text, size=20, color=self.text_color)
+        self.settings_item_text = ft.Text(settings_text, size=20, color=self.text_color)
+        self.popup_menu_button_icon = ft.Icon(ft.Icons.MENU, size=50, color=self.text_color) # Apply text_color to icon
 
         if self.page and self.state_manager:
             self.state_manager.register_observer("theme_event", self.handle_theme_change)
-
-    def _get_translation(self, key):
-        """Helper method to get translation with fallback"""
-        if self.translation_service and hasattr(self.translation_service, 'get_text'):
-            current_language = self.state_manager.get_state("language") if self.state_manager else "en"
-            return self.translation_service.get_text(key, current_language)
-        return key  # Fallback to key if no translation service
         
     def handle_theme_change(self, event_data=None):
         """Handles theme change events by updating text and icon colors."""
@@ -94,20 +105,14 @@ class Filter:
                 if hasattr(self, 'popup_menu_button') and self.popup_menu_button.page:
                     self.popup_menu_button.update() 
             
-            # Propagate theme change to Alert Dialogs
-            if hasattr(self, 'setting_alert') and hasattr(self.setting_alert, 'handle_theme_change'):
-                self.setting_alert.handle_theme_change(event_data)
-
-            if hasattr(self, 'weather_alert') and hasattr(self.weather_alert, 'handle_theme_change'):
-                self.weather_alert.handle_theme_change(event_data)
-            
-            if hasattr(self, 'map_alert') and hasattr(self.map_alert, 'handle_theme_change'):
-                self.map_alert.handle_theme_change(event_data)
+            # Propagate theme change to SettingsAlertDialog
+            if hasattr(self, 'setting_alert'):
+                self.setting_alert.handle_theme_change(event_data) # Pass event_data
 
     def _open_alert_dialog(self, alert_instance):
         """Helper method to create (if needed) and open an alert dialog."""
         if not self.page:
-            logging.error("Error: Page context not available for opening dialog.")
+            print("Error: Page context not available for opening dialog.")
             return
         if not hasattr(alert_instance, 'dialog') or not alert_instance.dialog:
             alert_instance.createAlertDialog(self.page)
@@ -116,16 +121,15 @@ class Filter:
         if hasattr(alert_instance, 'dialog') and alert_instance.dialog:
             self.page.open(alert_instance.dialog)
         else:
-            logging.error(f"Error: Dialog for {type(alert_instance).__name__} could not be created or found for opening.")
+            print(f"Error: Dialog for {type(alert_instance).__name__} could not be created or found for opening.")
 
     def createPopMenu(self, page=None): # page arg can be removed if self.page is always set
         if page is None: 
             page = self.page # Use self.page if available
         
         if not page: # Ensure we have a page context
-            logging.error("Error: Page context is required to create PopMenu and its dialogs.")
-            return ft.Container(ft.Text(self._get_translation("error_page_context_missing")))
-
+            print("Error: Page context is required to create PopMenu and its dialogs.")
+            return ft.Container(ft.Text("Error: Page context missing"))
 
         # Crea il menu popup con tutte le opzioni
         self.popup_menu_button = ft.PopupMenuButton( # Store button for updates

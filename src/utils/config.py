@@ -6,13 +6,13 @@ Centralizes all configuration values and settings.
 # Default application settings
 DEFAULT_CITY = "Milano"
 DEFAULT_LANGUAGE = "en"
-DEFAULT_UNIT = "metric"  # "metric", "imperial", or "standard"
+DEFAULT_UNIT_SYSTEM = "metric"  # "metric", "imperial", or "standard"
 DEFAULT_THEME_MODE = "light"  # "light" or "dark"
 
 # Theme colors
 # Colori per il tema chiaro
 LIGHT_THEME = {
-    "BACKGROUND": "#f5f5f5",
+    "BACKGROUND": "#bbe9ebcc",
     "TEXT": "#000000",
     "SECONDARY_TEXT": "#555555",
     "ACCENT": "#6b46c1",  # Cambiato da azzurro a viola

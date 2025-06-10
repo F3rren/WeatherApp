@@ -16,12 +16,14 @@ LANGUAGES = [
 
 TRANSLATIONS = {
     "en": {
+        "weather": "Weather",
+        "map": "Map",
+        "settings": "Settings",
         "feels_like": "Feels like",
         "humidity": "Humidity",
         "wind": "Wind",
         "pressure": "Pressure",
         "air_condition_title": "Air Conditions",
-        "settings": "Settings",
         "measurement": "Measurement",
         "use_current_location": "Use current location:",
         "dark_theme": "Dark theme:",
@@ -46,14 +48,48 @@ TRANSLATIONS = {
         "sunday": "Sunday",
         "max": "Max",
         "min": "Min",
+        "unit_symbols": {
+            "metric": {
+                "temperature": "°C",
+                "wind": "m/s",
+                "pressure": "hPa"
+            },
+            "imperial": {
+                "temperature": "°F",
+                "wind": "mph",
+                "pressure": "hPa"
+            }
+        },
+        "chemical_elements": [
+            ["CO", "Carbon Monoxide"],
+            ["NO", "Nitrogen Monoxide"],
+            ["NO2", "Nitrogen Dioxide"],
+            ["O3", "Ozone"],
+            ["SO2", "Sulphur Dioxide"],
+            ["PM2.5", "Fine Particulate Matter"],
+            ["PM10", "Coarse Particulate Matter"],
+            ["NH3", "Ammonia"]
+        ],
+        "current_location": "Current Location",
+        "no_forecast_data": "Weather forecast data not available.",
+        "error_page_context_missing": "Error: Page context missing",
+        "language_setting": "Language:",
+        "measurement_setting": "Measurement:",
+        "use_current_location_setting": "Use current location:",
+        "dark_theme_setting": "Dark theme:",
+        "close_button": "Close",
+        "maps_title": "Maps",
+        "air_pollution_chart_title": "Air Pollution (μg/m³)"
     },
     "zh_cn": {
+        "weather": "天气",
+        "map": "地图",
+        "settings": "设置",
         "feels_like": "体感温度",
         "humidity": "湿度",
         "wind": "风速",
         "pressure": "气压",
         "air_condition_title": "空气状况",
-        "settings": "设置",
         "measurement": "测量单位",
         "use_current_location": "使用当前位置：",
         "dark_theme": "深色主题：",
@@ -78,14 +114,40 @@ TRANSLATIONS = {
         "sunday": "星期日",
         "max": "最大值",
         "min": "最小值",
+        "unit_symbols": {
+            "metric": {
+                "temperature": "°C",
+                "wind": "m/s",
+                "pressure": "hPa"
+            },
+            "imperial": {
+                "temperature": "°F",
+                "wind": "mph",
+                "pressure": "hPa"
+            }
+        },
+        "chemical_elements": [
+            ["CO", "一氧化碳"],
+            ["NO", "一氧化氮"],
+            ["NO2", "二氧化氮"],
+            ["O3", "臭氧"],
+            ["SO2", "二氧化硫"],
+            ["PM2.5", "细颗粒物"],
+            ["PM10", "粗颗粒物"],
+            ["NH3", "氨"]
+        ],
+        "current_location": "当前位置",
+        "no_forecast_data": "天气预报数据不可用。"
     },
     "hi": {
+        "weather": "मौसम",
+        "map": "नक्शा",
+        "settings": "सेटिंग्स",
         "feels_like": "अनुभूत तापमान",
         "humidity": "नमी",
         "wind": "हवा",
         "pressure": "दबाव",
         "air_condition_title": "वायु की स्थिति",
-        "settings": "सेटिंग्स",
         "measurement": "मापन इकाई",
         "use_current_location": "वर्तमान स्थान का उपयोग करें:",
         "dark_theme": "डार्क थीम:",
@@ -110,14 +172,40 @@ TRANSLATIONS = {
         "sunday": "रविवार",
         "max": "अधिकतम",
         "min": "न्यूनतम",
+        "unit_symbols": {
+            "metric": {
+                "temperature": "°C",
+                "wind": "m/s",
+                "pressure": "hPa"
+            },
+            "imperial": {
+                "temperature": "°F",
+                "wind": "mph",
+                "pressure": "hPa"
+            }
+        },
+        "chemical_elements": [
+            ["CO", "कार्बन मोनोऑक्साइड"],
+            ["NO", "नाइट्रोजन मोनोऑक्साइड"],
+            ["NO2", "नाइट्रोजन डाइऑक्साइड"],
+            ["O3", "ओजोन"],
+            ["SO2", "सल्फर डाइऑक्साइड"],
+            ["PM2.5", " महीन कण पदार्थ"],
+            ["PM10", "मोटे कण पदार्थ"],
+            ["NH3", "अमोनिया"]
+        ],
+        "current_location": "वर्तमान स्थान",
+        "no_forecast_data": "मौसम पूर्वानुमान डेटा उपलब्ध नहीं है।"
     },
     "es": {
+        "weather": "Clima",
+        "map": "Mapa",
+        "settings": "Configuración",
         "feels_like": "Sensación térmica",
         "humidity": "Humedad",
         "wind": "Viento",
         "pressure": "Presión",
         "air_condition_title": "Condiciones del aire",
-        "settings": "Configuración",
         "measurement": "Unidad de medida",
         "use_current_location": "Usar ubicación actual:",
         "dark_theme": "Tema oscuro:",
@@ -142,14 +230,48 @@ TRANSLATIONS = {
         "sunday": "Domingo",
         "max": "Máx",
         "min": "Mín",
+        "unit_symbols": {
+            "metric": {
+                "temperature": "°C",
+                "wind": "m/s",
+                "pressure": "hPa"
+            },
+            "imperial": {
+                "temperature": "°F",
+                "wind": "mph",
+                "pressure": "hPa"
+            }
+        },
+        "chemical_elements": [
+            ["CO", "Monóxido de carbono"],
+            ["NO", "Monóxido de nitrógeno"],
+            ["NO2", "Dióxido de nitrógeno"],
+            ["O3", "Ozono"],
+            ["SO2", "Dióxido de azufre"],
+            ["PM2.5", "Partículas finas"],
+            ["PM10", "Partículas gruesas"],
+            ["NH3", "Amoníaco"]
+        ],
+        "current_location": "Ubicación Actual",
+        "no_forecast_data": "Datos de pronóstico del tiempo no disponibles.",
+        "error_page_context_missing": "Error: Falta el contexto de la página",
+        "language_setting": "Idioma:",
+        "measurement_setting": "Medición:",
+        "use_current_location_setting": "Usar ubicación actual:",
+        "dark_theme_setting": "Tema oscuro:",
+        "close_button": "Cerrar",
+        "maps_title": "Mapas",
+        "air_pollution_chart_title": "Contaminación del Aire (μg/m³)"
     },
     "ar": {
+        "weather": "الطقس",
+        "map": "خريطة",
+        "settings": "الإعدادات",
         "feels_like": "يشعر كأنها",
         "humidity": "رطوبة",
         "wind": "رياح",
         "pressure": "الضغط",
         "air_condition_title": "ظروف الهواء",
-        "settings": "الإعدادات",
         "measurement": "وحدة القياس",
         "use_current_location": "استخدم الموقع الحالي:",
         "dark_theme": "الوضع الداكن:",
@@ -166,14 +288,48 @@ TRANSLATIONS = {
         "sunday": "الأحد",
         "max": "الأعلى",
         "min": "الأدنى",
+        "unit_symbols": {
+            "metric": {
+                "temperature": "°C",
+                "wind": "م/ث",
+                "pressure": "هكبا"
+            },
+            "imperial": {
+                "temperature": "°F",
+                "wind": "ميل/س",
+                "pressure": "هكبا"
+            }
+        },
+        "chemical_elements": [
+            ["CO", "أول أكسيد الكربون"],
+            ["NO", "أحادي أكسيد النيتروجين"],
+            ["NO2", "ثاني أكسيد النيتروجين"],
+            ["O3", "الأوزون"],
+            ["SO2", "ثاني أكسيد الكبريت"],
+            ["PM2.5", "الجسيمات الدقيقة"],
+            ["PM10", "الجسيمات الخشنة"],
+            ["NH3", "الأمونيا"]
+        ],
+        "current_location": "الموقع الحالي",
+        "no_forecast_data": "بيانات توقعات الطقس غير متوفرة.",
+        "error_page_context_missing": "خطأ: سياق الصفحة مفقود",
+        "language_setting": "اللغة:",
+        "measurement_setting": "القياس:",
+        "use_current_location_setting": "استخدام الموقع الحالي:",
+        "dark_theme_setting": "السمة الداكنة:",
+        "close_button": "إغلاق",
+        "maps_title": "خرائط",
+        "air_pollution_chart_title": "تلوث الهواء (ميكروغرام/م³)"
     },
     "fr": {
+        "weather": "Météo",
+        "map": "Carte",
+        "settings": "Paramètres",
         "feels_like": "Ressenti",
         "humidity": "Humidité",
         "wind": "Vent",
         "pressure": "Pression",
         "air_condition_title": "Conditions atmosphériques",
-        "settings": "Paramètres",
         "measurement": "Unité de mesure",
         "use_current_location": "Utiliser la position actuelle:",
         "dark_theme": "Thème sombre:",
@@ -198,14 +354,48 @@ TRANSLATIONS = {
         "sunday": "Dimanche",
         "max": "Max",
         "min": "Min",
+        "unit_symbols": {
+            "metric": {
+                "temperature": "°C",
+                "wind": "m/s",
+                "pressure": "hPa"
+            },
+            "imperial": {
+                "temperature": "°F",
+                "wind": "mph",
+                "pressure": "hPa"
+            }
+        },
+        "chemical_elements": [
+            ["CO", "Monoxyde de carbone"],
+            ["NO", "Monoxyde d'azote"],
+            ["NO2", "Dioxyde d'azote"],
+            ["O3", "Ozone"],
+            ["SO2", "Dioxyde de soufre"],
+            ["PM2.5", "Particules fines"],
+            ["PM10", "Particules grossières"],
+            ["NH3", "Ammoniac"]
+        ],
+        "current_location": "Position Actuelle",
+        "no_forecast_data": "Données de prévisions météorologiques non disponibles.",
+        "error_page_context_missing": "Erreur: Contexte de la page manquant",
+        "language_setting": "Langue:",
+        "measurement_setting": "Mesure:",
+        "use_current_location_setting": "Utiliser la position actuelle:",
+        "dark_theme_setting": "Thème sombre:",
+        "close_button": "Fermer",
+        "maps_title": "Cartes",
+        "air_pollution_chart_title": "Pollution de l'Air (μg/m³)"
     },
     "pt": {
+        "weather": "Tempo",
+        "map": "Mapa",
+        "settings": "Configurações",
         "feels_like": "Sensação térmica",
         "humidity": "Umidade",
         "wind": "Vento",
         "pressure": "Pressão",
         "air_condition_title": "Condições do ar",
-        "settings": "Configurações",
         "measurement": "Unidade de medida",
         "use_current_location": "Usar localização atual:",
         "dark_theme": "Tema escuro:",
@@ -222,14 +412,48 @@ TRANSLATIONS = {
         "sunday": "Domingo",
         "max": "Máx",
         "min": "Mín",
+        "unit_symbols": {
+            "metric": {
+                "temperature": "°C",
+                "wind": "m/s",
+                "pressure": "hPa"
+            },
+            "imperial": {
+                "temperature": "°F",
+                "wind": "mph",
+                "pressure": "hPa"
+            }
+        },
+        "chemical_elements": [
+            ["CO", "Monóxido de carbono"],
+            ["NO", "Monóxido de nitrogênio"],
+            ["NO2", "Dióxido de nitrogênio"],
+            ["O3", "Ozônio"],
+            ["SO2", "Dióxido de enxofre"],
+            ["PM2.5", "Partículas finas"],
+            ["PM10", "Partículas grossas"],
+            ["NH3", "Amônia"]
+        ],
+        "current_location": "Localização Atual",
+        "no_forecast_data": "Dados de previsão do tempo não disponíveis.",
+        "error_page_context_missing": "Erro: Falta contexto da página",
+        "language_setting": "Idioma:",
+        "measurement_setting": "Medição:",
+        "use_current_location_setting": "Usar localização atual:",
+        "dark_theme_setting": "Tema escuro:",
+        "close_button": "Fechar",
+        "maps_title": "Mapas",
+        "air_pollution_chart_title": "Poluição do Ar (μg/m³)"
     },
     "ru": {
+        "weather": "Погода",
+        "map": "Карта",
+        "settings": "Настройки",
         "feels_like": "Ощущается как",
         "humidity": "Влажность",
         "wind": "Ветер",
         "pressure": "Давление",
         "air_condition_title": "Состояние воздуха",
-        "settings": "Настройки",
         "measurement": "Единица измерения",
         "use_current_location": "Использовать текущее местоположение:",
         "dark_theme": "Темная тема:",
@@ -246,14 +470,48 @@ TRANSLATIONS = {
         "sunday": "Воскресенье",
         "max": "Макс",
         "min": "Мин",
+        "unit_symbols": {
+            "metric": {
+                "temperature": "°C",
+                "wind": "м/с",
+                "pressure": "гПа"
+            },
+            "imperial": {
+                "temperature": "°F",
+                "wind": "миль/ч",
+                "pressure": "гПа"
+            }
+        },
+        "chemical_elements": [
+            ["CO", "Монооксид углерода"],
+            ["NO", "Монооксид азота"],
+            ["NO2", "Диоксид азота"],
+            ["O3", "Озон"],
+            ["SO2", "Диоксид серы"],
+            ["PM2.5", "Мелкодисперсные частицы"],
+            ["PM10", "Крупнодисперсные частицы"],
+            ["NH3", "Аммиак"]
+        ],
+        "current_location": "Текущее местоположение",
+        "no_forecast_data": "Данные прогноза погоды недоступны.",
+        "error_page_context_missing": "Ошибка: отсутствует контекст страницы",
+        "language_setting": "Язык:",
+        "measurement_setting": "Измерение:",
+        "use_current_location_setting": "Использовать текущее местоположение:",
+        "dark_theme_setting": "Темная тема:",
+        "close_button": "Закрыть",
+        "maps_title": "Карты",
+        "air_pollution_chart_title": "Загрязнение воздуха (мкг/м³)"
     },
     "id": {
+        "weather": "Cuaca",
+        "map": "Peta",
+        "settings": "Pengaturan",
         "feels_like": "Terasa seperti",
         "humidity": "Kelembapan",
         "wind": "Angin",
         "pressure": "Tekanan",
         "air_condition_title": "Kondisi udara",
-        "settings": "Pengaturan",
         "measurement": "Satuan pengukuran",
         "use_current_location": "Gunakan lokasi saat ini:",
         "dark_theme": "Tema gelap:",
@@ -270,14 +528,48 @@ TRANSLATIONS = {
         "sunday": "Minggu",
         "max": "Maks",
         "min": "Min",
+        "unit_symbols": {
+            "metric": {
+                "temperature": "°C",
+                "wind": "m/s",
+                "pressure": "hPa"
+            },
+            "imperial": {
+                "temperature": "°F",
+                "wind": "mph",
+                "pressure": "hPa"
+            }
+        },
+        "chemical_elements": [
+            ["CO", "Karbon Monoksida"],
+            ["NO", "Nitrogen Monoksida"],
+            ["NO2", "Nitrogen Dioksida"],
+            ["O3", "Ozon"],
+            ["SO2", "Sulfur Dioksida"],
+            ["PM2.5", "Partikel Halus"],
+            ["PM10", "Partikel Kasar"],
+            ["NH3", "Amonia"]
+        ],
+        "current_location": "Lokasi Saat Ini",
+        "no_forecast_data": "Data prakiraan cuaca tidak tersedia.",
+        "error_page_context_missing": "Kesalahan: Konteks halaman hilang",
+        "language_setting": "Bahasa:",
+        "measurement_setting": "Pengukuran:",
+        "use_current_location_setting": "Gunakan lokasi saat ini:",
+        "dark_theme_setting": "Tema gelap:",
+        "close_button": "Tutup",
+        "maps_title": "Peta",
+        "air_pollution_chart_title": "Polusi Udara (μg/m³)"
     },
     "de": {
+        "weather": "Wetter",
+        "map": "Karte",
+        "settings": "Einstellungen",
         "feels_like": "Gefühlt",
         "humidity": "Luftfeuchtigkeit",
         "wind": "Wind",
         "pressure": "Druck",
         "air_condition_title": "Luftbedingungen",
-        "settings": "Einstellungen",
         "measurement": "Maßeinheit",
         "use_current_location": "Aktuellen Standort verwenden:",
         "dark_theme": "Dunkles Thema:",
@@ -302,21 +594,63 @@ TRANSLATIONS = {
         "sunday": "Sonntag",
         "max": "Max",
         "min": "Min",
+        "unit_symbols": {
+            "metric": {
+                "temperature": "°C",
+                "wind": "m/s",
+                "pressure": "hPa"
+            },
+            "imperial": {
+                "temperature": "°F",
+                "wind": "mph",
+                "pressure": "hPa"
+            }
+        },
+        "chemical_elements": [
+            ["CO", "Kohlenmonoxid"],
+            ["NO", "Stickstoffmonoxid"],
+            ["NO2", "Stickstoffdioxid"],
+            ["O3", "Ozon"],
+            ["SO2", "Schwefeldioxid"],
+            ["PM2.5", "Feinstaub"],
+            ["PM10", "Grobstaub"],
+            ["NH3", "Ammoniak"]
+        ],
+        "current_location": "Aktueller Standort",
+        "no_forecast_data": "Wettervorhersagedaten nicht verfügbar.",
+        "error_page_context_missing": "Fehler: Seitenkontext fehlt",
+        "language_setting": "Sprache:",
+        "measurement_setting": "Messung:",
+        "use_current_location_setting": "Aktuellen Standort verwenden:",
+        "dark_theme_setting": "Dunkles Thema:",
+        "close_button": "Schließen",
+        "maps_title": "Karten",
+        "air_pollution_chart_title": "Luftverschmutzung (μg/m³)"
     },
     "ja": {
+        "weather": "天気",
+        "map": "地図",
+        "settings": "設定",
         "feels_like": "体感温度",
         "humidity": "湿度",
         "wind": "風",
         "pressure": "気圧",
         "air_condition_title": "空気の状態",
-        "settings": "設定",
-        "measurement": "測定単位",
-        "use_current_location": "現在地を使用する：",
-        "dark_theme": "ダークテーマ：",
-        "language": "言語：",
+        "measurement": "測定",
+        "use_current_location": "現在の場所を使用:",
+        "dark_theme": "ダークテーマ:",
+        "language": "言語:",
         "close": "閉じる",
         "temperature": "温度",
         "air_quality_index": "空気質指数",
+        "aqi_descriptions": [
+            "該当なし",
+            "良好",
+            "普通",
+            "中程度",
+            "悪い",
+            "非常に悪い"
+        ],
         "monday": "月曜日",
         "tuesday": "火曜日",
         "wednesday": "水曜日",
@@ -326,15 +660,41 @@ TRANSLATIONS = {
         "sunday": "日曜日",
         "max": "最大",
         "min": "最小",
+        "unit_symbols": {
+            "metric": {"temperature": "°C", "wind": "m/s", "pressure": "hPa"},
+            "imperial": {"temperature": "°F", "wind": "mph", "pressure": "hPa"}
+        },
+        "chemical_elements": [
+            ["CO", "一酸化炭素"],
+            ["NO", "一酸化窒素"],
+            ["NO2", "二酸化窒素"],
+            ["O3", "オゾン"],
+            ["SO2", "二酸化硫黄"],
+            ["PM2.5", "微小粒子状物質"],
+            ["PM10", "粗大粒子状物質"],
+            ["NH3", "アンモニア"]
+        ],
+        "current_location": "現在地",
+        "no_forecast_data": "天気予報データはありません。",
+        "error_page_context_missing": "エラー: ページコンテキストがありません",
+        "language_setting": "言語:",
+        "measurement_setting": "測定:",
+        "use_current_location_setting": "現在の場所を使用:",
+        "dark_theme_setting": "ダークテーマ:",
+        "close_button": "閉じる",
+        "maps_title": "地図",
+        "air_pollution_chart_title": "大気汚染 (μg/m³)"
     },
     "it": {
+        "weather": "Meteo",
+        "map": "Mappa",
+        "settings": "Impostazioni",
         "feels_like": "Percepita",
         "humidity": "Umidità",
         "wind": "Vento",
         "pressure": "Pressione",
         "air_condition_title": "Condizioni dell'aria",
-        "settings": "Impostazioni",
-        "measurement": "Unità di misura",
+        "measurement": "Misurazione",
         "use_current_location": "Usa posizione attuale:",
         "dark_theme": "Tema scuro:",
         "language": "Lingua:",
@@ -346,8 +706,8 @@ TRANSLATIONS = {
             "Buona",
             "Discreta",
             "Moderata",
-            "Scarsa",
-            "Molto scarsa"
+            "Scadente",
+            "Molto Scadente"
         ],
         "monday": "Lunedì",
         "tuesday": "Martedì",
@@ -358,5 +718,37 @@ TRANSLATIONS = {
         "sunday": "Domenica",
         "max": "Max",
         "min": "Min",
+        "unit_symbols": {
+            "metric": {
+                "temperature": "°C",
+                "wind": "m/s",
+                "pressure": "hPa"
+            },
+            "imperial": {
+                "temperature": "°F",
+                "wind": "mph",
+                "pressure": "hPa"
+            }
+        },
+        "chemical_elements": [
+            ["CO", "Monossido di Carbonio"],
+            ["NO", "Monossido di Azoto"],
+            ["NO2", "Diossido di Azoto"],
+            ["O3", "Ozono"],
+            ["SO2", "Diossido di Zolfo"],
+            ["PM2.5", "Particolato Fine"],
+            ["PM10", "Particolato Grosso"],
+            ["NH3", "Ammoniaca"]
+        ],
+        "current_location": "Posizione Attuale",
+        "no_forecast_data": "Dati di previsione meteo non disponibili.",
+        "error_page_context_missing": "Errore: Contesto pagina mancante",
+        "language_setting": "Lingua:",
+        "measurement_setting": "Misurazione:",
+        "use_current_location_setting": "Usa posizione attuale:",
+        "dark_theme_setting": "Tema scuro:",
+        "close_button": "Chiudi",
+        "maps_title": "Mappe",
+        "air_pollution_chart_title": "Inquinamento Atmosferico (μg/m³)"
     },
 }

@@ -1,7 +1,8 @@
 import flet as ft
 from datetime import datetime
-from utils.config import LIGHT_THEME, DARK_THEME
-from components.responsive_text_handler import ResponsiveTextHandler  # Spostato qui l'import
+from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM # Added DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
+from components.responsive_text_handler import ResponsiveTextHandler
+from services.translation_service import TranslationService # Added TranslationService
 
 class HourlyForecastDisplay:
     """
@@ -10,130 +11,118 @@ class HourlyForecastDisplay:
     """
     def __init__(self, hourly_data: list, text_color: str, page: ft.Page):
         self.hourly_data_list = hourly_data
-        self.text_color = text_color
+        self.initial_text_color = text_color # Store initial text color
         self.page = page
-        self.built_item_containers = [] # To store references to individual item containers
-        self.main_container_ref = None # To store reference to the main container
+        self.built_item_containers = [] 
+        self.main_container_ref = None 
+        self._state_manager = None
         
-        # Inizializza il gestore del testo responsive
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes= {
-                'icon': 70,        # Ridotto da 150 per schermi più piccoli
-                'title': 16,       # Ridotto da 30 per schermi più piccoli
-                'value': 20,       # Ridotto da 30 per schermi più piccoli
+                'icon': 70,
+                'title': 16,
+                'value': 20,
             },
-            breakpoints=[600, 900, 1200, 1600]  # Aggiunti breakpoint per il ridimensionamento
+            breakpoints=[600, 900, 1200, 1600]
         )
         
-        # Dizionario dei controlli di testo per aggiornamento facile
-        self.text_controls = {}
+        self.text_controls_map = {} # Stores {control_instance: {type: 'text/icon', category: 'title/value/icon', original_data: {}}}
 
-        if self.page:
-            state_manager = self.page.session.get('state_manager')
-            if state_manager:
-                state_manager.register_observer("theme_event", self.handle_theme_change)
+        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+            self._state_manager = self.page.session.get('state_manager')
+            self.language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
+            self.unit_system = self._state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM
+            self.text_color = self._determine_text_color()
+
+            self._state_manager.register_observer("theme_event", self._handle_state_change)
+            self._state_manager.register_observer("language_event", self._handle_state_change) # Added
+            self._state_manager.register_observer("unit_event", self._handle_state_change)   # Added
             
-            # Registra l'evento di ridimensionamento personalizzato
             original_resize_handler = self.page.on_resize
             
             def combined_resize_handler(e):
-                # Aggiorna le dimensioni del testo
                 self.text_handler._handle_resize(e)
-                # Aggiorna i controlli di testo
-                self.update_text_controls()
-                # Chiama anche l'handler originale se esiste
+                self._update_all_item_visuals() # Update visuals on resize
                 if original_resize_handler:
                     original_resize_handler(e)
-            
             self.page.on_resize = combined_resize_handler
-
-    def handle_theme_change(self, event_data=None):
-        """Handles theme change events by updating text color and item backgrounds."""
-        if not self.page:
-            return
-
-        if event_data and "is_dark" in event_data:
-            is_dark = event_data["is_dark"]
         else:
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            
-        current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-        self.text_color = current_theme_config["TEXT"]
+            self.language = DEFAULT_LANGUAGE
+            self.unit_system = DEFAULT_UNIT_SYSTEM
+            self.text_color = self.initial_text_color
 
-        if hasattr(self, 'built_item_containers') and self.built_item_containers:
-            for item_container in self.built_item_containers:
-                # item_container.content is the ft.Column
-                if isinstance(item_container.content, ft.Column) and item_container.content.controls:
-                    column_controls = item_container.content.controls
-                    # Update text color for ft.Text elements
-                    if len(column_controls) > 1 and isinstance(column_controls[1], ft.Text): # Temperature text
-                        column_controls[1].color = self.text_color
-                    if len(column_controls) > 2 and isinstance(column_controls[2], ft.Text): # Temperature text
-                        column_controls[2].color = self.text_color
-
-                item_container.update()
-        
-            
-        # Aggiorna anche le dimensioni del testo
-        self.update_text_controls()
-
-    def update_text_controls(self):
-        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
-        for control, size_category in self.text_controls.items():
-            if size_category == 'icon':
-                # Per le icone, aggiorna width e height
-                if hasattr(control, 'width') and hasattr(control, 'height'):
-                    control.width = self.text_handler.get_size(size_category)
-                    control.height = self.text_handler.get_size(size_category)
-            else:
-                # Per i testi, aggiorna size
-                if hasattr(control, 'size'):
-                    control.size = self.text_handler.get_size(size_category)
-        
-        # Richiedi l'aggiornamento della pagina
+    def _determine_text_color(self):
         if self.page:
-            self.page.update()
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
+            return current_theme_config["TEXT"]
+        return self.initial_text_color
+
+    def _handle_state_change(self, event_data=None):
+        """Handles theme, language, or unit changes."""
+        if self._state_manager:
+            self.language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
+            self.unit_system = self._state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM
+        self.text_color = self._determine_text_color()
+        self._update_all_item_visuals()
+
+    def _update_all_item_visuals(self):
+        """Updates text, color, and size for all items based on current state."""
+        for item_container in self.built_item_containers:
+            if hasattr(item_container, "original_data"):
+                original_data = item_container.original_data
+                # item_container.content is the ft.Column
+                column_controls = item_container.content.controls
+                weather_icon_control = column_controls[0]
+                time_text_control = column_controls[1]
+                temp_text_control = column_controls[2]
+
+                # Update icon size
+                weather_icon_control.width = self.text_handler.get_size('icon')
+                weather_icon_control.height = self.text_handler.get_size('icon')
+
+                # Update time text (no translation needed for HH:MM)
+                time_text_control.size = self.text_handler.get_size('title')
+                time_text_control.color = self.text_color
+
+                # Update temperature text with unit
+                temp_value = round(original_data["main"]["temp"])
+                unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system, self.language)
+                temp_text_control.value = f"{temp_value}{unit_symbol}"
+                temp_text_control.size = self.text_handler.get_size('value')
+                temp_text_control.color = self.text_color
+                
+                if hasattr(item_container, 'page') and item_container.page: # Guard update
+                    item_container.update()
 
     def _create_item_column(self, item_data: dict) -> ft.Container:
         """Helper method to create a single forecast item's visual representation."""
         time_str = datetime.strptime(item_data["dt_txt"], "%Y-%m-%d %H:%M:%S").strftime("%H:%M")
-        icon = item_data["weather"][0]["icon"]
-        temp = round(item_data["main"]["temp"])
-        
-        # Creare i controlli di testo con dimensioni responsive
+        icon_code = item_data["weather"][0]["icon"]
+        temp_value = round(item_data["main"]["temp"])
+        unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system, self.language)
+
+        weather_icon = ft.Image(
+            src=f"https://openweathermap.org/img/wn/{icon_code}@2x.png",
+            width=self.text_handler.get_size('icon'),
+            height=self.text_handler.get_size('icon'),
+            fit=ft.ImageFit.CONTAIN
+        )
         time_text = ft.Text(
             time_str, 
             size=self.text_handler.get_size('title'), 
             weight=ft.FontWeight.BOLD, 
             color=self.text_color
         )
-        
         temp_text = ft.Text(
-            f"{temp}°", 
+            f"{temp_value}{unit_symbol}", 
             size=self.text_handler.get_size('value'), 
             weight=ft.FontWeight.BOLD, 
-            color=(
-                ft.Colors.RED if temp >= 30 else
-                self.text_color if temp >= 15 and temp < 30 else
-                ft.Colors.BLUE
-            )
+            color=self.text_color
         )
-        
-        # Crea l'icona meteo con dimensioni responsive
-        weather_icon = ft.Image(
-            src=f"https://openweathermap.org/img/wn/{icon}@2x.png",
-            width=self.text_handler.get_size('icon'),
-            height=self.text_handler.get_size('icon'),
-            fit=ft.ImageFit.CONTAIN
-        )
-        
-        # Aggiungi i controlli al dizionario per l'aggiornamento dinamico
-        self.text_controls[time_text] = 'title'
-        self.text_controls[temp_text] = 'value'
-        self.text_controls[weather_icon] = 'icon'
 
-        return ft.Container(
+        container = ft.Container(
             content=ft.Column(
                 controls=[
                     weather_icon,
@@ -146,26 +135,36 @@ class HourlyForecastDisplay:
             border_radius=20,
             expand=True,
         )
+        # Store original data with the container for updates
+        container.original_data = item_data 
+        return container
 
     def build(self) -> ft.Container:
         """Builds the hourly forecast container with a scrollable row of items."""
-        # Reset text controls before rebuilding
-        self.text_controls = {}
-        self.built_item_containers.clear() # Clear previous items if any (e.g., on a rebuild)
-        
+        self.built_item_containers.clear()
         if self.hourly_data_list:
             for item_data in self.hourly_data_list:
-                item_container = self._create_item_column(item_data)
+                item_container = self._create_item_column(item_data) # Sets initial visuals
                 self.built_item_containers.append(item_container)
         
         self.main_container_ref = ft.Container(
             content=ft.Row(
-                controls=self.built_item_containers, # Use the stored list
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN, # Keep items spaced out
-                scroll=ft.ScrollMode.ADAPTIVE, # Hide scrollbars
+                controls=self.built_item_containers,
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                scroll=ft.ScrollMode.ADAPTIVE,
             ),
             expand=True,
-            padding=ft.padding.symmetric(vertical=10), # Restore padding
+            padding=ft.padding.symmetric(vertical=10),
         )
         return self.main_container_ref
+
+    def cleanup(self):
+        """Unregister observers."""
+        if self._state_manager:
+            self._state_manager.unregister_observer("theme_event", self._handle_state_change)
+            self._state_manager.unregister_observer("language_event", self._handle_state_change)
+            self._state_manager.unregister_observer("unit_event", self._handle_state_change)
+        # print("HourlyForecastDisplay cleaned up") # For debugging
+
+    # Remove update_text_controls and handle_theme_change as their logic is now in _handle_state_change and _update_all_item_visuals
 

@@ -1,13 +1,13 @@
 import flet as ft
 from utils.config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
-from services.translation_service import TranslationService
 
 class WeatherAlertDialog:
         
-    def __init__(self, page, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None, text_color=None):
+    def __init__(self, page, state_manager=None, translation_service=None, handle_location_toggle=None, handle_theme_toggle=None, text_color=None):
         self.page = page
         self.state_manager = state_manager
+        self.translation_service = translation_service or (page.session.get('translation_service') if page else None)
         self.handle_location_toggle = handle_location_toggle
         self.handle_theme_toggle = handle_theme_toggle
         self.text_color = text_color if text_color else (DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"])
@@ -59,6 +59,13 @@ class WeatherAlertDialog:
         if self.page and self.dialog and self.dialog.page:
             self.dialog.update()
 
+    def _get_translation(self, key):
+        """Helper method to get translation with fallback"""
+        if self.translation_service and hasattr(self.translation_service, 'get_text'):
+            current_language = self.state_manager.get_state("language") if self.state_manager else "en"
+            return self.translation_service.get_text(key, current_language)
+        return key  # Fallback to key if no translation service
+
     def createAlertDialog(self, page):
         # Reset text controls dictionary before rebuilding
         self.text_controls = {}
@@ -72,17 +79,10 @@ class WeatherAlertDialog:
         bg_color = current_theme["DIALOG_BACKGROUND"]
 
         # Creare i controlli di testo con dimensioni responsive
-        # Get current language
-        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
-            state_manager = self.page.session.get('state_manager')
-            self.language = state_manager.get_state('language') or 'en'
-        else:
-            self.language = 'en'
-            
         title_text = ft.Text(
-            TranslationService.get_text("weather", self.language),
-            size=self.text_handler.get_size('title'),
-            weight=ft.FontWeight.BOLD,
+            self._get_translation("weather"), 
+            size=self.text_handler.get_size('title'), 
+            weight=ft.FontWeight.BOLD, 
             color=self.text_color
         )
         
@@ -93,11 +93,13 @@ class WeatherAlertDialog:
         theme_icon = ft.Icon(ft.Icons.DARK_MODE, size=self.text_handler.get_size('icon'), color="#3b82f6")
         
         # Creazione dei testi con dimensioni responsive
-        language_text = ft.Text(TranslationService.get_text("language", self.language), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
-        measurement_text = ft.Text(TranslationService.get_text("measurement", self.language), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
-        location_text = ft.Text(TranslationService.get_text("use_current_location", self.language), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
-        theme_text = ft.Text(TranslationService.get_text("dark_theme", self.language), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
-        close_button_text = ft.Text(TranslationService.get_text("close", self.language), color=current_theme["ACCENT"], size=self.text_handler.get_size('body'))
+        language_text = ft.Text(self._get_translation("language_setting"), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
+        measurement_text = ft.Text(self._get_translation("measurement_setting"), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
+        location_text = ft.Text(self._get_translation("use_current_location_setting"), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
+        theme_text = ft.Text(self._get_translation("dark_theme_setting"), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
+        
+        # Pulsante di chiusura con dimensioni responsive
+        close_button_text = ft.Text(self._get_translation("close_button"), color=current_theme["ACCENT"], size=self.text_handler.get_size('body'))
         
         # Registra i controlli nel dizionario
         self.text_controls[title_text] = 'title'
@@ -116,7 +118,7 @@ class WeatherAlertDialog:
             title=title_text,
             bgcolor=bg_color,
             content=ft.Container(
-                #width=400,  # Imposta una larghezza fissa per il dialogo
+                width=400,  # Imposta una larghezza fissa per il dialogo
                 content=ft.Column(
                 controls=[
                     # Sezione lingua
@@ -174,11 +176,11 @@ class WeatherAlertDialog:
                 height=280,
                 expand=True,
                 spacing=20,
-                ),
+            ),
             ),
             actions=[
                 ft.TextButton(
-                    TranslationService.get_text("close", self.language),
+                    self._get_translation("close_button"),
                     content=close_button_text,
                     style=ft.ButtonStyle(
                         color=current_theme["ACCENT"],
@@ -187,6 +189,7 @@ class WeatherAlertDialog:
                     on_click=lambda e: page.close(self.dialog)
                 ),
             ],
+            on_dismiss=lambda e: print("Dialog closed"),
         )
         
         return self.dialog

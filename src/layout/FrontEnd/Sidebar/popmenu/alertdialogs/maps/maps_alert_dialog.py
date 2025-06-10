@@ -5,9 +5,10 @@ from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_la
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
 
 class MapsAlertDialog:
-    def __init__(self, page, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None, text_color=None):
+    def __init__(self, page, state_manager=None, translation_service=None, handle_location_toggle=None, handle_theme_toggle=None, text_color=None):
         self.page = page
         self.state_manager = state_manager
+        self.translation_service = translation_service or (page.session.get('translation_service') if page else None)
         self.handle_location_toggle = handle_location_toggle
         self.handle_theme_toggle = handle_theme_toggle
         self.text_color = text_color if text_color else (DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"])
@@ -15,11 +16,18 @@ class MapsAlertDialog:
         self.measurement_dropdown = DropdownMeasurement(state_manager)
         self.location_toggle = None
         self.theme_toggle = None
-        self.dialog = None  # Changed from self.dlg to self.dialog for consistency
+        self.dialog = None  # Changed from self.dlg to self.dialog
         
         # Register for theme change events if state_manager is available
         if state_manager:
-            state_manager.register_observer("theme_event", self.handle_theme_event) # Renamed for clarity
+            state_manager.register_observer("theme_event", self.handle_theme_event)
+
+    def _get_translation(self, key):
+        """Helper method to get translation with fallback"""
+        if self.translation_service and hasattr(self.translation_service, 'get_text'):
+            current_language = self.state_manager.get_state("language") if self.state_manager else "en"
+            return self.translation_service.get_text(key, current_language)
+        return key  # Fallback to key if no translation service
 
     def create_location_toggle(self):
         # Ottieni il valore corrente dallo state manager, se disponibile
@@ -107,7 +115,7 @@ class MapsAlertDialog:
         # Utilizza i colori dal tema corrente
         bg_color = current_theme["DIALOG_BACKGROUND"]        # Dialog semplificato per test
         self.dialog = ft.AlertDialog( # Changed from self.dlg to self.dialog
-            title=ft.Text("Maps", size=20, weight=ft.FontWeight.BOLD, color=self.text_color),
+            title=ft.Text(self._get_translation("maps_title"), size=20, weight=ft.FontWeight.BOLD, color=self.text_color),
             bgcolor=bg_color,
             content=ft.Container(
                 width=400,  # Imposta una larghezza fissa per il dialogo
@@ -118,7 +126,7 @@ class MapsAlertDialog:
                             ft.Row(
                                 controls=[
                                     ft.Icon(ft.Icons.LANGUAGE, size=20, color="#ff6b35"),  # Arancione personalizzato
-                                    ft.Text("Language:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
+                                    ft.Text(self._get_translation("language_setting"), size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
                             ),
@@ -134,7 +142,7 @@ class MapsAlertDialog:
                             ft.Row(
                                 controls=[
                                     ft.Icon(ft.Icons.STRAIGHTEN, size=20, color="#22c55e"),  # Verde personalizzato
-                                    ft.Text("Measurement:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
+                                    ft.Text(self._get_translation("measurement_setting"), size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
                             ),
@@ -150,7 +158,7 @@ class MapsAlertDialog:
                             ft.Row(
                                 controls=[
                                     ft.Icon(ft.Icons.LOCATION_ON, size=20, color="#ef4444"),  # Rosso personalizzato
-                                    ft.Text("Use current location:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
+                                    ft.Text(self._get_translation("use_current_location_setting"), size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
                             ),
@@ -165,7 +173,7 @@ class MapsAlertDialog:
                             ft.Row(
                                 controls=[
                                     ft.Icon(ft.Icons.DARK_MODE, size=20, color="#3b82f6"),  # Blu personalizzato
-                                    ft.Text("Dark theme:", size=14, weight=ft.FontWeight.W_500, color=self.text_color),
+                                    ft.Text(self._get_translation("dark_theme_setting"), size=14, weight=ft.FontWeight.W_500, color=self.text_color),
                                 ],
                                 spacing=10,
                             ),
@@ -184,7 +192,7 @@ class MapsAlertDialog:
             actions=[
                 ft.TextButton(
                     "Close",
-                    content=ft.Text("Close", color=current_theme["ACCENT"]), # Ensure text color is applied
+                    content=ft.Text(self._get_translation("close_button"), color=current_theme["ACCENT"]), # Ensure text color is applied
                     style=ft.ButtonStyle(
                         color=current_theme["ACCENT"],
                         overlay_color=ft.Colors.with_opacity(0.1, current_theme["ACCENT"]),

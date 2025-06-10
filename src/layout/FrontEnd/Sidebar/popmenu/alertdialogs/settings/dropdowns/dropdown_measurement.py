@@ -1,6 +1,7 @@
 ﻿# filepath: c:\Users\Utente\Desktop\Progetti\Python\MeteoApp\src\layout\frontend\sidebar\popmenu\alertdialogs\settings\dropdowns\dropdown_measurement.py
 import flet as ft
 import logging
+from services.api_service import ApiService
 from utils.config import MEASUREMENT_UNITS, LIGHT_THEME, DARK_THEME
 
 class DropdownMeasurement:
@@ -13,7 +14,8 @@ class DropdownMeasurement:
         self.units = MEASUREMENT_UNITS
         # Mappiamo i nomi ai codici per l'API
         self.unit_labels = {unit["code"]: unit["name"] for unit in MEASUREMENT_UNITS}
-        
+        self.api = ApiService()  # Assuming ApiService is defined elsewhere
+
         # Register for theme change events if state_manager is available
         if state_manager:
             state_manager.register_observer("theme_event", self.handle_theme_change)
@@ -42,9 +44,14 @@ class DropdownMeasurement:
         return options
     
     def createDropdown(self):
+        
         def dropdown_changed(e):
             unit_code = e.control.value
+            print(f"Selected unit: {unit_code}")
             self.set_unit(unit_code)
+            # Aggiorna lo stato dell'applicazione
+            if self.state_manager:
+                self.state_manager.set_state("unit", unit_code)
             if hasattr(self, 'parent') and self.parent:
                 self.parent.update()
 

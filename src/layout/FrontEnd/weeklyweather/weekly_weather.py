@@ -5,8 +5,10 @@ from layout.frontend.informationtab.air_condition import AirConditionInfo
 from layout.frontend.informationtab.daily_forecast import DailyForecast
 from layout.frontend.informationtab.main_information import MainWeatherInfo
 from components.responsive_text_handler import ResponsiveTextHandler
+from services.translation_service import TranslationService
 
 class WeeklyWeather:
+
     def __init__(self, page, city, language, unit):
         self.page = page
         self.language = language
@@ -62,6 +64,37 @@ class WeeklyWeather:
         self.dailyForecast.update_by_coordinates(lat, lon)
         self.airCondition.update_by_coordinates(lat, lon)
 
+    def handle_language_change(self, event_data=None):
+        """Aggiorna le label quando cambia la lingua."""
+        if self.page:
+            state_manager = self.page.session.get('state_manager')
+            if state_manager:
+                self.language = state_manager.get_state('language') or 'en'
+        # Aggiorna le label delle righe
+        for row, key in zip([self.feels_like_label, self.humidity_label, self.wind_label, self.pressure_label], ["feels_like", "humidity", "wind", "pressure"]):
+            if isinstance(row.controls[1], ft.Text):
+                row.controls[1].value = TranslationService.get_text(key, self.language)
+                row.controls[1].update()
+        self.update_text_controls()
+
+    def update_text_controls(self):
+        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
+        for control, size_category in self.text_controls.items():
+            if size_category == 'icon':
+                # Per le icone, aggiorna size
+                if hasattr(control, 'size'):
+                    control.size = self.text_handler.get_size(size_category)
+            else:
+                # Per i testi, aggiorna size
+                if hasattr(control, 'size'):
+                    control.size = self.text_handler.get_size(size_category)
+                elif hasattr(control, 'style') and hasattr(control.style, 'size'):
+                    control.style.size = self.text_handler.get_size(size_category)
+                # Aggiorna anche i TextSpan se presenti
+                if hasattr(control, 'spans'):
+                    for span in control.spans:
+                        span.style.size = self.text_handler.get_size(size_category)
+                        
     def createWeeklyForecast(self):
         """Crea il componente per le previsioni settimanali"""
         # Ottieni prima i dati meteo generali
@@ -71,7 +104,8 @@ class WeeklyWeather:
         forecast_days = self.api.get_weekly_forecast_data(weather_data) if weather_data else []
         
         if not forecast_days:
-            return ft.Text("Dati previsioni meteo non disponibili.")
+            # Use TranslationService for the fallback text
+            return ft.Text(TranslationService.get_text("no_forecast_data", self.language))
         
         forecast_cards = []
         
@@ -81,7 +115,7 @@ class WeeklyWeather:
             day_text = ft.Text(
                 day_data["day"],
                 size=self.text_handler.get_size('label'),
-                weight="bold", 
+                weight="bold",
                 text_align=ft.TextAlign.START
             )
             temp_text = ft.Text(
@@ -186,6 +220,7 @@ class WeeklyWeather:
             self.page.update()
 
     def build(self):
+        self.update_text_controls()
         return ft.Container(
             border_radius=15,
             padding=20,

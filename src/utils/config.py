@@ -22,6 +22,10 @@ LIGHT_THEME = {
         "start": "#78bff1",  # Azzurro chiaro
         "end": "#ffffff"     # Bianco
     },
+    "HOURLY_GRADIENT": {
+        "start": "#cbeb4a",  # Azzurro chiaro
+        "end": "#bbe9ebcc"   # Azzurro chiaro con trasparenza
+    },
     "BORDER": "#e0e0e0",
     "ICON": "#333333",
     "BUTTON_TEXT": "#ffffff",

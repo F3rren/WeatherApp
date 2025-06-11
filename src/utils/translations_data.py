@@ -80,12 +80,6 @@ TRANSLATIONS = {
         "current_location": "Current Location",
         "no_forecast_data": "Weather forecast data not available.",
         "error_page_context_missing": "Error: Page context missing",
-        # SettingsAlertDialog specific keys (already present but for clarity)
-        # "language_setting": "Language:", # Duplicate of "language"
-        # "measurement_setting": "Measurement:", # Duplicate of "measurement"
-        # "use_current_location_setting": "Use current location:", # Duplicate of "use_current_location"
-        # "dark_theme_setting": "Dark theme:", # Duplicate of "dark_theme"
-        # "close_button": "Close", # Duplicate of "close"
         "maps_title": "Maps", # For MapsAlertDialog title
         "air_pollution_chart_title": "Air Pollution (μg/m³)", # For AirPollutionChart y-axis title
         "weather_card_title": "Weather Details", # Example for a potential WeatherAlertDialog title

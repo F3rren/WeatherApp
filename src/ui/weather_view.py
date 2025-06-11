@@ -42,6 +42,7 @@ class WeatherView:
             state_manager.register_observer("language_event", self.handle_language_change)
 
         self.info_container = ft.Container(content=ft.Text("Caricamento...", color=self.text_color)) # Apply initial text color
+        self.hourly_container = ft.Container()
         self.weekly_container = ft.Container()
         self.chart_container = ft.Container()
         self.air_pollution_container = ft.Container()
@@ -135,6 +136,7 @@ class WeatherView:
         self._update_text_color() 
         await self._update_main_info(city, is_current_location)
         await self._update_weekly_forecast()
+        await self._update_hourly_container()
         await self._update_temperature_chart()
         try:
             if lat is not None and lon is not None:
@@ -174,23 +176,13 @@ class WeatherView:
         else:
             location = city
 
-        # Costruisce la riga di previsioni orarie (massimo 6)
-        hourly_data = self.api_service.get_hourly_forecast_data(self.weather_data)[:6]
-        
-        # Utilizza la nuova classe per costruire la sezione delle previsioni orarie
-        hourly_forecast = HourlyForecastDisplay(
-            hourly_data=hourly_data,
-            text_color=self.text_color,
-            page=self.page
-        ).build()
-
         # Costruisce le sezioni dell'interfaccia
         main_info = MainWeatherInfo(city, location, temperature, icon_code, self.text_color, self.page).build()
 
         air_condition = AirConditionInfo(feels_like, humidity, wind_speed, pressure, self.text_color, self.page).build()        # Assembla il contenuto e aggiorna il contenitore
         self.info_container.content = WeatherCard(self.page).build(
             ft.Column(
-                controls=[main_info, hourly_forecast, air_condition],
+                controls=[main_info, air_condition],
                 expand=True,
                 spacing=10,
                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH  # Assicura che i figli si estendano
@@ -241,6 +233,22 @@ class WeatherView:
         )
         self.chart_container.content = weather_card.build(temp_chart.build())
         
+    async def _update_hourly_container(self) -> None:
+        """Frontend: Updates air pollution chart UI"""
+        weather_card = WeatherCard(self.page) # Pass page if WeatherCard needs theme context
+        self._update_text_color() # Ensure text_color is current
+
+        # Costruisce la riga di previsioni orarie (massimo 6)
+        hourly_data = self.api_service.get_hourly_forecast_data(self.weather_data)[:6]
+        # Utilizza la nuova classe per costruire la sezione delle previsioni orarie
+        hourly_forecast = HourlyForecastDisplay(
+            hourly_data=hourly_data,
+            text_color=self.text_color,
+            page=self.page
+        )
+
+        self.hourly_container.content = weather_card.build(hourly_forecast.build())
+    
     async def _update_air_pollution(self, lat: float, lon: float) -> None:
         """Frontend: Updates air pollution UI"""
         self._update_text_color() # Ensure text_color is current
@@ -267,6 +275,7 @@ class WeatherView:
         """Frontend: Returns UI containers for display"""
         return (
             self.info_container,
+            self.hourly_container,
             self.weekly_container,
             self.chart_container,
             self.air_pollution_container,

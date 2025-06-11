@@ -31,6 +31,7 @@ class MeteoApp:
         self.theme_toggle_service = None
         self.sidebar_container = None
         self.info_container_wrapper = None
+        self.hourly_container_wrapper = None
         self.weekly_container_wrapper = None
         self.chart_container_wrapper = None
         self.air_pollution_chart_container_wrapper = None
@@ -74,7 +75,8 @@ class MeteoApp:
         self.state_manager.register_observer("theme_event", self._update_container_colors)
 
         self.weather_view_instance = WeatherView(page) # Store instance
-        info_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = self.weather_view_instance.get_containers()
+        
+        info_container, hourly_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = self.weather_view_instance.get_containers()
         
         # Inizializza il servizio di location toggle
         self.location_toggle_service = LocationToggleService(
@@ -108,6 +110,7 @@ class MeteoApp:
         self.layout_manager.create_containers(
             sidebar_content=sidebar,
             info_content=info_container,
+            hourly_content=hourly_container,
             weekly_content=weekly_container,
             chart_content=chart_container,
             air_pollution_chart_content=air_pollution_chart_container,
@@ -118,6 +121,7 @@ class MeteoApp:
         containers = self.layout_manager.get_all_containers()
         self.sidebar_container = containers['sidebar']
         self.info_container_wrapper = containers['info']
+        self.hourly_container_wrapper = containers['hourly']
         self.weekly_container_wrapper = containers['weekly']
         self.chart_container_wrapper = containers['chart']
         self.air_pollution_chart_container_wrapper = containers['air_pollution_chart']

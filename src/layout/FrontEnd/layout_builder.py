@@ -68,7 +68,7 @@ class LayoutBuilder:
         )
 
     @staticmethod
-    def build_main_layout(sidebar, info, weekly, air_pollution, chart, air_pollution_chart) -> ft.Control:
+    def build_main_layout(sidebar, info, hourly, weekly, air_pollution, chart, air_pollution_chart) -> ft.Control:
         """
         Costruisce il layout principale responsivo dell'applicazione.
         
@@ -94,6 +94,10 @@ class LayoutBuilder:
                 info
             ]),
             
+            ft.ResponsiveRow([
+                hourly
+            ]),
+
             # Terza riga: previsioni settimanali + inquinamento aria
             ft.ResponsiveRow([
                 weekly,

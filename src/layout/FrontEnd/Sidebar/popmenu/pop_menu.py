@@ -1,4 +1,5 @@
 import flet as ft
+from services.translation_service import TranslationService
 from utils.config import LIGHT_THEME, DARK_THEME # Import theme configurations
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
@@ -53,12 +54,12 @@ class PopMenu:
         )
 
         # Get current language from state_manager
-        current_language = self.state_manager.get_state("language") if self.state_manager else "en"
+        self.current_language = self.state_manager.get_state("language") if self.state_manager else "en"
 
         # Get translations using the translation_service
-        weather_text = self.translation_service.get_text("weather", target_language=current_language) if self.translation_service else "Weather"
-        map_text = self.translation_service.get_text("map", target_language=current_language) if self.translation_service else "Map"
-        settings_text = self.translation_service.get_text("settings", target_language=current_language) if self.translation_service else "Settings"
+        weather_text = self.translation_service.get_text("weather", target_language=self.current_language) if self.translation_service else "Weather"
+        map_text = self.translation_service.get_text("map", target_language=self.current_language) if self.translation_service else "Map"
+        settings_text = self.translation_service.get_text("settings", target_language=self.current_language) if self.translation_service else "Settings"
         
         self.meteo_item_text = ft.Text(weather_text, size=20, color=self.text_color)
         self.map_item_text = ft.Text(map_text, size=20, color=self.text_color)
@@ -160,19 +161,19 @@ class PopMenu:
         )
         
         self.meteo_item_text = ft.Text(
-            self._get_translation("weather"), 
+            TranslationService.get_text("weather_card_title", self.current_language),
             color=self.text_color,
             size=self.text_handler.get_size('button') if hasattr(self, 'text_handler') else 14
         )
         
         self.map_item_text = ft.Text(
-            self._get_translation("maps"), 
+            TranslationService.get_text("maps_title", self.current_language),
             color=self.text_color,
             size=self.text_handler.get_size('button') if hasattr(self, 'text_handler') else 14
         )
         
         self.settings_item_text = ft.Text(
-            self._get_translation("settings"), 
+            TranslationService.get_text("settings_title", self.current_language),
             color=self.text_color,
             size=self.text_handler.get_size('button') if hasattr(self, 'text_handler') else 14
         )
@@ -232,13 +233,6 @@ class PopMenu:
         if hasattr(self, 'setting_alert'):
             self.setting_alert.update_theme_toggle(value)
         
-    def _get_translation(self, key):
-        """Helper method to get translation with fallback"""
-        if self.translation_service and hasattr(self.translation_service, 'get_text'):
-            current_language = self.state_manager.get_state("language") if self.state_manager else "en"
-            return self.translation_service.get_text(key, current_language)
-        return key  # Fallback to key if no translation service
-
     def cleanup(self):
         """Cleanup method to remove observers"""
         if hasattr(self, 'text_handler') and self.text_handler:

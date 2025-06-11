@@ -56,21 +56,15 @@ class LayoutManager:
         if self.page:
             self.page.update()
     
-    def create_containers(self,                         
-                         sidebar_content,
-                         info_content,
-                         weekly_content,
-                         chart_content,
-                         air_pollution_chart_content,
-                         air_pollution_content,
-                         animation_duration=500,
-                         animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
+    def create_containers(self, sidebar_content, info_content, hourly_content, weekly_content, chart_content,
+        air_pollution_chart_content, air_pollution_content, animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
         """
         Crea tutti i contenitori per il layout dell'applicazione.
         
         Args:
             sidebar_content: Oggetto Sidebar da inserire nel container
             info_content: Contenuto del container info meteo
+            hourly_content: Contenuto del container info meteo
             weekly_content: Contenuto del container previsioni settimanali
             chart_content: Contenuto del container grafico
             air_pollution_chart_content: Contenuto del container grafico inquinamento
@@ -91,7 +85,12 @@ class LayoutManager:
             animation_duration,
             animation_curve
         )
-        
+        self.containers['hourly'] = LayoutBuilder.build_content_container(
+            hourly_content, 
+            {"xs": 12}, 
+            animation_duration,
+            animation_curve
+        )
         self.containers['weekly'] = LayoutBuilder.build_content_container(
             weekly_content,
             {"xs": 12, "sm": 12, "lg": 8},
@@ -129,6 +128,7 @@ class LayoutManager:
         self.layout = LayoutBuilder.build_main_layout(
             self.containers['sidebar'],
             self.containers['info'],
+            self.containers['hourly'], 
             self.containers['weekly'],
             self.containers['air_pollution'],
             self.containers['chart'],

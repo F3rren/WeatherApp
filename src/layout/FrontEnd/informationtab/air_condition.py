@@ -82,11 +82,26 @@ class AirConditionInfo:
         self.text_controls[wind_icon] = 'icon'
         self.text_controls[pressure_icon] = 'icon'
         
-        self._update_all_text_elements() # Initial text setup
-
         # Register observer with ResponsiveTextHandler
         self.text_handler.add_observer(self.update_text_controls)
-        print(f"ResponsiveTextHandler initialized in {self.__class__.__name__}")
+        
+        # Sovrascrivi il gestore di ridimensionamento della pagina per questo componente
+        if self.page:
+            # Salva l'handler originale se presente
+            self._original_resize_handler = self.page.on_resize
+            
+            def combined_resize_handler(e):
+                # Aggiorna le dimensioni del testo
+                self.text_handler._handle_resize(e)
+                # Aggiorna i controlli di testo
+                self.update_text_controls()
+                # Chiama anche l'handler originale se esiste
+                if hasattr(self, '_original_resize_handler') and self._original_resize_handler:
+                    self._original_resize_handler(e)
+            
+            self.page.on_resize = combined_resize_handler
+            
+        self._update_all_text_elements() # Initial text setup
 
     def _update_all_text_elements(self):
         """Updates all text elements including labels, values, and unit symbols."""
@@ -140,6 +155,9 @@ class AirConditionInfo:
                 # Per le icone, aggiorna size
                 if hasattr(control, 'size'):
                     control.size = new_size
+                elif hasattr(control, 'width') and hasattr(control, 'height'):
+                    control.width = new_size
+                    control.height = new_size
             else:
                 # Per i testi, aggiorna size
                 if hasattr(control, 'size'):
@@ -149,7 +167,8 @@ class AirConditionInfo:
                 # Aggiorna anche i TextSpan se presenti
                 if hasattr(control, 'spans'):
                     for span in control.spans:
-                        span.style.size = new_size
+                        if hasattr(span, 'style') and span.style:
+                            span.style.size = new_size
         
         # Richiedi l'aggiornamento della pagina
         if self.page:
@@ -183,6 +202,10 @@ class AirConditionInfo:
         # Unregister observer from ResponsiveTextHandler
         if hasattr(self, 'text_handler') and self.text_handler:
             self.text_handler.remove_observer(self.update_text_controls)
+            
+        # Ripristina l'handler originale di resize se esiste
+        if hasattr(self, '_original_resize_handler') and self.page:
+            self.page.on_resize = self._original_resize_handler
 
     def build(self) -> ft.Container:
         """Build the air condition information"""

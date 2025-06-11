@@ -31,7 +31,9 @@ class MainWeatherInfo:
         )
         
         # Dictionary to track text controls for responsive sizing
-        self.text_controls = {}        # Text controls that need dynamic color updates
+        self.text_controls = {}
+        
+        # Text controls that need dynamic color updates
         self.city_text = ft.Text(
             self.city.split(", ")[0], 
             size=self.text_handler.get_size('city'), 
@@ -59,6 +61,22 @@ class MainWeatherInfo:
         # Register observer for responsive text changes
         if self.text_handler:
             self.text_handler.add_observer(self.update_text_controls)
+            
+        # Sovrascrivi il gestore di ridimensionamento della pagina per questo componente
+        if self.page:
+            # Salva l'handler originale se presente
+            self._original_resize_handler = self.page.on_resize
+            
+            def combined_resize_handler(e):
+                # Aggiorna le dimensioni del testo
+                self.text_handler._handle_resize(e)
+                # Aggiorna i controlli di testo
+                self.update_text_controls()
+                # Chiama anche l'handler originale se esiste
+                if hasattr(self, '_original_resize_handler') and self._original_resize_handler:
+                    self._original_resize_handler(e)
+            
+            self.page.on_resize = combined_resize_handler
 
         if self.page:
             state_manager = self.page.session.get('state_manager')
@@ -93,7 +111,7 @@ class MainWeatherInfo:
         unit_symbol = TranslationService.get_unit_symbol("temperature", current_unit, current_language)
         self.temperature_text.value = f"{self.temperature}{unit_symbol}"
         if hasattr(self.temperature_text, 'update') and self.temperature_text.page:
-             self.temperature_text.update()
+            self.temperature_text.update()
 
     def cleanup(self):
         logger = logging.getLogger(__name__)
@@ -102,87 +120,60 @@ class MainWeatherInfo:
         if hasattr(self, 'text_handler') and self.text_handler:
             self.text_handler.remove_observer(self.update_text_controls)
         
+        # Ripristina l'handler originale di resize se esiste
+        if hasattr(self, '_original_resize_handler') and self.page:
+            self.page.on_resize = self._original_resize_handler
+        
         if self._state_manager_ref_for_cleanup and hasattr(self._state_manager_ref_for_cleanup, 'unregister_observer'):
             city_name = self.city_text.value if self.city_text and hasattr(self.city_text, 'value') else "N/A"
-            logger.info(f"MainWeatherInfo ({city_name}): Attempting to unregister observers.")
-            try:
-                self._state_manager_ref_for_cleanup.unregister_observer("theme_event", self.handle_theme_change)
-                self._state_manager_ref_for_cleanup.unregister_observer("unit_event", self.handle_unit_change)
-                self._state_manager_ref_for_cleanup.unregister_observer("language_event", self.handle_language_change)
-                logger.info(f"MainWeatherInfo ({city_name}): Successfully unregistered observers.")
-            except Exception as e:
-                logger.warning(f"MainWeatherInfo ({city_name}): Could not unregister an observer: {e}")
-        self._state_manager_ref_for_cleanup = None
+            logger.debug(f"MainWeatherInfo: Unregistering theme_event observer for city {city_name}")
+            self._state_manager_ref_for_cleanup.unregister_observer("theme_event", self.handle_theme_change)
+            self._state_manager_ref_for_cleanup.unregister_observer("unit_event", self.handle_unit_change)
+            self._state_manager_ref_for_cleanup.unregister_observer("language_event", self.handle_language_change)
 
     def handle_unit_change(self, event_data=None):
-        """Handles unit change events by updating the temperature display."""
-        logger = logging.getLogger(__name__)
-        logger.info(f"MainWeatherInfo ({self.city}): handle_unit_change called.")
+        """Updates the temperature display when the unit system changes."""
         self._update_temperature_display()
-        if self.page and hasattr(self.page, 'update'):
-            self.page.update() # Update the page to reflect changes if necessary
 
     def handle_language_change(self, event_data=None):
-        """Handles language change events by updating the temperature display (unit symbol might change)."""
-        logger = logging.getLogger(__name__)
-        logger.info(f"MainWeatherInfo ({self.city}): handle_language_change called.")
+        """Updates the temperature display when the language changes (as it could affect unit symbols)."""
         self._update_temperature_display()
-        if self.page and hasattr(self.page, 'update'):
-            self.page.update()
 
     def handle_theme_change(self, event_data=None):
-        """Handles theme change events by updating text color."""
+        """Updates the text color based on the current theme."""
         logger = logging.getLogger(__name__)
-        logger.info("MainWeatherInfo: handle_theme_change called.")
-
-        if self.page:
-            logger.info(f"MainWeatherInfo: Current page theme_mode: {self.page.theme_mode}")
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-            self.text_color = current_theme_config["TEXT"]
-            logger.info(f"MainWeatherInfo: Calculated text_color: {self.text_color}")
-
-            controls_to_update = {
-                "city_text": getattr(self, 'city_text', None),
-                "location_text": getattr(self, 'location_text', None),
-                "temperature_text": getattr(self, 'temperature_text', None)
-            }
-
-            for name, control_obj in controls_to_update.items(): # Renamed variable for clarity
-                logger.info(f"MainWeatherInfo: Processing control '{name}'. Object: {control_obj}, Type: {type(control_obj)}")
-                if control_obj is not None:
-                    if hasattr(control_obj, 'color'):
-                        logger.info(f"MainWeatherInfo: Attempting to set color for '{name}'. Current color: {getattr(control_obj, 'color', 'N/A')}, New color: {self.text_color}")
-                        try:
-                            control_obj.color = self.text_color # THE CRITICAL LINE
-                        except Exception as e:
-                            logger.error(f"MainWeatherInfo: ERROR during color assignment for '{name}': {e}", exc_info=True)
-                            continue # Skip update if color setting failed
-
-                        if getattr(control_obj, 'page', None):
-                            try:
-                                control_obj.update()
-                                logger.info(f"MainWeatherInfo: {name}.update() successfully called.")
-                            except Exception as e:
-                                logger.error(f"MainWeatherInfo: ERROR during {name}.update(): {e}", exc_info=True)
-                        else:
-                            logger.warning(f"MainWeatherInfo: {name} is not on page, {name}.update() skipped.")
-                    else:
-                        # This case should ideally not be reached if control_obj is a standard ft.Text
-                        logger.error(f"MainWeatherInfo: Control '{name}' (Object: {control_obj}, Type: {type(control_obj)}) is not None but lacks 'color' attribute.")
-                else:
-                    logger.warning(f"MainWeatherInfo: Control '{name}' is None. Skipping operations for this control.")
-            
-            # Update temperature display as well, as text_color might affect it if not handled by control.color
-            self._update_temperature_display()
-
-            if getattr(self.page, 'update', None):
-                self.page.update()
-                logger.info("MainWeatherInfo: self.page.update() called.")
-            else:
-                logger.warning("MainWeatherInfo: self.page.update is not available or self.page is None.")
-        else:
+        
+        if not self.page:
             logger.warning("MainWeatherInfo: self.page is None in handle_theme_change.")
+            return
+        
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
+        self.text_color = current_theme_config["TEXT"]
+        logger.info(f"MainWeatherInfo: Theme changed to {'DARK' if is_dark else 'LIGHT'}, new text_color: {self.text_color}")
+        
+        # Update color of all controls
+        controls = {"city_text": self.city_text, "location_text": self.location_text, "temperature_text": self.temperature_text}
+        
+        for name, control_obj in controls.items():
+            if control_obj is not None:
+                if hasattr(control_obj, 'color'):
+                    control_obj.color = self.text_color
+                    logger.info(f"MainWeatherInfo: Updated {name}.color to {self.text_color}")
+                else:
+                    # This case should ideally not be reached if control_obj is a standard ft.Text
+                    logger.error(f"MainWeatherInfo: Control '{name}' (Object: {control_obj}, Type: {type(control_obj)}) is not None but lacks 'color' attribute.")
+            else:
+                logger.warning(f"MainWeatherInfo: Control '{name}' is None. Skipping operations for this control.")
+        
+        # Update temperature display as well, as text_color might affect it if not handled by control.color
+        self._update_temperature_display()
+
+        if getattr(self.page, 'update', None):
+            self.page.update()
+            logger.info("MainWeatherInfo: self.page.update() called.")
+        else:
+            logger.warning("MainWeatherInfo: self.page.update is not available or self.page is None.")
 
     def build(self) -> ft.Container:
         """Build the main weather information"""

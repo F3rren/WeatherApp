@@ -272,8 +272,4 @@ class AirPollution:
         # WeatherView should then trigger an update if necessary, or rely on state changes.
         return self.container_control
 
-    def cleanup(self):
-        """Unregister observers."""
-        if self._state_manager:
-            self._state_manager.unregister_observer("language_event", self._handle_state_change)
-            self._state_manager.unregister_observer("theme_event", self._handle_state_change)
+

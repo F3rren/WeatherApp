@@ -20,8 +20,8 @@ class HourlyForecastDisplay:
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes= {
-                'icon': 70,
-                'title': 16,
+                'icon': 100,
+                'title': 18,
                 'value': 20,
             },
             breakpoints=[600, 900, 1200, 1600]
@@ -96,75 +96,55 @@ class HourlyForecastDisplay:
                 if hasattr(item_container, 'page') and item_container.page: # Guard update
                     item_container.update()
 
-    def _create_item_column(self, item_data: dict) -> ft.Container:
-        """Helper method to create a single forecast item's visual representation."""
-        time_str = datetime.strptime(item_data["dt_txt"], "%Y-%m-%d %H:%M:%S").strftime("%H:%M")
-        icon_code = item_data["weather"][0]["icon"]
-        temp_value = round(item_data["main"]["temp"])
-        unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system, self.language)
-
-        weather_icon = ft.Image(
-            src=f"https://openweathermap.org/img/wn/{icon_code}@2x.png",
-            width=self.text_handler.get_size('icon'),
-            height=self.text_handler.get_size('icon'),
-            fit=ft.ImageFit.CONTAIN
-        )
-        time_text = ft.Text(
-            time_str, 
-            size=self.text_handler.get_size('title'), 
-            weight=ft.FontWeight.BOLD, 
-            color=self.text_color
-        )
-        temp_text = ft.Text(
-            f"{temp_value}{unit_symbol}", 
-            size=self.text_handler.get_size('value'), 
-            weight=ft.FontWeight.BOLD, 
-            color=self.text_color
-        )
-
-        container = ft.Container(
-            content=ft.Column(
-                controls=[
-                    weather_icon,
-                    time_text,
-                    temp_text
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
-            border_radius=20,
-            expand=True,
-        )
-        # Store original data with the container for updates
-        container.original_data = item_data 
-        return container
+  
 
     def build(self) -> ft.Container:
-        """Builds the hourly forecast container with a scrollable row of items."""
-        self.built_item_containers.clear()
         if self.hourly_data_list:
             for item_data in self.hourly_data_list:
-                item_container = self._create_item_column(item_data) # Sets initial visuals
-                self.built_item_containers.append(item_container)
-        
-        self.main_container_ref = ft.Container(
+                time_str = datetime.strptime(item_data["dt_txt"], "%Y-%m-%d %H:%M:%S").strftime("%H:%M")
+                icon_code = item_data["weather"][0]["icon"]
+                temp_value = round(item_data["main"]["temp"])
+                unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system, self.language)
+
+                icon = ft.Image(
+                    src=f"https://openweathermap.org/img/wn/{icon_code}@2x.png",
+                    width=self.text_handler.get_size('icon'),
+                    height=self.text_handler.get_size('icon'),
+                    fit=ft.ImageFit.CONTAIN
+                )
+                time_text = ft.Text(
+                    time_str,
+                    size=self.text_handler.get_size('title'),
+                )
+                temp_text = ft.Text(
+                    f"{temp_value}{unit_symbol}",
+                    size=self.text_handler.get_size('value'),
+                    weight=ft.FontWeight.BOLD,
+                    
+                )
+
+                container = ft.Container(
+                    content=ft.Column(
+                        controls=[icon, time_text, temp_text],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                padding=ft.padding.all(10),
+                margin=ft.margin.all(5),
+                expand=True,
+                border_radius=ft.border_radius.all(50),
+                  # Use transparent background
+            )
+                # Memorizza i dati originali per aggiornamenti futuri
+                self.built_item_containers.append(container)
+
+        return ft.Container(
             content=ft.Row(
                 controls=self.built_item_containers,
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 scroll=ft.ScrollMode.ADAPTIVE,
             ),
+            
             expand=True,
-            padding=ft.padding.symmetric(vertical=10),
         )
-        return self.main_container_ref
-
-    def cleanup(self):
-        """Unregister observers."""
-        if self._state_manager:
-            self._state_manager.unregister_observer("theme_event", self._handle_state_change)
-            self._state_manager.unregister_observer("language_event", self._handle_state_change)
-            self._state_manager.unregister_observer("unit_event", self._handle_state_change)
-        # print("HourlyForecastDisplay cleaned up") # For debugging
-
-    # Remove update_text_controls and handle_theme_change as their logic is now in _handle_state_change and _update_all_item_visuals
-
+    
+    

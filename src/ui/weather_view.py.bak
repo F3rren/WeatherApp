@@ -204,8 +204,7 @@ class WeatherView:
         weather_card = WeatherCard(self.page) # Pass page if WeatherCard needs theme context
         forecast_items_controls = [] # Renamed
         self._update_text_color() # Ensure text_color is current
-        for i, day_data in enumerate(weekly_data):            
-            forecast_item_obj = DailyForecastItems( # Create instance
+        for i, day_data in enumerate(weekly_data):            forecast_item_obj = DailyForecastItems( # Create instance
                 day=day_data["day_key"],
                 icon_code=day_data["icon"],
                 temp_min=day_data["temp_min"],

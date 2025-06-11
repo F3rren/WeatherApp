@@ -1,19 +1,44 @@
 ﻿import flet as ft
 import logging
-
 from utils.config import LIGHT_THEME, DARK_THEME
 from utils.translations_data import LANGUAGES 
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class DropdownLanguage:
     
-    def __init__(self, state_manager=None):
+    def __init__(self, state_manager=None, page: ft.Page = None):
         self.selected_language = None
         self.state_manager = state_manager
+        self.page = page
         self.dropdown = None
         
-        # Register for theme change events if state_manager is available
-        if state_manager:
-            state_manager.register_observer("theme_event", self.handle_theme_change)
+        # Initialize ResponsiveTextHandler
+        if self.page:
+            self.text_handler = ResponsiveTextHandler(
+                page=self.page,
+                base_sizes={
+                    'dropdown_text': 14,  # Dropdown text size
+                    'hint_text': 13,      # Hint text size
+                },
+                breakpoints=[600, 900, 1200, 1600]
+            )
+            
+            # Dictionary to track text controls
+            self.text_controls = {}
+            
+            # Register as observer for responsive updates
+            self.text_handler.add_observer(self.update_text_controls)
+
+    def update_text_controls(self):
+        """Update text sizes for all registered controls"""
+        if self.dropdown:
+            if hasattr(self.dropdown, 'text_size'):
+                self.dropdown.text_size = self.text_handler.get_size('dropdown_text')
+        
+        # Request page update
+        if self.page:
+            self.page.update()
+        
 
     def get_language_name_by_code(self, code):
         """Restituisce il nome della lingua dato il codice"""
@@ -116,8 +141,13 @@ class DropdownLanguage:
             focused_border_width=2,
             bgcolor=theme["CARD_BACKGROUND"],
             color=theme["TEXT"],
-            content_padding=ft.padding.symmetric(horizontal=10, vertical=8) # Adjusted padding
+            content_padding=ft.padding.symmetric(horizontal=10, vertical=8), # Adjusted padding
+            text_size=self.text_handler.get_size('dropdown_text') if hasattr(self, 'text_handler') else 14,
         )
+        
+        # Register dropdown in text controls
+        if hasattr(self, 'text_handler'):
+            self.text_controls[self.dropdown] = 'dropdown_text'
         return self.dropdown # Return the created dropdown
 
     def get_language_code_by_name(self, name):
@@ -184,6 +214,11 @@ class DropdownLanguage:
             # Request update of the dropdown
             self.dropdown.update()
             
+    def cleanup(self):
+        """Cleanup method to remove observers"""
+        if hasattr(self, 'text_handler') and self.text_handler:
+            self.text_handler.remove_observer(self.update_text_controls)
+    
     def build(self):
         if not self.dropdown: # Create dropdown only if it doesn't exist
             self.dropdown = self.createDropdown()

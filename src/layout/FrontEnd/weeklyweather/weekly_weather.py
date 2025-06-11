@@ -79,21 +79,91 @@ class WeeklyWeather:
 
     def update_text_controls(self):
         """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
+        window_width = self.page.width if self.page else 'N/A'
+        print(f"[DEBUG] WeeklyWeather: update_text_controls chiamato - width: {window_width}")
+        print(f"[DEBUG] WeeklyWeather breakpoints: {self.text_handler.breakpoints}")
+        print(f"[DEBUG] WeeklyWeather current_sizes: {self.text_handler.current_sizes}")
+        
+        # Log di tutte le categorie e dimensioni correnti
+        for category, size in self.text_handler.current_sizes.items():
+            print(f"[DEBUG] WeeklyWeather - Categoria '{category}' dimensione attuale: {size}px")
+        
+        # Controllo di quali controlli sono registrati
+        control_info = {}
         for control, size_category in self.text_controls.items():
+            control_type = type(control).__name__
+            if control_type not in control_info:
+                control_info[control_type] = []
+            control_info[control_type].append(size_category)
+        
+        print(f"[DEBUG] WeeklyWeather - Controlli registrati per tipo: {control_info}")
+        
+        # Aggiorna le dimensioni dei controlli e registra i cambiamenti
+        for control, size_category in self.text_controls.items():
+            control_type = type(control).__name__
+            
             if size_category == 'icon':
-                # Per le icone, aggiorna size
-                if hasattr(control, 'size'):
-                    control.size = self.text_handler.get_size(size_category)
+                # Per le icone, aggiorna width e height per Image, o size per Icon
+                if hasattr(control, 'width') and hasattr(control, 'height'):
+                    old_width = control.width
+                    old_height = control.height
+                    new_size = self.text_handler.get_size(size_category)
+                    
+                    print(f"[DEBUG] WeeklyWeather - Aggiornamento icona {control_type}: width={old_width} -> {new_size}, height={old_height} -> {new_size}")
+                    
+                    if old_width != new_size or old_height != new_size:
+                        print(f"[DEBUG] WeeklyWeather - CAMBIAMENTO 'icon': {control_type} da {old_width}x{old_height} a {new_size}x{new_size} con larghezza finestra {window_width}px")
+                    
+                    control.width = new_size
+                    control.height = new_size
+                elif hasattr(control, 'size'):
+                    old_size = control.size
+                    new_size = self.text_handler.get_size(size_category)
+                    
+                    print(f"[DEBUG] WeeklyWeather - Aggiornamento icona {control_type}: size={old_size} -> {new_size}")
+                    
+                    if old_size != new_size:
+                        print(f"[DEBUG] WeeklyWeather - CAMBIAMENTO 'icon': {control_type} da {old_size} a {new_size} con larghezza finestra {window_width}px")
+                    
+                    control.size = new_size
             else:
                 # Per i testi, aggiorna size
                 if hasattr(control, 'size'):
-                    control.size = self.text_handler.get_size(size_category)
+                    old_size = control.size
+                    new_size = self.text_handler.get_size(size_category)
+                    
+                    print(f"[DEBUG] WeeklyWeather - Aggiornamento {control_type} con categoria '{size_category}': dimensione attuale={old_size}, nuova dimensione={new_size}")
+                    
+                    if old_size != new_size:
+                        print(f"[DEBUG] WeeklyWeather - CAMBIAMENTO '{size_category}': {control_type} da {old_size} a {new_size} con larghezza finestra {window_width}px")
+                    
+                    control.size = new_size
+                    
                 elif hasattr(control, 'style') and hasattr(control.style, 'size'):
-                    control.style.size = self.text_handler.get_size(size_category)
+                    old_style_size = control.style.size
+                    new_size = self.text_handler.get_size(size_category)
+                    
+                    print(f"[DEBUG] WeeklyWeather - Aggiornamento style {control_type} con categoria '{size_category}': dimensione attuale={old_style_size}, nuova dimensione={new_size}")
+                    
+                    if old_style_size != new_size:
+                        print(f"[DEBUG] WeeklyWeather - CAMBIAMENTO '{size_category}' style: {control_type} da {old_style_size} a {new_size} con larghezza finestra {window_width}px")
+                    
+                    control.style.size = new_size
+                    
                 # Aggiorna anche i TextSpan se presenti
                 if hasattr(control, 'spans'):
-                    for span in control.spans:
-                        span.style.size = self.text_handler.get_size(size_category)
+                    for i, span in enumerate(control.spans):
+                        old_span_size = span.style.size if hasattr(span, 'style') and hasattr(span.style, 'size') else None
+                        new_size = self.text_handler.get_size(size_category)
+                        
+                        if old_span_size != new_size:
+                            print(f"[DEBUG] WeeklyWeather - CAMBIAMENTO span {i} '{size_category}': da {old_span_size} a {new_size} con larghezza finestra {window_width}px")
+                        
+                        span.style.size = new_size
+        
+        # Richiedi l'aggiornamento della pagina
+        if self.page:
+            self.page.update()
                         
     def createWeeklyForecast(self):
         """Crea il componente per le previsioni settimanali"""
@@ -196,28 +266,6 @@ class WeeklyWeather:
                 expand=True
             )
         )
-
-    def update_text_controls(self):
-        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
-        for control, size_category in self.text_controls.items():
-            if size_category == 'icon':
-                # Per le icone, aggiorna width e height
-                control.width = self.text_handler.get_size(size_category)
-                control.height = self.text_handler.get_size(size_category)
-            else:
-                # Per i testi, aggiorna size
-                if hasattr(control, 'size'):
-                    control.size = self.text_handler.get_size(size_category)
-                elif hasattr(control, 'style') and hasattr(control.style, 'size'):
-                    control.style.size = self.text_handler.get_size(size_category)
-                # Aggiorna anche i TextSpan se presenti
-                if hasattr(control, 'spans'):
-                    for span in control.spans:
-                        span.style.size = self.text_handler.get_size(size_category)
-        
-        # Richiedi l'aggiornamento della pagina
-        if self.page:
-            self.page.update()
 
     def build(self):
         self.update_text_controls()

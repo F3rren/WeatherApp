@@ -62,16 +62,10 @@ class TemperatureChart:
         self.y_axis_title = ft.Text(color=self.text_color, size=self.text_handler.get_size('axis_title'))
         self._update_y_axis_title_text() 
         self.text_controls[self.y_axis_title] = 'axis_title'
-
         if self.page:
-            original_resize_handler = self.page.on_resize
-            def combined_resize_handler(e):
-                self.text_handler._handle_resize(e)
-                self.update_text_controls()
-                if original_resize_handler:
-                    original_resize_handler(e)
-            self.page.on_resize = combined_resize_handler
-            
+            # Registra questo componente come observer del text_handler
+            self.text_handler.add_observer(self.update_text_controls)
+
         if self.state_manager:
             # Make sure to register for "theme_event" specifically if not already covered by _handle_state_change
             # If _handle_state_change already correctly updates colors based on theme_mode from state_manager,

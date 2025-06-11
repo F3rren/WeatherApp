@@ -33,37 +33,14 @@ class AirPollutionChart:
         self.pm10 = 0
         self.nh3 = 0
 
-        self.translation_service = TranslationService(page.session) # Add this line
-        self.language = self.translation_service.get_current_language() # Add this line
+        self.translation_service = TranslationService(page.session)
+        self.language = self.translation_service.get_current_language()
 
-        self.text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'label': 12,      # Etichette
-                'subtitle': 15,   # Sottotitoli
-                'icon': 40,       # Icone (se necessarie)
-            },
-            breakpoints=[600, 900, 1200, 1600]  # Aggiunti breakpoint per il ridimensionamento
-        )
-
+        # Initialize ResponsiveTextHandler
+        self.text_handler = ResponsiveTextHandler(page)
+        
         # Dizionario dei controlli di testo per aggiornamento facile
         self.text_controls = {}
-        
-        # Sovrascrivi il gestore di ridimensionamento della pagina
-        if self.page:
-            # Salva l'handler originale se presente
-            original_resize_handler = self.page.on_resize
-            
-            def combined_resize_handler(e):
-                # Aggiorna le dimensioni del testo
-                self.text_handler._handle_resize(e)
-                # Aggiorna i controlli di testo
-                self.update_text_controls()
-                # Chiama anche l'handler originale se esiste
-                if original_resize_handler:
-                    original_resize_handler(e)
-            
-            self.page.on_resize = combined_resize_handler
             
         # Rimuoviamo la chiamata a add_load_complete_callback che non esiste
         # Invece, chiamiamo update_text_controls direttamente quando il chart viene creato
@@ -190,7 +167,7 @@ class AirPollutionChart:
                         ft.BarChartRod(
                             from_y=0,
                             to_y=self.co, # Use float value
-                            width=40,
+                            width=30,
                             color=ft.Colors.RED,
                             tooltip=f"{round(self.co)} {unit_text}", # Updated tooltip
                             border_radius=0,
@@ -203,7 +180,7 @@ class AirPollutionChart:
                         ft.BarChartRod(
                             from_y=0,
                             to_y=self.no, # Use float value
-                            width=40,
+                            width=30,
                             color=ft.Colors.ORANGE,
                             tooltip=f"{round(self.no)} {unit_text}", # Updated tooltip
                             border_radius=0,
@@ -216,7 +193,7 @@ class AirPollutionChart:
                         ft.BarChartRod(
                             from_y=0,
                             to_y=self.no2, # Use float value
-                            width=40,
+                            width=30,
                             color=ft.Colors.YELLOW,
                             tooltip=f"{round(self.no2)} {unit_text}", # Updated tooltip
                             border_radius=0,
@@ -229,7 +206,7 @@ class AirPollutionChart:
                         ft.BarChartRod(
                             from_y=0,
                             to_y=self.o3, # Use float value
-                            width=40,
+                            width=30,
                             color=ft.Colors.GREEN,
                             tooltip=f"{round(self.o3)} {unit_text}", # Updated tooltip
                             border_radius=0,
@@ -242,7 +219,7 @@ class AirPollutionChart:
                         ft.BarChartRod(
                             from_y=0,
                             to_y=self.so2, # Use float value
-                            width=40,
+                            width=30,
                             color=ft.Colors.BLUE,
                             tooltip=f"{round(self.so2)} {unit_text}", # Updated tooltip
                             border_radius=0,
@@ -255,7 +232,7 @@ class AirPollutionChart:
                         ft.BarChartRod(
                             from_y=0,
                             to_y=self.pm2_5, # Use float value
-                            width=40,
+                            width=30,
                             color=ft.Colors.INDIGO,
                             tooltip=f"{round(self.pm2_5)} {unit_text}", # Updated tooltip
                             border_radius=0,
@@ -268,7 +245,7 @@ class AirPollutionChart:
                         ft.BarChartRod(
                             from_y=0,
                             to_y=self.pm10, # Use float value
-                            width=40,
+                            width=30,
                             color=ft.Colors.PURPLE,
                             tooltip=f"{round(self.pm10)} {unit_text}", # Updated tooltip
                             border_radius=0,
@@ -281,7 +258,7 @@ class AirPollutionChart:
                         ft.BarChartRod(
                             from_y=0,
                             to_y=self.nh3, # Use float value
-                            width=40,
+                            width=30,
                             color=ft.Colors.BLACK,
                             tooltip=f"{round(self.nh3)} {unit_text}", # Updated tooltip
                             border_radius=0,
@@ -295,7 +272,6 @@ class AirPollutionChart:
                 labels_size=40,
                 title=ft.Text(
                         value=self.translation_service.get_text("air_pollution_chart_y_axis_title", self.language),
-                        size=self.text_handler.get_size('subtitle'),
                         color=self.text_color,
                     ),
                 title_size=20
@@ -303,28 +279,28 @@ class AirPollutionChart:
             bottom_axis=ft.ChartAxis(
                 labels=[
                     ft.ChartAxisLabel(
-                        value=0, label=ft.Container(ft.Text("CO", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
+                        value=0, label=ft.Container(ft.Text("CO", color=self.text_color), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=1, label=ft.Container(ft.Text("NO", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
+                        value=1, label=ft.Container(ft.Text("NO", color=self.text_color), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=2, label=ft.Container(ft.Text("NO₂", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
+                        value=2, label=ft.Container(ft.Text("NO₂", color=self.text_color), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=3, label=ft.Container(ft.Text("O₃", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
+                        value=3, label=ft.Container(ft.Text("O₃", color=self.text_color), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=4, label=ft.Container(ft.Text("SO₂", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
+                        value=4, label=ft.Container(ft.Text("SO₂", color=self.text_color), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=5, label=ft.Container(ft.Text("PM2.5", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
+                        value=5, label=ft.Container(ft.Text("PM2.5", color=self.text_color), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=6, label=ft.Container(ft.Text("PM10", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
+                        value=6, label=ft.Container(ft.Text("PM10", color=self.text_color), padding=10)
                     ),
                     ft.ChartAxisLabel(
-                        value=7, label=ft.Container(ft.Text("NH₃", color=self.text_color, size=self.text_handler.get_size('label')), padding=10)
+                        value=7, label=ft.Container(ft.Text("NH₃", color=self.text_color), padding=10)
                     ),
                 ],
                 labels_size=50, # Restored and set to 50 to ensure space for labels
@@ -357,28 +333,15 @@ class AirPollutionChart:
                 for label in self.chart_control.bottom_axis.labels:
                     if isinstance(label.label, ft.Container) and isinstance(label.label.content, ft.Text):
                         self.text_controls[label.label.content] = 'label'
-    
-    def update_text_controls(self):
-        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
-        for control, size_category in self.text_controls.items():
-            if size_category == 'icon':
-                # Per le icone, aggiorna width e height
-                control.width = self.text_handler.get_size(size_category)
-                control.height = self.text_handler.get_size(size_category)
-            else:
-                # Per i testi, aggiorna size
-                if hasattr(control, 'size'):
-                    control.size = self.text_handler.get_size(size_category)
-                elif hasattr(control, 'style') and hasattr(control.style, 'size'):
-                    control.style.size = self.text_handler.get_size(size_category)
-                # Aggiorna anche i TextSpan se presenti
-                if hasattr(control, 'spans'):
-                    for span in control.spans:
-                        span.style.size = self.text_handler.get_size(size_category)
-        
+            
         # Richiedi l'aggiornamento della pagina
         if self.page:
             self.page.update()
+    
+    def update_text_controls(self):
+        """Update text controls with current responsive sizes."""
+        if self.text_handler and self.text_controls:
+            self.text_handler.update_text_controls(self.text_controls)
     
     def build(self, lat, long):
         # Store the container for potential updates (e.g. gradient)

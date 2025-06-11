@@ -84,16 +84,9 @@ class AirConditionInfo:
         
         self._update_all_text_elements() # Initial text setup
 
-        if self.page:
-            original_resize_handler = self.page.on_resize
-            
-            def combined_resize_handler(e):
-                self.text_handler._handle_resize(e)
-                self.update_text_controls()
-                if original_resize_handler:
-                    original_resize_handler(e)
-            
-            self.page.on_resize = combined_resize_handler
+        # Register observer with ResponsiveTextHandler
+        self.text_handler.add_observer(self.update_text_controls)
+        print(f"ResponsiveTextHandler initialized in {self.__class__.__name__}")
 
     def _update_all_text_elements(self):
         """Updates all text elements including labels, values, and unit symbols."""
@@ -133,30 +126,64 @@ class AirConditionInfo:
             if self.unit_system != new_unit_system:
                 self.unit_system = new_unit_system
                 changed = True
-            
             if changed:
                 self._update_all_text_elements()
         else: # Fallback if state_manager is not available
             self._update_all_text_elements()
-
-
+            
     def update_text_controls(self):
         """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
+        window_width = self.page.width if self.page else 'N/A'
+        print(f"[DEBUG] AirConditionInfo: update_text_controls chiamato - width: {window_width}")
+        print(f"[DEBUG] ResponsiveTextHandler breakpoints: {self.text_handler.breakpoints}")
+        print(f"[DEBUG] ResponsiveTextHandler current_sizes: {self.text_handler.current_sizes}")
+        
+        # Log di tutte le categorie e dimensioni correnti
+        for category, size in self.text_handler.current_sizes.items():
+            print(f"[DEBUG] Categoria '{category}' dimensione attuale: {size}px")
+        
+        # Controllo di quali controlli sono registrati
+        control_info = {}
         for control, size_category in self.text_controls.items():
+            control_type = type(control).__name__
+            if control_type not in control_info:
+                control_info[control_type] = []
+            control_info[control_type].append(size_category)
+        
+        print(f"[DEBUG] Controlli registrati per tipo: {control_info}")
+        
+        # Aggiorna le dimensioni dei controlli e registra i cambiamenti
+        for control, size_category in self.text_controls.items():
+            old_size = control.size if hasattr(control, 'size') else None
+            new_size = self.text_handler.get_size(size_category)
+            control_type = type(control).__name__
+            
+            print(f"[DEBUG] Aggiornamento di {control_type} con categoria '{size_category}': dimensione attuale={old_size}, nuova dimensione={new_size}")
+            
             if size_category == 'icon':
                 # Per le icone, aggiorna size
                 if hasattr(control, 'size'):
-                    control.size = self.text_handler.get_size(size_category)
+                    if old_size != new_size:
+                        print(f"[DEBUG] CAMBIAMENTO '{size_category}': {control_type} da {old_size} a {new_size} con larghezza finestra {window_width}px")
+                    control.size = new_size
             else:
                 # Per i testi, aggiorna size
                 if hasattr(control, 'size'):
-                    control.size = self.text_handler.get_size(size_category)
+                    if old_size != new_size:
+                        print(f"[DEBUG] CAMBIAMENTO '{size_category}': {control_type} da {old_size} a {new_size} con larghezza finestra {window_width}px")
+                    control.size = new_size
                 elif hasattr(control, 'style') and hasattr(control.style, 'size'):
-                    control.style.size = self.text_handler.get_size(size_category)
+                    old_style_size = control.style.size
+                    if old_style_size != new_size:
+                        print(f"[DEBUG] CAMBIAMENTO '{size_category}' style: {control_type} da {old_style_size} a {new_size} con larghezza finestra {window_width}px")
+                    control.style.size = new_size
                 # Aggiorna anche i TextSpan se presenti
                 if hasattr(control, 'spans'):
-                    for span in control.spans:
-                        span.style.size = self.text_handler.get_size(size_category)
+                    for i, span in enumerate(control.spans):
+                        old_span_size = span.style.size if hasattr(span, 'style') and hasattr(span.style, 'size') else None
+                        if old_span_size != new_size:
+                            print(f"[DEBUG] CAMBIAMENTO span {i} '{size_category}': da {old_span_size} a {new_size} con larghezza finestra {window_width}px")
+                        span.style.size = new_size
         
         # Richiedi l'aggiornamento della pagina
         if self.page:
@@ -191,14 +218,10 @@ class AirConditionInfo:
             self.state_manager.unregister_observer("theme_event", self.handle_theme_change)
             self.state_manager.unregister_observer("language_event", self._handle_language_or_unit_change)
             self.state_manager.unregister_observer("unit_event", self._handle_language_or_unit_change)
-        # Remove custom resize handler to avoid issues if the page object is reused elsewhere
-        if self.page and hasattr(self.page, 'on_resize'):
-             # To properly remove, we'd need to store the original handler and restore it.
-             # For now, setting to None or a no-op if this component is truly destroyed.
-             # This part is tricky without knowing the exact lifecycle Flet uses for page.on_resize.
-             # Assuming Flet handles multiple assignments or we manage this component's lifecycle carefully.
-             pass
-
+        
+        # Unregister observer from ResponsiveTextHandler
+        if hasattr(self, 'text_handler') and self.text_handler:
+            self.text_handler.remove_observer(self.update_text_controls)
 
     def build(self) -> ft.Container:
         """Build the air condition information"""

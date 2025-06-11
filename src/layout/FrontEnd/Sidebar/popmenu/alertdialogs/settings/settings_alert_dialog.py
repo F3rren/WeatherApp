@@ -1,5 +1,6 @@
 ﻿import flet as ft
 from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE
+from components.responsive_text_handler import ResponsiveTextHandler
 
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
@@ -20,6 +21,25 @@ class SettingsAlertDialog:
         self.location_toggle = None
         self.theme_toggle = None
         self.dialog = None  # Changed from self.dlg to self.dialog
+        
+        # Initialize ResponsiveTextHandler
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'title': 22,
+                'subtitle': 18,
+                'label': 16,
+                'body': 14,
+            },
+            breakpoints=[600, 900, 1200, 1600]
+        )
+        
+        # Dictionary to track text controls for responsive sizing
+        self.text_controls = {}
+        
+        # Register observer for responsive text changes
+        if self.text_handler:
+            self.text_handler.add_observer(self.update_text_controls)
         
         # Register for theme change events if state_manager is available
         if state_manager:
@@ -51,6 +71,11 @@ class SettingsAlertDialog:
             current_language = self.state_manager.get_state("language") if self.state_manager else "en"
             return self.translation_service.get_text(key, current_language)
         return key  # Fallback to key if no translation service
+
+    def update_text_controls(self):
+        """Update text controls with current responsive sizes."""
+        if self.text_handler and self.text_controls:
+            self.text_handler.update_text_controls(self.text_controls)
 
     def create_location_toggle(self):
         # Ottieni il valore corrente dallo state manager, se disponibile
@@ -228,7 +253,7 @@ class SettingsAlertDialog:
         # Utilizza i colori dal tema corrente
         bg_color = current_theme["DIALOG_BACKGROUND"]        # Dialog semplificato per test
         self.dialog = ft.AlertDialog(
-            title=ft.Text(self._get_translation("settings"), size=20, weight=ft.FontWeight.BOLD, color=self.text_color),
+            title=ft.Text(self._get_translation("settings"), size=self.text_handler.get_size('title'), weight=ft.FontWeight.BOLD, color=self.text_color),
             scrollable=True,
             bgcolor=bg_color,
             content=ft.Container(
@@ -240,8 +265,8 @@ class SettingsAlertDialog:
                             controls=[
                                 ft.Row(
                                     controls=[
-                                        ft.Icon(ft.Icons.LANGUAGE, size=20, color="#ff6b35"),
-                                        ft.Text(self._get_translation("language_setting"), size=14, weight=ft.FontWeight.W_500, color=self.text_color),
+                                        ft.Icon(ft.Icons.LANGUAGE, size=self.text_handler.get_size('label'), color="#ff6b35"),
+                                        ft.Text(self._get_translation("language_setting"), size=self.text_handler.get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color),
                                     ],
                                     spacing=10,
                                 ),
@@ -256,8 +281,8 @@ class SettingsAlertDialog:
                             controls=[
                                 ft.Row(
                                     controls=[
-                                        ft.Icon(ft.Icons.STRAIGHTEN, size=20, color="#22c55e"),
-                                        ft.Text(self._get_translation("measurement_setting"), size=14, weight=ft.FontWeight.W_500, color=self.text_color),
+                                        ft.Icon(ft.Icons.STRAIGHTEN, size=self.text_handler.get_size('label'), color="#22c55e"),
+                                        ft.Text(self._get_translation("measurement_setting"), size=self.text_handler.get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color),
                                     ],
                                     spacing=10,
                                 ),
@@ -272,8 +297,8 @@ class SettingsAlertDialog:
                             controls=[
                                 ft.Row(
                                     controls=[
-                                        ft.Icon(ft.Icons.LOCATION_ON, size=20, color="#ef4444"),
-                                        ft.Text(self._get_translation("use_current_location_setting"), size=14, weight=ft.FontWeight.W_500, color=self.text_color),
+                                        ft.Icon(ft.Icons.LOCATION_ON, size=self.text_handler.get_size('label'), color="#ef4444"),
+                                        ft.Text(self._get_translation("use_current_location_setting"), size=self.text_handler.get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color),
                                     ],
                                     spacing=10,
                                 ),
@@ -288,8 +313,8 @@ class SettingsAlertDialog:
                             controls=[
                                 ft.Row(
                                     controls=[
-                                        ft.Icon(ft.Icons.DARK_MODE, size=20, color="#3b82f6"),
-                                        ft.Text(self._get_translation("dark_theme_setting"), size=14, weight=ft.FontWeight.W_500, color=self.text_color),
+                                        ft.Icon(ft.Icons.DARK_MODE, size=self.text_handler.get_size('label'), color="#3b82f6"),
+                                        ft.Text(self._get_translation("dark_theme_setting"), size=self.text_handler.get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color),
                                     ],
                                     spacing=10,
                                 ),
@@ -308,7 +333,7 @@ class SettingsAlertDialog:
             actions=[
                 ft.TextButton(
                     # self._get_translation("close_button"), # Text property for TextButton
-                    content=ft.Text(self._get_translation("close_button"), color=current_theme["ACCENT"]),
+                    content=ft.Text(self._get_translation("close_button"), size=self.text_handler.get_size('body'), color=current_theme["ACCENT"]),
                     style=ft.ButtonStyle(
                         color=current_theme["ACCENT"],
                         overlay_color=ft.Colors.with_opacity(0.1, current_theme["ACCENT"]),

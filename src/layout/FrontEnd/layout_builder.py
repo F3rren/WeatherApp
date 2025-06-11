@@ -5,11 +5,44 @@ Centralizes layout building functions for different UI components.
 
 import flet as ft
 from typing import Dict, Any
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class LayoutBuilder:
     """
     Classe utility per costruire elementi di layout per l'applicazione.
     """
+    
+    _text_handler = None
+    _debug_initialized = False
+    
+    @classmethod
+    def init_text_handler(cls, page: ft.Page):
+        """Initialize ResponsiveTextHandler if not already initialized"""
+        if cls._text_handler is None and page is not None:
+            cls._text_handler = ResponsiveTextHandler(
+                page=page,
+                base_sizes={
+                    'title': 22,        # Titoli principali
+                    'subtitle': 18,     # Sottotitoli
+                    'body': 14,         # Testo normale
+                    'small': 12,        # Testo piccolo
+                },
+                breakpoints=[600, 900, 1200, 1600]
+            )
+            if not cls._debug_initialized:
+                print("DEBUG: LayoutBuilder initialized with ResponsiveTextHandler")
+                cls._debug_initialized = True
+        return cls._text_handler
+    
+    @classmethod
+    def get_text_size(cls, category, page=None):
+        """Get text size for the given category"""
+        if cls._text_handler is None:
+            cls.init_text_handler(page)
+        
+        if cls._text_handler:
+            return cls._text_handler.get_size(category)
+        return None
     
     @staticmethod
     def build_content_container(content, col_size, animation_duration=500, 

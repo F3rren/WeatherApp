@@ -2,6 +2,7 @@ import flet as ft
 from utils.config import LIGHT_THEME, DARK_THEME
 import logging # Added import for logging
 from services.translation_service import TranslationService # Added import
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class MainWeatherInfo:
     """
@@ -18,25 +19,46 @@ class MainWeatherInfo:
         self.page = page # Store page to access state_manager if needed for observing theme
         self._state_manager_ref_for_cleanup = None # To store state_manager if observer is registered
 
-        # Text controls that need dynamic color updates
+        # Initialize ResponsiveTextHandler
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'city': 36,
+                'location': 20,
+                'temperature': 40,
+            },
+            breakpoints=[600, 900, 1200, 1600]
+        )
+        
+        # Dictionary to track text controls for responsive sizing
+        self.text_controls = {}        # Text controls that need dynamic color updates
         self.city_text = ft.Text(
             self.city.split(", ")[0], 
-            size=36, 
+            size=self.text_handler.get_size('city'), 
             weight="bold", 
             color=self.text_color
         ) 
         
         self.location_text = ft.Text(
             self.location, 
-            size=20,
+            size=self.text_handler.get_size('location'),
             color=self.text_color
         )
         
         self.temperature_text = ft.Text(
-            size=40,
+            size=self.text_handler.get_size('temperature'),
             weight="bold", 
             color=self.text_color
         )
+
+        # Register text controls for responsive sizing
+        self.text_controls[self.city_text] = 'city'
+        self.text_controls[self.location_text] = 'location'
+        self.text_controls[self.temperature_text] = 'temperature'
+        
+        # Register observer for responsive text changes
+        if self.text_handler:
+            self.text_handler.add_observer(self.update_text_controls)
 
         if self.page:
             state_manager = self.page.session.get('state_manager')
@@ -48,6 +70,11 @@ class MainWeatherInfo:
                 # Register for language_event to update temperature unit symbol (as language can affect symbol)
                 state_manager.register_observer("language_event", self.handle_language_change)
                 self._state_manager_ref_for_cleanup = state_manager # Store for cleanup
+    
+    def update_text_controls(self):
+        """Update text controls with current responsive sizes."""
+        if self.text_handler and self.text_controls:
+            self.text_handler.update_text_controls(self.text_controls)
     
     def _update_temperature_display(self):
         """Updates the temperature text with the correct unit symbol."""
@@ -70,6 +97,11 @@ class MainWeatherInfo:
 
     def cleanup(self):
         logger = logging.getLogger(__name__)
+        
+        # Remove responsive text handler observer
+        if hasattr(self, 'text_handler') and self.text_handler:
+            self.text_handler.remove_observer(self.update_text_controls)
+        
         if self._state_manager_ref_for_cleanup and hasattr(self._state_manager_ref_for_cleanup, 'unregister_observer'):
             city_name = self.city_text.value if self.city_text and hasattr(self.city_text, 'value') else "N/A"
             logger.info(f"MainWeatherInfo ({city_name}): Attempting to unregister observers.")

@@ -55,20 +55,13 @@ class ResponsiveTextHandler:
     async def _periodic_size_check(self):
         """Controlla periodicamente la dimensione della finestra come fallback."""
         last_width = None
-        check_count = 0
         while True:
             await asyncio.sleep(0.5)  # Controlla ogni 500ms
-            check_count += 1
             
             if self.page and hasattr(self.page, 'width') and self.page.width:
                 current_width = self.page.width
                 
-                # Log meno frequente (ogni 10 controlli = 5 secondi)
-                if check_count % 10 == 0:
-                    print(f"[DEBUG] ResponsiveTextHandler: Controllo periodico - Larghezza corrente: {current_width}px, ultima larghezza: {last_width}px")
-                
                 if last_width != current_width:
-                    print(f"[DEBUG] ResponsiveTextHandler: Cambio larghezza rilevato dal controllo periodico - da {last_width}px a {current_width}px")
                     self._handle_resize()
                     last_width = current_width
     
@@ -77,69 +70,38 @@ class ResponsiveTextHandler:
         if not self.page:
             # Se la pagina non è disponibile, usa le dimensioni base
             self.current_sizes = self.base_sizes.copy()
-            print(f"[DEBUG] ResponsiveTextHandler: Pagina non disponibile, usando dimensioni base")
             return
         
         # Ottieni la larghezza corrente della finestra
         width = self.page.width if hasattr(self.page, 'width') and self.page.width else 1200
-        old_sizes = self.current_sizes.copy()
-        
-        print(f"[DEBUG] ResponsiveTextHandler: Ricalcolo dimensioni testo - Larghezza finestra: {width}px")
         
         # Calcola il fattore di scala in base alla larghezza
         if width < self.breakpoints[0]:  # xs
             scale_factor = 0.85  # Riduce del 15%
-            breakpoint_name = "xs"
         elif width < self.breakpoints[1]:  # sm
             scale_factor = 0.9   # Riduce del 10%
-            breakpoint_name = "sm"
         elif width < self.breakpoints[2]:  # md
             scale_factor = 1.0   # Dimensione base
-            breakpoint_name = "md"
         elif width < self.breakpoints[3]:  # lg
             scale_factor = 1.1   # Aumenta del 10%
-            breakpoint_name = "lg"
         else:  # xl
             scale_factor = 1.2   # Aumenta del 20%
-            breakpoint_name = "xl"
-            
-        print(f"[DEBUG] ResponsiveTextHandler: Breakpoint attuale: {breakpoint_name}, fattore di scala: {scale_factor}")
         
         # Applica il fattore di scala a tutte le dimensioni base
         for key, base_size in self.base_sizes.items():
-            old_size = old_sizes.get(key)
             new_size = round(base_size * scale_factor)
             self.current_sizes[key] = new_size
-            
-            # Log dei cambiamenti
-            if old_size != new_size:
-                print(f"[DEBUG] ResponsiveTextHandler: Categoria '{key}' cambiata da {old_size} a {new_size} px (base: {base_size})")
-            else:
-                print(f"[DEBUG] ResponsiveTextHandler: Categoria '{key}' invariata a {new_size} px (base: {base_size})")
     
     def _handle_resize(self, e=None):
         """Gestisce l'evento di ridimensionamento della finestra."""
-        width = self.page.width if hasattr(self.page, 'width') and self.page.width else None
-        print(f"[DEBUG] ResponsiveTextHandler: Evento ridimensionamento rilevato - Larghezza finestra: {width}px")
-        
         old_sizes = self.current_sizes.copy()
         self._calculate_sizes()
         
         # Verifica se le dimensioni sono effettivamente cambiate
         sizes_changed = old_sizes != self.current_sizes
-        print(f"[DEBUG] ResponsiveTextHandler: Dimensioni cambiate? {'Sì' if sizes_changed else 'No'}")
         
         if sizes_changed:
-            # Log dettagliato dei cambiamenti
-            print(f"[DEBUG] ResponsiveTextHandler: DIMENSIONI CAMBIATE:")
-            for key in set(list(old_sizes.keys()) + list(self.current_sizes.keys())):
-                old_val = old_sizes.get(key, "N/A")
-                new_val = self.current_sizes.get(key, "N/A")
-                if old_val != new_val:
-                    print(f"[DEBUG] ResponsiveTextHandler:   - '{key}': da {old_val} a {new_val}")
-            
             # Notifica tutti gli osservatori che le dimensioni sono cambiate
-            print(f"[DEBUG] ResponsiveTextHandler: Notifica a {len(self.observers)} observer")
             self._notify_observers()
         
         return self.current_sizes

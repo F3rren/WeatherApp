@@ -130,65 +130,31 @@ class AirConditionInfo:
                 self._update_all_text_elements()
         else: # Fallback if state_manager is not available
             self._update_all_text_elements()
-            
+    
     def update_text_controls(self):
         """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
-        window_width = self.page.width if self.page else 'N/A'
-        print(f"[DEBUG] AirConditionInfo: update_text_controls chiamato - width: {window_width}")
-        print(f"[DEBUG] ResponsiveTextHandler breakpoints: {self.text_handler.breakpoints}")
-        print(f"[DEBUG] ResponsiveTextHandler current_sizes: {self.text_handler.current_sizes}")
-        
-        # Log di tutte le categorie e dimensioni correnti
-        for category, size in self.text_handler.current_sizes.items():
-            print(f"[DEBUG] Categoria '{category}' dimensione attuale: {size}px")
-        
-        # Controllo di quali controlli sono registrati
-        control_info = {}
         for control, size_category in self.text_controls.items():
-            control_type = type(control).__name__
-            if control_type not in control_info:
-                control_info[control_type] = []
-            control_info[control_type].append(size_category)
-        
-        print(f"[DEBUG] Controlli registrati per tipo: {control_info}")
-        
-        # Aggiorna le dimensioni dei controlli e registra i cambiamenti
-        for control, size_category in self.text_controls.items():
-            old_size = control.size if hasattr(control, 'size') else None
             new_size = self.text_handler.get_size(size_category)
-            control_type = type(control).__name__
-            
-            print(f"[DEBUG] Aggiornamento di {control_type} con categoria '{size_category}': dimensione attuale={old_size}, nuova dimensione={new_size}")
             
             if size_category == 'icon':
                 # Per le icone, aggiorna size
                 if hasattr(control, 'size'):
-                    if old_size != new_size:
-                        print(f"[DEBUG] CAMBIAMENTO '{size_category}': {control_type} da {old_size} a {new_size} con larghezza finestra {window_width}px")
                     control.size = new_size
             else:
                 # Per i testi, aggiorna size
                 if hasattr(control, 'size'):
-                    if old_size != new_size:
-                        print(f"[DEBUG] CAMBIAMENTO '{size_category}': {control_type} da {old_size} a {new_size} con larghezza finestra {window_width}px")
                     control.size = new_size
                 elif hasattr(control, 'style') and hasattr(control.style, 'size'):
-                    old_style_size = control.style.size
-                    if old_style_size != new_size:
-                        print(f"[DEBUG] CAMBIAMENTO '{size_category}' style: {control_type} da {old_style_size} a {new_size} con larghezza finestra {window_width}px")
                     control.style.size = new_size
                 # Aggiorna anche i TextSpan se presenti
                 if hasattr(control, 'spans'):
-                    for i, span in enumerate(control.spans):
-                        old_span_size = span.style.size if hasattr(span, 'style') and hasattr(span.style, 'size') else None
-                        if old_span_size != new_size:
-                            print(f"[DEBUG] CAMBIAMENTO span {i} '{size_category}': da {old_span_size} a {new_size} con larghezza finestra {window_width}px")
+                    for span in control.spans:
                         span.style.size = new_size
         
         # Richiedi l'aggiornamento della pagina
         if self.page:
             self.page.update()
-
+            
     def handle_theme_change(self, event_data=None):
         """Handles theme change events by updating text and divider colors."""
         if self.page:
@@ -206,11 +172,6 @@ class AirConditionInfo:
                 self.divider.color = self.text_color
 
             self._update_all_text_elements() # Re-render texts with new theme and potentially new sizes
-
-    def handle_language_change(self, event_data=None):
-        # This method is now effectively replaced by _handle_language_or_unit_change
-        # Kept for compatibility if directly called, but logic is centralized.
-        self._handle_language_or_unit_change(event_data)
 
     def cleanup(self):
         """Unregister observers to prevent memory leaks."""
@@ -261,4 +222,3 @@ class AirConditionInfo:
                 expand=True,
             )
         )
-

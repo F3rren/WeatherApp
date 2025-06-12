@@ -101,7 +101,7 @@ class DailyForecastItems:
         self.day_text.color = self.text_color
 
         # Update temperature with units
-        unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system, self.language)
+        unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system)
         self.temp_span_min.text = f"{self.temp_min}{unit_symbol}"
         self.temp_span_max.text = f"{self.temp_max}{unit_symbol}"
         

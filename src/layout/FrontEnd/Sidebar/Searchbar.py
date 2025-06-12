@@ -1,16 +1,41 @@
 import logging
 import flet as ft
 from typing import Callable, Optional, List
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class SearchBar:
-    def __init__(self, cities: List[str] = None, on_city_selected: Optional[Callable] = None):
+    def __init__(self, cities: List[str] = None, on_city_selected: Optional[Callable] = None, page: ft.Page = None):
         self.cities = cities or []
         self.on_city_selected = on_city_selected
+        self.page = page
         self.autocomplete = None
+        
+        # Initialize ResponsiveTextHandler
+        if self.page:
+            self.text_handler = ResponsiveTextHandler(
+                page=self.page,
+                base_sizes={
+                    'searchbar': 16,  # Search text size
+                    'suggestion': 14,  # Suggestion text size
+                },
+                breakpoints=[600, 900, 1200, 1600]
+            )
+            
+            # Dictionary to track text controls
+            self.text_controls = {}
+            
+            # Register as observer for responsive updates
+            self.text_handler.add_observer(self.update_text_controls)
+
+    def update_text_controls(self):
+        """Update text sizes for all registered controls"""
+        # Request page update if controls were updated
+        if self.page:
+            self.page.update()
 
     def build(self) -> ft.Column:
-        # Crea una barra degli strumenti (Toolbox) con un'etichetta
-    
+        """Builds and returns the search bar component"""
+        
         async def handle_select(e):
             """Gestisce la selezione di una città"""
             try:
@@ -27,13 +52,13 @@ class SearchBar:
                             await res
             except Exception as ex:
                 logging.error(f"Errore in handle_select: {ex}")
-
+                
         # Crea le suggestions dall'elenco delle città
         suggestions = [
             ft.AutoCompleteSuggestion(key=city, value=city)
             for city in self.cities
         ]
-
+        
         self.autocomplete = ft.AutoComplete(
             suggestions=suggestions,
             on_select=handle_select,
@@ -78,7 +103,11 @@ class SearchBar:
             self.autocomplete.value = ""
             self.autocomplete.update()
     
+    def cleanup(self):
+        """Cleanup method to remove observers"""
+        if hasattr(self, 'text_handler') and self.text_handler:
+            self.text_handler.remove_observer(self.update_text_controls)
+    
     def get_autocomplete_only(self) -> ft.AutoComplete:
         """Restituisce solo il componente AutoComplete senza la toolbox"""
         return self.autocomplete
-    

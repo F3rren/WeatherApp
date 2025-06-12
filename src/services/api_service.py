@@ -24,12 +24,18 @@ class ApiService:
     Service for making API calls to the OpenWeatherMap API.
     """
     
-    def __init__(self):
+    def __init__(self, page=None, city=None, language="en", unit="metric"):
         load_dotenv()
         self._api_key = os.getenv("API_KEY")
         if not self._api_key:
             logging.error("API key not found. Please set the API_KEY environment variable.")
-    
+        
+        # Supporto per la versione estesa del costruttore
+        self.page = page
+        self.city = city
+        self.language = language
+        self.unit = unit
+
     def _normalize_city_name(self, city: str) -> str:
         if city:
             city = city.replace("’", "'").replace("‘", "'")
@@ -368,8 +374,7 @@ class ApiService:
                     "no2": components.get("no2", 0),  # Nitrogen dioxide, μg/m3
                     "o3": components.get("o3", 0),  # Ozone, μg/m3
                     "so2": components.get("so2", 0),  # Sulphur dioxide, μg/m3
-                    "pm2_5": components.get("pm2_5", 0),  # Fine particles, μg/m3
-                    "pm10": components.get("pm10", 0),  # Coarse particles, μg/m3
+                    "pm2_5": components.get("pm2_5", 0),  # Fine particles, μg/m3                    "pm10": components.get("pm10", 0),  # Coarse particles, μg/m3
                     "nh3": components.get("nh3", 0)  # Ammonia, μg/m3
                 }
                 return result_data
@@ -379,3 +384,54 @@ class ApiService:
         except requests.exceptions.RequestException as e:
             logging.error(f"Error fetching air pollution data: {e}")
             return {}
+    
+    def getDailyForecast(self):
+        """
+        Returns a flet Control containing the daily forecast.
+        This method is specifically added to support DailyForecast component.
+        
+        Returns:
+            A flet Control (Row) with the hourly forecast items.
+        """
+        import flet as ft
+        from layout.frontend.weeklyweather.daily_forecast_items import DailyForecastItems
+        from components.responsive_text_handler import ResponsiveTextHandler
+        
+        try:
+            # Get weather data
+            weather_data = self.get_weather_data(self.city)
+            if not weather_data:
+                return ft.Text("No data available")
+            
+            # Get forecast days
+            forecast_days = self.get_weekly_forecast_data(weather_data)
+            if not forecast_days:
+                return ft.Text("No forecast data available")
+                
+            # Create items row
+            items = []
+            self.daily_forecast_items = []  # Store references for cleanup
+            
+            # Determina il colore del testo in base al tema
+            text_color = "#1F1A1A" if self.page and self.page.theme_mode == ft.ThemeMode.LIGHT else "#adadad"
+            
+            # Use ResponsiveTextHandler for consistent text sizing
+            for day_data in forecast_days:
+                day_item = DailyForecastItems(
+                    day=day_data["day_key"],
+                    icon_code=day_data["icon"],
+                    temp_min=day_data["temp_min"],
+                    temp_max=day_data["temp_max"],
+                    text_color=text_color,
+                    page=self.page
+                )
+                self.daily_forecast_items.append(day_item)  # Save reference for cleanup
+                items.append(day_item.build())
+            
+            # Crea la row con le previsioni
+            forecast_row = ft.Row(controls=items, scroll=ft.ScrollMode.AUTO)
+            
+            return forecast_row
+        except Exception as e:
+            logging.error(f"Error in getDailyForecast: {e}")
+            return ft.Text(f"Error loading forecast")

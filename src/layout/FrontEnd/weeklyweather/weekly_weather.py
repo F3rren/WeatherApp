@@ -64,25 +64,17 @@ class WeeklyWeather:
         self.dailyForecast.update_by_coordinates(lat, lon)
         self.airCondition.update_by_coordinates(lat, lon)
 
-    def handle_language_change(self, event_data=None):
-        """Aggiorna le label quando cambia la lingua."""
-        if self.page:
-            state_manager = self.page.session.get('state_manager')
-            if state_manager:
-                self.language = state_manager.get_state('language') or 'en'
-        # Aggiorna le label delle righe
-        for row, key in zip([self.feels_like_label, self.humidity_label, self.wind_label, self.pressure_label], ["feels_like", "humidity", "wind", "pressure"]):
-            if isinstance(row.controls[1], ft.Text):
-                row.controls[1].value = TranslationService.get_text(key, self.language)
-                row.controls[1].update()
-        self.update_text_controls()
-
     def update_text_controls(self):
         """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
+        # Aggiorna le dimensioni dei controlli
         for control, size_category in self.text_controls.items():
             if size_category == 'icon':
-                # Per le icone, aggiorna size
-                if hasattr(control, 'size'):
+                # Per le icone, aggiorna width e height per Image, o size per Icon
+                if hasattr(control, 'width') and hasattr(control, 'height'):
+                    new_size = self.text_handler.get_size(size_category)
+                    control.width = new_size
+                    control.height = new_size
+                elif hasattr(control, 'size'):
                     control.size = self.text_handler.get_size(size_category)
             else:
                 # Per i testi, aggiorna size
@@ -90,10 +82,16 @@ class WeeklyWeather:
                     control.size = self.text_handler.get_size(size_category)
                 elif hasattr(control, 'style') and hasattr(control.style, 'size'):
                     control.style.size = self.text_handler.get_size(size_category)
+                
                 # Aggiorna anche i TextSpan se presenti
                 if hasattr(control, 'spans'):
                     for span in control.spans:
-                        span.style.size = self.text_handler.get_size(size_category)
+                        if hasattr(span, 'style') and hasattr(span.style, 'size'):
+                            span.style.size = self.text_handler.get_size(size_category)
+        
+        # Richiedi l'aggiornamento della pagina
+        if self.page:
+            self.page.update()
                         
     def createWeeklyForecast(self):
         """Crea il componente per le previsioni settimanali"""
@@ -196,28 +194,6 @@ class WeeklyWeather:
                 expand=True
             )
         )
-
-    def update_text_controls(self):
-        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
-        for control, size_category in self.text_controls.items():
-            if size_category == 'icon':
-                # Per le icone, aggiorna width e height
-                control.width = self.text_handler.get_size(size_category)
-                control.height = self.text_handler.get_size(size_category)
-            else:
-                # Per i testi, aggiorna size
-                if hasattr(control, 'size'):
-                    control.size = self.text_handler.get_size(size_category)
-                elif hasattr(control, 'style') and hasattr(control.style, 'size'):
-                    control.style.size = self.text_handler.get_size(size_category)
-                # Aggiorna anche i TextSpan se presenti
-                if hasattr(control, 'spans'):
-                    for span in control.spans:
-                        span.style.size = self.text_handler.get_size(size_category)
-        
-        # Richiedi l'aggiornamento della pagina
-        if self.page:
-            self.page.update()
 
     def build(self):
         self.update_text_controls()

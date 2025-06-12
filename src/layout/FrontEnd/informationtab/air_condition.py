@@ -107,15 +107,15 @@ class AirConditionInfo:
         self.pressure_label_text.value = TranslationService.get_text("pressure", self.language)
 
         # Update values with units
-        temp_unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system, self.language)
+        temp_unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system)
         self.feels_like_value.value = f"{self.feels_like}{temp_unit_symbol}"
         
         self.humidity_value.value = f"{self.humidity}%" # Humidity is a percentage, no unit symbol needed from service
 
-        wind_unit_symbol = TranslationService.get_unit_symbol("wind", self.unit_system, self.language)
+        wind_unit_symbol = TranslationService.get_unit_symbol("wind", self.unit_system)
         self.wind_value.value = f"{self.wind_speed} {wind_unit_symbol}"
         
-        pressure_unit_symbol = TranslationService.get_unit_symbol("pressure", self.unit_system, self.language)
+        pressure_unit_symbol = TranslationService.get_unit_symbol("pressure", self.unit_system)
         self.pressure_value.value = f"{self.pressure} {pressure_unit_symbol}"
 
         self.update_text_controls() # Apply text sizes and update page
@@ -238,4 +238,3 @@ class AirConditionInfo:
                 expand=True,
             )
         )
-

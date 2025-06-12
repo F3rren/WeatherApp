@@ -3,6 +3,7 @@ Responsive Text Handler per l'applicazione MeteoApp.
 Gestisce il ridimensionamento dinamico del testo in base alla dimensione della finestra.
 """
 
+import asyncio
 import flet as ft
 
 class ResponsiveTextHandler:
@@ -10,7 +11,6 @@ class ResponsiveTextHandler:
     Classe che gestisce il ridimensionamento del testo in base alla dimensione dello schermo.
     Permette di definire dimensioni di base e regole di scalabilità per diversi breakpoint.
     """
-    
     def __init__(self, page: ft.Page = None, 
                  base_sizes: dict = None,
                  breakpoints: list = None):
@@ -23,16 +23,19 @@ class ResponsiveTextHandler:
             breakpoints: Lista di breakpoint in pixel per la larghezza della finestra [xs, sm, md, lg]
         """
         self.page = page
+        self.observers = []  # Lista di callback da chiamare quando le dimensioni cambiano
         
         # Dimensioni predefinite se non specificate
         self.base_sizes = base_sizes or {
-            'title': 30,      # Titoli principali
-            'subtitle': 20,   # Sottotitoli
-            'label': 20,      # Etichette
-            'body': 15,       # Testo normale
-            'caption': 15,    # Testo piccolo/caption
-            'value': 20,       # Valori (es. temperature, percentuali)
-            'icon': 100       # Icone (dimensione base),
+            'title': 28,       # Titoli principali (più contenuto)
+            'subtitle': 18,    # Sottotitoli (ridotto per coerenza)
+            'label': 14,       # Etichette (standardizzato)
+            'body': 14,        # Testo normale (base standard)
+            'caption': 12,     # Testo piccolo/caption (ridotto)
+            'value': 16,       # Valori (temperature, percentuali - moderato)
+            'icon': 20,        # Icone (molto ridotto, più proporzionato)
+            'legend': 13,      # Per legende dei grafici
+            'axis_title': 15,  # Per titoli degli assi dei grafici
         }
         
         # Breakpoint predefiniti se non specificati (in pixel)
@@ -45,7 +48,22 @@ class ResponsiveTextHandler:
         # Registra il callback per il ridimensionamento se la pagina è disponibile
         if self.page:
             self.page.on_resize = self._handle_resize
-            self.page.window_width_trigger_points = self.breakpoints
+            # Aggiungi controllo periodico come fallback
+            import asyncio
+            asyncio.create_task(self._periodic_size_check())
+    
+    async def _periodic_size_check(self):
+        """Controlla periodicamente la dimensione della finestra come fallback."""
+        last_width = None
+        while True:
+            await asyncio.sleep(0.5)  # Controlla ogni 500ms
+            
+            if self.page and hasattr(self.page, 'width') and self.page.width:
+                current_width = self.page.width
+                
+                if last_width != current_width:
+                    self._handle_resize()
+                    last_width = current_width
     
     def _calculate_sizes(self):
         """Calcola le dimensioni del testo in base alla larghezza corrente della finestra."""
@@ -71,7 +89,8 @@ class ResponsiveTextHandler:
         
         # Applica il fattore di scala a tutte le dimensioni base
         for key, base_size in self.base_sizes.items():
-            self.current_sizes[key] = round(base_size * scale_factor)
+            new_size = round(base_size * scale_factor)
+            self.current_sizes[key] = new_size
     
     def _handle_resize(self, e=None):
         """Gestisce l'evento di ridimensionamento della finestra."""
@@ -79,12 +98,31 @@ class ResponsiveTextHandler:
         self._calculate_sizes()
         
         # Verifica se le dimensioni sono effettivamente cambiate
-        if old_sizes != self.current_sizes:
-            # Qui potresti notificare agli osservatori che le dimensioni sono cambiate
-            # se implementi un pattern observer
-            pass
+        sizes_changed = old_sizes != self.current_sizes
+        
+        if sizes_changed:
+            # Notifica tutti gli osservatori che le dimensioni sono cambiate
+            self._notify_observers()
         
         return self.current_sizes
+    
+    def add_observer(self, callback):
+        """Aggiunge un observer che viene chiamato quando le dimensioni cambiano."""
+        if callback not in self.observers:
+            self.observers.append(callback)
+    
+    def remove_observer(self, callback):
+        """Rimuove un observer."""
+        if callback in self.observers:
+            self.observers.remove(callback)
+    
+    def _notify_observers(self):
+        """Notifica tutti gli observers che le dimensioni sono cambiate."""
+        for callback in self.observers:
+            try:
+                callback()
+            except Exception as e:
+                print(f"Errore nella notifica observer: {e}")
     
     def get_size(self, text_type: str) -> int:
         """
@@ -142,4 +180,6 @@ class ResponsiveTextHandler:
         
         if self.page:
             self.page.on_resize = self._handle_resize
-            self.page.window_width_trigger_points = self.breakpoints
+            # Aggiungi controllo periodico come fallback
+            import asyncio
+            asyncio.create_task(self._periodic_size_check())

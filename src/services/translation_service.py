@@ -1,6 +1,6 @@
 from deep_translator import GoogleTranslator
 from utils.translations_data import TRANSLATIONS
-from utils.config import DEFAULT_LANGUAGE
+from utils.config import DEFAULT_LANGUAGE, UNIT_SYSTEMS # Added UNIT_SYSTEMS
 
 class TranslationService:
     
@@ -77,22 +77,18 @@ class TranslationService:
         return translated
 
     @classmethod
-    def get_unit_symbol(cls, quantity: str, unit_system: str, language: str = None) -> str:
-        """Get the translation for a unit symbol."""
-        target_lang = cls.normalize_lang_code(language if language else DEFAULT_LANGUAGE)
-
+    def get_unit_symbol(cls, quantity: str, unit_system: str) -> str: # Removed language parameter
+        """Get the unit symbol from UNIT_SYSTEMS in config.py."""
         try:
-            return cls.TRANSLATIONS[target_lang]["unit_symbols"][unit_system][quantity]
+            # Corrected access to UNIT_SYSTEMS
+            return UNIT_SYSTEMS[unit_system][quantity]
         except KeyError:
-            print(f"[TranslationService] Unit symbol not found for lang='{target_lang}', unit_system='{unit_system}', quantity='{quantity}'")
-            # Fallback to English (lowercase 'en') if the specific language symbol is not found
-            if target_lang != 'en': # Compare with lowercase 'en'
-                try:
-                    return cls.TRANSLATIONS['en']["unit_symbols"][unit_system][quantity] # Use lowercase 'en' for fallback
-                except KeyError:
-                    print(f"[TranslationService] English fallback failed for unit_system='{unit_system}', quantity='{quantity}'")
-                    pass # English fallback also failed
-            return "" # Default empty string if no symbol is found
+            print(f"[TranslationService] Unit symbol not found for unit_system='{unit_system}', quantity='{quantity}'")
+            # Fallback to a default or handle error as appropriate
+            # For example, returning the quantity name or a placeholder
+            if unit_system == "standard" and quantity == "temperature":
+                 return "K" # Kelvin for standard temperature
+            return "?" # Placeholder for unknown units
 
     @classmethod
     def translate_weekday(cls, day_key: str, language: str) -> str:

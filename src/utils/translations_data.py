@@ -55,18 +55,6 @@ TRANSLATIONS = {
         "sun": "Sun",
         "max": "Max",
         "min": "Min",
-        "unit_symbols": {
-            "metric": {
-                "temperature": "°C",
-                "wind": "m/s",
-                "pressure": "hPa"
-            },
-            "imperial": {
-                "temperature": "°F",
-                "wind": "mph",
-                "pressure": "hPa"
-            }
-        },
         "chemical_elements": { # Changed to a dictionary
             "CO": "Carbon Monoxide",
             "NO": "Nitrogen Monoxide",
@@ -80,12 +68,6 @@ TRANSLATIONS = {
         "current_location": "Current Location",
         "no_forecast_data": "Weather forecast data not available.",
         "error_page_context_missing": "Error: Page context missing",
-        # SettingsAlertDialog specific keys (already present but for clarity)
-        # "language_setting": "Language:", # Duplicate of "language"
-        # "measurement_setting": "Measurement:", # Duplicate of "measurement"
-        # "use_current_location_setting": "Use current location:", # Duplicate of "use_current_location"
-        # "dark_theme_setting": "Dark theme:", # Duplicate of "dark_theme"
-        # "close_button": "Close", # Duplicate of "close"
         "maps_title": "Maps", # For MapsAlertDialog title
         "air_pollution_chart_title": "Air Pollution (μg/m³)", # For AirPollutionChart y-axis title
         "weather_card_title": "Weather Details", # Example for a potential WeatherAlertDialog title
@@ -95,6 +77,7 @@ TRANSLATIONS = {
         "filter_options": "Filter Options", # Title for a filter section
         "unit_metric": "Metric", # Unit option
         "unit_imperial": "Imperial", # Unit option
+        "unit_standard": "Standard", # Unit option
         "select_language": "Select Language", # Dropdown placeholder or label
         "theme_light": "Light Theme",
         "theme_dark": "Dark Theme",
@@ -147,18 +130,6 @@ TRANSLATIONS = {
         "sun": "周日",
         "max": "最大值",
         "min": "最小值",
-        "unit_symbols": {
-            "metric": {
-                "temperature": "°C",
-                "wind": "米/秒",
-                "pressure": "百帕"
-            },
-            "imperial": {
-                "temperature": "°F",
-                "wind": "英里/小时",
-                "pressure": "百帕"
-            }
-        },
         "chemical_elements": { # Changed to a dictionary
             "CO": "一氧化碳",
             "NO": "一氧化氮",
@@ -180,6 +151,7 @@ TRANSLATIONS = {
         "filter_options": "筛选选项",
         "unit_metric": "公制",
         "unit_imperial": "英制",
+        "unit_standard": "标准", # Added translation for Standard
         "select_language": "选择语言",
         "theme_light": "浅色主题",
         "theme_dark": "深色主题",
@@ -231,18 +203,6 @@ TRANSLATIONS = {
         "sun": "रवि",
         "max": "अधिकतम",
         "min": "न्यूनतम",
-        "unit_symbols": {
-            "metric": {
-                "temperature": "°C",
-                "wind": "मी/से",
-                "pressure": "हेक्टोपास्कल"
-            },
-            "imperial": {
-                "temperature": "°F",
-                "wind": "मील/घंटा",
-                "pressure": "हेक्टोपास्कल"
-            }
-        },
         "chemical_elements": { # Changed to a dictionary
             "CO": "कार्बन मोनोऑक्साइड",
             "NO": "नाइट्रोजन मोनोऑक्साइड",
@@ -264,6 +224,7 @@ TRANSLATIONS = {
         "filter_options": "फ़िल्टर विकल्प",
         "unit_metric": "मीट्रिक",
         "unit_imperial": "इंपीरियल",
+        "unit_standard": "मानक", # Added translation for Standard
         "select_language": "भाषा चुनें",
         "theme_light": "लाइट थीम",
         "theme_dark": "डार्क थीम",
@@ -315,18 +276,6 @@ TRANSLATIONS = {
         "sun": "Dom",
         "max": "Máx",
         "min": "Mín",
-        "unit_symbols": {
-            "metric": {
-                "temperature": "°C",
-                "wind": "m/s",
-                "pressure": "hPa"
-            },
-            "imperial": {
-                "temperature": "°F",
-                "wind": "mph",
-                "pressure": "hPa"
-            }
-        },
         "chemical_elements": { # Changed to a dictionary
             "CO": "Monóxido de carbono",
             "NO": "Monóxido de nitrógeno",
@@ -349,6 +298,7 @@ TRANSLATIONS = {
         "filter_options": "Opciones de Filtro",
         "unit_metric": "Métrico",
         "unit_imperial": "Imperial",
+        "unit_standard": "Estándar", # Added translation for Standard
         "select_language": "Seleccionar Idioma",
         "theme_light": "Tema Claro",
         "theme_dark": "Tema Oscuro",
@@ -400,18 +350,6 @@ TRANSLATIONS = {
         "sun": "أحد",
         "max": "الأقصى", # Changed from الأعلى
         "min": "الأدنى",
-        "unit_symbols": {
-            "metric": {
-                "temperature": "°م", # Celsius in Arabic
-                "wind": "م/ث",
-                "pressure": "هكبا"
-            },
-            "imperial": {
-                "temperature": "°ف", # Fahrenheit in Arabic
-                "wind": "ميل/س",
-                "pressure": "هكبا"
-            }
-        },
         "chemical_elements": { # Changed to a dictionary
             "CO": "أول أكسيد الكربون",
             "NO": "أحادي أكسيد النيتروجين",
@@ -434,6 +372,7 @@ TRANSLATIONS = {
         "filter_options": "خيارات التصفية",
         "unit_metric": "متري",
         "unit_imperial": "إمبراطوري",
+        "unit_standard": "قياسي", # Added translation for Standard
         "select_language": "اختر اللغة",
         "theme_light": "سمة فاتحة",
         "theme_dark": "سمة داكنة",
@@ -485,18 +424,6 @@ TRANSLATIONS = {
         "sun": "Dim",
         "max": "Max",
         "min": "Min",
-        "unit_symbols": {
-            "metric": {
-                "temperature": "°C",
-                "wind": "m/s",
-                "pressure": "hPa"
-            },
-            "imperial": {
-                "temperature": "°F",
-                "wind": "mph",
-                "pressure": "hPa"
-            }
-        },
         "chemical_elements": { # Changed to a dictionary
             "CO": "Monoxyde de carbone",
             "NO": "Monoxyde d\'azote",
@@ -519,6 +446,7 @@ TRANSLATIONS = {
         "filter_options": "Options de Filtrage",
         "unit_metric": "Métrique",
         "unit_imperial": "Impérial",
+        "unit_standard": "Standard", # Added translation for Standard
         "select_language": "Sélectionner la Langue",
         "theme_light": "Thème Clair",
         "theme_dark": "Thème Sombre",
@@ -570,18 +498,6 @@ TRANSLATIONS = {
         "sun": "Dom",
         "max": "Máx",
         "min": "Mín",
-        "unit_symbols": {
-            "metric": {
-                "temperature": "°C",
-                "wind": "m/s",
-                "pressure": "hPa"
-            },
-            "imperial": {
-                "temperature": "°F",
-                "wind": "mph",
-                "pressure": "hPa"
-            }
-        },
         "chemical_elements": { # Changed to a dictionary
             "CO": "Monóxido de carbono",
             "NO": "Monóxido de nitrogênio", # Corrected from "nitrogénio"
@@ -604,6 +520,7 @@ TRANSLATIONS = {
         "filter_options": "Opções de Filtro",
         "unit_metric": "Métrico",
         "unit_imperial": "Imperial",
+        "unit_standard": "Padrão", # Added translation for Standard
         "select_language": "Selecionar Idioma",
         "theme_light": "Tema Claro",
         "theme_dark": "Tema Escuro",
@@ -655,18 +572,6 @@ TRANSLATIONS = {
         "sun": "Вс",
         "max": "Макс.", # Added period for abbreviation
         "min": "Мин.",  # Added period for abbreviation
-        "unit_symbols": {
-            "metric": {
-                "temperature": "°C",
-                "wind": "м/с",
-                "pressure": "гПа"
-            },
-            "imperial": {
-                "temperature": "°F",
-                "wind": "миль/ч",
-                "pressure": "гПа"
-            }
-        },
         "chemical_elements": { # Changed to a dictionary
             "CO": "Монооксид углерода",
             "NO": "Монооксид азота",
@@ -689,6 +594,7 @@ TRANSLATIONS = {
         "filter_options": "Параметры фильтра",
         "unit_metric": "Метрическая",
         "unit_imperial": "Имперская",
+        "unit_standard": "Стандартная", # Added translation for Standard
         "select_language": "Выберите язык",
         "theme_light": "Светлая тема",
         "theme_dark": "Темная тема",
@@ -741,18 +647,6 @@ TRANSLATIONS = {
         "sun": "Dom",
         "max": "Max",
         "min": "Min",
-        "unit_symbols": {
-            "metric": {
-                "temperature": "°C",
-                "wind": "m/s",
-                "pressure": "hPa"
-            },
-            "imperial": {
-                "temperature": "°F",
-                "wind": "mph",
-                "pressure": "hPa"
-            }
-        },
         "chemical_elements": { # Changed to a dictionary
             "CO": "Monossido di carbonio",
             "NO": "Monossido di azoto",
@@ -775,6 +669,7 @@ TRANSLATIONS = {
         "filter_options": "Opzioni Filtro",
         "unit_metric": "Metrico",
         "unit_imperial": "Imperiale",
+        "unit_standard": "Standard", # Added translation for Standard
         "select_language": "Seleziona Lingua",
         "theme_light": "Tema Chiaro",
         "theme_dark": "Tema Scuro",
@@ -827,18 +722,6 @@ TRANSLATIONS = {
         "sun": "So",
         "max": "Max",
         "min": "Min",
-        "unit_symbols": {
-            "metric": {
-                "temperature": "°C",
-                "wind": "m/s",
-                "pressure": "hPa"
-            },
-            "imperial": {
-                "temperature": "°F",
-                "wind": "mph",
-                "pressure": "hPa"
-            }
-        },
         "chemical_elements": { # Changed to a dictionary
             "CO": "Kohlenmonoxid",
             "NO": "Stickstoffmonoxid",
@@ -861,6 +744,7 @@ TRANSLATIONS = {
         "filter_options": "Filteroptionen",
         "unit_metric": "Metrisch",
         "unit_imperial": "Imperial",
+        "unit_standard": "Standard", # Added translation for Standard
         "select_language": "Sprache auswählen",
         "theme_light": "Helles Thema",
         "theme_dark": "Dunkles Thema",
@@ -913,18 +797,6 @@ TRANSLATIONS = {
         "sun": "Min",
         "max": "Maks",
         "min": "Min",
-        "unit_symbols": {
-            "metric": {
-                "temperature": "°C",
-                "wind": "m/s",
-                "pressure": "hPa"
-            },
-            "imperial": {
-                "temperature": "°F",
-                "wind": "mph",
-                "pressure": "hPa"
-            }
-        },
         "chemical_elements": { # Changed to a dictionary
             "CO": "Karbon Monoksida",
             "NO": "Nitrogen Monoksida",
@@ -947,6 +819,7 @@ TRANSLATIONS = {
         "filter_options": "Opsi Filter",
         "unit_metric": "Metrik",
         "unit_imperial": "Imperial",
+        "unit_standard": "Standar", # Added translation for Standard
         "select_language": "Pilih Bahasa",
         "theme_light": "Tema Terang",
         "theme_dark": "Tema Gelap",
@@ -999,18 +872,6 @@ TRANSLATIONS = {
         "sun": "日",
         "max": "最大",
         "min": "最小",
-        "unit_symbols": {
-            "metric": {
-                "temperature": "°C",
-                "wind": "m/s",
-                "pressure": "hPa"
-            },
-            "imperial": {
-                "temperature": "°F",
-                "wind": "mph",
-                "pressure": "hPa"
-            }
-        },
         "chemical_elements": { # Changed to a dictionary
             "CO": "一酸化炭素",
             "NO": "一酸化窒素",
@@ -1033,6 +894,7 @@ TRANSLATIONS = {
         "filter_options": "フィルターオプション",
         "unit_metric": "メートル法",
         "unit_imperial": "ヤード・ポンド法",
+        "unit_standard": "標準", # Added translation for Standard
         "select_language": "言語を選択",
         "theme_light": "ライトテーマ",
         "theme_dark": "ダークテーマ",

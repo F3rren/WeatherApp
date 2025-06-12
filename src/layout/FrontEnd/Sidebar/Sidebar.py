@@ -10,6 +10,7 @@ from services.sidebar_service import SidebarService
 from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
 from layout.frontend.sidebar.searchbar import SearchBar
 from layout.frontend.sidebar.filter.filter import Filter
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class Sidebar:
     """
@@ -27,6 +28,22 @@ class Sidebar:
         self.query = SidebarService()
         self.search_bar = None
         self.cities = self._load_cities()
+        
+        # Initialize ResponsiveTextHandler
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'container_text': 14,  # General text in containers
+                'spacing': 10,  # Base spacing value
+            },
+            breakpoints=[600, 900, 1200, 1600]
+        )
+        
+        # Dictionary to track text controls
+        self.text_controls = {}
+        
+        # Register as observer for responsive updates
+        self.text_handler.add_observer(self.update_text_controls)
 
     def _load_cities(self) -> List[str]:
         """Load city names from JSON (via SidebarQuery)"""
@@ -52,11 +69,20 @@ class Sidebar:
         """Aggiorna il valore del toggle tema"""
         if hasattr(self, 'pop_menu'):
             self.pop_menu.update_theme_toggle_value(value)
-    
+    def update_text_controls(self):
+        """Update text sizes for all registered controls"""
+        for control, size_category in self.text_controls.items():
+            if hasattr(control, 'size'):
+                control.size = self.text_handler.get_size(size_category)
+        
+        # Request page update
+        if self.page:
+            self.page.update()
+
     def build(self) -> ft.Container:
         """Build the sidebar"""
-        # Create search bar
-        self.search_bar = SearchBar(self.cities, self.on_city_selected)
+        # Create search bar with page for ResponsiveTextHandler
+        self.search_bar = SearchBar(self.cities, self.on_city_selected, self.page)
           # Create pop menu with location toggle callback
         self.pop_menu = PopMenu(
             page=self.page,
@@ -89,8 +115,7 @@ class Sidebar:
                     ft.Container(
                         content=self.search_bar.build(),
                         col={"xs": 10, "md": 10},
-                    ),
-                    ft.Container(
+                    ),                    ft.Container(
                         content=self.filter.build(self.page),
                         col={"xs": 2, "md": 1},
                     ),
@@ -100,3 +125,13 @@ class Sidebar:
                 run_spacing=10,
             )
         )
+
+    def cleanup(self):
+        """Cleanup method to remove observers"""
+        if hasattr(self, 'text_handler') and self.text_handler:
+            self.text_handler.remove_observer(self.update_text_controls)
+        
+        # Cleanup child components
+        if hasattr(self, 'search_bar') and self.search_bar:
+            if hasattr(self.search_bar, 'cleanup'):
+                self.search_bar.cleanup()

@@ -12,6 +12,7 @@ from layout.frontend.sidebar.sidebar import Sidebar
 from state_manager import StateManager
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class SidebarManager:
     """
@@ -41,6 +42,35 @@ class SidebarManager:
         self.theme_toggle_service = theme_toggle_service
         self.update_weather_callback = update_weather_callback
         self.sidebar = None
+        
+        # Initialize ResponsiveTextHandler
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'title': 20,      # Titoli
+                'subtitle': 16,   # Sottotitoli
+                'body': 14,       # Testo normale
+            },
+            breakpoints=[600, 900, 1200, 1600]
+        )
+        
+        # Dictionary to track text controls
+        self.text_controls = {}
+        
+        # Register as observer for responsive updates
+        self.text_handler.add_observer(self.update_text_controls)
+          # Debug print
+        print("DEBUG: SidebarManager initialized with ResponsiveTextHandler")
+    
+    def update_text_controls(self):
+        """Update text sizes for all registered controls"""
+        for control, size_category in self.text_controls.items():
+            if hasattr(control, 'size'):
+                control.size = self.text_handler.get_size(size_category)
+        
+        # Request page update
+        if self.page:
+            self.page.update()
     
     async def handle_city_change(self, city: str):
         """
@@ -90,3 +120,14 @@ class SidebarManager:
         ).build()
         
         return self.sidebar
+    
+    def cleanup(self):
+        """Cleanup method to remove observers"""
+        if hasattr(self, 'text_handler') and self.text_handler:
+            self.text_handler.remove_observer(self.update_text_controls)
+        
+        # Cleanup della sidebar se disponibile
+        if hasattr(self, 'sidebar') and self.sidebar and hasattr(self.sidebar, 'cleanup'):
+            self.sidebar.cleanup()
+        
+        print("DEBUG: SidebarManager cleanup completed")

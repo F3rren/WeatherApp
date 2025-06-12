@@ -9,6 +9,7 @@ from typing import Dict
 
 from layout.frontend.layout_builder import LayoutBuilder
 from utils.config import LIGHT_THEME, DARK_THEME
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class LayoutManager:
     """
@@ -26,22 +27,44 @@ class LayoutManager:
         self.page = page
         self.containers = {}
         self.layout = None
+        
+        # Initialize ResponsiveTextHandler
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'title': 22,        # Titoli principali
+                'subtitle': 18,     # Sottotitoli
+                'body': 14,         # Testo normale
+                'small': 12,        # Testo piccolo
+            },
+            breakpoints=[600, 900, 1200, 1600]
+        )
+        
+        # Dictionary to track text controls
+        self.text_controls = {}
+        
+        # Register as observer for responsive updates
+        self.text_handler.add_observer(self.update_text_controls)
     
-    def create_containers(self,                         
-                         sidebar_content,
-                         info_content,
-                         weekly_content,
-                         chart_content,
-                         air_pollution_chart_content,
-                         air_pollution_content,
-                         animation_duration=500,
-                         animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
+    def update_text_controls(self):
+        """Update text sizes for all registered controls"""
+        for control, size_category in self.text_controls.items():
+            if hasattr(control, 'size'):
+                control.size = self.text_handler.get_size(size_category)
+        
+        # Request page update
+        if self.page:
+            self.page.update()
+    
+    def create_containers(self, sidebar_content, info_content, hourly_content, weekly_content, chart_content,
+        air_pollution_chart_content, air_pollution_content, animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
         """
         Crea tutti i contenitori per il layout dell'applicazione.
         
         Args:
             sidebar_content: Oggetto Sidebar da inserire nel container
             info_content: Contenuto del container info meteo
+            hourly_content: Contenuto del container info meteo
             weekly_content: Contenuto del container previsioni settimanali
             chart_content: Contenuto del container grafico
             air_pollution_chart_content: Contenuto del container grafico inquinamento
@@ -62,7 +85,12 @@ class LayoutManager:
             animation_duration,
             animation_curve
         )
-        
+        self.containers['hourly'] = LayoutBuilder.build_content_container(
+            hourly_content, 
+            {"xs": 12}, 
+            animation_duration,
+            animation_curve
+        )
         self.containers['weekly'] = LayoutBuilder.build_content_container(
             weekly_content,
             {"xs": 12, "sm": 12, "lg": 8},
@@ -100,6 +128,7 @@ class LayoutManager:
         self.layout = LayoutBuilder.build_main_layout(
             self.containers['sidebar'],
             self.containers['info'],
+            self.containers['hourly'], 
             self.containers['weekly'],
             self.containers['air_pollution'],
             self.containers['chart'],

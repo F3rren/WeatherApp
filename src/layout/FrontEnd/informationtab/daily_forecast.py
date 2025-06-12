@@ -1,16 +1,31 @@
 import flet as ft
 from services.api_service import ApiService
+from components.responsive_text_handler import ResponsiveTextHandler
 
-class DailyForecast:
-
+class DailyForecast:    
     def __init__(self, page, city, language, unit):
-        self.page = page 
-        self.txtcolor= "#1F1A1A" if page.theme_mode == ft.ThemeMode.LIGHT else "#adadad"
-        
+        self.page = page  
         self.city = city
         self.language = language
         self.unit = unit
         self.api = ApiService(page, self.city, self.language, self.unit)
+        self.daily_forecast_items = []  # Inizializza la lista per memorizzare i riferimenti agli item
+        
+        # Inizializzazione del ResponsiveTextHandler per gestire il testo responsive
+        self.text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'title': 24,
+                'subtitle': 18,
+                'label': 14,
+                'value': 16,
+                'icon': 200
+            },
+            breakpoints=[600, 900, 1200, 1600]
+        )
+        
+        # Dizionario per memorizzare i controlli di testo da aggiornare
+        self.text_controls = {}
 
         # This Row will hold the dynamically loaded forecast items.
         # self.api.getDailyForecast() is expected to return a single ft.Control (e.g., another ft.Row)
@@ -29,6 +44,9 @@ class DailyForecast:
         
         # Initial population of the forecast items
         self._populate_forecast_items()
+        
+        # Aggiungiamo un observer per il ridimensionamento
+        self.text_handler.add_observer(self._handle_text_resize)
 
     def _populate_forecast_items(self):
         """
@@ -50,7 +68,7 @@ class DailyForecast:
 
     def update_city(self, new_city):
         self.city = new_city
-        self.api.update_data(new_city, self.language, self.unit)
+        self.update_data(new_city, self.language, self.unit)
         self._populate_forecast_items() 
         
     def update_by_coordinates(self, lat, lon):
@@ -83,6 +101,13 @@ class DailyForecast:
 
     def cleanup(self):
         """Release resources and perform cleanup."""
+        # Rimuove l'observer del text_handler
+        if hasattr(self, 'text_handler'):
+            self.text_handler.remove_observer(self._handle_text_resize)
+        
+        # Rimuove gli handler dello StateManager
+        self.unregister_state_handlers()
+            
         if self.forecast_items_row:
             # Call cleanup on each DailyForecastItems instance
             if self.daily_forecast_items:
@@ -93,11 +118,20 @@ class DailyForecast:
             self.forecast_items_row.controls.clear()
             self.forecast_items_row.update()
 
-    # TODO: Integrate with StateManager for language/unit/theme changes
-    # Example for language:
-    # def _handle_language_change(self, event_data=None):
-    #     state_manager = self.page.session.get('state_manager')
-    #     if state_manager:
-    #         new_language = state_manager.get_state('language')
-    #         if new_language and new_language != self.language:
-    #             self.update_data(self.city, new_language, self.unit)
+    def _handle_text_resize(self):
+        """
+        Aggiorna le dimensioni del testo quando cambia la dimensione della finestra.
+        Chiamato come observer dal ResponsiveTextHandler.
+        """
+        if self.text_controls:
+            self.text_handler.update_text_controls(self.text_controls)
+            
+        # Aggiorniamo anche i DailyForecastItems che potrebbero avere il proprio text_handler
+        for item in self.daily_forecast_items:
+            if hasattr(item, 'text_handler') and hasattr(item, '_update_text_elements'):
+                item._update_text_elements()
+                
+        # Forza l'aggiornamento dell'interfaccia
+        if self.hourly_forecast_content_column.page:
+            self.hourly_forecast_content_column.update()
+

@@ -1,5 +1,6 @@
 import flet as ft
 from services.translation_service import TranslationService
+from state_manager import StateManager
 from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME, DEFAULT_UNIT_SYSTEM # Added DEFAULT_UNIT_SYSTEM
 from components.responsive_text_handler import ResponsiveTextHandler
 
@@ -31,11 +32,13 @@ class DailyForecastItems:
         if page and hasattr(page, 'session') and page.session.get('state_manager'):
             self._state_manager = page.session.get('state_manager')
             self.language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
-            self.unit_system = self._state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM
+            # Corrected: Use 'unit' for unit system state key
+            self.unit_system = self._state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
             self.text_color = self._determine_text_color() # Initialize text_color based on current theme
 
             self._state_manager.register_observer("language_event", self._handle_state_change)
-            self._state_manager.register_observer("unit_event", self._handle_state_change)
+            # Corrected: Use 'unit' for unit system observer key
+            self._state_manager.register_observer("unit", self._handle_state_change)
             self._state_manager.register_observer("theme_event", self._handle_state_change)
         else:
             self.language = DEFAULT_LANGUAGE
@@ -91,7 +94,7 @@ class DailyForecastItems:
         # Update language and unit system from state manager, just in case
         if self._state_manager:
             self.language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
-            self.unit_system = self._state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM
+            self.unit_system = self._state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
         
         # Update text color based on current theme
         self.text_color = self._determine_text_color()
@@ -99,6 +102,7 @@ class DailyForecastItems:
         # Translate day
         self.day_text.value = TranslationService.translate_weekday(self.day, self.language)
         self.day_text.color = self.text_color
+
 
         # Update temperature with units
         unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system)
@@ -127,7 +131,8 @@ class DailyForecastItems:
         """Unregister observers to prevent memory leaks."""
         if self._state_manager:
             self._state_manager.unregister_observer("language_event", self._handle_state_change)
-            self._state_manager.unregister_observer("unit_event", self._handle_state_change)
+            # Corrected: Use 'unit' for unit system observer key
+            self._state_manager.unregister_observer("unit", self._handle_state_change)
             self._state_manager.unregister_observer("theme_event", self._handle_state_change)
         # print(f"DailyForecastItem for {self.day} cleaned up") # For debugging
 

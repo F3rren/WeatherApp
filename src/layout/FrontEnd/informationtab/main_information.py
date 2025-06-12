@@ -1,6 +1,6 @@
 import flet as ft
 from utils.config import LIGHT_THEME, DARK_THEME
-import logging # Added import for logging
+import logging 
 from services.translation_service import TranslationService # Added import
 from components.responsive_text_handler import ResponsiveTextHandler
 
@@ -83,8 +83,8 @@ class MainWeatherInfo:
             if state_manager:
                 # Register for theme_event to update text colors
                 state_manager.register_observer("theme_event", self.handle_theme_change)
-                # Register for unit_event to update temperature unit symbol
-                state_manager.register_observer("unit_event", self.handle_unit_change)
+                # Register for unit to update temperature unit symbol
+                state_manager.register_observer("unit", self.handle_unit_change)
                 # Register for language_event to update temperature unit symbol (as language can affect symbol)
                 state_manager.register_observer("language_event", self.handle_language_change)
                 self._state_manager_ref_for_cleanup = state_manager # Store for cleanup
@@ -127,7 +127,7 @@ class MainWeatherInfo:
             city_name = self.city_text.value if self.city_text and hasattr(self.city_text, 'value') else "N/A"
             logger.debug(f"MainWeatherInfo: Unregistering theme_event observer for city {city_name}")
             self._state_manager_ref_for_cleanup.unregister_observer("theme_event", self.handle_theme_change)
-            self._state_manager_ref_for_cleanup.unregister_observer("unit_event", self.handle_unit_change)
+            self._state_manager_ref_for_cleanup.unregister_observer("unit", self.handle_unit_change)
             self._state_manager_ref_for_cleanup.unregister_observer("language_event", self.handle_language_change)
 
     def handle_unit_change(self, event_data=None):

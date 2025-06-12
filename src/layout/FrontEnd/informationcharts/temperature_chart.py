@@ -1,329 +1,373 @@
 import flet as ft
-from typing import List
+from typing import List, Optional # Added Optional
+import math # ADDED: For floor and ceil functions
 from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 from components.responsive_text_handler import ResponsiveTextHandler
+from services.translation_service import TranslationService # Added
 
-class TemperatureChart:
+class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Container, renamed
     """
-    Temperature chart display.
+    Temperature chart display component.
+    Manages its own UI construction, updates, and state observers.
     """
     
-    def __init__(self, page: ft.Page, days: List[str], temp_min: List[int], 
-                 temp_max: List[int], text_color: str = None): # text_color can be optional if derived from theme
+    def __init__(self, page: ft.Page, days: Optional[List[str]] = None, 
+                 temp_min: Optional[List[int]] = None, temp_max: Optional[List[int]] = None, 
+                 **kwargs): # CHANGED: Added **kwargs, made data optional
+        super().__init__(**kwargs) # Pass kwargs to ft.Container
         self.page = page
-        self.days = days 
-        self.temp_min = temp_min
-        self.temp_max = temp_max
+        self._days = days if days is not None else []
+        self._temp_min = temp_min if temp_min is not None else []
+        self._temp_max = temp_max if temp_max is not None else []
         
-        self.text_handler = ResponsiveTextHandler(
-            page=self.page,
+        self._state_manager = None
+        self._translation_service = None # Will be initialized in did_mount
+        self._current_language = DEFAULT_LANGUAGE
+        self._current_unit_system = DEFAULT_UNIT_SYSTEM
+        self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+        self._unit_symbol = "°" 
+        self._ui_elements_built = False
+        self._chart_control: Optional[ft.LineChart] = None # To store the chart control
+
+        self._text_handler = ResponsiveTextHandler(
+            page=self.page, # Page context might be None initially if page not passed to constructor
             base_sizes={
                 'legend': 14,
-                'label': 14,
-                'axis_title': 16,
-                'icon': 20,
+                'label': 14, # For axis labels
+                'axis_title': 14, # CHANGED: Reduced from 16 to 14
+                'tooltip': 12, # For data point tooltips
             },
             breakpoints=[600, 900, 1200, 1600]
         )
-        self.text_controls = {}
         
-        self.state_manager = self.page.session.get('state_manager')
-        self.translation_service = self.page.session.get('translation_service')
-
-        if self.state_manager:
-            self.language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
-            # Corrected: Use 'unit' for unit system state key
-            self.unit_system = self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
-            current_theme_mode = self.state_manager.get_state('theme_mode') or self.page.theme_mode
-        else:
-            self.language = DEFAULT_LANGUAGE
-            self.unit_system = DEFAULT_UNIT_SYSTEM
-            current_theme_mode = self.page.theme_mode
+        # Default container properties
+        if 'expand' not in kwargs:
+            self.expand = True # Or False, depending on desired default
+        if 'padding' not in kwargs:
+            self.padding = ft.padding.all(10)
         
-        self.text_color = DARK_THEME["TEXT"] if current_theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"]
-        if text_color: # Allow override if explicitly passed, though theme-based is preferred
-             self.text_color = text_color
+        self.content = ft.Text("Loading temperature chart...") # Initial placeholder
 
-        self.unit_symbol = "°" # Default
-        if self.translation_service:
-            self.unit_symbol = self.translation_service.get_unit_symbol("temperature", self.unit_system)
-
-        max_text_str = "Max"
-        min_text_str = "Min"
-        if self.translation_service:
-            max_text_str = self.translation_service.get_text("max", self.language)
-            min_text_str = self.translation_service.get_text("min", self.language)
-
-        self.legend_max_text = ft.Text(max_text_str, color=self.text_color, size=self.text_handler.get_size('legend'))
-        self.legend_min_text = ft.Text(min_text_str, color=self.text_color, size=self.text_handler.get_size('legend'))
+    def did_mount(self):
+        """Called when the control is added to the page."""
+        if self.page and self._text_handler and not self._text_handler.page:
+            self._text_handler.page = self.page
         
-        self.text_controls[self.legend_max_text] = 'legend'
-        self.text_controls[self.legend_min_text] = 'legend'
+        self._initialize_services_and_observers()
         
-        self.y_axis_title = ft.Text(color=self.text_color, size=self.text_handler.get_size('axis_title'))
-        self._update_y_axis_title_text() 
-        self.text_controls[self.y_axis_title] = 'axis_title'
+        # Fetch initial data or build UI if data was provided at init
+        if self._days and self._temp_min and self._temp_max:
+            self._request_ui_rebuild()
+        # Else, it might wait for an update_data call
+
+    def _initialize_services_and_observers(self):
+        """Initializes services and registers observers."""
+        if self.page and hasattr(self.page, 'session'):
+            self._state_manager = self.page.session.get('state_manager')
+            # Initialize TranslationService here as page.session should be available
+            self._translation_service = TranslationService(self.page.session) 
+
+            if self._state_manager:
+                self._current_language = self._state_manager.get_state('language') or self._current_language
+                self._current_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
+                
+                self._state_manager.register_observer("language_event", self._handle_language_change)
+                self._state_manager.register_observer("theme_event", self._handle_theme_change)
+                self._state_manager.register_observer("unit_event", self._handle_unit_system_change) # Assuming "unit_event"
+        
         if self.page:
-            # Registra questo componente come observer del text_handler
-            self.text_handler.add_observer(self.update_text_controls)
-
-        if self.state_manager:
-            # Make sure to register for "theme_event" specifically if not already covered by _handle_state_change
-            # If _handle_state_change already correctly updates colors based on theme_mode from state_manager,
-            # then explicitly registering handle_theme_change might be redundant or could conflict.
-            # For now, let's assume _handle_state_change is comprehensive.
-            # If direct theme handling is needed:
-            # self.state_manager.register_observer("theme_event", self.handle_theme_change) 
-            self.state_manager.register_observer("theme_event", self.handle_theme_change) # Renamed to avoid conflict
-            self.state_manager.register_observer("language_event", self._handle_state_change)
-            # Corrected: Use 'unit' for unit system observer key
-            self.state_manager.register_observer("unit", self._handle_state_change)
-
-
-    def _update_y_axis_title_text(self):
-        title_str = "Temperature"
-        if self.translation_service:
-            title_str = self.translation_service.get_text("temperature", self.language)
-        self.y_axis_title.value = f"{title_str} ({self.unit_symbol})"
-        if self.y_axis_title.page:
-            self.y_axis_title.update()
-
-    def update_text_controls(self):
-        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
-        for control, size_category in self.text_controls.items():
-            new_size = self.text_handler.get_size(size_category)
-            if hasattr(control, 'size'):
-                control.size = new_size
-            elif hasattr(control, 'style') and hasattr(control.style, 'size'): # For TextSpans
-                control.style.size = new_size
-            
-            if hasattr(control, 'spans'): # For ft.Text with spans
-                for span in control.spans:
-                    if hasattr(span, 'style') and span.style:
-                        span.style.size = new_size
-                    else:
-                        span.style = ft.TextStyle(size=new_size)
-            
-            if control.page: # Guard update
-                control.update()
+            self._original_on_resize = self.page.on_resize
+            self.page.on_resize = self._combined_resize_handler
         
-        # Update chart specific label sizes if not covered by individual controls
-        if hasattr(self, 'chart_control') and self.chart_control:
-            if self.chart_control.left_axis:
-                self.chart_control.left_axis.labels_size = self.text_handler.get_size('label') * 2.8 # Adjust multiplier as needed
-                if self.chart_control.left_axis.title:
-                     self.chart_control.left_axis.title_size = self.text_handler.get_size('axis_title') * 1.2 # Adjust
-            if self.chart_control.bottom_axis:
-                self.chart_control.bottom_axis.labels_size = self.text_handler.get_size('label') * 2.8 # Adjust
-            if self.chart_control.page:
-                self.chart_control.update()
+        # Initial update of unit symbol and text color based on current state
+        self._update_unit_symbol()
+        self._current_text_color = self._determine_text_color_from_theme()
 
 
-    def _handle_state_change(self, event_data=None):        
-        if not self.page or not self.state_manager or not self.translation_service:
-            return
-
-        new_language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
-        # Corrected: Use 'unit' for unit system state key
-        new_unit_system = self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
-        language_changed = self.language != new_language
-        unit_system_changed = self.unit_system != new_unit_system
+    def will_unmount(self):
+        """Called when the control is removed from the page."""
+        if self._state_manager:
+            self._state_manager.unregister_observer("language_event", self._handle_language_change)
+            self._state_manager.unregister_observer("theme_event", self._handle_theme_change)
+            self._state_manager.unregister_observer("unit_event", self._handle_unit_system_change)
         
-        self.language = new_language
-        self.unit_system = new_unit_system
-        
-        current_theme_mode = self.state_manager.get_state('theme_mode') or self.page.theme_mode
-        self.text_color = DARK_THEME["TEXT"] if current_theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"]
+        if self.page and hasattr(self, '_original_on_resize'):
+            self.page.on_resize = self._original_on_resize
+        elif self.page and self.page.on_resize == self._combined_resize_handler:
+            self.page.on_resize = self._original_on_resize # Or None if it was the first
 
-        if language_changed or unit_system_changed:
-            self.unit_symbol = self.translation_service.get_unit_symbol("temperature", self.unit_system) # Corrected call
-            self.legend_max_text.value = self.translation_service.get_text("max", self.language)
-            self.legend_min_text.value = self.translation_service.get_text("min", self.language)
-            self._update_y_axis_title_text()
-
-        self.legend_max_text.color = self.text_color
-        self.legend_min_text.color = self.text_color
-        self.y_axis_title.color = self.text_color
-        
-        if hasattr(self, 'chart_control') and self.chart_control.page:
-            self._update_chart_axis_colors() 
-            if language_changed: # If days are keys like "monday", they need retranslation
-                self.chart_control.bottom_axis.labels = self._build_x_labels()
-            self.chart_control.left_axis.title = self.y_axis_title
-            self.chart_control.update()
-        
-        self.update_text_controls()
-        
-        if self.legend_max_text.page: 
-            self.legend_max_text.update()
-        if self.legend_min_text.page: 
-            self.legend_min_text.update()
-        # y_axis_title is updated within _update_y_axis_title_text and update_text_controls
-
-    def handle_theme_change(self, event_data=None):
-        """Handles theme change events by updating text color and chart elements."""
-        if self.page:
+    def _determine_text_color_from_theme(self):
+        if self.page and self.page.theme_mode:
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-            self.text_color = current_theme_config["TEXT"]
+            return current_theme_config.get("TEXT", ft.Colors.BLACK)
+        return LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
 
-            # Update legend text colors
-            if hasattr(self, 'legend_max_text') and self.legend_max_text:
-                self.legend_max_text.color = self.text_color
-                if self.legend_max_text.page:
-                    self.legend_max_text.update()
-            
-            if hasattr(self, 'legend_min_text') and self.legend_min_text:
-                self.legend_min_text.color = self.text_color
-                if self.legend_min_text.page:
-                    self.legend_min_text.update()
+    def _update_unit_symbol(self):
+        if self._translation_service:
+            self._unit_symbol = self._translation_service.get_unit_symbol("temperature", self._current_unit_system)
 
-            # Update Y-axis title color (temperature text on Y axis)
-            if hasattr(self, 'y_axis_title') and self.y_axis_title:
-                self.y_axis_title.color = self.text_color
-                if self.y_axis_title.page:
-                    self.y_axis_title.update()
-
-            # Update chart axis labels and rebuild chart if necessary
-            if hasattr(self, 'chart_control') and self.chart_control and self.chart_control.page:
-                # Update axis label colors directly
-                self._update_chart_axis_colors()
-                # Update the chart's left axis title reference
-                self.chart_control.left_axis.title = self.y_axis_title
-                self.chart_control.update()
-
-    def _update_chart_axis_colors(self):
-        """Updates the colors of chart axis labels."""
-        if hasattr(self, 'chart_control'):
-            # Update X-axis labels
-            if self.chart_control.bottom_axis and self.chart_control.bottom_axis.labels:
-                for label in self.chart_control.bottom_axis.labels:
-                    if isinstance(label.label, ft.Container) and isinstance(label.label.content, ft.Text):
-                        label.label.content.color = self.text_color
-                        
-                        # Aggiorna il dizionario dei controlli di testo
-                        self.text_controls[label.label.content] = 'label'
-            
-            # Update Y-axis labels
-            if self.chart_control.left_axis and self.chart_control.left_axis.labels:
-                for label in self.chart_control.left_axis.labels:
-                    if isinstance(label.label, ft.Text):
-                        label.label.color = self.text_color
-                        
-                        # Aggiorna il dizionario dei controlli di testo
-                        self.text_controls[label.label] = 'label'
-            
-            # Aggiorna le dimensioni dopo aver cambiato colore
-            self.update_text_controls()
-
-    def _build_x_labels(self) -> List[ft.ChartAxisLabel]:
-        x_labels = []
-        for i, day_input in enumerate(self.days): # self.days could be keys or already processed strings
-            day_display_text = day_input # Default to the input
-
-            if self.translation_service:
-                # translate_weekday should handle various inputs:
-                # - Known keys (e.g., "monday") will be translated.
-                # - Unknown keys/already translated strings should be returned appropriately (e.g., as is or capitalized).
-                day_display_text = self.translation_service.translate_weekday(str(day_input), self.language)
-            elif isinstance(day_input, str):
-                # Fallback if no translation_service and input is a string (e.g., "monday")
-                day_display_text = day_input.capitalize()
-            else:
-                # Fallback for non-string inputs if no translation service
-                day_display_text = str(day_input)
-
-            label_text_control = ft.Text(
-                day_display_text,
-                size=self.text_handler.get_size('label'),
-                weight=ft.FontWeight.BOLD,
-                color=self.text_color
+    def _build_ui_elements(self):
+        """Constructs the UI for the temperature chart."""
+        if not self._days or not self._temp_min or not self._temp_max or \
+           len(self._days) != len(self._temp_min) or len(self._days) != len(self._temp_max):
+            return ft.Text(
+                self._translation_service.get_text("no_temperature_data", self._current_language) if self._translation_service else "No temperature data",
+                color=self._current_text_color,
+                size=self._text_handler.get_size('label')
             )
-            self.text_controls[label_text_control] = 'label' # Register for responsive sizing
-            x_labels.append(ft.ChartAxisLabel(
-                value=i + 1, # Chart typically 1-indexed for categories
-                label=ft.Container(
-                    label_text_control,
-                    margin=ft.margin.only(top=10),
+
+        # Chart Data
+        data_points_min = []
+        data_points_max = []
+        for i, day_label_key in enumerate(self._days): # Assuming _days contains translation keys
+            day_display_name = self._translation_service.get_text(day_label_key, self._current_language) if self._translation_service else day_label_key
+            
+            # Min temperature point
+            data_points_min.append(
+                ft.LineChartDataPoint(
+                    i, self._temp_min[i],
+                    tooltip=f"{day_display_name}: {self._temp_min[i]}{self._unit_symbol}",
+                    tooltip_style=ft.TextStyle(size=self._text_handler.get_size('tooltip'), color=ft.Colors.BLACK), # Tooltip text color
                 )
-            ))
-        return x_labels
-
-    def _build_y_labels(self, min_y, max_y) -> List[ft.ChartAxisLabel]:
-        y_labels = []
-        for y_val in range(min_y, max_y + 1, 5): # Assuming step of 5
-            label_text_control = ft.Text(
-                str(y_val), 
-                size=self.text_handler.get_size('label'), 
-                color=self.text_color
             )
-            self.text_controls[label_text_control] = 'label' # Register
-            y_labels.append(ft.ChartAxisLabel(value=y_val, label=label_text_control))
-        return y_labels
+            # Max temperature point
+            data_points_max.append(
+                ft.LineChartDataPoint(
+                    i, self._temp_max[i],
+                    tooltip=f"{day_display_name}: {self._temp_max[i]}{self._unit_symbol}",
+                    tooltip_style=ft.TextStyle(size=self._text_handler.get_size('tooltip'), color=ft.Colors.BLACK),
+                )
+            )
 
-    def build(self) -> ft.Column:
-        min_temp_val = min(self.temp_min) if self.temp_min else 0
-        max_temp_val = max(self.temp_max) if self.temp_max else 30
-        
-        # Dynamic Y-axis range calculation
-        min_y = int((min_temp_val - 5) // 5 * 5) 
-        max_y = int((max_temp_val + 5) // 5 * 5)
-        if min_y == max_y: # Ensure there's some range
-            max_y += 5 
-        min_y = max(min_y, 0) # Ensure min_y is not negative unless intended for specific chart types
+        line_min = ft.LineChartData(
+            data_points=data_points_min,
+            stroke_width=2,
+            color=ft.Colors.BLUE_ACCENT, # Or theme-based
+            curved=True,
+            stroke_cap_round=True,
+        )
+        line_max = ft.LineChartData(
+            data_points=data_points_max,
+            stroke_width=2,
+            color=ft.Colors.RED_ACCENT, # Or theme-based
+            curved=True,
+            stroke_cap_round=True,
+        )
 
-        data_series = [
-            ft.LineChartData(
-                data_points=[ft.LineChartDataPoint(i + 1, t) for i, t in enumerate(self.temp_min)],
-                stroke_width=3, color=ft.Colors.BLUE, curved=True, stroke_cap_round=True,
-            ),
-            ft.LineChartData(
-                data_points=[ft.LineChartDataPoint(i + 1, t) for i, t in enumerate(self.temp_max)],
-                stroke_width=3, color=ft.Colors.RED, curved=True, stroke_cap_round=True,
-            ),
-        ]
+        # X-axis labels
+        x_labels = []
+        for i, day_label_key in enumerate(self._days):
+            day_display_name = self._translation_service.get_text(day_label_key, self._current_language) if self._translation_service else day_label_key
+            x_labels.append(
+                ft.ChartAxisLabel(
+                    value=i,
+                    label=ft.Text(day_display_name[:3], size=self._text_handler.get_size('label'), color=self._current_text_color, data={'type': 'text', 'category': 'label'})
+                )
+            )
         
-        x_axis_labels = self._build_x_labels()
-        y_axis_labels = self._build_y_labels(min_y, max_y)
-        
-        self.chart_control = ft.LineChart(
-            data_series=data_series,
-            border=ft.border.all(3, ft.Colors.with_opacity(0.2, ft.Colors.ON_SURFACE)),
-            horizontal_grid_lines=ft.ChartGridLines(
-                interval=max(1, (max_y - min_y) / 5 if (max_y - min_y) > 0 else 1), # Dynamic interval
-                color=ft.Colors.with_opacity(0.2, ft.Colors.ON_SURFACE), width=1
-            ),
-            vertical_grid_lines=ft.ChartGridLines(
-                interval=1, color=ft.Colors.with_opacity(0.2, ft.Colors.ON_SURFACE), width=1
-            ),
+        # Y-axis title
+        y_axis_title_text = self._translation_service.get_text("temperature", self._current_language) if self._translation_service else "Temperature"
+        y_axis_title_control = ft.Text(
+            f"{y_axis_title_text} ({self._unit_symbol})", 
+            size=self._text_handler.get_size('axis_title'), 
+            color=self._current_text_color,
+            data={'type': 'text', 'category': 'axis_title'}
+        )
+
+        # Determine min/max for Y-axis
+        all_temps = self._temp_min + self._temp_max
+        step = 5  # Define step for clarity
+
+        if not all_temps:
+            min_y_val = 0
+            max_y_val = 10  # Default range for empty chart
+        else:
+            data_min_val = min(all_temps)
+            data_max_val = max(all_temps)
+            
+            # Calculate Y-axis limits to be multiples of step, with padding
+            min_y_val = math.floor((data_min_val - step) / step) * step
+            max_y_val = math.ceil((data_max_val + step) / step) * step
+
+            # Ensure there's always some range, e.g., if all temps are the same or very close
+            if max_y_val <= min_y_val:
+                # If data_min_val and data_max_val are same, max_y_val could be min_y_val + step.
+                # e.g. data=12. min_y_val=5, max_y_val=math.ceil((12+5)/5)*5 = math.ceil(3.4)*5 = 20.
+                # This case (max_y_val <= min_y_val) should be rare with the current padding.
+                # Add a default span if it happens.
+                max_y_val = min_y_val + step * 2 
+            
+            # Ensure max_y_val is strictly greater than min_y_val for the range function
+            if max_y_val == min_y_val:
+                max_y_val += step
+
+
+        self._chart_control = ft.LineChart(
+            data_series=[line_min, line_max],
+            border=ft.border.all(1, ft.Colors.with_opacity(0.5, self._current_text_color)),
+            horizontal_grid_lines=ft.ChartGridLines(interval=step, color=ft.Colors.with_opacity(0.2, self._current_text_color), width=1), # Use step
+            vertical_grid_lines=ft.ChartGridLines(interval=1, color=ft.Colors.with_opacity(0.2, self._current_text_color), width=1),
             left_axis=ft.ChartAxis(
-                labels=y_axis_labels, 
-                title=self.y_axis_title,
+                labels= [ft.ChartAxisLabel(value=y, label=ft.Text(str(int(y)), size=self._text_handler.get_size('label'), color=self._current_text_color, data={'type': 'text', 'category': 'label'})) for y in range(int(min_y_val), int(max_y_val) + 1, step)], # Use step
+                labels_size=40, 
+                title=y_axis_title_control, 
+                title_size=self._text_handler.get_size('axis_title') 
             ),
-            bottom_axis=ft.ChartAxis(labels=x_axis_labels),
-            min_y=min_y, max_y=max_y,
-            min_x=0, max_x=len(self.days) +1 if self.days else 1, # Adjusted max_x for padding
-            tooltip_bgcolor=ft.Colors.with_opacity(0.8, ft.Colors.BLACK),
+            bottom_axis=ft.ChartAxis(
+                labels=x_labels,
+                labels_size=40, 
+            ),
+            tooltip_bgcolor=ft.Colors.WHITE, 
+            min_y=int(min_y_val), # Use calculated min_y_val
+            max_y=int(max_y_val), # Use calculated max_y_val
             expand=True,
-            interactive=False,  # Disable hover/tooltips
+        )
+
+        # Legend
+        legend_max_text = self._translation_service.get_text("max", self._current_language) if self._translation_service else "Max"
+        legend_min_text = self._translation_service.get_text("min", self._current_language) if self._translation_service else "Min"
+
+        legend = ft.Row(
+            [
+                ft.Icon(name=ft.Icons.CIRCLE, color=ft.Colors.RED_ACCENT, size=self._text_handler.get_size('legend')),
+                ft.Text(legend_max_text, color=self._current_text_color, size=self._text_handler.get_size('legend'), data={'type': 'text', 'category': 'legend'}),
+                ft.Icon(name=ft.Icons.CIRCLE, color=ft.Colors.BLUE_ACCENT, size=self._text_handler.get_size('legend')),
+                ft.Text(legend_min_text, color=self._current_text_color, size=self._text_handler.get_size('legend'), data={'type': 'text', 'category': 'legend'}),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=10
         )
         
-        self.update_text_controls() # Apply initial sizes and colors registered in build methods
-
-        return ft.Column(
-            [
-                ft.Row(
-                    [
-                        ft.Icon(name=ft.Icons.SQUARE, color=ft.Colors.RED, size=self.text_handler.get_size('icon')),
-                        self.legend_max_text,
-                        ft.Icon(name=ft.Icons.SQUARE, color=ft.Colors.BLUE, size=self.text_handler.get_size('icon')),
-                        self.legend_min_text,
-                    ], 
-                    spacing=10, # Reduced spacing
-                    alignment=ft.MainAxisAlignment.CENTER # Center legends
-                ),
-                self.chart_control
-            ],
-            expand=True, # Ensure Column expands
-            # horizontal_alignment=ft.CrossAxisAlignment.CENTER # Center chart if needed
+        main_column = ft.Column(
+            controls=[self._chart_control, legend],
+            spacing=10,
+            expand=True,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
+        self._ui_elements_built = True
+        return main_column
+
+    def _request_ui_rebuild(self, event_data=None):
+        if not self.page or not self.visible: 
+            return
+
+        if self._state_manager: # Ensure state is current before rebuild
+            self._current_language = self._state_manager.get_state('language') or self._current_language
+            self._current_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
+        
+        self._update_unit_symbol()
+        self._current_text_color = self._determine_text_color_from_theme()
+        
+        new_content = self._build_ui_elements()
+        if self.content != new_content:
+            self.content = new_content
+        
+        if self._ui_elements_built:
+            self._update_text_sizes() 
+
+        self.update()
+
+    def _handle_language_change(self, event_data=None):
+        self._request_ui_rebuild()
+
+    def _handle_theme_change(self, event_data=None):
+        self._request_ui_rebuild()
+
+    def _handle_unit_system_change(self, event_data=None):
+        # Data might need to be re-fetched or re-processed by the parent (WeatherView)
+        # For now, just rebuild UI which will use the new unit symbol.
+        # If temperature values themselves change, update_data should be called.
+        self._request_ui_rebuild()
+
+    def _update_text_sizes(self):
+        if not self._ui_elements_built or not self.content or not isinstance(self.content, ft.Column):
+            return
+
+        def _apply_to_controls(control_tree_node):
+            if isinstance(control_tree_node, ft.Text) and hasattr(control_tree_node, 'data') and isinstance(control_tree_node.data, dict):
+                category = control_tree_node.data.get('category')
+                if category:
+                    control_tree_node.size = self._text_handler.get_size(category)
+                    control_tree_node.color = self._current_text_color # General color update
+            
+            # For LineChart specific text elements (axis titles, labels)
+            if isinstance(control_tree_node, ft.LineChart):
+                chart = control_tree_node
+                # Left Axis
+                if chart.left_axis:
+                    # Reserved space for title
+                    chart.left_axis.title_size = self._text_handler.get_size('axis_title') # ADDED: Ensure reserved space is updated
+                    # Title font size (if Text control)
+                    if isinstance(chart.left_axis.title, ft.Text):
+                        chart.left_axis.title.size = self._text_handler.get_size('axis_title')
+                        chart.left_axis.title.color = self._current_text_color
+                    # Left Axis Labels
+                    if chart.left_axis.labels:
+                        chart.left_axis.labels_size = self._text_handler.get_size('label') * 2.8 # Example scaling
+                        for label in chart.left_axis.labels:
+                            if isinstance(label.label, ft.Text):
+                                label.label.size = self._text_handler.get_size('label')
+                                label.label.color = self._current_text_color
+                # Bottom Axis
+                if chart.bottom_axis:
+                    # Bottom Axis Labels
+                    if chart.bottom_axis.labels:
+                        chart.bottom_axis.labels_size = self._text_handler.get_size('label') * 2.8 # Example scaling
+                        for label in chart.bottom_axis.labels:
+                            if isinstance(label.label, ft.Text):
+                                label.label.size = self._text_handler.get_size('label')
+                                label.label.color = self._current_text_color
+                    # If bottom axis ever gets a title, its reserved space and font size should also be updated here
+                    # For example:
+                    # chart.bottom_axis.title_size = self._text_handler.get_size('axis_title') # Or a different category
+                    # if isinstance(chart.bottom_axis.title, ft.Text):
+                    #     chart.bottom_axis.title.size = self._text_handler.get_size('axis_title') # Or a different category
+                    #     chart.bottom_axis.title.color = self._current_text_color
+            
+            if hasattr(control_tree_node, 'controls') and control_tree_node.controls:
+                for child_control in control_tree_node.controls:
+                    _apply_to_controls(child_control)
+            elif hasattr(control_tree_node, 'content') and control_tree_node.content: # For single content containers
+                _apply_to_controls(control_tree_node.content)
+
+        _apply_to_controls(self.content)
+        # self.update() # Called by _request_ui_rebuild
+
+    def _combined_resize_handler(self, e):
+        if hasattr(self, '_original_on_resize') and self._original_on_resize:
+            self._original_on_resize(e) 
+
+        self._text_handler._handle_resize(e) 
+        if self._ui_elements_built:
+            self._update_text_sizes()
+            if self.page: 
+                self.update()
+
+    def update_data(self, days: List[str], temp_min: List[int], temp_max: List[int]):
+        """Allows updating the chart data and refreshing the display."""
+        self._days = days if days is not None else []
+        self._temp_min = temp_min if temp_min is not None else []
+        self._temp_max = temp_max if temp_max is not None else []
+        
+        if self.page and self.visible: # Only rebuild if mounted and visible
+             self.page.run_task(self._request_ui_rebuild_task)
+
+    async def _request_ui_rebuild_task(self): # Added async wrapper for run_task
+        self._request_ui_rebuild()
+
+# Example usage (for testing, not part of the class itself)
+# if __name__ == \"__main__\":
+#     def main(page: ft.Page):
+#         page.title = \"Temperature Chart Test\"
+#         # ... (setup state manager, translation service for testing) ...
+#         
+#         # Sample data
+#         days_data = [\"mon\", \"tue\", \"wed\", \"thu\", \"fri\"]
+#         min_temps = [10, 12, 11, 13, 14]
+#         max_temps = [20, 22, 21, 23, 24]
+# 
+#         chart_display = TemperatureChartDisplay(page, days_data, min_temps, max_temps)
+#         page.add(chart_display)
+#     
+#     ft.app(target=main)

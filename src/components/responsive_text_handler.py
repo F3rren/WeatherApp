@@ -47,7 +47,7 @@ class ResponsiveTextHandler:
         
         # Registra il callback per il ridimensionamento se la pagina è disponibile
         if self.page:
-            self.page.on_resize = self._handle_resize
+            # self.page.on_resize = self._handle_resize # MODIFIED: Removed this line
             # Aggiungi controllo periodico come fallback
             import asyncio
             asyncio.create_task(self._periodic_size_check())
@@ -179,7 +179,7 @@ class ResponsiveTextHandler:
         self._calculate_sizes()
         
         if self.page:
-            self.page.on_resize = self._handle_resize
+            # self.page.on_resize = self._handle_resize # MODIFIED: Removed this line
             # Aggiungi controllo periodico come fallback
             import asyncio
             asyncio.create_task(self._periodic_size_check())

@@ -2,8 +2,9 @@
 Main application file for the MeteoApp.
 """
 
-import flet as ft
+import flet as ft # MODIFIED: Use standard alias 'ft'
 import logging
+
 
 from utils.config import (DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, DEFAULT_THEME_MODE)
 
@@ -48,7 +49,7 @@ class MeteoApp:
         # Delega l'aggiornamento dei colori al layout manager
         self.layout_manager.update_container_colors(self.page.theme_mode)
 
-    async def main(self, page: ft.Page) -> None:
+    async def main(self, page: ft.Page) -> None: # MODIFIED: ft.Page
         """
         Main entry point for the application.
         
@@ -58,9 +59,9 @@ class MeteoApp:
         self.page = page # Store page reference
         # Set page properties
         page.title = "MeteoApp"
-        page.theme_mode = (ft.ThemeMode.LIGHT if DEFAULT_THEME_MODE == "light" else ft.ThemeMode.DARK)
+        page.theme_mode = (ft.ThemeMode.LIGHT if DEFAULT_THEME_MODE == "light" else ft.ThemeMode.DARK) # MODIFIED: ft.ThemeMode
         page.adaptive = True
-        page.scroll = ft.ScrollMode.AUTO
+        page.scroll = ft.ScrollMode.AUTO # MODIFIED: ft.ScrollMode
         page.animation_duration = 500 # Add animation duration for page-level animations
 
         self.state_manager = StateManager(page)
@@ -157,7 +158,7 @@ class MeteoApp:
 
         page.on_disconnect = on_disconnect_or_close
         # For desktop, on_window_event might be more reliable for cleanup before exit
-        if page.platform == ft.PagePlatform.WINDOWS or page.platform == ft.PagePlatform.LINUX or page.platform == ft.PagePlatform.MACOS:
+        if page.platform == ft.PagePlatform.WINDOWS or page.platform == ft.PagePlatform.LINUX or page.platform == ft.PagePlatform.MACOS: # MODIFIED: ft.PagePlatform
             async def window_event_handler(e):
                 if e.data == "close": # Or other relevant events like 'destroy'
                     await on_disconnect_or_close(e)
@@ -167,10 +168,10 @@ class MeteoApp:
 def main():
     """Entry point for the application"""
     app = MeteoApp()
-    ft.app(
+    ft.app( # MODIFIED: ft.app
         target=app.main,
         assets_dir="assets",
-        view=ft.AppView.WEB_BROWSER
+        view=ft.AppView.WEB_BROWSER # MODIFIED: ft.AppView
     )
 
 

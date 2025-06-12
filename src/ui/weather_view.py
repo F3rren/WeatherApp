@@ -11,12 +11,12 @@ from services.api_service import ApiService
 
 from layout.frontend.weather_card import WeatherCard
 from layout.frontend.informationtab.hourly_forecast import HourlyForecastDisplay # Importa la nuova classe
-from layout.frontend.weeklyweather.daily_forecast_items import DailyForecastItems
+from layout.frontend.weeklyweather.weekly_weather import WeeklyForecastDisplay # CHANGED: Import WeeklyForecastDisplay
 from layout.frontend.informationtab.main_information import MainWeatherInfo
 from layout.frontend.informationtab.air_condition import AirConditionInfo
-from layout.frontend.informationtab.air_pollution import AirPollution
-from layout.frontend.informationcharts.temperature_chart import TemperatureChart
-from layout.frontend.informationcharts.air_pollution_chart import AirPollutionChart
+from layout.frontend.informationtab.air_pollution import AirPollutionDisplay # CHANGED: Import AirPollutionDisplay
+from layout.frontend.informationcharts.temperature_chart import TemperatureChartDisplay # CHANGED: Import TemperatureChartDisplay
+from layout.frontend.informationcharts.air_pollution_chart import AirPollutionChartDisplay # CHANGED: Import AirPollutionChartDisplay
 
 class WeatherView:
     """
@@ -33,9 +33,16 @@ class WeatherView:
         self.current_lat = None
         self.current_lon = None
         self.current_city = None
-        # Initialize text_color based on the current theme
         self._update_text_color() 
         
+        self.main_weather_info_instance = None
+        self.air_condition_instance = None # ADDED
+        self.weekly_forecast_display_instance = None # CHANGED: Renamed from weekly_weather_instance
+        self.hourly_forecast_instance = None # ADDED
+        self.temperature_chart_instance = None # ADDED
+        self.air_pollution_display_instance = None # CHANGED: Renamed from air_pollution_instance
+        self.air_pollution_chart_instance = None
+
         # Register for theme change events
         state_manager = self.page.session.get('state_manager')
         if state_manager:
@@ -50,6 +57,56 @@ class WeatherView:
         self.air_pollution_container = ft.Container()
         self.air_pollution_chart_container = ft.Container()
 
+        # Add the main on_resize handler for WeatherView
+        if self.page:
+            # It's important that WeatherView's on_resize is set up to call the
+            # original handler if one existed, and then propagate to its children.
+            # The children (like HourlyForecastDisplay) will then replace page.on_resize
+            # with their own combined handler.
+            self._original_page_resize_handler = self.page.on_resized # Corrected: store page.on_resize not on_resized
+            self.page.on_resize = self._handle_page_resize
+
+    def _handle_page_resize(self, e=None):
+        """Handles page resize events for WeatherView and propagates to children."""
+        # Call original page resize handler FIRST if it existed
+        if hasattr(self, '_original_page_resize_handler') and self._original_page_resize_handler:
+            self._original_page_resize_handler(e)
+
+        # Child components (MainWeatherInfo, AirConditionInfo, HourlyForecastDisplay, 
+        # WeeklyForecastDisplay, AirPollutionDisplay, TemperatureChartDisplay, AirPollutionChartDisplay)
+        # now manage their own page.on_resize.
+        # No direct calls to their _combined_resize_handler needed here.
+
+        # It's generally good practice for the top-level resize handler to call page.update()
+        # if sub-components don't reliably do it or if there are direct changes in WeatherView itself.
+        if self.page: 
+            self.page.update()
+
+    def _cleanup_child_components(self): 
+        """Calls cleanup on all child component instances."""
+        children_to_cleanup = [
+            self.main_weather_info_instance,
+            self.air_condition_instance, 
+            self.weekly_forecast_display_instance, 
+            self.hourly_forecast_instance,
+            self.temperature_chart_instance,
+            self.air_pollution_display_instance, # CHANGED: Renamed
+            self.air_pollution_chart_instance
+        ]
+        for child in children_to_cleanup:
+            if child and hasattr(child, 'will_unmount'): # Use will_unmount for ft.Control based components
+                child.will_unmount()
+            elif child and hasattr(child, 'cleanup'): # Fallback for older components
+                child.cleanup()
+        
+        self.main_weather_info_instance = None
+        self.air_condition_instance = None 
+        self.weekly_forecast_display_instance = None # CHANGED: Renamed
+        self.hourly_forecast_instance = None
+        self.temperature_chart_instance = None
+        self.air_pollution_display_instance = None # CHANGED: Renamed
+        self.air_pollution_chart_instance = None
+
     def _update_text_color(self):
         """Updates text_color based on the current page theme."""
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
@@ -61,27 +118,10 @@ class WeatherView:
         
         if self.info_container.content and isinstance(self.info_container.content, ft.Text):
             self.info_container.content.color = self.text_color
-            # self.info_container.update() # Usually page.update() is enough
 
-        # Re-build air pollution components with new theme Colors if data is available
-        if self.current_lat is not None and self.current_lon is not None:
-            # Update air pollution component with new text color
-            air_pollution = AirPollution(
-                page=self.page,
-                lat=self.current_lat,
-                lon=self.current_lon,
-                text_color=self.text_color,
-            )
-            self.air_pollution_container.content = air_pollution.build()
-            
-            # Update air pollution chart component with new text color
-            air_pollution_chart = AirPollutionChart(
-                page=self.page,
-                lat=self.current_lat,
-                lon=self.current_lon,
-                text_color=self.text_color
-            )
-            self.air_pollution_chart_container.content = air_pollution_chart.build(self.current_lat, self.current_lon)
+        # For refactored components like AirPollutionDisplay, TemperatureChartDisplay, 
+        # and AirPollutionChartDisplay, theme changes are handled internally.
+        # No specific update calls needed here for them.
         
         self.page.update()
 
@@ -159,6 +199,9 @@ class WeatherView:
         if not self.weather_data:
             return
         
+        # Cleanup old component instances before creating new ones
+        self._cleanup_child_components() # ADDED
+
         # Store current coordinates and city for theme change rebuilds
         self.current_city = city
         self.current_lat = lat
@@ -207,101 +250,162 @@ class WeatherView:
             location = ", ".join(filter(None, [data.get("name"), data.get("state"), data.get("country")]))
         else:
             location = city
-
-        # Costruisce le sezioni dell'interfaccia
-        main_info = MainWeatherInfo(city, location, temperature, icon_code, self.text_color, self.page).build()
-
-        air_condition = AirConditionInfo(feels_like, humidity, wind_speed, pressure, self.text_color, self.page).build()        # Assembla il contenuto e aggiorna il contenitore
-        self.info_container.content = WeatherCard(self.page).build(
-            ft.Column(
-                controls=[main_info, air_condition],
-                expand=True,
-                spacing=10,
-                horizontal_alignment=ft.CrossAxisAlignment.STRETCH  # Assicura che i figli si estendano
-            )
-        )
-        self.info_container.expand = True
         
-    async def _update_weekly_forecast(self) -> None:
-        """Frontend: Updates weekly forecast UI"""
-        weekly_data = self.api_service.get_weekly_forecast_data(self.weather_data)
-        weather_card = WeatherCard(self.page) # Pass page if WeatherCard needs theme context
-        forecast_items_controls = [] # Renamed
-        self._update_text_color() # Ensure text_color is current
-        for i, day_data in enumerate(weekly_data):            
-            forecast_item_obj = DailyForecastItems( # Create instance
-                day=day_data["day_key"],
-                icon_code=day_data["icon"],
-                temp_min=day_data["temp_min"],
-                temp_max=day_data["temp_max"],
-                text_color=self.text_color,
-                page=self.page # Pass page for theme observation
-            )
-            forecast_items_controls.append(ft.Container(content=forecast_item_obj.build())) # Append built control
-            if i < len(weekly_data) - 1:
-                divider_color = DARK_THEME.get("BORDER", ft.Colors.WHITE if self.page.theme_mode == ft.ThemeMode.DARK else ft.Colors.BLACK)
-                forecast_items_controls.append(
-                    ft.Container(
-                        content=ft.Divider(thickness=0.5, color=divider_color, opacity=1),
-                    )
-                )
-        self.weekly_container.content = weather_card.build(
-            ft.Column(controls=forecast_items_controls, expand=True)
+        # Create and store the MainWeatherInfo instance
+        self.main_weather_info_instance = MainWeatherInfo(
+            city=city,
+            location=location,
+            temperature=temperature,
+            weather_icon=icon_code,
+            page=self.page,
+            expand=True # Ensure it expands if needed within the column
         )
-        # self.weekly_container.update() # Covered by page.update()
+
+        # Create and store the AirConditionInfo instance
+        self.air_condition_instance = AirConditionInfo(
+            feels_like=feels_like,
+            humidity=humidity,
+            wind_speed=wind_speed,
+            pressure=pressure,
+            page=self.page,
+            expand=True # Ensure it expands if needed within the column
+        )
+        
+        # Combine MainWeatherInfo and AirConditionInfo in a Column
+        self.info_container.content = ft.Column(
+            controls=[
+                self.main_weather_info_instance,
+                self.air_condition_instance
+            ],
+            spacing=10, # Add some spacing between the two components
+            expand=True
+        )
+        # self.info_container.update() # Covered by page.update() later in _update_ui
+
+
+    async def _update_weekly_forecast(self) -> None:
+        """Frontend: Updates weekly forecast UI using WeeklyForecastDisplay."""
+        weather_card = WeatherCard(self.page) 
+        self._update_text_color() # Ensure text_color is current for components not self-managing it
+
+        # state_manager = self.page.session.get(\'state_manager\')
+        # language = state_manager.get_state(\'language\') if state_manager else \'en\'
+        # unit = state_manager.get_state(\'unit\') if state_manager else \'metric\'
+        # The WeeklyForecastDisplay will get lang/unit from state_manager itself.
+
+        if not self.current_city:
+            # Handle case where city is not yet set, perhaps show a placeholder or log
+            logging.warning("Weekly forecast update skipped: current_city is not set.")
+            self.weekly_container.content = ft.Text("City not selected for weekly forecast.", color=self.text_color)
+            # self.weekly_container.update() # Covered by page.update()
+            return
+
+        # Instantiate or update the WeeklyForecastDisplay instance
+        if not hasattr(self, 'weekly_forecast_display_instance') or not self.weekly_forecast_display_instance:
+            self.weekly_forecast_display_instance = WeeklyForecastDisplay(
+                page=self.page, 
+                city=self.current_city
+                # expand=True # WeeklyForecastDisplay sets its own expand
+            )
+        else:
+            # If the city has changed, update the component
+            if self.weekly_forecast_display_instance._city != self.current_city:
+                self.weekly_forecast_display_instance.update_city(self.current_city)
+            # Language and unit changes are handled internally by WeeklyForecastDisplay via observers
+
+        # The WeatherCard is a generic wrapper, WeeklyForecastDisplay is the actual content.
+        self.weekly_container.content = weather_card.build(self.weekly_forecast_display_instance)
+        # self.weekly_container.update() # Covered by page.update() in _update_ui
 
     async def _update_temperature_chart(self) -> None:
-        """Frontend: Updates temperature chart UI"""
+        """Frontend: Updates temperature chart UI using TemperatureChartDisplay."""
         forecast_data = self.api_service.get_daily_forecast_data(self.weather_data)
         days = self.api_service.get_upcoming_days()
-        weather_card = WeatherCard(self.page) # Pass page if WeatherCard needs theme context
-        self._update_text_color() # Ensure text_color is current
-        temp_chart = TemperatureChart(
-            page=self.page,
-            days=days,
-            temp_min=forecast_data["temp_min"],
-            temp_max=forecast_data["temp_max"],
-            text_color=self.text_color
-        )
-        self.chart_container.content = weather_card.build(temp_chart.build())
-        
+        weather_card = WeatherCard(self.page)
+        # self._update_text_color() # TemperatureChartDisplay manages its own text color
+
+        # Instantiate or update the TemperatureChartDisplay instance
+        if not hasattr(self, 'temperature_chart_instance') or not self.temperature_chart_instance:
+            self.temperature_chart_instance = TemperatureChartDisplay(
+                page=self.page,
+                days=days,
+                temp_min=forecast_data["temp_min"],
+                temp_max=forecast_data["temp_max"]
+                # expand=True # TemperatureChartDisplay sets its own expand if needed
+            )
+        else:
+            # If data needs to be updated (e.g., city change, unit change affecting data)
+            self.temperature_chart_instance.update_data(
+                days=days,
+                temp_min=forecast_data["temp_min"],
+                temp_max=forecast_data["temp_max"]
+            )
+            # Language and theme changes are handled internally by TemperatureChartDisplay
+
+        # The WeatherCard is a generic wrapper, TemperatureChartDisplay is the actual content.
+        self.chart_container.content = weather_card.build(self.temperature_chart_instance)
+        # self.chart_container.update() # Covered by page.update() in _update_ui
+
     async def _update_hourly_container(self) -> None:
-        """Frontend: Updates air pollution chart UI"""
-        weather_card = WeatherCard(self.page) # Pass page if WeatherCard needs theme context
-        self._update_text_color() # Ensure text_color is current
+        """Frontend: Updates hourly forecast UI"""
+        weather_card = WeatherCard(self.page) 
+        self._update_text_color() # Ensure text_color is current for components not self-managing it
 
-        # Costruisce la riga di previsioni orarie (massimo 6)
         hourly_data = self.api_service.get_hourly_forecast_data(self.weather_data)[:6]
-        # Utilizza la nuova classe per costruire la sezione delle previsioni orarie
-        hourly_forecast = HourlyForecastDisplay(
+        
+        # Instantiate the refactored HourlyForecastDisplay
+        self.hourly_forecast_instance = HourlyForecastDisplay(
             hourly_data=hourly_data,
-            text_color=self.text_color,
-            page=self.page
+            page=self.page,
+            # expand=True # HourlyForecastDisplay sets its own expand property if needed
         )
-
-        self.hourly_container.content = weather_card.build(hourly_forecast.build())
+        # The WeatherCard is a generic wrapper, the HourlyForecastDisplay is the actual content.
+        self.hourly_container.content = weather_card.build(self.hourly_forecast_instance)
+        # self.hourly_container.update() # Covered by page.update() in _update_ui
     
     async def _update_air_pollution(self, lat: float, lon: float) -> None:
-        """Frontend: Updates air pollution UI"""
-        self._update_text_color() # Ensure text_color is current
-        air_pollution = AirPollution( # Assuming AirPollution is a class
-            page=self.page,
-            lat=lat,
-            lon=lon,
-            text_color=self.text_color, # Pass text_color
-        )
-        self.air_pollution_container.content = air_pollution.build()
-        
+        """Frontend: Updates air pollution UI using AirPollutionDisplay."""
+        # self._update_text_color() # AirPollutionDisplay manages its own text color via theme
+        weather_card = WeatherCard(self.page) # Assuming WeatherCard is still used as a wrapper
+
+        if not hasattr(self, 'air_pollution_display_instance') or not self.air_pollution_display_instance:
+            self.air_pollution_display_instance = AirPollutionDisplay(
+                page=self.page,
+                lat=lat,
+                lon=lon
+                # expand=True # AirPollutionDisplay sets its own expand
+            )
+        else:
+            # If location has changed, update the component
+            if self.air_pollution_display_instance._lat != lat or self.air_pollution_display_instance._lon != lon:
+                self.air_pollution_display_instance.update_location(lat, lon)
+            # Language and theme changes are handled internally by AirPollutionDisplay
+
+        self.air_pollution_container.content = weather_card.build(self.air_pollution_display_instance)
+        # self.air_pollution_container.update() # Covered by page.update() in _update_ui
+    
     async def _update_air_pollution_chart(self, lat: float, lon: float) -> None:
-        """Frontend: Updates air pollution chart UI"""
-        self._update_text_color() # Ensure text_color is current
-        air_pollution_chart = AirPollutionChart( # Assuming AirPollutionChart is a class
-            page=self.page,
-            lat=lat,
-            lon=lon,
-            text_color=self.text_color # Pass text_color
-        )
-        self.air_pollution_chart_container.content = air_pollution_chart.build(lat, lon)
+        """Frontend: Updates air pollution chart UI using AirPollutionChartDisplay."""
+        weather_card = WeatherCard(self.page) # Assuming WeatherCard is still used as a wrapper
+        # self._update_text_color() # AirPollutionChartDisplay manages its own text color
+
+        # Instantiate or update the AirPollutionChartDisplay instance
+        if not hasattr(self, 'air_pollution_chart_instance') or not self.air_pollution_chart_instance:
+            self.air_pollution_chart_instance = AirPollutionChartDisplay(
+                page=self.page,
+                lat=lat,
+                lon=lon
+                # expand=True # AirPollutionChartDisplay sets its own expand if needed
+            )
+        else:
+            # If location has changed, update the component
+            if self.air_pollution_chart_instance._lat != lat or self.air_pollution_chart_instance._lon != lon:
+                self.air_pollution_chart_instance.update_location(lat, lon)
+            # Language and theme changes are handled internally by AirPollutionChartDisplay
+
+        # The WeatherCard is a generic wrapper, AirPollutionChartDisplay is the actual content.
+        self.air_pollution_chart_container.content = weather_card.build(self.air_pollution_chart_instance)
+        # self.air_pollution_chart_container.update() # Covered by page.update() in _update_ui
 
     def get_containers(self) -> tuple:
         """Frontend: Returns UI containers for display"""

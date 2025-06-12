@@ -133,7 +133,7 @@ class TemperatureChart:
         self.text_color = DARK_THEME["TEXT"] if current_theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"]
 
         if language_changed or unit_system_changed:
-            self.unit_symbol = self.translation_service.get_unit_symbol("temperature", self.unit_system, self.language)
+            self.unit_symbol = self.translation_service.get_unit_symbol("temperature", self.unit_system) # Corrected call
             self.legend_max_text.value = self.translation_service.get_text("max", self.language)
             self.legend_min_text.value = self.translation_service.get_text("min", self.language)
             self._update_y_axis_title_text()

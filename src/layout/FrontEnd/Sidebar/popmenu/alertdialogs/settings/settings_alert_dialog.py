@@ -17,7 +17,7 @@ class SettingsAlertDialog:
         self.handle_theme_toggle = handle_theme_toggle
         self.text_color = text_color if text_color else (DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"])
         self.language_dropdown = DropdownLanguage(state_manager)
-        self.measurement_dropdown = DropdownMeasurement(state_manager)
+        self.measurement_dropdown = DropdownMeasurement(state_manager=state_manager, page=page) # Pass page here
         self.location_toggle = None
         self.theme_toggle = None
         self.dialog = None  # Changed from self.dlg to self.dialog

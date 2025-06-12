@@ -5,8 +5,8 @@ Centralizes all configuration values and settings.
 
 # Default application settings
 DEFAULT_CITY = "Milano"
-DEFAULT_LANGUAGE = "en"
-DEFAULT_UNIT_SYSTEM = "standard"  # "metric", "imperial", or "standard"
+DEFAULT_LANGUAGE = "it"
+DEFAULT_UNIT_SYSTEM = "metric"  # "metric", "imperial", or "standard"
 DEFAULT_THEME_MODE = "light"  # "light" or "dark"
 
 # Theme colors

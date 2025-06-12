@@ -79,9 +79,11 @@ class DropdownMeasurement:
         def dropdown_changed(e):
             unit_code = e.control.value
             print(f"Selected unit: {unit_code}")
-            self.set_unit(unit_code)            # Aggiorna lo stato dell'applicazione
-            if self.state_manager:
-                self.state_manager.set_state("unit", unit_code)
+            self.set_unit(unit_code) # Call set_unit to handle selection and state update
+            # if self.state_manager: # Removed direct state update from here
+                # Use asyncio.create_task to avoid blocking if set_state is async
+                # import asyncio # Removed
+                # asyncio.create_task(self.state_manager.set_state("unit", unit_code)) # Removed
             if hasattr(self, 'parent') and self.parent:
                 self.parent.update()
 
@@ -126,27 +128,38 @@ class DropdownMeasurement:
 
     def set_unit(self, unit_code):
         self.selected_unit = unit_code
+        logging.info(f"DropdownMeasurement: selected_unit updated to {unit_code}")
         
         # Aggiorna lo stato dell'applicazione se state_manager è disponibile
-        if self.state_manager:
-            import asyncio
+        if self.state_manager and self.page:
+            # import asyncio # Removed
             
             # Funzione wrapper per gestire chiamate asincrone in modo sicuro
-            def call_async_safely(coro):
-                try:
-                    loop = asyncio.get_event_loop()
-                except RuntimeError:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                
-                if not loop.is_running():
-                    return loop.run_until_complete(coro)
-                else:
-                    return asyncio.create_task(coro)
+            # This local helper might be redundant if set_state is already robustly handling async calls
+            # Consider removing if direct asyncio.create_task(self.state_manager.set_state(...)) is sufficient
+            # def call_async_safely(coro): # Removed call_async_safely
+            #     try:
+            #         loop = asyncio.get_event_loop()
+            #     except RuntimeError: # pragma: no cover
+            #         loop = asyncio.new_event_loop()
+            #         asyncio.set_event_loop(loop)
+            #     
+            #     if not loop.is_running(): # pragma: no cover
+            #         return loop.run_until_complete(coro)
+            #     else: # pragma: no cover
+            #         return asyncio.create_task(coro) # Ensure it\'s a task
             
             # Aggiorna lo stato con la nuova unità di misura
-            call_async_safely(self.state_manager.set_state("unit", unit_code))
-            logging.info(f"State updated with unit: {unit_code}")
+            # Directly call set_state, which should handle notifying observers.
+            # The WeatherView will observe the "unit" state change and update the UI.
+            # asyncio.create_task(self.state_manager.set_state("unit", unit_code)) # Removed
+            logging.info(f"DropdownMeasurement: Queuing state update for unit: {unit_code} via page.run_task")
+            self.page.run_task(self.state_manager.set_state, "unit", unit_code)
+            # logging.info(f"State \'unit\' set to: {unit_code}") # Old log message
+        elif not self.page:
+            logging.warning("DropdownMeasurement: self.page is not available, cannot run task for set_state.")
+        elif not self.state_manager:
+            logging.warning("DropdownMeasurement: self.state_manager is not available, cannot set state.")
 
     def handle_theme_change(self, event_data=None):
         """Handle theme change events by updating the dropdown appearance"""

@@ -4,6 +4,7 @@ Handles the display of weather information.
 """
 
 import flet as ft
+import logging # Add logging import
 from utils.config import LIGHT_THEME, DARK_THEME
 
 from services.api_service import ApiService
@@ -40,6 +41,7 @@ class WeatherView:
         if state_manager:
             state_manager.register_observer("theme_event", self.handle_theme_change)
             state_manager.register_observer("language_event", self.handle_language_change)
+            state_manager.register_observer("unit", self.handle_unit_system_change) # Register observer for unit changes
 
         self.info_container = ft.Container(content=ft.Text("Caricamento...", color=self.text_color)) # Apply initial text color
         self.hourly_container = ft.Container()
@@ -85,15 +87,45 @@ class WeatherView:
 
     def handle_language_change(self, event_data=None):
         """Aggiorna i contenuti della UI quando cambia la lingua."""
-        # Forza il rebuild dei componenti principali con la nuova lingua
-        if self.current_city:
-            # Recupera la lingua e l'unità correnti dallo state_manager
+        if self.current_city or (self.current_lat is not None and self.current_lon is not None):
             state_manager = self.page.session.get('state_manager')
             language = state_manager.get_state('language') if state_manager else 'en'
             unit = state_manager.get_state('unit') if state_manager else 'metric'
-            # Aggiorna la UI principale
-            import asyncio
-            asyncio.create_task(self.update_by_city(self.current_city, language, unit))
+            # import asyncio # No longer needed here
+            if self.current_city:
+                self.page.run_task(self.update_by_city, self.current_city, language, unit)
+            elif self.current_lat is not None and self.current_lon is not None:
+                self.page.run_task(self.update_by_coordinates, self.current_lat, self.current_lon, language, unit)
+
+    async def handle_unit_system_change(self, new_unit_system: str):
+        """Handles unit system change events by re-fetching data and updating the UI."""
+        state_manager = self.page.session.get('state_manager')
+        if not state_manager:
+            return
+
+        language = state_manager.get_state('language') or 'en'
+        # Get current location context from state_manager if possible, otherwise use WeatherView's last known
+        using_location = state_manager.get_state('using_location')
+        current_lat_from_state = state_manager.get_state('current_lat')
+        current_lon_from_state = state_manager.get_state('current_lon')
+        current_city_from_state = state_manager.get_state('city')
+
+        # import asyncio # No longer needed here
+        if using_location and current_lat_from_state is not None and current_lon_from_state is not None:
+            self.page.run_task(self.update_by_coordinates, current_lat_from_state, current_lon_from_state, language, new_unit_system)
+        elif current_city_from_state:
+            self.page.run_task(self.update_by_city, current_city_from_state, language, new_unit_system)
+        # Fallback to WeatherView's internally stored context if state manager doesn't have fresh info
+        elif self.current_city:
+            self.page.run_task(self.update_by_city, self.current_city, language, new_unit_system)
+        elif self.current_lat is not None and self.current_lon is not None:
+            self.page.run_task(self.update_by_coordinates, self.current_lat, self.current_lon, language, new_unit_system)
+        else:
+            # If no location context at all, we might not be able to update.
+            # This could happen if unit is changed before any location is set.
+            # Consider fetching with a default city if this case is problematic.
+            logging.warning("Unit system changed, but no location context (city/coords) available in WeatherView or StateManager to refresh data.")
+
 
     async def update_by_city(self, city: str, language: str, unit: str) -> None:
         """Frontend: Triggers backend to fetch weather by city, then updates UI"""

@@ -111,3 +111,4 @@ class SearchBar:
     def get_autocomplete_only(self) -> ft.AutoComplete:
         """Restituisce solo il componente AutoComplete senza la toolbox"""
         return self.autocomplete
+    

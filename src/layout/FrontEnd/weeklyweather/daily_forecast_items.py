@@ -7,6 +7,7 @@ class DailyForecastItems:
     """
     An item displaying daily forecast information.
     """
+    
     def __init__(self, day: str, icon_code: str, temp_min: int, temp_max: int, text_color: str, page: ft.Page = None):
         self.day = day
         self.icon_code = icon_code
@@ -25,9 +26,7 @@ class DailyForecastItems:
                 'value': 18,
             },
             breakpoints=[600, 900, 1200, 1600]
-        )
-        # Registra un callback per l'aggiornamento delle dimensioni
-        self.text_handler.add_observer(self.update_text_sizes)
+        )        
 
         if page and hasattr(page, 'session') and page.session.get('state_manager'):
             self._state_manager = page.session.get('state_manager')
@@ -80,23 +79,6 @@ class DailyForecastItems:
         
         self._update_text_elements() # Initial population of text and styles
 
-    def update_text_sizes(self):
-        """Aggiorna le dimensioni dei controlli di testo quando cambia la dimensione della finestra."""
-        # Aggiorna le dimensioni dei testi
-        self.day_text.size = self.text_handler.get_size('value')
-        self.temp_span_min.style.size = self.text_handler.get_size('value')
-        self.temp_span_separator.style.size = self.text_handler.get_size('value')
-        self.temp_span_max.style.size = self.text_handler.get_size('value')
-        
-        # Aggiorna anche l'icona meteo se esiste
-        if hasattr(self, 'weather_icon'):
-            self.weather_icon.width = self.text_handler.get_size('icon')
-            self.weather_icon.height = self.text_handler.get_size('icon')
-        
-        # Forza l'aggiornamento dei controlli
-        if self.page:
-            self.page.update()
-
     def _determine_text_color(self):
         if self.page:
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
@@ -119,7 +101,7 @@ class DailyForecastItems:
         self.day_text.color = self.text_color
 
         # Update temperature with units
-        unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system, self.language)
+        unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system)
         self.temp_span_min.text = f"{self.temp_min}{unit_symbol}"
         self.temp_span_max.text = f"{self.temp_max}{unit_symbol}"
         
@@ -127,30 +109,31 @@ class DailyForecastItems:
         self.temp_span_separator.style.color = self.text_color
 
         # Update sizes (in case of resize before this update)
-        self.update_text_sizes()
+        self.day_text.size = self.text_handler.get_size('value')
+        self.temp_span_min.style.size = self.text_handler.get_size('value')
+        self.temp_span_separator.style.size = self.text_handler.get_size('value')
+        self.temp_span_max.style.size = self.text_handler.get_size('value')
+        
+        if hasattr(self.day_text, 'page') and self.day_text.page:
+            self.day_text.update()
+        if hasattr(self.temperature_text, 'page') and self.temperature_text.page:
+            self.temperature_text.update()
 
     def _handle_state_change(self, event_data=None):
         """Handles language, unit, or theme change events."""
         self._update_text_elements()
-        
+
     def cleanup(self):
         """Unregister observers to prevent memory leaks."""
         if self._state_manager:
             self._state_manager.unregister_observer("language_event", self._handle_state_change)
             self._state_manager.unregister_observer("unit_event", self._handle_state_change)
             self._state_manager.unregister_observer("theme_event", self._handle_state_change)
-        # Rimuovi anche l'observer dal text_handler
-        if hasattr(self, 'text_handler'):
-            self.text_handler.remove_observer(self.update_text_sizes)
-    
+        # print(f"DailyForecastItem for {self.day} cleaned up") # For debugging
+
     def build(self) -> ft.Container:
-        # Memorizza l'immagine come attributo di istanza per poterla aggiornare
-        self.weather_icon = ft.Image(
-            src=f"https://openweathermap.org/img/wn/{self.icon_code}@4x.png",
-            width=self.text_handler.get_size('icon'), 
-            height=self.text_handler.get_size('icon'),
-        )
-        
+        # ... existing build method ...
+        # Ensure day_text and temperature_text are used from self
         return ft.Container(
             content=ft.Row(
                 controls=[
@@ -159,8 +142,12 @@ class DailyForecastItems:
                         alignment=ft.alignment.center_left
                     ),
                     ft.Container(
-                        content=self.weather_icon,
-                        # Rimuove la larghezza fissa per adattarsi dinamicamente
+                        content=ft.Image(
+                            src=f"https://openweathermap.org/img/wn/{self.icon_code}@4x.png",
+                            width=self.text_handler.get_size('icon'), 
+                            height=self.text_handler.get_size('icon'),
+                        ),
+                        width=100,
                         alignment=ft.alignment.center,
                     ),
                     ft.Container(

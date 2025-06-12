@@ -45,7 +45,7 @@ class TemperatureChart:
 
         self.unit_symbol = "°" # Default
         if self.translation_service:
-            self.unit_symbol = self.translation_service.get_unit_symbol("temperature", self.unit_system, self.language)
+            self.unit_symbol = self.translation_service.get_unit_symbol("temperature", self.unit_system)
 
         max_text_str = "Max"
         min_text_str = "Min"

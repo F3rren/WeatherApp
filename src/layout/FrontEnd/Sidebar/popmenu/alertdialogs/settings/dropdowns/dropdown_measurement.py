@@ -1,9 +1,9 @@
-﻿# filepath: c:\Users\Utente\Desktop\Progetti\Python\MeteoApp\src\layout\frontend\sidebar\popmenu\alertdialogs\settings\dropdowns\dropdown_measurement.py
-import flet as ft
+﻿import flet as ft
 import logging
 from services.api_service import ApiService
-from utils.config import MEASUREMENT_UNITS, LIGHT_THEME, DARK_THEME
+from utils.config import LIGHT_THEME, DARK_THEME, UNIT_SYSTEMS, DEFAULT_LANGUAGE # Added DEFAULT_LANGUAGE
 from components.responsive_text_handler import ResponsiveTextHandler
+from services.translation_service import TranslationService # Added TranslationService
 
 class DropdownMeasurement:
 
@@ -13,9 +13,9 @@ class DropdownMeasurement:
         self.page = page
         self.dropdown = None
         # Sistemi di misura disponibili
-        self.units = MEASUREMENT_UNITS
-        # Mappiamo i nomi ai codici per l'API
-        self.unit_labels = {unit["code"]: unit["name"] for unit in MEASUREMENT_UNITS}
+        self.units = UNIT_SYSTEMS
+        # Mappiamo i codici dei sistemi di misura alle loro chiavi di traduzione per i nomi
+        self.unit_name_keys = {code: details["name_key"] for code, details in UNIT_SYSTEMS.items()} # Corrected this line
         self.api = ApiService()  # Assuming ApiService is defined elsewhere
 
         # Initialize ResponsiveTextHandler
@@ -47,21 +47,24 @@ class DropdownMeasurement:
 
     def get_options(self, theme=None):
         # Accept theme so we can set the correct color for option content
+        current_language = DEFAULT_LANGUAGE
+        if self.state_manager:
+            current_language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
+
         if theme is None:
             is_dark = False
             if self.state_manager and hasattr(self.state_manager, 'page'):
                 is_dark = self.state_manager.page.theme_mode == ft.ThemeMode.DARK
             theme = DARK_THEME if is_dark else LIGHT_THEME
         options = []
-        for unit in self.units:
-            code = unit["code"]
-            name = unit["name"]
+        for unit_system_code, name_key in self.unit_name_keys.items():
+            translated_name = TranslationService.get_text(name_key, current_language)
             options.append(
                 ft.dropdown.Option(
-                    key=code,
-                    text=name,
+                    key=unit_system_code,
+                    text=translated_name, # Use translated name for accessibility/search
                     content=ft.Text(
-                        value=name,
+                        value=translated_name,
                         color=theme["TEXT"]
                     ),
                 )
@@ -69,6 +72,9 @@ class DropdownMeasurement:
         return options
     
     def createDropdown(self):
+        current_language = DEFAULT_LANGUAGE
+        if self.state_manager:
+            current_language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
         
         def dropdown_changed(e):
             unit_code = e.control.value
@@ -89,9 +95,11 @@ class DropdownMeasurement:
             is_dark = self.state_manager.page.theme_mode == ft.ThemeMode.DARK
         theme = DARK_THEME if is_dark else LIGHT_THEME
 
+        translated_hint_text = TranslationService.get_text("select_measurement_hint", current_language)
+
         dropdown = ft.Dropdown(
             autofocus=True,
-            hint_text="Select measurement system",
+            hint_text=translated_hint_text, # Use translated hint text
             options=self.get_options(theme),
             on_change=dropdown_changed,
             # expand=True, # Removed to allow custom width
@@ -143,6 +151,7 @@ class DropdownMeasurement:
     def handle_theme_change(self, event_data=None):
         """Handle theme change events by updating the dropdown appearance"""
         if self.dropdown and self.state_manager:
+            current_language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
             is_dark = False
             if event_data and "is_dark" in event_data:
                 is_dark = event_data["is_dark"]
@@ -153,6 +162,10 @@ class DropdownMeasurement:
             self.dropdown.focused_border_color = theme.get("ACCENT", ft.Colors.BLUE)
             self.dropdown.bgcolor = theme.get("CARD_BACKGROUND", ft.Colors.WHITE)
             self.dropdown.color = theme.get("TEXT", ft.Colors.BLACK)
+            
+            translated_hint_text = TranslationService.get_text("select_measurement_hint", current_language)
+            self.dropdown.hint_text = translated_hint_text
+
             # Imposta label_style e hint_style come nel dropdown lingua
             if self.dropdown.hint_style is None:
                 self.dropdown.hint_style = ft.TextStyle()

@@ -6,7 +6,7 @@ Centralizes all configuration values and settings.
 # Default application settings
 DEFAULT_CITY = "Milano"
 DEFAULT_LANGUAGE = "en"
-DEFAULT_UNIT_SYSTEM = "metric"  # "metric", "imperial", or "standard"
+DEFAULT_UNIT_SYSTEM = "standard"  # "metric", "imperial", or "standard"
 DEFAULT_THEME_MODE = "light"  # "light" or "dark"
 
 # Theme colors
@@ -69,9 +69,26 @@ GEO_UPDATE_INTERVAL = 5  # seconds
 # UI settings
 UI_REFRESH_RATE = 5  # seconds
 
-MEASUREMENT_UNITS = [
-    {"code": "metric", "name": "Metric (°C, m/s)"},
-    {"code": "imperial", "name": "Imperial (°F, mph)"},
-    {"code": "standard", "name": "Standard (K, knt/h)"}
-]
+# Defines the available unit systems and their specific units.
+# 'name_key' is used for fetching the translated name of the unit system.
+UNIT_SYSTEMS = {
+    "metric": {
+        "name_key": "unit_metric",
+        "temperature": "°C",
+        "wind": "m/s",
+        "pressure": "hPa"
+    },
+    "imperial": {
+        "name_key": "unit_imperial",
+        "temperature": "°F",
+        "wind": "mph",
+        "pressure": "hPa"  # OpenWeatherMap typically provides pressure in hPa for all systems
+    },
+    "standard": {
+        "name_key": "unit_standard",
+        "temperature": "°K",
+        "wind": "m/s",      # API provides wind speed in m/s for the standard system
+        "pressure": "hPa"
+    }
+}
 

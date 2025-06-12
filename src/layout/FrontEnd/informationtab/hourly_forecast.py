@@ -88,7 +88,7 @@ class HourlyForecastDisplay:
 
                 # Update temperature text with unit
                 temp_value = round(original_data["main"]["temp"])
-                unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system, self.language)
+                unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system)
                 temp_text_control.value = f"{temp_value}{unit_symbol}"
                 temp_text_control.size = self.text_handler.get_size('value')
                 temp_text_control.color = self.text_color
@@ -104,7 +104,7 @@ class HourlyForecastDisplay:
                 time_str = datetime.strptime(item_data["dt_txt"], "%Y-%m-%d %H:%M:%S").strftime("%H:%M")
                 icon_code = item_data["weather"][0]["icon"]
                 temp_value = round(item_data["main"]["temp"])
-                unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system, self.language)
+                unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system)
 
                 icon = ft.Image(
                     src=f"https://openweathermap.org/img/wn/{icon_code}@2x.png",

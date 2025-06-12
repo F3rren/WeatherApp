@@ -106,9 +106,8 @@ class MainWeatherInfo:
             return
 
         current_unit = state_manager.get_state('unit')
-        current_language = state_manager.get_state('language')
         
-        unit_symbol = TranslationService.get_unit_symbol("temperature", current_unit, current_language)
+        unit_symbol = TranslationService.get_unit_symbol("temperature", current_unit)
         self.temperature_text.value = f"{self.temperature}{unit_symbol}"
         if hasattr(self.temperature_text, 'update') and self.temperature_text.page:
             self.temperature_text.update()

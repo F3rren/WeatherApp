@@ -1,6 +1,5 @@
 import flet as ft
 from services.translation_service import TranslationService
-from state_manager import StateManager
 from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME, DEFAULT_UNIT_SYSTEM # Added DEFAULT_UNIT_SYSTEM
 from components.responsive_text_handler import ResponsiveTextHandler
 
@@ -29,27 +28,29 @@ class DailyForecastItems:
             breakpoints=[600, 900, 1200, 1600]
         )        
 
-        if page and hasattr(page, 'session') and page.session.get('state_manager'):
-            self._state_manager = page.session.get('state_manager')
-            self.language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
-            # Corrected: Use 'unit' for unit system state key
-            self.unit_system = self._state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
-            self.text_color = self._determine_text_color() # Initialize text_color based on current theme
+        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+            self._state_manager = self.page.session.get('state_manager')
+            self.unit_system = self._state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM
+            self.text_color = self._determine_text_color()
 
-            self._state_manager.register_observer("language_event", self._handle_state_change)
-            # Corrected: Use 'unit' for unit system observer key
-            self._state_manager.register_observer("unit", self._handle_state_change)
             self._state_manager.register_observer("theme_event", self._handle_state_change)
+            self._state_manager.register_observer("unit_event", self._handle_state_change)   # Added
+            
+            original_resize_handler = self.page.on_resize
+            
+            def combined_resize_handler(e):
+                self.text_handler._handle_resize(e)
+                self._update_all_item_visuals() # Update visuals on resize
+                if original_resize_handler:
+                    original_resize_handler(e)
+            self.page.on_resize = combined_resize_handler
         else:
-            self.language = DEFAULT_LANGUAGE
             self.unit_system = DEFAULT_UNIT_SYSTEM
-            self.text_color = self.initial_text_color # Fallback
+            self.text_color = self.initial_text_color
 
         # Create Text controls (will be updated by _update_text_elements)
-        self.day_text = ft.Text(
-            size=self.text_handler.get_size('value'),
-            weight="bold",
-        )
+        self.day_text = ft.Text(size=self.text_handler.get_size('value'))
+        
         self.temp_span_min = ft.TextSpan(
             style=ft.TextStyle(
                 size=self.text_handler.get_size('value'),
@@ -58,7 +59,7 @@ class DailyForecastItems:
             )
         )
         self.temp_span_separator = ft.TextSpan(
-            " / ",
+            " ",
             ft.TextStyle(
                 size=self.text_handler.get_size('value'),
                 weight=ft.FontWeight.BOLD,
@@ -95,8 +96,6 @@ class DailyForecastItems:
         if self._state_manager:
             self.language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
             self.unit_system = self._state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
-        
-        # Update text color based on current theme
         self.text_color = self._determine_text_color()
 
         # Translate day
@@ -126,15 +125,6 @@ class DailyForecastItems:
     def _handle_state_change(self, event_data=None):
         """Handles language, unit, or theme change events."""
         self._update_text_elements()
-
-    def cleanup(self):
-        """Unregister observers to prevent memory leaks."""
-        if self._state_manager:
-            self._state_manager.unregister_observer("language_event", self._handle_state_change)
-            # Corrected: Use 'unit' for unit system observer key
-            self._state_manager.unregister_observer("unit", self._handle_state_change)
-            self._state_manager.unregister_observer("theme_event", self._handle_state_change)
-        # print(f"DailyForecastItem for {self.day} cleaned up") # For debugging
 
     def build(self) -> ft.Container:
         # ... existing build method ...

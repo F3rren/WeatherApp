@@ -32,12 +32,14 @@ class HourlyForecastDisplay:
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
             self.language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
-            self.unit_system = self._state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM
+            # Corrected: Use 'unit' for unit system state key
+            self.unit_system = self._state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
             self.text_color = self._determine_text_color()
 
             self._state_manager.register_observer("theme_event", self._handle_state_change)
             self._state_manager.register_observer("language_event", self._handle_state_change) # Added
-            self._state_manager.register_observer("unit_event", self._handle_state_change)   # Added
+            # Corrected: Use 'unit' for unit system observer key
+            self._state_manager.register_observer("unit", self._handle_state_change)   # Added
             
             original_resize_handler = self.page.on_resize
             
@@ -63,13 +65,16 @@ class HourlyForecastDisplay:
         """Handles theme, language, or unit changes."""
         if self._state_manager:
             self.language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
-            self.unit_system = self._state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM
+            # Corrected: Use 'unit' for unit system state key
+            self.unit_system = self._state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
         self.text_color = self._determine_text_color()
         self._update_all_item_visuals()
 
     def _update_all_item_visuals(self):
         """Updates text, color, and size for all items based on current state."""
         for item_container in self.built_item_containers:
+            # Update language and unit system from state manager, just in case
+
             if hasattr(item_container, "original_data"):
                 original_data = item_container.original_data
                 # item_container.content is the ft.Column
@@ -86,7 +91,10 @@ class HourlyForecastDisplay:
                 time_text_control.size = self.text_handler.get_size('title')
                 time_text_control.color = self.text_color
 
-                # Update temperature text with unit
+                self.unit_system = self._state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
+                print(f"Updating item with unit system: {self.unit_system}")
+
+
                 temp_value = round(original_data["main"]["temp"])
                 unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system)
                 temp_text_control.value = f"{temp_value}{unit_symbol}"
@@ -104,6 +112,7 @@ class HourlyForecastDisplay:
                 time_str = datetime.strptime(item_data["dt_txt"], "%Y-%m-%d %H:%M:%S").strftime("%H:%M")
                 icon_code = item_data["weather"][0]["icon"]
                 temp_value = round(item_data["main"]["temp"])
+
                 unit_symbol = TranslationService.get_unit_symbol("temperature", self.unit_system)
 
                 icon = ft.Image(
@@ -146,5 +155,4 @@ class HourlyForecastDisplay:
             
             expand=True,
         )
-    
-    
+

@@ -32,7 +32,8 @@ class TemperatureChart:
 
         if self.state_manager:
             self.language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
-            self.unit_system = self.state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM
+            # Corrected: Use 'unit' for unit system state key
+            self.unit_system = self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
             current_theme_mode = self.state_manager.get_state('theme_mode') or self.page.theme_mode
         else:
             self.language = DEFAULT_LANGUAGE
@@ -75,7 +76,8 @@ class TemperatureChart:
             # self.state_manager.register_observer("theme_event", self.handle_theme_change) 
             self.state_manager.register_observer("theme_event", self.handle_theme_change) # Renamed to avoid conflict
             self.state_manager.register_observer("language_event", self._handle_state_change)
-            self.state_manager.register_observer("unit_system_event", self._handle_state_change)
+            # Corrected: Use 'unit' for unit system observer key
+            self.state_manager.register_observer("unit", self._handle_state_change)
 
 
     def _update_y_axis_title_text(self):
@@ -122,7 +124,8 @@ class TemperatureChart:
             return
 
         new_language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
-        new_unit_system = self.state_manager.get_state('unit_system') or DEFAULT_UNIT_SYSTEM
+        # Corrected: Use 'unit' for unit system state key
+        new_unit_system = self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
         language_changed = self.language != new_language
         unit_system_changed = self.unit_system != new_unit_system
         

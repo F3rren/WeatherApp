@@ -32,14 +32,11 @@ class SidebarManager(ft.Container):
         self.theme_toggle_service = theme_toggle_service
         self.update_weather_callback = update_weather_callback
 
-        # --- REMOVE ALL UI REBUILD/OBSERVER LOGIC ---
-        # Instead, create PopMenu, SearchBar, Filter directly as in other frontend components
         from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
         from layout.frontend.sidebar.searchbar import SearchBar
         from layout.frontend.sidebar.filter.filter import Filter
         from services.translation_service import TranslationService
         from components.responsive_text_handler import ResponsiveTextHandler
-        # Get theme and language
         translation_service = TranslationService()
         cities = []
         try:
@@ -49,7 +46,6 @@ class SidebarManager(ft.Container):
         except Exception:
             pass
 
-        # Setup responsive text handler for sidebar
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes={'title': 20, 'subtitle': 16, 'body': 14, 'container_text': 14, 'spacing': 10},
@@ -68,7 +64,6 @@ class SidebarManager(ft.Container):
                 return asyncio.create_task(res)
             return res
 
-        # Create components directly with required args
         self.search_bar = SearchBar(
             page=self.page,
             text_color=text_color,
@@ -101,18 +96,36 @@ class SidebarManager(ft.Container):
             text_handler_get_size=get_size_func
         )
 
-        # Compose the sidebar layout
-        self.content = ft.Container(
-            content=ft.ResponsiveRow(
-                controls=[
-                    ft.Container(content=self.pop_menu.build(self.page), col={"xs": 1, "md": 1}),
-                    ft.Container(content=self.search_bar.build(), col={"xs": 10, "md": 10}),
-                    ft.Container(content=self.filter.build(self.page), col={"xs": 2, "md": 1}),
-                ],
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=10,
-                run_spacing=10,
-            )
-        )
+        # --- MODERN SIDEBAR LAYOUT ---
+        self.border_radius = 22
+        self.shadow = ft.BoxShadow(blur_radius=18, color="#00000033")
 
-    # Remove all other methods related to UI rebuild, observer registration, etc.
+        # Row con popmenu a sinistra, searchbar al centro (espansa), filter a destra
+        self.content = ft.Column(
+            [
+                ft.Container(
+                    content=ft.Row(
+                        [
+                            ft.Container(
+                                content=self.pop_menu.build(self.page, icon_size=32, text_size=16),  # popmenu sinistra, icone e testo uguali al filter
+                                margin=ft.margin.only(right=8)
+                            ),
+                            ft.Container(
+                                content=self.search_bar.build(),
+                                expand=True,
+                                margin=ft.margin.only(right=8, left=8)
+                            ),
+                            ft.Container(
+                                content=self.filter.build(self.page, icon_size=32, text_size=16),  # filter destra, icone e testo uguali
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=0,
+                    ),
+                    margin=ft.margin.only(bottom=8)
+                ),
+            ],
+            spacing=0,
+            expand=False,
+        )

@@ -178,7 +178,7 @@ class PopMenu:
         else:
             print(f"Error: Dialog for {type(alert_instance).__name__} could not be opened (no open_dialog method).")
 
-    def createPopMenu(self, page=None):
+    def createPopMenu(self, page=None, icon_size=None, text_size=None):
         if page is None: 
             page = self.page
         if not page:
@@ -187,16 +187,24 @@ class PopMenu:
 
         if not self.text_handler_get_size or not self.translation_service:
              print("Error: PopMenu not fully initialized (text_handler or translation_service missing).")
-             # Return a placeholder or raise an error
              return ft.Container(ft.Text("Error: PopMenu init incomplete"))
 
-        # Ensure elements are initialized by _update_internal_elements if called before __init__ completes fully
-        # This should ideally be handled by ensuring createPopMenu is called after full init.
-        # For safety, call it again, or rely on __init__ having called it.
         if not all([self.meteo_item_text, self.map_item_text, self.settings_item_text, self.popup_menu_button_icon]):
-            self._update_internal_elements() # Ensure elements are created
+            self._update_internal_elements()
 
-        icon_item_size = self.text_handler_get_size('icon_small') if self.text_handler_get_size else 18 # Smaller icons for items
+        # Usa i parametri se forniti, altrimenti fallback
+        icon_item_size = icon_size if icon_size else (self.text_handler_get_size('icon_small') if self.text_handler_get_size else 18)
+        # Usa la stessa logica di Filter per la grandezza del testo
+        current_get_size_func = self.text_handler_get_size if self.text_handler_get_size else (lambda x: 14)
+        text_item_size = text_size if text_size else current_get_size_func('button')
+
+        # Aggiorna la dimensione dei testi delle scelte
+        if hasattr(self.meteo_item_text, 'size'):
+            self.meteo_item_text.size = text_item_size
+        if hasattr(self.map_item_text, 'size'):
+            self.map_item_text.size = text_item_size
+        if hasattr(self.settings_item_text, 'size'):
+            self.settings_item_text.size = text_item_size
 
         self.popup_menu_button = ft.PopupMenuButton(
             content=self.popup_menu_button_icon, # Use the stored icon instance
@@ -204,23 +212,23 @@ class PopMenu:
                 ft.PopupMenuItem(
                     content=ft.Row([
                         ft.Icon(ft.Icons.SUNNY, color="#FF8C00", size=icon_item_size), 
-                        self.meteo_item_text,
+                        ft.Text(self.meteo_item_text.value, size=text_item_size, color=self.meteo_item_text.color),
                     ]),
                     on_click=lambda _, al=self.weather_alert: self._open_alert_dialog(al),
                 ),
                 ft.PopupMenuItem(
                     content=ft.Row([
                         ft.Icon(ft.Icons.MAP_OUTLINED, color="#0000FF", size=icon_item_size), 
-                        self.map_item_text,
+                        ft.Text(self.map_item_text.value, size=text_item_size, color=self.map_item_text.color),
                     ]),
                     on_click=lambda _, al=self.map_alert: self._open_alert_dialog(al),
                 ),
                 ft.PopupMenuItem(
                      content=ft.Row([
                          ft.Icon(ft.Icons.SETTINGS, color="#808080", size=icon_item_size), 
-                         self.settings_item_text,
+                         ft.Text(self.settings_item_text.value, size=text_item_size, color=self.settings_item_text.color),
                      ]),
-                    on_click=lambda _, al=self.setting_alert: self._open_alert_dialog(al),
+                     on_click=lambda _, al=self.setting_alert: self._open_alert_dialog(al),
                 ),
             ]
         )
@@ -257,11 +265,20 @@ class PopMenu:
         if hasattr(self, 'setting_alert') and hasattr(self.setting_alert, 'cleanup'):
             self.setting_alert.cleanup()
 
-    def build(self, page=None): # build is not standard Flet for a non-Control class
+    def build(self, page=None, icon_size=None, text_size=None): # build is not standard Flet for a non-Control class
         # This class is not a Flet Control. It provides a Flet control via createPopMenu.
         # If it were to be used as a control directly, it should inherit ft.UserControl.
         # For now, Sidebar will call createPopMenu.
         # If build() is intended to be called, it should return the main control.
         if not self.popup_menu_button:
-             self.createPopMenu(page if page else self.page) # Ensure it's created
+            self.createPopMenu(page if page else self.page, icon_size=icon_size, text_size=text_size)
+        else:
+            # Aggiorna la dimensione del testo delle scelte anche se già creato
+            if text_size:
+                if hasattr(self.meteo_item_text, 'size'):
+                    self.meteo_item_text.size = text_size
+                if hasattr(self.map_item_text, 'size'):
+                    self.map_item_text.size = text_size
+                if hasattr(self.settings_item_text, 'size'):
+                    self.settings_item_text.size = text_size
         return self.popup_menu_button

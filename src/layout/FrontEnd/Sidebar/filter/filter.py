@@ -181,7 +181,31 @@ class Filter:
         else:
             logging.error(f"Error: Dialog for {type(alert_instance).__name__} could not be created or shown.")
 
-    def _build_popup_menu_items(self):
+    def createPopMenu(self, page=None, icon_size=None, text_size=None):
+        if page is None: 
+            page = self.page # Use self.page if available
+        if not page: # Ensure we have a page context
+            logging.error("Error: Page context is required to create PopMenu and its dialogs.")
+            return ft.Container(ft.Text(self._get_translation("error_page_context_missing")))
+
+        current_get_size_func = self.passed_text_handler_get_size if self.passed_text_handler_get_size else (self.text_handler.get_size if self.text_handler else lambda x: 14)
+        icon_size_val = icon_size if icon_size else current_get_size_func('icon')
+        button_size_val = text_size if text_size else current_get_size_func('button')
+
+        self.popup_menu_button_icon = ft.Icon(
+            ft.Icons.MORE_VERT, 
+            color=self.text_color, 
+            size=icon_size_val
+        )
+
+        self.popup_menu_button = ft.PopupMenuButton(
+            content=self.popup_menu_button_icon, 
+            icon_size=icon_size_val, 
+            items=self._build_popup_menu_items(button_size_val)
+        )
+        return self.popup_menu_button
+
+    def _build_popup_menu_items(self, button_size_val):
         """Helper to build/rebuild PopupMenuItem list with current translations and styles."""
         current_get_size_func = self.passed_text_handler_get_size if self.passed_text_handler_get_size else (self.text_handler.get_size if self.text_handler else lambda x: 14)
         button_size_val = current_get_size_func('button')
@@ -227,47 +251,6 @@ class Filter:
             ),
         ]
 
-    def createPopMenu(self, page=None):
-        if page is None: 
-            page = self.page # Use self.page if available
-        
-        if not page: # Ensure we have a page context
-            logging.error("Error: Page context is required to create PopMenu and its dialogs.")
-            return ft.Container(ft.Text(self._get_translation("error_page_context_missing")))
-
-        # Create text controls with responsive sizes
-        # These should use self.text_color and the appropriate get_size function
-        current_get_size_func = self.passed_text_handler_get_size if self.passed_text_handler_get_size else (self.text_handler.get_size if self.text_handler else lambda x: 14)
-        icon_size_val = current_get_size_func('icon')
-        # button_size_val = current_get_size_func('button') # Text items created in _build_popup_menu_items
-
-        self.popup_menu_button_icon = ft.Icon(
-            ft.Icons.MORE_VERT, 
-            color=self.text_color, 
-            size=icon_size_val
-        )
-        
-        # Text items are now created dynamically by _build_popup_menu_items
-        # self.meteo_item_text = ft.Text(...)
-        # self.map_item_text = ft.Text(...)
-        # self.settings_item_text = ft.Text(...)
-        
-        # Register controls if text_handler is available (part of eventual removal)
-        if self.text_handler:
-            self.text_controls[self.popup_menu_button_icon] = 'icon'
-            # Text controls for items are dynamic, so direct registration here is less relevant
-            # self.text_controls[self.meteo_item_text] = 'button'
-            # self.text_controls[self.map_item_text] = 'button'
-            # self.text_controls[self.settings_item_text] = 'button'
-
-        self.popup_menu_button = ft.PopupMenuButton(
-            content=self.popup_menu_button_icon, 
-            icon_size=icon_size_val, 
-            items=self._build_popup_menu_items() # Use helper to build items
-        )
-        
-        return self.popup_menu_button
-    
     def update_location_toggle_value(self, value):
         """
         Aggiorna il valore interno dello stato del toggle della localizzazione.
@@ -289,9 +272,9 @@ class Filter:
         if hasattr(self, 'text_handler') and self.text_handler:
             self.text_handler.remove_observer(self.update_text_controls)
     
-    def build(self, page=None):
+    def build(self, page=None, icon_size=None, text_size=None):
         return ft.Container(
             content=ft.Column([
-                self.createPopMenu(page)
+                self.createPopMenu(page, icon_size=icon_size, text_size=text_size)
             ])
         )

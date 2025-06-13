@@ -68,12 +68,12 @@ class SearchBar:
             ft.AutoCompleteSuggestion(key=city, value=city)
             for city in self.cities
         ]
-        
         self.autocomplete = ft.AutoComplete(
             suggestions=suggestions,
             on_select=handle_select,
-            suggestions_max_height=300
-            # Removed text_size and color from constructor
+            suggestions_max_height=300,
+
+            # ...altri parametri...
         )
 
         initial_text_style = None
@@ -87,21 +87,21 @@ class SearchBar:
             elif color is not None:
                 initial_text_style = ft.TextStyle(color=color)
         
-        if initial_text_style: # Apply text_style after creation
+        if initial_text_style:
             self.autocomplete.text_style = initial_text_style
         
-        # Example for hint text styling, if you add a hint_text to AutoComplete:
-        # self.autocomplete.hint_text="Search..."
-        # hint_style_color = self._text_color.get("HINT", self._text_color.get("TEXT_SECONDARY"))
-        # if self._text_handler_get_size and hint_style_color:
-        #     self.autocomplete.hint_style = ft.TextStyle(
-        #         size=self._text_handler_get_size('body_small'), 
-        #         color=hint_style_color
-        #     )
-
+        # Searchbar con icona e stile moderno
+        search_row = ft.Row([
+            ft.Icon(ft.Icons.SEARCH, size=22, color="#888"),
+            ft.Container(self.autocomplete, expand=True, padding=ft.padding.only(left=0, right=0, top=0, bottom=0)),
+        ], alignment=ft.MainAxisAlignment.START, vertical_alignment=ft.CrossAxisAlignment.CENTER, spacing=8)
         styled_autocomplete = ft.Container(
-            content=self.autocomplete,
-            padding=ft.padding.all(8),
+            content=search_row,
+            padding=ft.padding.symmetric(horizontal=12, vertical=4),
+            border_radius=18,
+            bgcolor="#fafbfc",
+            border=ft.border.all(1, "#e0e0e0"),
+            shadow=ft.BoxShadow(blur_radius=8, color="#00000010"),
         )
         
         return ft.Column(

@@ -104,23 +104,21 @@ class MainWeatherInfo(ft.Container): # Changed inheritance
             return current_theme_config.get("TEXT", ft.Colors.BLACK)
         return LIGHT_THEME.get("TEXT", ft.Colors.BLACK) # Overall fallback
 
-    def _request_ui_rebuild(self, event_data=None): 
-        logger = logging.getLogger(__name__)
+    def _safe_update(self):
+        if getattr(self, "page", None) and getattr(self, "visible", True):
+            self.update()
+
+    def _request_ui_rebuild(self, event_data=None):
         if not self.page or not self.visible:
             return
-
         if self._state_manager:
             self._current_language = self._state_manager.get_state('language') or self._current_language
             self._current_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
-        
         self._current_text_color = self._determine_text_color_from_theme()
-        
         new_content = self._build_ui_elements()
-        if self.content != new_content: 
+        if self.content != new_content:
             self.content = new_content
-        
-        if self.page: # Ensure page exists before updating
-            self.update()
+        self._safe_update()
 
     def _get_formatted_temperature(self):
         """Formats temperature with the correct unit symbol."""

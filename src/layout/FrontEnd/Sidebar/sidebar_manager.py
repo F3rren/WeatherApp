@@ -59,13 +59,22 @@ class SidebarManager(ft.Container):
         language = self.state_manager.get_state("language") or "en"
         get_size_func = self.text_handler.get_size
 
+        def handle_city_selected(city):
+            language = self.state_manager.get_state("language") or "en"
+            unit = self.state_manager.get_state("unit") or "metric"
+            res = self.update_weather_callback(city, language, unit)
+            if hasattr(res, '__await__'):
+                import asyncio
+                return asyncio.create_task(res)
+            return res
+
         # Create components directly with required args
         self.search_bar = SearchBar(
             page=self.page,
             text_color=text_color,
             text_handler_get_size=get_size_func,
             cities=cities,
-            on_city_selected=self.update_weather_callback,
+            on_city_selected=handle_city_selected,
             language=language
         )
         self.pop_menu = PopMenu(

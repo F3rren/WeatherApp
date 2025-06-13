@@ -146,32 +146,24 @@ class HourlyForecastDisplay(ft.Container):
         self._text_color = self._determine_text_color_from_theme() # Update text color before rebuilding
         new_content = self._build_ui_elements()
         self.content = new_content
-        if self.page:
+        self._safe_update()
+
+    def _safe_update(self):
+        if getattr(self, "page", None) and getattr(self, "visible", True):
             self.update()
-            # RIMOSSO: nessuna chiamata a page.update() globale
 
     def _update_text_and_icon_sizes(self):
         """Updates sizes of text and icon elements within the content."""
-        if not self._ui_elements_built or not self.content or not isinstance(self.content, ft.Row):
+        if not self._ui_elements_built:
             return
+        for control, size_category in self.text_controls.items():
+            new_size = self.text_handler.get_size(size_category)
+            if hasattr(control, 'size'):
+                control.size = new_size
+            elif hasattr(control, 'style') and hasattr(control.style, 'size'):
+                control.style.size = new_size
+        self._safe_update()
 
-        for item_container in self.content.controls: # ft.Row -> list of ft.Container (items)
-            if isinstance(item_container, ft.Container) and isinstance(item_container.content, ft.Column):
-                item_column = item_container.content
-                for control in item_column.controls: # ft.Column -> list of ft.Image, ft.Text
-                    if hasattr(control, 'data') and isinstance(control.data, dict):
-                        category = control.data.get('category')
-                        control_type = control.data.get('type')
-                        if category:
-                            new_size = self.text_handler.get_size(category)
-                            if control_type == 'icon' and hasattr(control, 'width') and hasattr(control, 'height'):
-                                control.width = new_size
-                                control.height = new_size
-                            elif control_type == 'text' and hasattr(control, 'size'):
-                                control.size = new_size
-        if self.page:
-            self.update()
-            
     def _handle_language_or_unit_change(self, event_data=None):
         """Handles language or unit system changes."""
         if event_data is not None and not isinstance(event_data, dict):

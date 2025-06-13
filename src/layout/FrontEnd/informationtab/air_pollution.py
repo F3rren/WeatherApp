@@ -100,12 +100,11 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
         return LIGHT_THEME.get("TEXT", ft.Colors.BLACK) # Default if page or theme_mode not set
 
     async def _fetch_air_pollution_data(self):
-        """Fetches air pollution data using ApiService."""
+        """Fetches air pollution data using ApiService (async)."""
         if self._lat is None or self._lon is None:
             self._pollution_data = {}
             return
-        # ApiService.get_air_pollution now returns a processed dictionary
-        self._pollution_data = self._api_service.get_air_pollution(self._lat, self._lon) or {}
+        self._pollution_data = await self._api_service.get_air_pollution_async(self._lat, self._lon) or {}
 
     def _build_ui_elements(self):
         """Constructs the UI for air pollution data."""
@@ -271,14 +270,38 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
         if event_data is not None and not isinstance(event_data, dict):
             logging.warning(f"_handle_theme_change received unexpected event_data type: {type(event_data)}")
         self._current_text_color = self._determine_text_color_from_theme()
-        self._request_ui_rebuild()
+        if getattr(self, "page", None) and getattr(self, "visible", True):
+            self._request_ui_rebuild()
+            self._update_text_colors()
+
+    def _safe_update(self):
+        # Only update if the control is attached to the page and has a UID
+        if getattr(self, "page", None) and getattr(self, "visible", True) and getattr(self, "_Control__uid", None):
+            self.update()
+
+    def _update_text_colors(self):
+        """Recursively update color of all ft.Text elements in self.content to match current theme."""
+        def _apply_color(control):
+            if isinstance(control, ft.Text):
+                category = getattr(control, 'data', {}).get('category') if hasattr(control, 'data') else None
+                if category == 'aqi_value':
+                    aqi_val_for_color = self._pollution_data.get("aqi", 0)
+                    control.color = "#ffffff" if aqi_val_for_color > 2 else self._current_text_color
+                else:
+                    control.color = self._current_text_color
+            if hasattr(control, 'controls') and control.controls:
+                for child in control.controls:
+                    _apply_color(child)
+            elif hasattr(control, 'content') and control.content:
+                _apply_color(control.content)
+        if self.content:
+            _apply_color(self.content)
+        self._safe_update()
 
     def _update_text_sizes(self): # Renamed from _update_text_and_icon_sizes
-        """Updates sizes of all registered text elements based on ResponsiveTextHandler."""
+        """Updates sizes of all registered text elements based on ResponsiveTextHandler and updates their color."""
         if not self._ui_elements_built or not isinstance(self.content, ft.Column):
             return
-
-        # Helper to recursively find Text controls with 'data'
         def _apply_to_text_controls(control_tree_node):
             if isinstance(control_tree_node, ft.Text) and hasattr(control_tree_node, 'data') and isinstance(control_tree_node.data, dict):
                 category = control_tree_node.data.get('category')
@@ -287,20 +310,17 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
                     control_tree_node.size = new_size
                     # Update color too, respecting AQI value's special background logic
                     if category == 'aqi_value':
-                         # CHANGED: Access 'aqi' directly from self._pollution_data
-                         aqi_val_for_color = self._pollution_data.get("aqi", 0)
-                         control_tree_node.color = "#ffffff" if aqi_val_for_color > 2 else self._current_text_color
+                        aqi_val_for_color = self._pollution_data.get("aqi", 0)
+                        control_tree_node.color = "#ffffff" if aqi_val_for_color > 2 else self._current_text_color
                     else:
-                         control_tree_node.color = self._current_text_color
-            
+                        control_tree_node.color = self._current_text_color
             if hasattr(control_tree_node, 'controls') and control_tree_node.controls:
                 for child_control in control_tree_node.controls:
                     _apply_to_text_controls(child_control)
             elif hasattr(control_tree_node, 'content') and control_tree_node.content:
                 _apply_to_text_controls(control_tree_node.content)
-
         _apply_to_text_controls(self.content)
-        # self.update() # Update is called by _request_ui_rebuild
+        self._safe_update()
 
     def _combined_resize_handler(self, e):
         """Handles page resize events for this component."""
@@ -359,5 +379,10 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
             else:
                 # Fallback or log if page context not available for task
                 print(f"[AirPollutionDisplay] Page context not available for task on location update to ({lat}, {lon})")
+    
+    async def refresh(self):
+        """Forza il fetch e la ricostruzione della UI, anche se la posizione non cambia."""
+        if self.page:
+            await self._fetch_data_and_request_rebuild()
 
 

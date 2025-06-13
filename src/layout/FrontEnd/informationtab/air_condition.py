@@ -208,6 +208,10 @@ class AirConditionInfo(ft.Container):
             expand=True,
         )
 
+    def _safe_update(self):
+        if getattr(self, "page", None) and getattr(self, "visible", True):
+            self.update()
+
     def _request_ui_rebuild(self):
         """
         Rebuilds the UI content and updates the control.
@@ -215,9 +219,7 @@ class AirConditionInfo(ft.Container):
         self._text_color = self._determine_text_color_from_theme() # Update text color before rebuilding
         new_content = self._build_ui_elements()
         self.content = new_content
-        if self.page: # Ensure page update is called if component is on page
-            self.update()
-            self.page.update() 
+        self._safe_update()
 
     def _update_text_and_icon_sizes(self):
         if not self._ui_elements_initialized:
@@ -228,9 +230,7 @@ class AirConditionInfo(ft.Container):
                 control.size = new_size
             elif hasattr(control, 'style') and hasattr(control.style, 'size'): # For TextSpans
                 control.style.size = new_size
-        if self.page:
-            self.update()
-            # self.page.update()
+        self._safe_update()
 
     def _update_colors(self):
         if not self._ui_elements_initialized:

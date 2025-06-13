@@ -96,7 +96,7 @@ class MeteoApp:
         """
         self.page = page # Store page reference
         # Set page properties
-        page.title = "MeteoApp"
+        page.title = "MeteoOGGI - Il tuo meteo giornaliero"
         page.theme_mode = (ft.ThemeMode.LIGHT if DEFAULT_THEME_MODE == "light" else ft.ThemeMode.DARK) # MODIFIED: ft.ThemeMode
         page.adaptive = True
         page.scroll = ft.ScrollMode.AUTO # MODIFIED: ft.ScrollMode
@@ -114,6 +114,7 @@ class MeteoApp:
         self.state_manager.register_observer("theme_event", self._update_container_colors)
 
         self.weather_view_instance = WeatherView(page) # Store instance
+        self.weather_view_instance.start_background_updater()  # Avvia il task persistente
         
         info_container, hourly_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = self.weather_view_instance.get_containers()
         

@@ -6,6 +6,7 @@ Handles the display of weather information.
 import flet as ft
 import logging # Add logging import
 from utils.config import LIGHT_THEME, DARK_THEME
+import asyncio
 
 from services.api_service import ApiService
 
@@ -66,6 +67,9 @@ class WeatherView:
             self._original_page_resize_handler = self.page.on_resized # Corrected: store page.on_resize not on_resized
             self.page.on_resize = self._handle_page_resize
 
+        self._update_event = asyncio.Event()
+        self._background_task = None
+
     def _handle_page_resize(self, e=None):
         """Handles page resize events for WeatherView and propagates to children."""
         # Call original page resize handler FIRST if it existed
@@ -112,6 +116,10 @@ class WeatherView:
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         self.text_color = DARK_THEME["TEXT"] if is_dark else LIGHT_THEME["TEXT"]
 
+    def _safe_update(self):
+        if getattr(self, "page", None):
+            self.page.update()
+
     def handle_theme_change(self, event_data=None):
         """Handles theme change events by updating text color and relevant UI parts."""
         if event_data is not None and not isinstance(event_data, dict):
@@ -119,7 +127,7 @@ class WeatherView:
         self._update_text_color()
         if self.info_container.content and isinstance(self.info_container.content, ft.Text):
             self.info_container.content.color = self.text_color
-        self.page.update()
+        self._safe_update()
 
     def handle_language_change(self, event_data=None):
         """Aggiorna i contenuti della UI quando cambia la lingua."""
@@ -227,7 +235,7 @@ class WeatherView:
                 print("No coordinates available for air pollution data")
         except (KeyError, IndexError, TypeError) as e:
             print(f"Error getting coordinates for air pollution: {e}")
-        self.page.update()
+        self._safe_update()
 
     async def _update_main_info(self, city: str, is_current_location: bool) -> None:
         """Frontend: Updates main weather info UI"""
@@ -362,21 +370,26 @@ class WeatherView:
     
     async def _update_air_pollution(self, lat: float, lon: float) -> None:
         """Frontend: Updates air pollution UI using AirPollutionDisplay."""
-        # self._update_text_color() # AirPollutionDisplay manages its own text color via theme
-        weather_card = WeatherCard(self.page) # Assuming WeatherCard is still used as a wrapper
+        weather_card = WeatherCard(self.page)
 
         if not hasattr(self, 'air_pollution_display_instance') or not self.air_pollution_display_instance:
             self.air_pollution_display_instance = AirPollutionDisplay(
                 page=self.page,
                 lat=lat,
                 lon=lon
-                # expand=True # AirPollutionDisplay sets its own expand
             )
         else:
-            # If location has changed, update the component
             if self.air_pollution_display_instance._lat != lat or self.air_pollution_display_instance._lon != lon:
                 self.air_pollution_display_instance.update_location(lat, lon)
             # Language and theme changes are handled internally by AirPollutionDisplay
+
+        # --- FIX: Aggiorna sempre la lingua e l'unità prima del refresh ---
+        state_manager = self.page.session.get('state_manager')
+        if state_manager:
+            self.air_pollution_display_instance._current_language = state_manager.get_state('language') or self.air_pollution_display_instance._current_language
+            self.air_pollution_display_instance._current_unit = state_manager.get_state('unit') or getattr(self.air_pollution_display_instance, '_current_unit', 'metric')
+        # --------------------------------------------------------
+        await self.air_pollution_display_instance.refresh()
 
         self.air_pollution_container.content = weather_card.build(self.air_pollution_display_instance)
         # self.air_pollution_container.update() # Covered by page.update() in _update_ui
@@ -414,3 +427,33 @@ class WeatherView:
             self.air_pollution_container,
             self.air_pollution_chart_container
         )
+
+    async def background_updater(self):
+        """Task persistente che aggiorna la UI quando trigger_update viene chiamato."""
+        while True:
+            await self._update_event.wait()
+            self._update_event.clear()
+            # Recupera parametri correnti
+            state_manager = self.page.session.get('state_manager')
+            language = state_manager.get_state('language') if state_manager else 'en'
+            unit = state_manager.get_state('unit') if state_manager else 'metric'
+            if self.current_city:
+                await self.update_by_city(self.current_city, language, unit)
+            elif self.current_lat is not None and self.current_lon is not None:
+                await self.update_by_coordinates(self.current_lat, self.current_lon, language, unit)
+            # else: non aggiorna se non ci sono dati
+
+    def trigger_update(self):
+        """Richiama un aggiornamento asincrono della UI."""
+        self._update_event.set()
+
+    def start_background_updater(self):
+        """Avvia il task di background updater se non già avviato."""
+        if not self._background_task:
+            self._background_task = asyncio.create_task(self.background_updater())
+
+    def stop_background_updater(self):
+        """(Opzionale) Cancella il task di background updater."""
+        if self._background_task:
+            self._background_task.cancel()
+            self._background_task = None

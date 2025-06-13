@@ -69,6 +69,13 @@ class AirConditionInfo(ft.Container):
         if self.page and hasattr(self, '_original_on_resize'):
             self.page.on_resize = self._original_on_resize
 
+    def _determine_text_color_from_theme(self):
+        """Determines text color based on the current page theme."""
+        if self.page and self.page.theme_mode:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
+            return current_theme_config.get("TEXT", LIGHT_THEME["TEXT"]) # Fallback to light theme text
+        return LIGHT_THEME["TEXT"] # Default if page or theme_mode not set
 
     def _build_ui_elements(self):
         """
@@ -204,11 +211,12 @@ class AirConditionInfo(ft.Container):
         """
         Rebuilds the UI content and updates the control.
         """
+        self._text_color = self._determine_text_color_from_theme() # Update text color before rebuilding
         new_content = self._build_ui_elements()
         self.content = new_content
         if self.page: # Ensure page update is called if component is on page
             self.update()
-            # self.page.update() # May not be necessary if self.update() is sufficient
+            self.page.update() 
 
     def _update_text_and_icon_sizes(self):
         if not self._ui_elements_initialized:
@@ -258,13 +266,8 @@ class AirConditionInfo(ft.Container):
                 self._request_ui_rebuild()
 
     def _handle_theme_change(self, event_data=None):
-        if self.state_manager:
-            current_theme = self.state_manager.get_state('theme') or "light"
-            new_text_color = DARK_THEME["TEXT"] if current_theme == "dark" else LIGHT_THEME["TEXT"]
-            if self._text_color != new_text_color:
-                self._text_color = new_text_color
-                # self._update_colors() # Update colors of existing elements
-                self._request_ui_rebuild() # Rebuild UI with new colors
+        # self._text_color is updated within _request_ui_rebuild via _determine_text_color_from_theme
+        self._request_ui_rebuild() # Rebuild UI with new colors
 
     def _combined_resize_handler(self, e):
         self.text_handler._handle_resize(e) # Update base sizes in handler

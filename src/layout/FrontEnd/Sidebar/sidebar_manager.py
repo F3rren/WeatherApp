@@ -8,7 +8,7 @@ import logging
 from typing import Callable, Optional
 
 
-from layout.frontend.sidebar.sidebar import Sidebar
+from layout.frontend.sidebar.Sidebar import Sidebar
 from state_manager import StateManager
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService

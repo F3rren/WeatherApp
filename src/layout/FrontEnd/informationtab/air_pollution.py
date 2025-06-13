@@ -1,4 +1,5 @@
 import flet as ft
+import logging # Added import for logging
 # import traceback # Removed unused import
 from services.api_service import ApiService
 from services.translation_service import TranslationService
@@ -258,7 +259,7 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
         if self._ui_elements_built:
              self._update_text_sizes() # Update sizes after rebuilding content
 
-        self.update()
+        # RIMOSSO: self.page.update() globale
 
     def _handle_language_change(self, event_data=None):
         """Handles language changes: updates text and rebuilds UI."""
@@ -267,6 +268,8 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
 
     def _handle_theme_change(self, event_data=None):
         """Handles theme changes: updates colors and rebuilds UI."""
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_theme_change received unexpected event_data type: {type(event_data)}")
         self._current_text_color = self._determine_text_color_from_theme()
         self._request_ui_rebuild()
 

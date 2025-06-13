@@ -3,6 +3,7 @@ from datetime import datetime
 from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService
+import logging
 
 class HourlyForecastDisplay(ft.Container):
     """
@@ -147,7 +148,7 @@ class HourlyForecastDisplay(ft.Container):
         self.content = new_content
         if self.page:
             self.update()
-            self.page.update()
+            # RIMOSSO: nessuna chiamata a page.update() globale
 
     def _update_text_and_icon_sizes(self):
         """Updates sizes of text and icon elements within the content."""
@@ -173,10 +174,11 @@ class HourlyForecastDisplay(ft.Container):
             
     def _handle_language_or_unit_change(self, event_data=None):
         """Handles language or unit system changes."""
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_language_or_unit_change received unexpected event_data type: {type(event_data)}")
         if self._state_manager:
             new_language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
             new_unit_system = self._state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
-            
             changed = False
             if self._language != new_language:
                 self._language = new_language
@@ -184,13 +186,13 @@ class HourlyForecastDisplay(ft.Container):
             if self._unit_system != new_unit_system:
                 self._unit_system = new_unit_system
                 changed = True
-            
             if changed:
                 self._request_ui_rebuild()
 
     def _handle_theme_change(self, event_data=None):
         """Handles theme changes."""
-        # self._text_color is updated within _request_ui_rebuild via _determine_text_color_from_theme
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_theme_change received unexpected event_data type: {type(event_data)}")
         self._request_ui_rebuild() # Rebuild to apply new colors
 
     def _combined_resize_handler(self, e):
@@ -199,6 +201,26 @@ class HourlyForecastDisplay(ft.Container):
         self._update_text_and_icon_sizes() 
         if hasattr(self, '_original_on_resize') and self._original_on_resize:
             self._original_on_resize(e)
+
+    def _update_all_item_visuals(self):
+        """Updates text, color, and size for all items based on current state."""
+        for item_container in self.built_item_containers:
+            if isinstance(item_container, ft.Container) and isinstance(item_container.content, ft.Column):
+                item_column = item_container.content
+                for control in item_column.controls: # ft.Column -> list of ft.Image, ft.Text
+                    if hasattr(control, 'data') and isinstance(control.data, dict):
+                        category = control.data.get('category')
+                        control_type = control.data.get('type')
+                        if category:
+                            new_size = self.text_handler.get_size(category)
+                            if control_type == 'icon' and hasattr(control, 'width') and hasattr(control, 'height'):
+                                control.width = new_size
+                                control.height = new_size
+                            elif control_type == 'text' and hasattr(control, 'size'):
+                                control.size = new_size
+            if hasattr(item_container, 'page') and item_container.page:
+                item_container.update()
+        # RIMOSSO: nessuna chiamata a page.update() globale
 
     # The old build method is no longer needed as the class itself is a container.
     # Old _update_all_item_visuals is replaced by _request_ui_rebuild and specific updates.

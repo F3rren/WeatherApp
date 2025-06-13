@@ -1,14 +1,18 @@
 import logging
 import flet as ft
-from utils.config import LIGHT_THEME, DARK_THEME # Import theme configurations
+# LIGHT_THEME, DARK_THEME imports will be removed if text_color dict is used directly
+from utils.config import LIGHT_THEME, DARK_THEME 
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
+# ResponsiveTextHandler will eventually be removed from here
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class Filter:
-    def __init__(self, page: ft.Page = None, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None, 
-                theme_toggle_value=False, location_toggle_value=False, text_color: str = None):
+    def __init__(self, page: ft.Page = None, state_manager=None, 
+                 handle_location_toggle=None, handle_theme_toggle=None, 
+                 theme_toggle_value=False, location_toggle_value=False, 
+                 text_color: dict = None, language: str = None, text_handler_get_size = None):
         self.page = page
         self.state_manager = state_manager
         self.translation_service = page.session.get('translation_service') if page else None
@@ -17,14 +21,11 @@ class Filter:
         self.theme_toggle_value = theme_toggle_value
         self.location_toggle_value = location_toggle_value
         
-        if text_color:
-            self.text_color = text_color        
-        elif self.page:
-            self.text_color = DARK_THEME["TEXT"] if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"]
-        else:
-            self.text_color = LIGHT_THEME["TEXT"] # Default if no page context
+        self.text_color = text_color if text_color else (DARK_THEME if self.page and self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME)
+        self.language = language if language else "en" # Default if not provided
+        self.passed_text_handler_get_size = text_handler_get_size # Store passed function
         
-        # Initialize ResponsiveTextHandler
+        # Initialize ResponsiveTextHandler (This will be removed in a future refactor)
         if self.page:
             self.text_handler = ResponsiveTextHandler(
                 page=self.page,
@@ -34,38 +35,46 @@ class Filter:
                 },
                 breakpoints=[600, 900, 1200, 1600]
             )
-            
-            # Dictionary to track text controls
             self.text_controls = {}
-            
-            # Register as observer for responsive updates
             self.text_handler.add_observer(self.update_text_controls)
+        else:
+            self.text_handler = None # Ensure it's None if no page
+
+        # Determine the get_size function to use for children for now
+        # Eventually, Filter will use passed_text_handler_get_size directly
+        current_get_size_func = self.passed_text_handler_get_size if self.passed_text_handler_get_size else (self.text_handler.get_size if self.text_handler else lambda x: 14) 
 
         self.weather_alert = WeatherAlertDialog(
-            page=self.page, # Pass page to SettingsAlertDialog
+            page=self.page, 
             state_manager=state_manager, 
-            translation_service=self.translation_service,
-            handle_location_toggle=handle_location_toggle,
-            handle_theme_toggle=handle_theme_toggle,
-            text_color=self.text_color # Pass text_color
+            # translation_service=self.translation_service, # translation_service is usually fetched from page session by dialogs
+            # handle_location_toggle=handle_location_toggle, # These seem specific to SettingsAlertDialog
+            # handle_theme_toggle=handle_theme_toggle,
+            text_color=self.text_color, # Pass the text_color dictionary
+            language=self.language, # Pass language
+            text_handler_get_size=current_get_size_func # Pass get_size function
         )
 
         self.map_alert = MapsAlertDialog(
-            page=self.page, # Pass page to MapsAlertDialog
+            page=self.page, 
             state_manager=state_manager,
-            translation_service=self.translation_service,
-            handle_location_toggle=handle_location_toggle,
-            handle_theme_toggle=handle_theme_toggle,
-            text_color=self.text_color
+            # translation_service=self.translation_service,
+            # handle_location_toggle=handle_location_toggle,
+            # handle_theme_toggle=handle_theme_toggle,
+            text_color=self.text_color, # Pass the text_color dictionary
+            language=self.language, # Pass language
+            text_handler_get_size=current_get_size_func # Pass get_size function
         )
 
         self.setting_alert = SettingsAlertDialog(
-            page=self.page, # Pass page to SettingsAlertDialog
+            page=self.page, 
             state_manager=state_manager, 
-            translation_service=self.translation_service,
-            handle_location_toggle=handle_location_toggle,
-            handle_theme_toggle=handle_theme_toggle,
-            text_color=self.text_color # Pass text_color
+            # translation_service=self.translation_service, # SettingsAlertDialog fetches its own
+            handle_location_toggle=self.handle_location_toggle, # Pass the specific callbacks
+            handle_theme_toggle=self.handle_theme_toggle,
+            text_color=self.text_color, # Pass the text_color dictionary
+            language=self.language, # Pass language
+            text_handler_get_size=current_get_size_func # Pass get_size function
         )
 
         # Store PopupMenuItems for color updates
@@ -74,11 +83,55 @@ class Filter:
         self.settings_item_text = ft.Text(self._get_translation("settings"), size=20, color=self.text_color) # Added for settings
         self.popup_menu_button_icon = ft.Icon(ft.Icons.FILTER_ALT_OUTLINED, size=40, color=self.text_color) # Apply text_color to icon
 
-        if self.page and self.state_manager:
-            self.state_manager.register_observer("theme_event", self.handle_theme_change)
+    def update_text_sizes(self, text_handler_get_size, text_color: dict, language: str):
+        """Updates text sizes, color, and language for the Filter and its children."""
+        self.passed_text_handler_get_size = text_handler_get_size
+        self.text_color = text_color
+        self.language = language
+
+        # Update own elements if they were more complex or directly managed text sizes
+        # For now, PopMenu items are recreated in createPopMenu, which will use new props.
+        # If PopMenu itself needs an update, it would be called here.
+        if hasattr(self, 'popup_menu_button') and self.popup_menu_button:
+            # Re-create or update PopMenu parts if necessary
+            # This might involve updating icon sizes/colors directly if not done in createPopMenu
+            if self.popup_menu_button_icon:
+                self.popup_menu_button_icon.size = self.passed_text_handler_get_size('icon')
+                self.popup_menu_button_icon.color = self.text_color
+            # Update text items (they are recreated in createPopMenu, but if held, update here)
+            if self.meteo_item_text: 
+                self.meteo_item_text.value = self._get_translation("weather")
+                self.meteo_item_text.size = self.passed_text_handler_get_size('button')
+                self.meteo_item_text.color = self.text_color
+            if self.map_item_text: 
+                self.map_item_text.value = self._get_translation("maps") # "map" or "maps"
+                self.map_item_text.size = self.passed_text_handler_get_size('button')
+                self.map_item_text.color = self.text_color
+            if self.settings_item_text: 
+                self.settings_item_text.value = self._get_translation("settings")
+                self.settings_item_text.size = self.passed_text_handler_get_size('button')
+                self.settings_item_text.color = self.text_color
+            
+            # If the popup_menu_button itself needs an update due to content changes:
+            self.popup_menu_button.items = self._build_popup_menu_items() # Rebuild items
+            self.popup_menu_button.update()
+
+        # Propagate to child dialogs
+        if hasattr(self.weather_alert, 'update_text_sizes'):
+            self.weather_alert.update_text_sizes(self.passed_text_handler_get_size, self.text_color, self.language)
+        if hasattr(self.map_alert, 'update_text_sizes'):
+            self.map_alert.update_text_sizes(self.passed_text_handler_get_size, self.text_color, self.language)
+        if hasattr(self.setting_alert, 'update_text_sizes'):
+            self.setting_alert.update_text_sizes(self.passed_text_handler_get_size, self.text_color, self.language)
+        
+        if self.page:
+            self.page.update() # Trigger a page update to reflect changes
 
     def update_text_controls(self):
         """Update text sizes for all registered controls"""
+        # This method will be removed when internal text_handler is removed
+        if not self.text_handler:
+            return
         for control, size_category in self.text_controls.items():
             if size_category == 'icon':
                 if hasattr(control, 'size'):
@@ -94,62 +147,87 @@ class Filter:
     def _get_translation(self, key):
         """Helper method to get translation with fallback"""
         if self.translation_service and hasattr(self.translation_service, 'get_text'):
-            current_language = self.state_manager.get_state("language") if self.state_manager else "en"
+            # Use self.language (passed prop) instead of fetching from state_manager here
+            # as this component should reflect the language it was given.
+            current_language = self.language 
             return self.translation_service.get_text(key, current_language)
         return key  # Fallback to key if no translation service
-        
-    def handle_theme_change(self, event_data=None):
-        """Handles theme change events by updating text and icon colors."""
-        if self.page:
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-            self.text_color = current_theme_config["TEXT"]
-
-            if hasattr(self, 'meteo_item_text'):
-                self.meteo_item_text.color = self.text_color
-                if self.meteo_item_text.page:
-                    self.meteo_item_text.update()
-            
-            if hasattr(self, 'map_item_text'):
-                self.map_item_text.color = self.text_color
-                if self.map_item_text.page:
-                    self.map_item_text.update()
-
-            if hasattr(self, 'settings_item_text'): # Added for settings
-                self.settings_item_text.color = self.text_color
-                if self.settings_item_text.page:
-                    self.settings_item_text.update()
-            
-            if hasattr(self, 'popup_menu_button_icon'):
-                self.popup_menu_button_icon.color = self.text_color
-                # The icon is part of PopupMenuButton, which might need its own update
-                if hasattr(self, 'popup_menu_button') and self.popup_menu_button.page:
-                    self.popup_menu_button.update() 
-            
-            # Propagate theme change to Alert Dialogs
-            if hasattr(self, 'setting_alert') and hasattr(self.setting_alert, 'handle_theme_change'):
-                self.setting_alert.handle_theme_change(event_data)
-
-            if hasattr(self, 'weather_alert') and hasattr(self.weather_alert, 'handle_theme_change'):
-                self.weather_alert.handle_theme_change(event_data)
-            
-            if hasattr(self, 'map_alert') and hasattr(self.map_alert, 'handle_theme_change'):
-                self.map_alert.handle_theme_change(event_data)
 
     def _open_alert_dialog(self, alert_instance):
         """Helper method to create (if needed) and open an alert dialog."""
         if not self.page:
             logging.error("Error: Page context not available for opening dialog.")
             return
-        if not hasattr(alert_instance, 'dialog') or not alert_instance.dialog:
-            alert_instance.createAlertDialog(self.page)
-          # Ensure dialog was created and is available
-        if hasattr(alert_instance, 'dialog') and alert_instance.dialog:
-            self.page.open(alert_instance.dialog)
-        else:
-            logging.error(f"Error: Dialog for {type(alert_instance).__name__} could not be created or found for opening.")
+        
+        # Ensure the dialog instance has the latest props before creating/opening
+        # This is important if dialogs are created lazily
+        if hasattr(alert_instance, 'text_color'): # Check if it has these attributes
+            alert_instance.text_color = self.text_color
+            alert_instance.language = self.language
+            alert_instance.text_handler_get_size = self.passed_text_handler_get_size 
+            # If the dialog is already created, call its update_text_sizes
+            if alert_instance.dialog and hasattr(alert_instance, 'update_text_sizes'):
+                alert_instance.update_text_sizes(self.passed_text_handler_get_size, self.text_color, self.language)
+            elif not alert_instance.dialog and hasattr(alert_instance, 'createAlertDialog'):
+                alert_instance.createAlertDialog(self.page) # It will use its updated props
+        elif hasattr(alert_instance, 'createAlertDialog'): # Fallback for older dialogs not yet fully refactored
+             alert_instance.createAlertDialog(self.page)
 
-    def createPopMenu(self, page=None):# page arg can be removed if self.page is always set
+        if hasattr(alert_instance, 'dialog') and alert_instance.dialog:
+            # self.page.open(alert_instance.dialog) # Flet V1 uses page.dialog = instance; instance.open = True
+            self.page.dialog = alert_instance.dialog
+            alert_instance.dialog.open = True
+            self.page.update()
+        else:
+            logging.error(f"Error: Dialog for {type(alert_instance).__name__} could not be created or shown.")
+
+    def _build_popup_menu_items(self):
+        """Helper to build/rebuild PopupMenuItem list with current translations and styles."""
+        current_get_size_func = self.passed_text_handler_get_size if self.passed_text_handler_get_size else (self.text_handler.get_size if self.text_handler else lambda x: 14)
+        button_size_val = current_get_size_func('button')
+
+        # Re-create text controls for items to ensure they have latest language and color
+        self.meteo_item_text = ft.Text(
+            self._get_translation("weather"), 
+            color=self.text_color, 
+            size=button_size_val
+        )
+        self.map_item_text = ft.Text(
+            self._get_translation("maps"), # Ensure key is correct ("map" or "maps")
+            color=self.text_color, 
+            size=button_size_val
+        )
+        self.settings_item_text = ft.Text(
+            self._get_translation("settings"), 
+            color=self.text_color, 
+            size=button_size_val
+        )
+
+        return [
+            ft.PopupMenuItem(
+                content=ft.Row([
+                    ft.Icon(ft.Icons.SUNNY, color="#FF8C00"),
+                    self.meteo_item_text,
+                ]),
+                on_click=lambda _, al=self.weather_alert: self._open_alert_dialog(al),
+            ),
+            ft.PopupMenuItem(
+                content=ft.Row([
+                    ft.Icon(ft.Icons.MAP_OUTLINED, color="#0000FF"),
+                    self.map_item_text,
+                ]),
+                on_click=lambda _, al=self.map_alert: self._open_alert_dialog(al),
+            ),
+            ft.PopupMenuItem(
+                 content=ft.Row([
+                     ft.Icon(ft.Icons.SETTINGS, color="#808080"),
+                     self.settings_item_text,
+                 ]),
+                on_click=lambda _, al=self.setting_alert: self._open_alert_dialog(al),
+            ),
+        ]
+
+    def createPopMenu(self, page=None):
         if page is None: 
             page = self.page # Use self.page if available
         
@@ -158,65 +236,34 @@ class Filter:
             return ft.Container(ft.Text(self._get_translation("error_page_context_missing")))
 
         # Create text controls with responsive sizes
+        # These should use self.text_color and the appropriate get_size function
+        current_get_size_func = self.passed_text_handler_get_size if self.passed_text_handler_get_size else (self.text_handler.get_size if self.text_handler else lambda x: 14)
+        icon_size_val = current_get_size_func('icon')
+        # button_size_val = current_get_size_func('button') # Text items created in _build_popup_menu_items
+
         self.popup_menu_button_icon = ft.Icon(
             ft.Icons.MORE_VERT, 
-            color=self.text_color,
-            size=self.text_handler.get_size('icon') if hasattr(self, 'text_handler') else 20
+            color=self.text_color, 
+            size=icon_size_val
         )
         
-        self.meteo_item_text = ft.Text(
-            self._get_translation("weather"), 
-            color=self.text_color,
-            size=self.text_handler.get_size('button') if hasattr(self, 'text_handler') else 14
-        )
+        # Text items are now created dynamically by _build_popup_menu_items
+        # self.meteo_item_text = ft.Text(...)
+        # self.map_item_text = ft.Text(...)
+        # self.settings_item_text = ft.Text(...)
         
-        self.map_item_text = ft.Text(
-            self._get_translation("maps"), 
-            color=self.text_color,
-            size=self.text_handler.get_size('button') if hasattr(self, 'text_handler') else 14
-        )
-        
-        self.settings_item_text = ft.Text(
-            self._get_translation("settings"), 
-            color=self.text_color,
-            size=self.text_handler.get_size('button') if hasattr(self, 'text_handler') else 14
-        )
-        
-        # Register controls if text_handler is available
-        if hasattr(self, 'text_handler'):
+        # Register controls if text_handler is available (part of eventual removal)
+        if self.text_handler:
             self.text_controls[self.popup_menu_button_icon] = 'icon'
-            self.text_controls[self.meteo_item_text] = 'button'
-            self.text_controls[self.map_item_text] = 'button'
-            self.text_controls[self.settings_item_text] = 'button'
+            # Text controls for items are dynamic, so direct registration here is less relevant
+            # self.text_controls[self.meteo_item_text] = 'button'
+            # self.text_controls[self.map_item_text] = 'button'
+            # self.text_controls[self.settings_item_text] = 'button'
 
-        # Crea il menu popup con tutte le opzioni
-        self.popup_menu_button = ft.PopupMenuButton( # Store button for updates
-            icon=None, # Icon will be set by content to allow dynamic color
-            content=self.popup_menu_button_icon, # Use the stored icon
-            icon_size=self.text_handler.get_size('icon') if hasattr(self, 'text_handler') else 50,
-            items=[
-                ft.PopupMenuItem(
-                    content=ft.Row([
-                        ft.Icon(ft.Icons.SUNNY, color="#FF8C00"), # Custom color DarkOrange
-                        self.meteo_item_text,
-                    ]),
-                    on_click=lambda _, al=self.weather_alert: self._open_alert_dialog(al),
-                ),
-                ft.PopupMenuItem(
-                    content=ft.Row([
-                        ft.Icon(ft.Icons.MAP_OUTLINED, color="#0000FF"), # Custom color Blue
-                        self.map_item_text,
-                    ]),
-                    on_click=lambda _, al=self.map_alert: self._open_alert_dialog(al),
-                ),
-                ft.PopupMenuItem(
-                     content=ft.Row([
-                         ft.Icon(ft.Icons.SETTINGS, color="#808080"), # Custom color Gray
-                         self.settings_item_text, # Use dedicated text control
-                     ]),
-                    on_click=lambda _, al=self.setting_alert: self._open_alert_dialog(al),
-                ),
-            ]
+        self.popup_menu_button = ft.PopupMenuButton(
+            content=self.popup_menu_button_icon, 
+            icon_size=icon_size_val, 
+            items=self._build_popup_menu_items() # Use helper to build items
         )
         
         return self.popup_menu_button

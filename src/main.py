@@ -42,12 +42,50 @@ class MeteoApp:
         self.weather_view_instance = None # Add to store WeatherView instance
         self.translation_service = None # Add to store TranslationService instance
 
-    async def _update_container_colors(self, event_data=None):
-        """Updates the background colors of main containers based on the theme."""
-        if not self.page or not hasattr(self, 'layout_manager'):
+    def _update_container_colors(self, event_data=None):
+        """Aggiorna solo i colori dei container principali e dei testi senza ricostruire i container."""
+        if not self.page:
             return
-        # Delega l'aggiornamento dei colori al layout manager
-        self.layout_manager.update_container_colors(self.page.theme_mode)
+        from utils.config import DARK_THEME, LIGHT_THEME
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        theme = DARK_THEME if is_dark else LIGHT_THEME
+        default_card = theme.get("CARD", "#ffffff" if not is_dark else "#222222")
+        if self.sidebar_container:
+            self.sidebar_container.bgcolor = theme.get("SIDEBAR", default_card)
+            self.sidebar_container.update()
+        if self.info_container_wrapper:
+            # Applica gradiente se definito nel tema
+            if "INFO_GRADIENT" in theme:
+                gradient_start = theme["INFO_GRADIENT"]["start"]
+                gradient_end = theme["INFO_GRADIENT"]["end"]
+                self.info_container_wrapper.gradient = ft.LinearGradient(
+                    begin=ft.alignment.top_center,
+                    end=ft.alignment.bottom_center,
+                    colors=[gradient_start, gradient_end]
+                )
+                self.info_container_wrapper.bgcolor = None
+            else:
+                self.info_container_wrapper.bgcolor = theme.get("INFO", default_card)
+                self.info_container_wrapper.gradient = None
+            self.info_container_wrapper.update()
+        if self.hourly_container_wrapper:
+            self.hourly_container_wrapper.bgcolor = theme.get("HOURLY", default_card)
+            self.hourly_container_wrapper.update()
+        if self.weekly_container_wrapper:
+            self.weekly_container_wrapper.bgcolor = theme.get("WEEKLY", default_card)
+            self.weekly_container_wrapper.update()
+        if self.chart_container_wrapper:
+            self.chart_container_wrapper.bgcolor = theme.get("CHART", default_card)
+            self.chart_container_wrapper.update()
+        if self.air_pollution_chart_container_wrapper:
+            self.air_pollution_chart_container_wrapper.bgcolor = theme.get("AIR_POLLUTION_CHART", default_card)
+            self.air_pollution_chart_container_wrapper.update()
+        if self.air_pollution_container_wrapper:
+            self.air_pollution_container_wrapper.bgcolor = theme.get("AIR_POLLUTION", default_card)
+            self.air_pollution_container_wrapper.update()
+        # Aggiorna il colore di sfondo della pagina
+        self.page.bgcolor = theme.get("BACKGROUND", "#f5f5f5" if not is_dark else "#1a1a1a")
+        self.page.update()
 
     async def main(self, page: ft.Page) -> None: # MODIFIED: ft.Page
         """
@@ -101,7 +139,9 @@ class MeteoApp:
         )
         
         # Ottieni l'istanza della sidebar dal gestore
-        sidebar = self.sidebar_manager.initialize_sidebar()
+        # sidebar = self.sidebar_manager.initialize_sidebar() # Vecchio modo
+        # Ora SidebarManager è esso stesso il componente sidebar da aggiungere al layout
+        sidebar_control = self.sidebar_manager # SidebarManager è ora un ft.Container
         
         # Le funzioni di gestione della posizione e del cambio città sono state spostate nei rispettivi servizi
           # Inizializza il layout manager
@@ -109,7 +149,7 @@ class MeteoApp:
         
         # Crea i contenitori del layout
         self.layout_manager.create_containers(
-            sidebar_content=sidebar,
+            sidebar_content=sidebar_control, # Usa l'istanza di SidebarManager
             info_content=info_container,
             hourly_content=hourly_container,
             weekly_content=weekly_container,
@@ -132,7 +172,7 @@ class MeteoApp:
         page.add(self.layout_manager.build_layout())
         
         # Initial update of container colors
-        await self._update_container_colors()
+        self._update_container_colors()
 
         await self.weather_view_instance.update_by_city( # Use instance
             city=DEFAULT_CITY,

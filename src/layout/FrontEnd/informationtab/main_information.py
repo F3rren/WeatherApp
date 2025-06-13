@@ -208,6 +208,20 @@ class MainWeatherInfo(ft.Container): # Changed inheritance
         # else:
             # logger.warning(f"MainWeatherInfo ({self._city_data}): handle_resize called, but no text_handler.")
 
+    def handle_theme_change(self, event_data=None):
+        """Updates the text color based on the current theme."""
+        if not self.page:
+            return
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
+        self.text_color = current_theme_config["TEXT"]
+        controls = {"city_text": self.city_text, "location_text": self.location_text, "temperature_text": self.temperature_text}
+        for name, control_obj in controls.items():
+            if control_obj is not None:
+                if hasattr(control_obj, 'color'):
+                    control_obj.color = self.text_color
+        # RIMOSSO: self.page.update()
+
 # Old methods like __init__ (original), update_text_controls, _update_temperature_display, 
 # cleanup, handle_unit_change, handle_language_change, handle_theme_change, and build
 # are now effectively replaced or integrated into the new structure.

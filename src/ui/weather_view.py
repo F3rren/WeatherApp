@@ -114,24 +114,21 @@ class WeatherView:
 
     def handle_theme_change(self, event_data=None):
         """Handles theme change events by updating text color and relevant UI parts."""
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"handle_theme_change received unexpected event_data type: {type(event_data)}")
         self._update_text_color()
-        
         if self.info_container.content and isinstance(self.info_container.content, ft.Text):
             self.info_container.content.color = self.text_color
-
-        # For refactored components like AirPollutionDisplay, TemperatureChartDisplay, 
-        # and AirPollutionChartDisplay, theme changes are handled internally.
-        # No specific update calls needed here for them.
-        
         self.page.update()
 
     def handle_language_change(self, event_data=None):
         """Aggiorna i contenuti della UI quando cambia la lingua."""
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"handle_language_change received unexpected event_data type: {type(event_data)}")
         if self.current_city or (self.current_lat is not None and self.current_lon is not None):
             state_manager = self.page.session.get('state_manager')
             language = state_manager.get_state('language') if state_manager else 'en'
             unit = state_manager.get_state('unit') if state_manager else 'metric'
-            # import asyncio # No longer needed here
             if self.current_city:
                 self.page.run_task(self.update_by_city, self.current_city, language, unit)
             elif self.current_lat is not None and self.current_lon is not None:

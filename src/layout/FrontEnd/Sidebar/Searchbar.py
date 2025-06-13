@@ -1,35 +1,47 @@
 import logging
 import flet as ft
 from typing import Callable, Optional, List
-from components.responsive_text_handler import ResponsiveTextHandler
 
 class SearchBar:
-    def __init__(self, cities: List[str] = None, on_city_selected: Optional[Callable] = None, page: ft.Page = None):
+    def __init__(self, 
+                 page: ft.Page, 
+                 text_color: dict, # text_color is a dict e.g. {"TEXT": "#000000", ...}
+                 text_handler_get_size: Callable, # Made required
+                 cities: List[str] = None, 
+                 on_city_selected: Optional[Callable] = None, 
+                 language: str = "en"):
         self.cities = cities or []
         self.on_city_selected = on_city_selected
         self.page = page
-        self.autocomplete = None
-        
-        # Initialize ResponsiveTextHandler
-        if self.page:
-            self.text_handler = ResponsiveTextHandler(
-                page=self.page,
-                base_sizes={
-                    'searchbar': 16,  # Search text size
-                    'suggestion': 14,  # Suggestion text size
-                },
-                breakpoints=[600, 900, 1200, 1600]
-            )
-            
-            # Dictionary to track text controls
-            self.text_controls = {}
-            
-            # Register as observer for responsive updates
-            self.text_handler.add_observer(self.update_text_controls)
+        self.autocomplete: Optional[ft.AutoComplete] = None # Type hint
 
-    def update_text_controls(self):
-        """Update text sizes for all registered controls"""
-        # Request page update if controls were updated
+        # Store new parameters
+        self._text_color = text_color 
+        self._language = language 
+        self._text_handler_get_size = text_handler_get_size
+        
+    def update_text_sizes(self, get_size_func: Callable, text_color: dict, language: str):
+        """Called by parent to update text sizes and colors."""
+        self._text_handler_get_size = get_size_func
+        self._text_color = text_color # text_color is a dict
+        self._language = language 
+
+        if self.autocomplete and self._text_handler_get_size:
+            current_size = self._text_handler_get_size('body') 
+            text_input_color = self._text_color.get("TEXT")
+
+            if text_input_color is not None and current_size is not None:
+                self.autocomplete.text_style = ft.TextStyle(
+                    size=current_size,
+                    color=text_input_color
+                )
+            elif current_size is not None: # Only size available
+                self.autocomplete.text_style = ft.TextStyle(size=current_size)
+            elif text_input_color is not None: # Only color available
+                 self.autocomplete.text_style = ft.TextStyle(color=text_input_color)
+            # else: no style to apply or clear existing if necessary
+            #    self.autocomplete.text_style = None 
+
         if self.page:
             self.page.update()
 
@@ -40,7 +52,6 @@ class SearchBar:
             """Gestisce la selezione di una città"""
             try:
                 selected_city = e.selection
-                # If selection is an AutoCompleteSuggestion, extract the value
                 if hasattr(selected_city, "value"):
                     selected_city_value = selected_city.value
                 else:
@@ -53,7 +64,6 @@ class SearchBar:
             except Exception as ex:
                 logging.error(f"Errore in handle_select: {ex}")
                 
-        # Crea le suggestions dall'elenco delle città
         suggestions = [
             ft.AutoCompleteSuggestion(key=city, value=city)
             for city in self.cities
@@ -62,16 +72,38 @@ class SearchBar:
         self.autocomplete = ft.AutoComplete(
             suggestions=suggestions,
             on_select=handle_select,
-            suggestions_max_height=300,
+            suggestions_max_height=300
+            # Removed text_size and color from constructor
         )
+
+        initial_text_style = None
+        if self._text_handler_get_size: 
+            initial_size = self._text_handler_get_size('body')
+            color = self._text_color.get("TEXT")
+            if initial_size is not None and color is not None:
+                initial_text_style = ft.TextStyle(size=initial_size, color=color)
+            elif initial_size is not None:
+                initial_text_style = ft.TextStyle(size=initial_size)
+            elif color is not None:
+                initial_text_style = ft.TextStyle(color=color)
         
-        # Avvolgiamo l'AutoComplete in un Container per il styling
+        if initial_text_style: # Apply text_style after creation
+            self.autocomplete.text_style = initial_text_style
+        
+        # Example for hint text styling, if you add a hint_text to AutoComplete:
+        # self.autocomplete.hint_text="Search..."
+        # hint_style_color = self._text_color.get("HINT", self._text_color.get("TEXT_SECONDARY"))
+        # if self._text_handler_get_size and hint_style_color:
+        #     self.autocomplete.hint_style = ft.TextStyle(
+        #         size=self._text_handler_get_size('body_small'), 
+        #         color=hint_style_color
+        #     )
+
         styled_autocomplete = ft.Container(
             content=self.autocomplete,
             padding=ft.padding.all(8),
         )
         
-        # Restituisce una colonna con toolbox e autocomplete stilizzato
         return ft.Column(
             controls=[
                 styled_autocomplete,
@@ -89,7 +121,7 @@ class SearchBar:
                 for city in self.cities
             ]
             self.autocomplete.suggestions = suggestions
-            self.autocomplete.update()
+            self.autocomplete.update() 
     
     def get_selected_value(self) -> str:
         """Restituisce il valore attualmente selezionato"""
@@ -105,10 +137,8 @@ class SearchBar:
     
     def cleanup(self):
         """Cleanup method to remove observers"""
-        if hasattr(self, 'text_handler') and self.text_handler:
-            self.text_handler.remove_observer(self.update_text_controls)
+        pass 
     
     def get_autocomplete_only(self) -> ft.AutoComplete:
         """Restituisce solo il componente AutoComplete senza la toolbox"""
         return self.autocomplete
-    

@@ -125,13 +125,7 @@ class DailyForecast:
         """
         if self.text_controls:
             self.text_handler.update_text_controls(self.text_controls)
-            
-        # Aggiorniamo anche i DailyForecastItems che potrebbero avere il proprio text_handler
         for item in self.daily_forecast_items:
             if hasattr(item, 'text_handler') and hasattr(item, '_update_text_elements'):
                 item._update_text_elements()
-                
-        # Forza l'aggiornamento dell'interfaccia
-        if self.hourly_forecast_content_column.page:
-            self.hourly_forecast_content_column.update()
 

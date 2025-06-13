@@ -4,6 +4,7 @@ import math # ADDED: For floor and ceil functions
 from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService # Added
+import logging
 
 class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Container, renamed
     """
@@ -204,6 +205,7 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
 
 
         self._chart_control = ft.LineChart(
+            interactive=False,
             data_series=[line_min, line_max],
             border=ft.border.all(1, ft.Colors.with_opacity(0.5, self._current_text_color)),
             horizontal_grid_lines=ft.ChartGridLines(interval=step, color=ft.Colors.with_opacity(0.2, self._current_text_color), width=1), # Use step
@@ -272,6 +274,8 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
         self._request_ui_rebuild()
 
     def _handle_theme_change(self, event_data=None):
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_theme_change received unexpected event_data type: {type(event_data)}")
         self._request_ui_rebuild()
 
     def _handle_unit_system_change(self, event_data=None):

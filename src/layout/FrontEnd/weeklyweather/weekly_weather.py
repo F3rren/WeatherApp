@@ -1,5 +1,6 @@
 import flet as ft
 import traceback
+import logging
 from services.api_service import ApiService
 from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService
@@ -168,7 +169,7 @@ class WeeklyForecastDisplay(ft.Container):
                     )
             except Exception as e:
                 print(f"[ERROR WeeklyForecastDisplay] Failed to build item for {day_data.get('day_key', 'Unknown Day')}: {e}\\nTraceback: {traceback.format_exc()}")
-                daily_item_controls.append(ft.Text(f"Error loading item.", color=ft.Colors.RED))
+                daily_item_controls.append(ft.Text("Error loading item.", color=ft.Colors.RED))
         
         self._ui_elements_built = True
         return ft.Column(
@@ -200,6 +201,9 @@ class WeeklyForecastDisplay(ft.Container):
 
     async def _handle_language_or_unit_change(self, event_data=None):
         """Handles language or unit changes: re-fetches data and rebuilds UI."""
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_language_or_unit_change received unexpected event_data type: {type(event_data)}")
+        
         # Update state from manager
         if self._state_manager:
             lang_changed = self._current_language != (self._state_manager.get_state('language') or self._current_language)
@@ -217,6 +221,8 @@ class WeeklyForecastDisplay(ft.Container):
 
     def _handle_theme_change(self, event_data=None):
         """Handles theme changes: updates colors and rebuilds UI."""
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_theme_change received unexpected event_data type: {type(event_data)}")
         self._current_text_color = self._determine_text_color_from_theme()
         self._request_ui_rebuild() # Rebuild UI with new colors
 
@@ -272,3 +278,13 @@ class WeeklyForecastDisplay(ft.Container):
                 # This might happen if called before did_mount or in a non-Flet context
                 # Consider logging or alternative handling
                 print(f"[WeeklyForecastDisplay] Page context not available for task on city update to {new_city}")
+
+    def update_text_controls(self):
+        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
+        for control, size_category in self.text_controls.items():
+            if hasattr(control, 'size'):
+                control.size = self.text_handler.get_size(size_category)
+            if hasattr(control, 'spans'):
+                for span in control.spans:
+                    if hasattr(span, 'style') and hasattr(span.style, 'size'):
+                        span.style.size = self.text_handler.get_size(size_category)

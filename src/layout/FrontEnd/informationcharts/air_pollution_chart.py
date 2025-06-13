@@ -1,5 +1,6 @@
 import flet as ft
 import math
+import logging
 from services.api_service import ApiService
 from services.translation_service import TranslationService
 from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE
@@ -247,6 +248,8 @@ class AirPollutionChartDisplay(ft.Container):
         self._request_ui_rebuild()
 
     def _handle_theme_change(self, event_data=None):
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_theme_change received unexpected event_data type: {type(event_data)}")
         self._request_ui_rebuild()
 
     def _update_text_sizes(self):

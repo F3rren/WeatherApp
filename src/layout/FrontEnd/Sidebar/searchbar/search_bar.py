@@ -63,6 +63,8 @@ class SearchBar(ft.Container):
         self.state_manager.unregister_observer("language_event", self._handle_language_change)
 
     def _handle_theme_change(self, event_data=None):
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_theme_change received unexpected event_data type: {type(event_data)}")
         self._text_color = self._get_current_text_color()
         self._border_color = self._get_current_border_color()
         self._bg_color = self._get_current_bg_color()

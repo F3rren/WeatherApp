@@ -13,14 +13,14 @@ DEFAULT_THEME_MODE = "light"  # "light" or "dark"
 # Colori per il tema chiaro
 LIGHT_THEME = {
     "BACKGROUND": "#bbe9ebcc",
-    "TEXT": "#000000",
+    "TEXT": "#23262A",
     "SECONDARY_TEXT": "#555555",
     "ACCENT": "#6b46c1",  # Cambiato da azzurro a viola
-    "CARD_BACKGROUND": "#ffffff",
+    "CARD_BACKGROUND": "#F4F1F8",
     # Aggiungo il gradiente per il container info (main meteo container)
     "INFO_GRADIENT": {
         "start": "#78bff1",  # Azzurro chiaro
-        "end": "#ffffff"     # Bianco
+        "end": "#F2F8FC"     # Bianco
     },
     "HOURLY_GRADIENT": {
         "start": "#cbeb4a",  # Azzurro chiaro
@@ -28,30 +28,30 @@ LIGHT_THEME = {
     },
     "BORDER": "#e0e0e0",
     "ICON": "#333333",
-    "BUTTON_TEXT": "#ffffff",
+    "BUTTON_TEXT": "#F2F8FC",
     "BUTTON_BACKGROUND": "#6b46c1",  # Cambiato da azzurro a viola
-    "DIALOG_BACKGROUND": "#ffffff",
+    "DIALOG_BACKGROUND": "#F2F8FC",
     "DIALOG_TEXT": "#000000",
 }
 
 # Colori per il tema scuro
 DARK_THEME = {
     "BACKGROUND": "#1a1a1a",
-    "TEXT": "#ffffff",
+    "TEXT": "#F2F8FC",
     "SECONDARY_TEXT": "#cccccc",
     "ACCENT": "#8b5cf6",  # Cambiato da azzurro a viola più chiaro per il tema scuro
-    "CARD_BACKGROUND": "#262626",
+    "CARD_BACKGROUND": "#21242A",
     # Aggiungo il gradiente per il container info (main meteo container) nel tema scuro
     "INFO_GRADIENT": {
         "start": "#78bff1",  # Blu scuro
         "end": "#262626"     # Nero
     },
     "BORDER": "#444444",
-    "ICON": "#ffffff",
-    "BUTTON_TEXT": "#ffffff",
+    "ICON": "#F2F8FC",
+    "BUTTON_TEXT": "#F2F8FC",
     "BUTTON_BACKGROUND": "#8b5cf6",  # Cambiato da azzurro a viola più chiaro
     "DIALOG_BACKGROUND": "#262626",
-    "DIALOG_TEXT": "#ffffff",
+    "DIALOG_TEXT": "#F2F8FC",
 }
 
 # API settings

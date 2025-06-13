@@ -10,7 +10,7 @@ from services.sidebar_service import SidebarService
 from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
 from layout.frontend.sidebar.searchbar import SearchBar
 from layout.frontend.sidebar.filter.filter import Filter
-from components.responsive_text_handler import ResponsiveTextHandler
+# from components.responsive_text_handler import ResponsiveTextHandler
 
 class Sidebar:
     """
@@ -18,7 +18,11 @@ class Sidebar:
     """
     def __init__(self, page: ft.Page, on_city_selected: Optional[Callable] = None, 
                 handle_location_toggle: Optional[Callable] = None, location_toggle_value: bool = False,
-                handle_theme_toggle: Optional[Callable] = None, theme_toggle_value: bool = False):
+                handle_theme_toggle: Optional[Callable] = None, theme_toggle_value: bool = False,
+                # New parameters for styling and language
+                text_color: dict = None, # Changed to dict
+                language: str = "en",
+                text_handler_get_size: Optional[Callable] = None):
         self.page = page
         self.on_city_selected = on_city_selected
         self.handle_location_toggle = handle_location_toggle
@@ -28,22 +32,20 @@ class Sidebar:
         self.query = SidebarService()
         self.search_bar = None
         self.cities = self._load_cities()
+
+        # Store passed-in style and language parameters
+        self._text_color = text_color if text_color is not None else {"TEXT": "#000000"} # Ensure default
+        self._language = language
+        self._text_handler_get_size = text_handler_get_size # Function to get responsive size
+
+        # PopMenu and Filter will be created in build() and might need these params
+        self.pop_menu: Optional[PopMenu] = None
+        self.filter_control: Optional[Filter] = None # Renamed to avoid conflict
         
-        # Initialize ResponsiveTextHandler
-        self.text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'container_text': 14,  # General text in containers
-                'spacing': 10,  # Base spacing value
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
-        
-        # Dictionary to track text controls
-        self.text_controls = {}
-        
-        # Register as observer for responsive updates
-        self.text_handler.add_observer(self.update_text_controls)
+        # No longer owns ResponsiveTextHandler or text_controls directly
+        # self.text_handler = ResponsiveTextHandler(...)
+        # self.text_controls = {}
+        # self.text_handler.add_observer(self.update_text_controls)
 
     def _load_cities(self) -> List[str]:
         """Load city names from JSON (via SidebarQuery)"""
@@ -61,29 +63,48 @@ class Sidebar:
 
         
     def update_location_toggle(self, value):
-        """Aggiorna il valore del toggle posizione"""
-        if hasattr(self, 'pop_menu'):
+        """Aggiorna il valore del toggle posizione nella UI del PopMenu."""
+        self.location_toggle_value = value # Update internal state
+        if self.pop_menu:
             self.pop_menu.update_location_toggle_value(value)
             
     def update_theme_toggle(self, value):
-        """Aggiorna il valore del toggle tema"""
-        if hasattr(self, 'pop_menu'):
+        """Aggiorna il valore del toggle tema nella UI del PopMenu."""
+        self.theme_toggle_value = value # Update internal state
+        if self.pop_menu:
             self.pop_menu.update_theme_toggle_value(value)
-    def update_text_controls(self):
-        """Update text sizes for all registered controls"""
-        for control, size_category in self.text_controls.items():
-            if hasattr(control, 'size'):
-                control.size = self.text_handler.get_size(size_category)
-        
-        # Request page update
+
+    # Removed update_text_controls as ResponsiveTextHandler is managed by SidebarManager
+    # def update_text_controls(self): ...
+
+    def update_internal_text_sizes(self, get_size_func: Callable, text_color: dict, language: str):
+        """Chiamato da SidebarManager per aggiornare le dimensioni del testo dei componenti interni."""
+        self._text_handler_get_size = get_size_func
+        self._text_color = text_color # Update current text_color
+        self._language = language # Update current language
+
+        # Aggiorna i componenti che usano text_handler_get_size, es. SearchBar, PopMenu, Filter
+        if self.search_bar and hasattr(self.search_bar, 'update_text_sizes'):
+            self.search_bar.update_text_sizes(self._text_handler_get_size, self._text_color, self._language)
+        if self.pop_menu and hasattr(self.pop_menu, 'update_text_sizes'):
+            self.pop_menu.update_text_sizes(self._text_handler_get_size, self._text_color, self._language)
+        if self.filter_control and hasattr(self.filter_control, 'update_text_sizes'):
+            self.filter_control.update_text_sizes(self._text_handler_get_size, self._text_color, self._language)
         if self.page:
-            self.page.update()
+            self.page.update() # Potrebbe essere necessario per riflettere le modifiche
 
     def build(self) -> ft.Container:
         """Build the sidebar"""
-        # Create search bar with page for ResponsiveTextHandler
-        self.search_bar = SearchBar(self.cities, self.on_city_selected, self.page)
-          # Create pop menu with location toggle callback
+        # Pass text_color, language, and text_handler_get_size to child components
+        self.search_bar = SearchBar(
+            cities=self.cities, 
+            on_city_selected=self.on_city_selected, 
+            page=self.page,
+            text_color=self._text_color,
+            language=self._language, # Pass language
+            text_handler_get_size=self._text_handler_get_size
+        )
+        
         self.pop_menu = PopMenu(
             page=self.page,
             state_manager=self.page.session.get('state_manager'),
@@ -91,16 +112,20 @@ class Sidebar:
             handle_location_toggle=self.handle_location_toggle,
             handle_theme_toggle=self.handle_theme_toggle,
             theme_toggle_value=self.theme_toggle_value,
-            location_toggle_value=self.location_toggle_value
+            location_toggle_value=self.location_toggle_value,
+            text_color=self._text_color,
+            language=self._language,
+            text_handler_get_size=self._text_handler_get_size
         )
 
-        self.filter = Filter(
+        self.filter_control = Filter(
             page=self.page,
             state_manager=self.page.session.get('state_manager'),
-            handle_location_toggle=self.handle_location_toggle,
-            handle_theme_toggle=self.handle_theme_toggle,
-            theme_toggle_value=self.theme_toggle_value,
-            location_toggle_value=self.location_toggle_value
+            # handle_location_toggle and handle_theme_toggle might not be needed if PopMenu handles them
+            # theme_toggle_value and location_toggle_value might also be managed via PopMenu or state
+            text_color=self._text_color,
+            language=self._language,
+            text_handler_get_size=self._text_handler_get_size
         )
 
 
@@ -116,7 +141,7 @@ class Sidebar:
                         content=self.search_bar.build(),
                         col={"xs": 10, "md": 10},
                     ),                    ft.Container(
-                        content=self.filter.build(self.page),
+                        content=self.filter_control.build(self.page),
                         col={"xs": 2, "md": 1},
                     ),
                 ],
@@ -128,10 +153,18 @@ class Sidebar:
 
     def cleanup(self):
         """Cleanup method to remove observers"""
-        if hasattr(self, 'text_handler') and self.text_handler:
-            self.text_handler.remove_observer(self.update_text_controls)
+        # ResponsiveTextHandler is no longer owned here
+        # if hasattr(self, 'text_handler') and self.text_handler:
+        #     self.text_handler.remove_observer(self.update_text_controls)
         
         # Cleanup child components
         if hasattr(self, 'search_bar') and self.search_bar:
             if hasattr(self.search_bar, 'cleanup'):
                 self.search_bar.cleanup()
+        if hasattr(self, 'pop_menu') and self.pop_menu:
+            if hasattr(self.pop_menu, 'cleanup'):
+                self.pop_menu.cleanup()
+        if hasattr(self, 'filter_control') and self.filter_control:
+            if hasattr(self.filter_control, 'cleanup'):
+                self.filter_control.cleanup()
+        logging.info("Sidebar class cleanup completed.")

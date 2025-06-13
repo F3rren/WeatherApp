@@ -2,6 +2,7 @@ import flet as ft
 from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService
+import logging
 
 class AirConditionInfo(ft.Container):
     """
@@ -250,10 +251,11 @@ class AirConditionInfo(ft.Container):
         pass # Colors are handled during _build_ui_elements
 
     def _handle_language_or_unit_change(self, event_data=None):
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_language_or_unit_change received unexpected event_data type: {type(event_data)}")
         if self.state_manager:
             new_language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
             new_unit_system = self.state_manager.get_state('unit') or "metric"
-            
             changed = False
             if self._language != new_language:
                 self._language = new_language
@@ -261,12 +263,12 @@ class AirConditionInfo(ft.Container):
             if self._unit_system != new_unit_system:
                 self._unit_system = new_unit_system
                 changed = True
-            
             if changed:
                 self._request_ui_rebuild()
 
     def _handle_theme_change(self, event_data=None):
-        # self._text_color is updated within _request_ui_rebuild via _determine_text_color_from_theme
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_theme_change received unexpected event_data type: {type(event_data)}")
         self._request_ui_rebuild() # Rebuild UI with new colors
 
     def _combined_resize_handler(self, e):
@@ -275,9 +277,30 @@ class AirConditionInfo(ft.Container):
         if hasattr(self, '_original_on_resize') and self._original_on_resize:
             self._original_on_resize(e)
 
-    # Remove old methods that are replaced or integrated
-    # def update_text_controls(self): ...
-    # def handle_theme_change(self, event_data=None): ... (replaced by _handle_theme_change)
-    # def handle_language_change(self, event_data=None): ... (replaced by _handle_language_or_unit_change)
-    # def cleanup(self): ... (replaced by will_unmount)
-    # def build(self) -> ft.Container: ... (class is now a Container)
+    def update_text_controls(self):
+        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
+        for control, size_category in self.text_controls.items():
+            if size_category == 'icon':
+                if hasattr(control, 'size'):
+                    control.size = self.text_handler.get_size(size_category)
+            else:
+                if hasattr(control, 'size'):
+                    control.size = self.text_handler.get_size(size_category)
+                elif hasattr(control, 'style') and hasattr(control.style, 'size'):
+                    control.style.size = self.text_handler.get_size(size_category)
+                if hasattr(control, 'spans'):
+                    for span in control.spans:
+                        span.style.size = self.text_handler.get_size(size_category)
+
+    def handle_theme_change(self, event_data=None):
+        """Handles theme change events by updating text and divider colors."""
+        if self.page:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
+            self.text_color = current_theme_config["TEXT"]
+            for control, _ in self.text_controls.items():
+                if hasattr(control, 'color'):
+                    control.color = self.text_color
+            if hasattr(self.divider, 'color'):
+                self.divider.color = self.text_color
+            self._update_all_text_elements()

@@ -7,7 +7,6 @@ from typing import Callable, Optional
 import logging
 
 from services.translation_service import TranslationService
-from services.sidebar_service import SidebarService # Added import
 from components.state_manager import StateManager
 from utils.config import LIGHT_THEME, DARK_THEME
 
@@ -17,13 +16,11 @@ class SearchBar(ft.Container):
     """
     def __init__(self, page: ft.Page, state_manager: StateManager, 
                  translation_service: TranslationService, 
-                 sidebar_service: SidebarService, # Added sidebar_service
                  on_city_selected: Optional[Callable[[str], None]] = None):
         super().__init__()
         self.page = page
         self.state_manager = state_manager
         self.translation_service = translation_service
-        self.sidebar_service = sidebar_service # Store sidebar_service
         self.on_city_selected = on_city_selected
 
         self._text_color = self._get_current_text_color()
@@ -155,9 +152,7 @@ class SearchBar(ft.Container):
             self._hide_suggestions()
 
     def _fetch_city_suggestions(self, query: str) -> list:
-        """Fetches city suggestions based on the query using SidebarService."""
-        if self.sidebar_service:
-            return self.sidebar_service.search_cities_by_name(query, limit=7) # Fetch up to 7 suggestions
+        """Fetches city suggestions based on the query. (Stub: always returns empty)"""
         return []
 
     def _update_suggestions_display(self, suggestions: list):
@@ -240,7 +235,9 @@ class SearchBar(ft.Container):
         """Handles the selection of a city, either from input or suggestions."""
         logging.info(f"SearchBar: City selected: {city_name}")
         if self.on_city_selected and city_name:
-            await self.on_city_selected(city_name) # MODIFIED: Added await
+            result = self.on_city_selected(city_name)
+            if hasattr(result, '__await__'):
+                await result
         self._clear_suggestions()
         self._hide_suggestions()
         if self.search_field:

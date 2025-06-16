@@ -57,6 +57,8 @@ class WeatherView:
         self.chart_container = ft.Container()
         self.air_pollution_container = ft.Container()
         self.air_pollution_chart_container = ft.Container()
+        self.loading = False
+        # RIMOSSO: self._loading_dialog e ProgressRing modale
 
         # Add the main on_resize handler for WeatherView
         if self.page:
@@ -173,20 +175,34 @@ class WeatherView:
 
 
     async def update_by_city(self, city: str, language: str, unit: str) -> None:
-        """Frontend: Triggers backend to fetch weather by city, then updates UI"""
-        # Backend call
-        self.weather_data = self.api_service.get_weather_data(
-            city=city,
-            language=language,
-            unit=unit
-        )
-        self.city_info = self.api_service.get_city_info(city)
-        lat = None
-        lon = None
-        if self.city_info and len(self.city_info) > 0:
-            lat = self.city_info[0].get("lat")
-            lon = self.city_info[0].get("lon")
-        await self._update_ui(city, lat=lat, lon=lon)
+        self._set_loading(True)
+        import asyncio
+        try:
+            try:
+                self.weather_data = await asyncio.to_thread(
+                    self.api_service.get_weather_data,
+                    city,
+                    None,
+                    None,
+                    language,
+                    unit
+                )
+                self.city_info = await asyncio.to_thread(
+                    self.api_service.get_city_info,
+                    city
+                )
+            except Exception:
+                return
+            lat = None
+            lon = None
+            if self.city_info and len(self.city_info) > 0:
+                lat = self.city_info[0].get("lat")
+                lon = self.city_info[0].get("lon")
+                await self._update_ui(city, lat=lat, lon=lon)
+            else:
+                pass
+        finally:
+            self._set_loading(False)
 
     async def update_by_coordinates(self, lat: float, lon: float, language: str, unit: str) -> None:
         """Frontend: Triggers backend to fetch weather by coordinates, then updates UI"""
@@ -417,8 +433,21 @@ class WeatherView:
         self.air_pollution_chart_container.content = weather_card.build(self.air_pollution_chart_instance)
         # self.air_pollution_chart_container.update() # Covered by page.update() in _update_ui
 
+    def _set_loading(self, value: bool):
+        self.loading = value
+        # RIMOSSO: logica AlertDialog e print di debug
+        # Nascondi/mostra i container principali
+        self.info_container.visible = not value
+        self.hourly_container.visible = not value
+        self.weekly_container.visible = not value
+        self.chart_container.visible = not value
+        self.air_pollution_container.visible = not value
+        self.air_pollution_chart_container.visible = not value
+        self._safe_update()
+
     def get_containers(self) -> tuple:
         """Frontend: Returns UI containers for display"""
+        # Non restituire più loading_container
         return (
             self.info_container,
             self.hourly_container,
@@ -457,3 +486,8 @@ class WeatherView:
         if self._background_task:
             self._background_task.cancel()
             self._background_task = None
+
+    def cleanup(self):
+        """Cleanup method to release resources and child components."""
+        self._cleanup_child_components()
+        self.stop_background_updater()

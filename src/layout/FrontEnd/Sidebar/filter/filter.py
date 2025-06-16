@@ -26,19 +26,6 @@ class Filter:
         self.passed_text_handler_get_size = text_handler_get_size # Store passed function
         
         # Initialize ResponsiveTextHandler (This will be removed in a future refactor)
-        if self.page:
-            self.text_handler = ResponsiveTextHandler(
-                page=self.page,
-                base_sizes={
-                    'button': 14,  # Button text size
-                    'icon': 20,    # Icon size
-                },
-                breakpoints=[600, 900, 1200, 1600]
-            )
-            self.text_controls = {}
-            self.text_handler.add_observer(self.update_text_controls)
-        else:
-            self.text_handler = None # Ensure it's None if no page
 
         # Determine the get_size function to use for children for now
         # Eventually, Filter will use passed_text_handler_get_size directly
@@ -84,48 +71,32 @@ class Filter:
         self.popup_menu_button_icon = ft.Icon(ft.Icons.FILTER_ALT_OUTLINED, size=40, color=self.text_color) # Apply text_color to icon
 
     def update_text_sizes(self, text_handler_get_size, text_color: dict, language: str):
-        """Updates text sizes, color, and language for the Filter and its children."""
+        """Aggiorna dinamicamente le dimensioni del testo e i colori in base alla finestra."""
         self.passed_text_handler_get_size = text_handler_get_size
         self.text_color = text_color
         self.language = language
-
-        # Update own elements if they were more complex or directly managed text sizes
-        # For now, PopMenu items are recreated in createPopMenu, which will use new props.
-        # If PopMenu itself needs an update, it would be called here.
-        if hasattr(self, 'popup_menu_button') and self.popup_menu_button:
-            # Re-create or update PopMenu parts if necessary
-            # This might involve updating icon sizes/colors directly if not done in createPopMenu
-            if self.popup_menu_button_icon:
-                self.popup_menu_button_icon.size = self.passed_text_handler_get_size('icon')
-                self.popup_menu_button_icon.color = self.text_color
-            # Update text items (they are recreated in createPopMenu, but if held, update here)
-            if self.meteo_item_text: 
-                self.meteo_item_text.value = self._get_translation("weather")
-                self.meteo_item_text.size = self.passed_text_handler_get_size('button')
-                self.meteo_item_text.color = self.text_color
-            if self.map_item_text: 
-                self.map_item_text.value = self._get_translation("maps") # "map" or "maps"
-                self.map_item_text.size = self.passed_text_handler_get_size('button')
-                self.map_item_text.color = self.text_color
-            if self.settings_item_text: 
-                self.settings_item_text.value = self._get_translation("settings")
-                self.settings_item_text.size = self.passed_text_handler_get_size('button')
-                self.settings_item_text.color = self.text_color
-            
-            # If the popup_menu_button itself needs an update due to content changes:
-            self.popup_menu_button.items = self._build_popup_menu_items() # Rebuild items
-            self.popup_menu_button.update()
-
-        # Propagate to child dialogs
+        # Aggiorna icone e testi se presenti
+        if hasattr(self, 'popup_menu_button_icon') and self.popup_menu_button_icon:
+            self.popup_menu_button_icon.size = self.passed_text_handler_get_size('icon')
+            self.popup_menu_button_icon.color = self.text_color
+        if hasattr(self, 'meteo_item_text'):
+            self.meteo_item_text.size = self.passed_text_handler_get_size('button')
+            self.meteo_item_text.color = self.text_color
+        if hasattr(self, 'map_item_text'):
+            self.map_item_text.size = self.passed_text_handler_get_size('button')
+            self.map_item_text.color = self.text_color
+        if hasattr(self, 'settings_item_text'):
+            self.settings_item_text.size = self.passed_text_handler_get_size('button')
+            self.settings_item_text.color = self.text_color
+        # Aggiorna eventuali child dialogs
         if hasattr(self.weather_alert, 'update_text_sizes'):
             self.weather_alert.update_text_sizes(self.passed_text_handler_get_size, self.text_color, self.language)
         if hasattr(self.map_alert, 'update_text_sizes'):
             self.map_alert.update_text_sizes(self.passed_text_handler_get_size, self.text_color, self.language)
         if hasattr(self.setting_alert, 'update_text_sizes'):
             self.setting_alert.update_text_sizes(self.passed_text_handler_get_size, self.text_color, self.language)
-        
         if self.page:
-            self.page.update() # Trigger a page update to reflect changes
+            self.page.update()
 
     def update_text_controls(self):
         """Update text sizes for all registered controls"""

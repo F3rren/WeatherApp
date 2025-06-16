@@ -128,22 +128,20 @@ class PopMenu:
 
 
     def update_text_sizes(self, get_size_func, text_color, language):
-        """Updates text sizes, colors, and translations based on provided parameters."""
+        """Aggiorna dinamicamente le dimensioni del testo e i colori in base alla finestra."""
         self.text_handler_get_size = get_size_func
         self.text_color = text_color
         self.current_language = language
-
         self._update_internal_elements()
-
-        # Propagate updates to child dialogs
-        # Assuming child dialogs have an 'update_text_sizes' method
+        # Aggiorna anche i child dialogs
         if hasattr(self, 'weather_alert') and hasattr(self.weather_alert, 'update_text_sizes'):
-            self.weather_alert.update_text_sizes(self.text_handler_get_size, self.text_color, self.current_language)
+            self.weather_alert.update_text_sizes(get_size_func, text_color, language)
         if hasattr(self, 'map_alert') and hasattr(self.map_alert, 'update_text_sizes'):
-            self.map_alert.update_text_sizes(self.text_handler_get_size, self.text_color, self.current_language)
+            self.map_alert.update_text_sizes(get_size_func, text_color, language)
         if hasattr(self, 'setting_alert') and hasattr(self.setting_alert, 'update_text_sizes'):
-            self.setting_alert.update_text_sizes(self.text_handler_get_size, self.text_color, self.current_language)
-            
+            self.setting_alert.update_text_sizes(get_size_func, text_color, language)
+        if self.page:
+            self.page.update()
 
     def handle_theme_change(self, event_data=None):
         """Handles theme change events by updating text and icon colors."""

@@ -7,12 +7,12 @@ Now a Flet component itself.
 import flet as ft
 from typing import Callable, Optional
 
-from utils.config import DARK_THEME, LIGHT_THEME
 from state_manager import StateManager
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
+from utils.config import DARK_THEME, LIGHT_THEME
 from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
-from layout.frontend.sidebar.searchbar import SearchBar
+from layout.frontend.sidebar.searchbar.search_bar import SearchBar
 from layout.frontend.sidebar.filter.filter import Filter
 from services.translation_service import TranslationService
 from components.responsive_text_handler import ResponsiveTextHandler
@@ -37,15 +37,8 @@ class SidebarManager(ft.Container):
         self.theme_toggle_service = theme_toggle_service
         self.update_weather_callback = update_weather_callback
 
-
         translation_service = TranslationService()
-        cities = []
-        try:
-            from services.sidebar_service import SidebarService
-            cities = SidebarService().loadAllCity()
-            cities = [item["city"] for item in cities if "city" in item and item["city"]]
-        except Exception:
-            pass
+        cities = []  # Rimosso il caricamento delle città dal DB
 
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
@@ -59,21 +52,14 @@ class SidebarManager(ft.Container):
         def handle_city_selected(city):
             language = self.state_manager.get_state("language") or "en"
             unit = self.state_manager.get_state("unit") or "metric"
-            # Usa sempre page.run_task per chiamate async
-            if hasattr(self.page, 'run_task'):
-                return self.page.run_task(self.update_weather_callback, city, language, unit)
-            else:
-                res = self.update_weather_callback(city, language, unit)
-                if hasattr(res, '__await__'):
-                    import asyncio
-                    return asyncio.create_task(res)
-                return res
+            # Restituisci sempre la coroutine, sarà attesa da chi la invoca (SearchBar)
+            return self.update_weather_callback(city, language, unit)
 
         self.search_bar = SearchBar(
             page=self.page,
             text_color=text_color,
             text_handler_get_size=get_size_func,
-            cities=cities,
+            cities=cities,  # Lista vuota per le città
             on_city_selected=handle_city_selected,
             language=language
         )
@@ -102,89 +88,35 @@ class SidebarManager(ft.Container):
         )
 
         # --- MODERN SIDEBAR LAYOUT ---
-        # Sidebar minimal stile flat con PopMenu e Filter integrati nella SearchBar
-        divider_color = "#e0e0e0" if self.page.theme_mode != ft.ThemeMode.DARK else "#333"
-        text_col = text_color["TEXT"]
+        self.border_radius = 22
+        self.shadow = ft.BoxShadow(blur_radius=18, color="#00000033")
 
-        header = ft.Row([
-            ft.Image(src="/assets/icon.png", width=28, height=28),
-            ft.Text(
-                "MeteoApp",
-                size=16,
-                weight=ft.FontWeight.W_500,
-                color=text_col,
-                style=ft.TextStyle(font_family="Arial Rounded MT Bold")
-            ),
-        ], spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
-
-        # PopMenu e Filter come widget prefix/suffix della SearchBar
-        popmenu_size = 22  # come la x/clear e il filtro
-        popmenu_container = ft.Container(
-            content=self.pop_menu.createPopMenu(self.page, icon_size=popmenu_size, text_size=14),
-            bgcolor=None,
-            width=34,  # 22 icona + padding
-            height=34,
-            alignment=ft.alignment.center,
-            padding=ft.padding.all(6),
-        )
-        # Filter come suffix_widget, dentro la searchbar, rotondo e centrato perfettamente
-        filter_bg = "#23272f" if self.page.theme_mode == ft.ThemeMode.DARK else "#f7f9fb"
-        filter_border = "#333" if self.page.theme_mode == ft.ThemeMode.DARK else "#e0e0e0"
-        filter_icon = ft.Icon(
-            ft.Icons.FILTER_ALT_OUTLINED,
-            size=22,
-            color=text_color["TEXT"]
-        )
-        filter_container = ft.Container(
-            content=filter_icon,
-            bgcolor=filter_bg,
-            border=ft.border.all(1, filter_border),
-            border_radius=32,
-            width=34,
-            height=34,
-            padding=0,
-            alignment=ft.alignment.center,
-        )
-        searchbar_field = self.search_bar.build(
-            prefix_widget=popmenu_container,
-            suffix_widget=filter_container
-        )
-        searchbar_field.width = None  # Espandibile
-        searchbar_field.expand = True
-        searchbar_field.padding = ft.padding.symmetric(horizontal=4, vertical=0)
-        searchbar_row = ft.Row(
-            [
-                searchbar_field,
-            ],
-            alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=0,
-        )
-
+        # Row con popmenu a sinistra, searchbar al centro (espansa), filter a destra
         self.content = ft.Column(
             [
-                ft.Container(content=searchbar_row, padding=ft.padding.only(top=8, bottom=4)),
+                ft.Container(
+                    content=ft.Row(
+                        [
+                            ft.Container(
+                                content=self.pop_menu.build(self.page, icon_size=32, text_size=16),  # popmenu sinistra, icone e testo uguali al filter
+                                margin=ft.margin.only(right=8)
+                            ),
+                            ft.Container(
+                                content=self.search_bar.build(),
+                                expand=True,
+                                margin=ft.margin.only(right=8, left=8)
+                            ),
+                            ft.Container(
+                                content=self.filter.build(self.page, icon_size=32, text_size=16),  # filter destra, icone e testo uguali
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=0,
+                    ),
+                    margin=ft.margin.only(bottom=8)
+                ),
             ],
             spacing=0,
             expand=False,
         )
-        self.padding = ft.padding.only(left=0, right=0)
-        self.border_radius = 0
-        self.shadow = None
-
-        # Collega l'aggiornamento dinamico delle dimensioni del testo al resize della pagina
-        def on_resize(e):
-            self.update_text_sizes(self.text_handler.get_size, text_color, language)
-        self.page.on_resize = on_resize
-
-    def update_text_sizes(self, get_size_func: Callable, text_color: dict, language: str):
-        """Aggiorna dinamicamente le dimensioni del testo e i colori in base alla finestra."""
-        self.text_handler = get_size_func  # Per coerenza con altri componenti
-        if hasattr(self.pop_menu, 'update_text_sizes'):
-            self.pop_menu.update_text_sizes(get_size_func, text_color, language)
-        if hasattr(self.filter, 'update_text_sizes'):
-            self.filter.update_text_sizes(get_size_func, text_color, language)
-        if hasattr(self.search_bar, 'update_text_sizes'):
-            self.search_bar.update_text_sizes(get_size_func, text_color, language)
-        if self.page:
-            self.page.update()

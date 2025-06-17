@@ -6,8 +6,8 @@ import flet as ft # MODIFIED: Use standard alias 'ft'
 import logging
 
 
-from utils.config import (DARK_THEME, LIGHT_THEME, DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, DEFAULT_THEME_MODE)
-from layout.frontend.sidebar.searchbar import SearchBar
+from utils.config import (DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, DEFAULT_THEME_MODE)
+
 from layout.frontend.layout_manager import LayoutManager
 from layout.frontend.sidebar.sidebar_manager import SidebarManager
 from state_manager import StateManager
@@ -46,7 +46,7 @@ class MeteoApp:
         """Aggiorna solo i colori dei container principali e dei testi senza ricostruire i container."""
         if not self.page:
             return
-        
+        from utils.config import DARK_THEME, LIGHT_THEME
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         theme = DARK_THEME if is_dark else LIGHT_THEME
         default_card = theme.get("CARD", "#ffffff" if not is_dark else "#222222")
@@ -116,7 +116,6 @@ class MeteoApp:
         self.weather_view_instance = WeatherView(page) # Store instance
         self.weather_view_instance.start_background_updater()  # Avvia il task persistente
         
-        # Ottieni i container senza loading_container
         info_container, hourly_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = self.weather_view_instance.get_containers()
         
         # Inizializza il servizio di location toggle
@@ -170,7 +169,7 @@ class MeteoApp:
         self.air_pollution_chart_container_wrapper = containers['air_pollution_chart']
         self.air_pollution_container_wrapper = containers['air_pollution']
         
-        # RIMOSSO: page.add(loading_container)  # Non serve più, il caricamento è gestito dal dialog
+        # Costruisce e aggiunge il layout alla pagina
         page.add(self.layout_manager.build_layout())
         
         # Initial update of container colors
@@ -205,6 +204,7 @@ class MeteoApp:
                 if e.data == "close": # Or other relevant events like 'destroy'
                     await on_disconnect_or_close(e)
             page.on_window_event = window_event_handler
+
 
 def main():
     """Entry point for the application"""

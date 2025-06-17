@@ -179,28 +179,25 @@ class WeatherView:
         import asyncio
         try:
             try:
-                self.weather_data = await asyncio.to_thread(
-                    self.api_service.get_weather_data,
-                    city,
-                    None,
-                    None,
-                    language,
-                    unit
+                # Recupera i dati in thread separato
+                weather_data, city_info = await asyncio.gather(
+                    asyncio.to_thread(self.api_service.get_weather_data, city, None, language, unit),
+                    asyncio.to_thread(self.api_service.get_city_info, city)
                 )
-                self.city_info = await asyncio.to_thread(
-                    self.api_service.get_city_info,
-                    city
-                )
-            except Exception:
+                self.weather_data = weather_data
+                self.city_info = city_info
+            except Exception as e:
+                print(f"Errore durante il recupero dati: {e}")
                 return
-            lat = None
-            lon = None
+
+            lat = lon = None
             if self.city_info and len(self.city_info) > 0:
                 lat = self.city_info[0].get("lat")
                 lon = self.city_info[0].get("lon")
                 await self._update_ui(city, lat=lat, lon=lon)
-            else:
-                pass
+            # Aggiorna la UI dopo aver cambiato i dati
+            if hasattr(self, 'page') and self.page:
+                self.page.update()
         finally:
             self._set_loading(False)
 

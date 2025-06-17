@@ -2,7 +2,7 @@ import flet as ft
 import logging
 
 from components.responsive_text_handler import ResponsiveTextHandler
-from utils.config import LIGHT_THEME, DARK_THEME
+from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
@@ -23,11 +23,9 @@ class PopMenu:
         self.location_toggle_value = location_toggle_value
         
         self.text_color = text_color if text_color else (DARK_THEME if self.page and self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME)
-        self.language = language if language else "en"
-        self.passed_text_handler_get_size = text_handler_get_size 
-        
-        self.text_handler = ResponsiveTextHandler()  # Will be set by ResponsiveTextHandler if needed
-
+        self.language = language if language else DEFAULT_LANGUAGE
+        self.text_handler_get_size = text_handler_get_size  
+ 
         self.weather_alert = WeatherAlertDialog(
             page=self.page, 
             state_manager=state_manager, 
@@ -120,72 +118,46 @@ class PopMenu:
         else:
             print(f"Error: Dialog for {type(alert_instance).__name__} could not be opened (no open_dialog method).")
 
-    def createPopMenu(self, page=None, icon_size=None, text_size=None):
-        if page is None: 
-            page = self.page # Use self.page if available
-        if not page: # Ensure we have a page context
-            logging.error("Error: Page context is required to create PopMenu and its dialogs.")
-            return ft.Container(ft.Text(self._get_translation("error_page_context_missing")))
-
-        current_get_size_func = self.passed_text_handler_get_size if self.passed_text_handler_get_size else (self.text_handler.get_size if self.text_handler else lambda x: 14)
-        icon_size_val = current_get_size_func('icon')
-        button_size_val = text_size if text_size else current_get_size_func('button')
-
-        self.popup_menu_button_icon = ft.Icon(
-            ft.Icons.MENU, 
-            color=self.text_color, 
-            size=self.text_handler.get_size('sidebar_icon')
-        )
-
-        self.popup_menu_button = ft.PopupMenuButton(
-            content=self.popup_menu_button_icon, 
-            icon_size=icon_size_val, 
-            items=self._build_popup_menu_items(button_size_val)
-        )
-        return self.popup_menu_button
-
-    def _build_popup_menu_items(self, button_size_val):
-        """Helper to build/rebuild PopupMenuItem list with current translations and styles."""
-        current_get_size_func = self.passed_text_handler_get_size if self.passed_text_handler_get_size else (self.text_handler.get_size if self.text_handler else lambda x: 14)
-        button_size_val = current_get_size_func('button')
-
-        # Re-create text controls for items to ensure they have latest language and color
-        self.meteo_item_text = ft.Text(
-            self._get_translation("weather"), 
-            color=self.text_color, 
-            size=button_size_val
-        )
-        self.map_item_text = ft.Text(
-            self._get_translation("maps"), # Ensure key is correct ("map" or "maps")
-            color=self.text_color, 
-            size=button_size_val
-        )
-        self.settings_item_text = ft.Text(
-            self._get_translation("settings"), 
-            color=self.text_color, 
-            size=button_size_val
-        )
-
+    def _build_popup_menu_items(self):
         return [
             ft.PopupMenuItem(
                 content=ft.Row([
-                    ft.Icon(ft.Icons.SUNNY, color="#FF8C00"),
-                    self.meteo_item_text,
+                    ft.Icon(ft.Icons.SUNNY, 
+                            color="#FF8C00", 
+                            size=self.text_handler_get_size('popup_menu_button_icon')),
+                    ft.Text(
+                        self._get_translation("weather"), 
+                        color=self.text_color, 
+                        size=self.text_handler_get_size('alert_dialog_text') 
+                    )
                 ]),
                 on_click=lambda _, al=self.weather_alert: self._open_alert_dialog(al),
             ),
             ft.PopupMenuItem(
                 content=ft.Row([
-                    ft.Icon(ft.Icons.MAP_OUTLINED, color="#0000FF"),
-                    self.map_item_text,
+                    ft.Icon(ft.Icons.MAP_OUTLINED, 
+                            color="#0000FF", 
+                            size=self.text_handler_get_size('popup_menu_button_icon')),
+                    ft.Text(
+                        self._get_translation("map"), # Ensure key is correct ("map" or "maps")
+                        color=self.text_color, 
+                        size=self.text_handler_get_size('alert_dialog_text') 
+                    )
                 ]),
                 on_click=lambda _, al=self.map_alert: self._open_alert_dialog(al),
             ),
             ft.PopupMenuItem(
                  content=ft.Row([
-                     ft.Icon(ft.Icons.SETTINGS, color="#808080"),
-                     self.settings_item_text,
-                 ]),
+                    ft.Icon(
+                        ft.Icons.SETTINGS, 
+                        color="#808080", 
+                        size=self.text_handler_get_size('popup_menu_button_icon')),
+                    ft.Text(
+                        self._get_translation("settings"), 
+                        color=self.text_color,
+                        size=self.text_handler_get_size('alert_dialog_text')
+                    )
+                ]),
                 on_click=lambda _, al=self.setting_alert: self._open_alert_dialog(al),
             ),
         ]
@@ -211,9 +183,13 @@ class PopMenu:
         if hasattr(self, 'text_handler') and self.text_handler:
             self.text_handler.remove_observer(self.update_text_controls)
     
-    def build(self, page=None, icon_size=None, text_size=None):
-        return ft.Container(
-            content=ft.Column([
-                self.createPopMenu(page, icon_size=icon_size, text_size=text_size)
-            ])
-        )
+    def build(self):
+        return ft.PopupMenuButton(
+                content=ft.Icon(
+                    ft.Icons.MENU, 
+                        color=self.text_color, 
+                        size=self.text_handler_get_size('icon')
+                    ), 
+                items=self._build_popup_menu_items(),
+                style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12))
+            )

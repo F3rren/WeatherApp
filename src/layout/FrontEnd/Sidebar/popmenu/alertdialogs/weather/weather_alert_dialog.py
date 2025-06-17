@@ -1,11 +1,12 @@
 import flet as ft
 from utils.config import LIGHT_THEME, DARK_THEME
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class WeatherAlertDialog:
         
     def __init__(self, page: ft.Page, state_manager=None, translation_service=None, 
                  handle_location_toggle=None, handle_theme_toggle=None, 
-                 text_color: str = None, language: str = "en", text_handler_get_size=None):
+                 text_color: str = None, language: str = "en"):
         self.page = page
         self.state_manager = state_manager
         self.translation_service = translation_service or (page.session.get('translation_service') if page else None)
@@ -13,11 +14,21 @@ class WeatherAlertDialog:
         self.handle_theme_toggle = handle_theme_toggle # Will be used for toggles if re-added
         
         self.current_language = language
-        self.text_handler_get_size = text_handler_get_size
 
         self.text_color = text_color if text_color else (DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"])
         self.dialog = None
-        
+
+        # ResponsiveTextHandler locale come in main_information
+        self._text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'title': 20,
+                'body': 14,
+                'icon': 20,
+            },
+            breakpoints=[600, 900, 1200, 1600]
+        )
+
         # Controls will be initialized in createAlertDialog
         self.title_text_control = None
         self.language_text_control = None
@@ -32,21 +43,17 @@ class WeatherAlertDialog:
         
         self.createAlertDialog()
 
-    def update_text_sizes(self, get_size_func, text_color, language):
-        self.text_handler_get_size = get_size_func
+    def update_text_sizes(self, text_color, language):
         self.text_color = text_color
         self.current_language = language
-
-        if not self.dialog or not self.text_handler_get_size:
+        if not self.dialog or not self._text_handler:
             return
-
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         current_theme = DARK_THEME if is_dark else LIGHT_THEME
         self.dialog.bgcolor = current_theme["DIALOG_BACKGROUND"]
-
-        title_size = self.text_handler_get_size('title')
-        body_size = self.text_handler_get_size('body')
-        icon_size = self.text_handler_get_size('icon')
+        title_size = self._text_handler.get_size('title')
+        body_size = self._text_handler.get_size('body')
+        icon_size = self._text_handler.get_size('icon')
 
         if self.title_text_control:
             self.title_text_control.value = self._get_translation("weather")
@@ -100,20 +107,12 @@ class WeatherAlertDialog:
             return self.translation_service.get_text(key, self.current_language)
         return key 
 
-    def _default_get_size(self, category):
-        """Provides default sizes if text_handler_get_size is not available."""
-        sizes = {'title': 20, 'body': 14, 'icon': 20}
-        return sizes.get(category, 14)
-
     def createAlertDialog(self):
-        current_get_size = self.text_handler_get_size if self.text_handler_get_size else self._default_get_size
-        
+        current_get_size = self._text_handler.get_size
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         current_theme = DARK_THEME if is_dark else LIGHT_THEME
-        dialog_text_color = self.text_color # Use the instance's text_color
-        
+        dialog_text_color = self.text_color
         bg_color = current_theme["DIALOG_BACKGROUND"]
-
         title_size = current_get_size('title')
         body_size = current_get_size('body')
         icon_size = current_get_size('icon')
@@ -199,8 +198,7 @@ class WeatherAlertDialog:
                 self.page.controls.append(self.dialog)
             self.page.dialog = self.dialog
             self.page.dialog.open = True
-            if self.text_handler_get_size:
-                self.update_text_sizes(self.text_handler_get_size, self.text_color, self.current_language)
+            self.update_text_sizes(self.text_color, self.current_language)
             self.page.update()
 
     def close_dialog(self):

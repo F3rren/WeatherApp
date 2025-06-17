@@ -1,30 +1,32 @@
 import flet as ft
 from utils.config import DARK_THEME, LIGHT_THEME
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class MapsAlertDialog:
     def __init__(self, page: ft.Page, state_manager=None, translation_service=None, 
-                 handle_location_toggle=None, handle_theme_toggle=None, # Kept for potential future use, but not used now
-                 text_color: str = None, language: str = "en", text_handler_get_size=None):
+                 handle_location_toggle=None, handle_theme_toggle=None, 
+                 text_color: str = None, language: str = "en"):
         self.page = page
         self.state_manager = state_manager
         self.translation_service = translation_service or (page.session.get('translation_service') if page else None)
-        # self.handle_location_toggle = handle_location_toggle # Not used in current simple map dialog
-        # self.handle_theme_toggle = handle_theme_toggle # Not used
-        
         self.current_language = language
-        self.text_handler_get_size = text_handler_get_size
-
         self.text_color = text_color if text_color else (DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"])
         self.dialog = None
+        # ResponsiveTextHandler locale
+        self._text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'title': 20,
+                'body': 14,
+                'icon': 20,
+            },
+            breakpoints=[600, 900, 1200, 1600]
+        )
 
         # Controls to be initialized in createAlertDialog
         self.title_text_control = None
         self.content_text_control = None
         self.close_button_text_control = None
-        
-        # Removed self.language_dropdown and self.measurement_dropdown initialization
-        # Removed self.location_toggle and self.theme_toggle initialization
-        # Removed ResponsiveTextHandler initialization and observer registration
         
         if state_manager:
             # Only register for theme_event if it's handled by this class directly
@@ -36,24 +38,19 @@ class MapsAlertDialog:
 
         self.createAlertDialog()
 
-    def _default_get_size(self, category):
-        sizes = {'title': 20, 'body': 14, 'icon': 20} # Basic defaults
-        return sizes.get(category, 14)
-
-    def update_text_sizes(self, get_size_func, text_color, language):
-        self.text_handler_get_size = get_size_func
+    def update_text_sizes(self, text_color, language):
         self.text_color = text_color
         self.current_language = language
 
-        if not self.dialog or not self.text_handler_get_size:
+        if not self.dialog or not self._text_handler:
             return
 
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         current_theme = DARK_THEME if is_dark else LIGHT_THEME
         self.dialog.bgcolor = current_theme["DIALOG_BACKGROUND"]
 
-        title_size = self.text_handler_get_size('title')
-        body_size = self.text_handler_get_size('body')
+        title_size = self._text_handler.get_size('title')
+        body_size = self._text_handler.get_size('body')
 
         if self.title_text_control:
             self.title_text_control.value = self._get_translation("maps")
@@ -87,20 +84,15 @@ class MapsAlertDialog:
             return "Maps content will be displayed here."
         return key
 
-    # Removed create_location_toggle, create_theme_toggle, update_location_toggle, update_theme_toggle
-    # Removed handle_theme_event (or ensure it calls update_text_sizes if kept)
-    # For simplicity, direct theme handling is now part of update_text_sizes
-
     def createAlertDialog(self):
-        current_get_size = self.text_handler_get_size if self.text_handler_get_size else self._default_get_size
-        
+        get_size = self._text_handler.get_size
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         current_theme = DARK_THEME if is_dark else LIGHT_THEME
         dialog_text_color = self.text_color
         bg_color = current_theme["DIALOG_BACKGROUND"]
 
-        title_size = current_get_size('title')
-        body_size = current_get_size('body')
+        title_size = get_size('title')
+        body_size = get_size('body')
 
         self.title_text_control = ft.Text(
             self._get_translation("maps"),
@@ -156,8 +148,7 @@ class MapsAlertDialog:
                 self.page.controls.append(self.dialog)
             self.page.dialog = self.dialog
             self.page.dialog.open = True
-            if self.text_handler_get_size:
-                self.update_text_sizes(self.text_handler_get_size, self.text_color, self.current_language)
+            self.update_text_sizes(self.text_color, self.current_language)
             self.page.update()
 
     def close_dialog(self):

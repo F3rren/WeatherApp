@@ -1,5 +1,5 @@
 ﻿import flet as ft
-from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE
+from components.responsive_text_handler import ResponsiveTextHandler
 
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
@@ -8,12 +8,10 @@ class SettingsAlertDialog:
     """
     Versione semplificata per test dell'alert dialog delle impostazioni.
     """    
-    def __init__(self, page, text_color, language, text_handler_get_size, state_manager=None, translation_service=None, handle_location_toggle=None, handle_theme_toggle=None):
+    def __init__(self, page, text_color, language, state_manager=None, translation_service=None, handle_location_toggle=None, handle_theme_toggle=None):
         self.page = page
         self.text_color = text_color
         self.language = language
-        self.get_size = text_handler_get_size # Store the passed function
-        
         self.state_manager = state_manager
         self.translation_service = translation_service or (page.session.get('translation_service') if page else None)
         
@@ -21,32 +19,36 @@ class SettingsAlertDialog:
         self.handle_location_toggle_callback = handle_location_toggle
         self.handle_theme_toggle_callback = handle_theme_toggle
 
+        # ResponsiveTextHandler locale
+        self._text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'title': 20,
+                'body': 14,
+                'icon': 20,
+            },
+            breakpoints=[600, 900, 1200, 1600]
+        )
+
         # Initialize child dropdowns, passing new props (assuming they are refactored)
         self.language_dropdown = DropdownLanguage(
             page=self.page, # Add if DropdownLanguage needs it
             state_manager=self.state_manager,
             text_color=self.text_color,
             language=self.language,
-            text_handler_get_size=self.get_size
+            text_handler_get_size=self._text_handler.get_size
         )
         self.measurement_dropdown = DropdownMeasurement(
             state_manager=self.state_manager,
             page=self.page, 
             text_color=self.text_color,
             language=self.language,
-            text_handler_get_size=self.get_size
+            text_handler_get_size=self._text_handler.get_size
         )
         
         self.location_toggle_control = None # Will hold the ft.Switch control
         self.theme_toggle_control = None    # Will hold the ft.Switch control
         self.dialog = None
-
-        # Removed ResponsiveTextHandler initialization
-        # Removed self.text_controls dictionary
-        # Removed observer registration for self.text_handler
-
-        # Removed state_manager observer registrations for "theme_event" and "language_event"
-        # These updates will now come via update_text_sizes from the parent.
 
     def _get_translation(self, key):
         """Helper method to get translation with fallback"""
@@ -54,8 +56,6 @@ class SettingsAlertDialog:
             # Use self.language which is passed in and updated
             return self.translation_service.get_text(key, self.language)
         return key  # Fallback to key if no translation service
-
-    # Removed update_text_controls method
 
     def _create_location_toggle_instance(self):
         using_location = self.state_manager.get_state('using_location') if self.state_manager else False
@@ -75,21 +75,15 @@ class SettingsAlertDialog:
         # Styling will be applied by _apply_current_styling_and_text
         return self.theme_toggle_control
 
-    def update_text_sizes(self, get_size_func, text_color, language):
-        """Updates text sizes, color, and language, then refreshes the dialog."""
-        self.get_size = get_size_func
+    def update_text_sizes(self, text_color, language):
         self.text_color = text_color
-        self.language = language # Update self.language
-
-        # Update child dropdowns if they have an update_text_sizes method
+        self.language = language
         if hasattr(self.language_dropdown, 'update_text_sizes'):
-            self.language_dropdown.update_text_sizes(get_size_func, text_color, language)
+            self.language_dropdown.update_text_sizes(self._text_handler.get_size, text_color, language)
         if hasattr(self.measurement_dropdown, 'update_text_sizes'):
-            self.measurement_dropdown.update_text_sizes(get_size_func, text_color, language)
-
+            self.measurement_dropdown.update_text_sizes(self._text_handler.get_size, text_color, language)
         if self.dialog:
             self._apply_current_styling_and_text()
-            # self.page.update() # Parent might do this, or if dialog is already open
 
     def _apply_current_styling_and_text(self):
         """Applies current text sizes, colors, language, and theme styles to the dialog."""
@@ -100,7 +94,7 @@ class SettingsAlertDialog:
         self.dialog.bgcolor = self.text_color.get("DIALOG_BACKGROUND", ft.Colors.WHITE)
         if isinstance(self.dialog.title, ft.Text):
             self.dialog.title.value = self._get_translation("settings")
-            self.dialog.title.size = self.get_size('title')
+            self.dialog.title.size = self._text_handler.get_size('title')
             self.dialog.title.color = self.text_color["TEXT"] 
         
         # Update content: labels, icons, etc.
@@ -121,24 +115,23 @@ class SettingsAlertDialog:
                    len(rows[i].controls[0].controls) > 1:
                     
                     icon_control = rows[i].controls[0].controls[0]
-                    text_control = rows[i].controls[0].controls[1]
+                    label_control = rows[i].controls[0].controls[1]
 
                     if isinstance(icon_control, ft.Icon):
-                        icon_control.name = icon_name 
-                        icon_control.size = self.get_size('label')
-                        icon_control.color = icon_color_val 
+                        icon_control.size = self._text_handler.get_size('icon')
+                        icon_control.color = icon_color_val
                     
-                    if isinstance(text_control, ft.Text):
-                        text_control.value = self._get_translation(key)
-                        text_control.size = self.get_size('label')
-                        text_control.color = self.text_color["TEXT"] 
+                    if isinstance(label_control, ft.Text):
+                        label_control.value = self._get_translation(key)
+                        label_control.size = self._text_handler.get_size('body')
+                        label_control.color = self.text_color["TEXT"] 
             
         # Update actions (close button)
         if self.dialog.actions and len(self.dialog.actions) > 0:
             action_button = self.dialog.actions[0]
             if isinstance(action_button, ft.TextButton) and hasattr(action_button, 'content') and isinstance(action_button.content, ft.Text):
                 action_button.content.value = self._get_translation("close_button")
-                action_button.content.size = self.get_size('body')
+                action_button.content.size = self._text_handler.get_size('body')
                 action_button.content.color = self.text_color.get("ACCENT", ft.Colors.BLUE)
             action_button.style = ft.ButtonStyle(
                 color=self.text_color.get("ACCENT"), 
@@ -162,11 +155,11 @@ class SettingsAlertDialog:
     def createAlertDialog(self, page): # page parameter is kept for consistency, uses self.page
         language_dropdown_control = self.language_dropdown.build()
         measurement_dropdown_control = self.measurement_dropdown.build()
-        
+        get_size = self._text_handler.get_size
         self.dialog = ft.AlertDialog(
             title=ft.Text(
                 self._get_translation("settings"), 
-                size=self.get_size('title'), 
+                size=get_size('title'), 
                 weight=ft.FontWeight.BOLD, 
                 color=self.text_color["TEXT"] 
             ),
@@ -181,8 +174,8 @@ class SettingsAlertDialog:
                             controls=[
                                 ft.Row(
                                     controls=[
-                                        ft.Icon(ft.Icons.LANGUAGE, size=self.get_size('label'), color="#ff6b35"),
-                                        ft.Text(self._get_translation("language_setting"), size=self.get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
+                                        ft.Icon(ft.Icons.LANGUAGE, size=get_size('label'), color="#ff6b35"),
+                                        ft.Text(self._get_translation("language_setting"), size=get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
                                     ], spacing=10),
                                 language_dropdown_control,
                             ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
@@ -191,8 +184,8 @@ class SettingsAlertDialog:
                             controls=[
                                 ft.Row(
                                     controls=[
-                                        ft.Icon(ft.Icons.STRAIGHTEN, size=self.get_size('label'), color="#22c55e"),
-                                        ft.Text(self._get_translation("measurement_setting"), size=self.get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
+                                        ft.Icon(ft.Icons.STRAIGHTEN, size=get_size('label'), color="#22c55e"),
+                                        ft.Text(self._get_translation("measurement_setting"), size=get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
                                     ], spacing=10),
                                 measurement_dropdown_control,
                             ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
@@ -201,8 +194,8 @@ class SettingsAlertDialog:
                             controls=[
                                 ft.Row(
                                     controls=[
-                                        ft.Icon(ft.Icons.LOCATION_ON, size=self.get_size('label'), color="#ef4444"),
-                                        ft.Text(self._get_translation("use_current_location_setting"), size=self.get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
+                                        ft.Icon(ft.Icons.LOCATION_ON, size=get_size('label'), color="#ef4444"),
+                                        ft.Text(self._get_translation("use_current_location_setting"), size=get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
                                     ], spacing=10),
                                 self._create_location_toggle_instance(), 
                             ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
@@ -211,8 +204,8 @@ class SettingsAlertDialog:
                             controls=[
                                 ft.Row(
                                     controls=[
-                                        ft.Icon(ft.Icons.DARK_MODE, size=self.get_size('label'), color="#3b82f6"),
-                                        ft.Text(self._get_translation("dark_theme_setting"), size=self.get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
+                                        ft.Icon(ft.Icons.DARK_MODE, size=get_size('label'), color="#3b82f6"),
+                                        ft.Text(self._get_translation("dark_theme_setting"), size=get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
                                     ], spacing=10),
                                 self._create_theme_toggle_instance(), 
                             ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
@@ -225,7 +218,7 @@ class SettingsAlertDialog:
                 ft.TextButton(
                     content=ft.Text(
                         self._get_translation("close_button"), 
-                        size=self.get_size('body'), 
+                        size=get_size('body'), 
                         color=self.text_color.get("ACCENT") 
                     ),
                     style=ft.ButtonStyle( 
@@ -264,9 +257,4 @@ class SettingsAlertDialog:
         """
         if self.dialog is None:
             self.createAlertDialog(self.page)
-        # This method might not be strictly necessary if instantiation implies readiness,
-        # and open_dialog handles creation.
-        # However, if some parent component expects a 'build' method that returns a control,
-        # this might need to return self.dialog (though it's an AlertDialog, not a typical control to embed).
-        # For now, let's assume it ensures the dialog is created.
-        return self.dialog # Or None if not created, though createAlertDialog should be called.
+        return self.dialog

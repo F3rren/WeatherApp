@@ -33,7 +33,7 @@ class ResponsiveTextHandler:
             'body': 14,        # Testo normale (base standard)
             'caption': 12,     # Testo piccolo/caption (ridotto)
             'value': 16,       # Valori (temperature, percentuali - moderato)
-            'icon': 20,        # Icone (molto ridotto, più proporzionato)
+            'sidebar_icon': 30,        # Icone (molto ridotto, più proporzionato)
             'legend': 13,      # Per legende dei grafici
             'axis_title': 15,  # Per titoli degli assi dei grafici
         }

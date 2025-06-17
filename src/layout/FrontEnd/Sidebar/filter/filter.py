@@ -5,10 +5,10 @@ from utils.config import LIGHT_THEME, DARK_THEME
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
-# ResponsiveTextHandler will eventually be removed from here
-from components.responsive_text_handler import ResponsiveTextHandler
+
 
 class Filter:
+
     def __init__(self, page: ft.Page = None, state_manager=None, 
                  handle_location_toggle=None, handle_theme_toggle=None, 
                  theme_toggle_value=False, location_toggle_value=False, 
@@ -27,9 +27,6 @@ class Filter:
         
         # Initialize ResponsiveTextHandler (This will be removed in a future refactor)
 
-        # Determine the get_size function to use for children for now
-        # Eventually, Filter will use passed_text_handler_get_size directly
-        current_get_size_func = self.passed_text_handler_get_size if self.passed_text_handler_get_size else (self.text_handler.get_size if self.text_handler else lambda x: 14) 
 
         self.weather_alert = WeatherAlertDialog(
             page=self.page, 
@@ -39,7 +36,6 @@ class Filter:
             # handle_theme_toggle=handle_theme_toggle,
             text_color=self.text_color, # Pass the text_color dictionary
             language=self.language, # Pass language
-            text_handler_get_size=current_get_size_func # Pass get_size function
         )
 
         self.map_alert = MapsAlertDialog(
@@ -50,8 +46,7 @@ class Filter:
             # handle_theme_toggle=handle_theme_toggle,
             text_color=self.text_color, # Pass the text_color dictionary
             language=self.language, # Pass language
-            text_handler_get_size=current_get_size_func # Pass get_size function
-        )
+            )
 
         self.setting_alert = SettingsAlertDialog(
             page=self.page, 
@@ -61,8 +56,7 @@ class Filter:
             handle_theme_toggle=self.handle_theme_toggle,
             text_color=self.text_color, # Pass the text_color dictionary
             language=self.language, # Pass language
-            text_handler_get_size=current_get_size_func # Pass get_size function
-        )
+            )
 
         # Store PopupMenuItems for color updates
         self.meteo_item_text = ft.Text(self._get_translation("weather"), size=20, color=self.text_color)
@@ -125,32 +119,13 @@ class Filter:
         return key  # Fallback to key if no translation service
 
     def _open_alert_dialog(self, alert_instance):
-        """Helper method to create (if needed) and open an alert dialog."""
         if not self.page:
-            logging.error("Error: Page context not available for opening dialog.")
+            print("Error: Page context not available for opening dialog.")
             return
-        
-        # Ensure the dialog instance has the latest props before creating/opening
-        # This is important if dialogs are created lazily
-        if hasattr(alert_instance, 'text_color'): # Check if it has these attributes
-            alert_instance.text_color = self.text_color
-            alert_instance.language = self.language
-            alert_instance.text_handler_get_size = self.passed_text_handler_get_size 
-            # If the dialog is already created, call its update_text_sizes
-            if alert_instance.dialog and hasattr(alert_instance, 'update_text_sizes'):
-                alert_instance.update_text_sizes(self.passed_text_handler_get_size, self.text_color, self.language)
-            elif not alert_instance.dialog and hasattr(alert_instance, 'createAlertDialog'):
-                alert_instance.createAlertDialog(self.page) # It will use its updated props
-        elif hasattr(alert_instance, 'createAlertDialog'): # Fallback for older dialogs not yet fully refactored
-             alert_instance.createAlertDialog(self.page)
-
-        if hasattr(alert_instance, 'dialog') and alert_instance.dialog:
-            # self.page.open(alert_instance.dialog) # Flet V1 uses page.dialog = instance; instance.open = True
-            self.page.dialog = alert_instance.dialog
-            alert_instance.dialog.open = True
-            self.page.update()
+        if hasattr(alert_instance, 'open_dialog') and callable(alert_instance.open_dialog):
+            alert_instance.open_dialog()
         else:
-            logging.error(f"Error: Dialog for {type(alert_instance).__name__} could not be created or shown.")
+            print(f"Error: Dialog for {type(alert_instance).__name__} could not be opened (no open_dialog method).")
 
     def createPopMenu(self, page=None, icon_size=None, text_size=None):
         if page is None: 

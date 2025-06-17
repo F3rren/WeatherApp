@@ -58,7 +58,6 @@ class SidebarManager(ft.Container):
         self.search_bar = SearchBar(
             page=self.page,
             text_color=text_color,
-            text_handler_get_size=get_size_func,
             cities=cities,  # Lista vuota per le città
             on_city_selected=handle_city_selected,
             language=language
@@ -66,7 +65,6 @@ class SidebarManager(ft.Container):
         self.pop_menu = PopMenu(
             page=self.page,
             state_manager=self.state_manager,
-            translation_service=translation_service,
             handle_location_toggle=self.location_toggle_service.handle_location_toggle,
             handle_theme_toggle=self.theme_toggle_service.handle_theme_toggle,
             theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
@@ -91,6 +89,13 @@ class SidebarManager(ft.Container):
         self.border_radius = 22
         self.shadow = ft.BoxShadow(blur_radius=18, color="#00000033")
 
+        # Usa la logica del text_handler anche per le icone della X e del filtro
+        icon_menu_size = self.text_handler.get_size('icon_menu')
+        icon_clear_size = self.text_handler.get_size('icon_clear')
+        icon_filter_size = self.text_handler.get_size('icon_filter')
+        popmenu_widget = self.pop_menu.build(self.page, icon_size=icon_menu_size, text_size=16)
+        filter_widget = self.filter.build(self.page, icon_size=icon_filter_size, text_size=16)
+
         # Row con popmenu a sinistra, searchbar al centro (espansa), filter a destra
         self.content = ft.Column(
             [
@@ -98,16 +103,13 @@ class SidebarManager(ft.Container):
                     content=ft.Row(
                         [
                             ft.Container(
-                                content=self.pop_menu.build(self.page, icon_size=32, text_size=16),  # popmenu sinistra, icone e testo uguali al filter
-                                margin=ft.margin.only(right=8)
-                            ),
-                            ft.Container(
-                                content=self.search_bar.build(),
+                                content=self.search_bar.build(
+                                    popmenu_widget=popmenu_widget,
+                                    filter_widget=filter_widget,
+                                    clear_icon_size=icon_clear_size  # Passa la size della X
+                                ),
                                 expand=True,
                                 margin=ft.margin.only(right=8, left=8)
-                            ),
-                            ft.Container(
-                                content=self.filter.build(self.page, icon_size=32, text_size=16),  # filter destra, icone e testo uguali
                             ),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,

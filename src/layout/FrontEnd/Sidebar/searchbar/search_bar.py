@@ -1,11 +1,11 @@
 import flet as ft
 from typing import Callable, Optional, List
+from components.responsive_text_handler import ResponsiveTextHandler
 
 class SearchBar:
     def __init__(self,
                  page: ft.Page,
                  text_color: dict, # text_color is a dict e.g. {"TEXT": "#000000", ...}
-                 text_handler_get_size: Callable,
                  cities: List[str] = None,
                  on_city_selected: Optional[Callable] = None,
                  language: str = "en",
@@ -16,31 +16,30 @@ class SearchBar:
         self.page = page
         self._text_color = text_color
         self._language = language
-        self._text_handler_get_size = text_handler_get_size
         self._prefix_widget = prefix_widget
         self._suffix_widget = suffix_widget
-
-    def update_text_sizes(self, get_size_func: Callable, text_color: dict, language: str):
-        self._text_handler_get_size = get_size_func
-        self._text_color = text_color
-        self._language = language
-        if self.page:
-            self.page.update()
-
-    def build(self) -> ft.Container:
-        self._snackbar = ft.SnackBar(
-            content=ft.Text(""),
-            bgcolor="#ffcccc", # Consider a theme-based color
-            duration=2000
+        # ResponsiveTextHandler locale
+        self._text_handler = ResponsiveTextHandler(
+            page=self.page,
+            base_sizes={
+                'body': 16,
+                'icon': 24,
+                'icon_filter': 24,
+                'icon_clear': 24,
+            },
+            breakpoints=[600, 900, 1200, 1600]
         )
 
-        # Note: show_city_not_found is defined but not used in the current build method.
-        # If it's intended for use with on_submit or other logic, it should be called.
-        # def show_city_not_found(city_name):
-        #     self._snackbar.content.value = f"La città '{city_name}' non esiste." # Localize
-        #     self.page.snack_bar = self._snackbar
-        #     self._snackbar.open = True
-        #     self.page.update()
+    def update_text_sizes(self, get_size_func: Callable, text_color: dict, language: str):
+        # ...existing code...
+        pass  # Non serve più, la gestione è locale
+
+    def build(self, popmenu_widget=None, filter_widget=None, clear_icon_size=None) -> ft.Container:
+        self._snackbar = ft.SnackBar(
+            content=ft.Text(""),
+            bgcolor="#ffcccc",
+            duration=2000
+        )
 
         def on_submit(e):
             value = e.control.value.strip()
@@ -51,77 +50,66 @@ class SearchBar:
                         import asyncio
                         async def run_and_update():
                             await res
-                        try:
-                            asyncio.run(run_and_update())
-                        except RuntimeError:
-                            # If already in an event loop, fallback to create_task (for completeness)
-                            asyncio.create_task(run_and_update())
+                            # self.page.update() # Page update might be handled by the callback itself
+                        asyncio.create_task(run_and_update())
                         # No return here, TextField handles its own update on submit typically
                 # self.page.update() # Avoid redundant updates if on_city_selected handles it
 
         self._focused = False
-        # Container needs to be defined before on_focus and on_blur can reference it.
-        # This will be addressed by defining `container` later and then assigning these methods
-        # or by passing `container` to them if they become static/helper methods.
-        # For now, assuming `container` will be accessible in their scope.
 
-        initial_text_style = None
-        if self._text_handler_get_size:
-            initial_size = self._text_handler_get_size('body')
-            color = self._text_color.get("TEXT", "#000000") # Default color if not in dict
-            if initial_size is not None:
-                initial_text_style = ft.TextStyle(size=initial_size, color=color)
-            else:
-                initial_text_style = ft.TextStyle(color=color)
+        get_size = self._text_handler.get_size
+        initial_size = get_size('body')
+        color = self._text_color.get("TEXT", "#000000") # Default color if not in dict
+        initial_text_style = ft.TextStyle(size=initial_size, color=color)
+
+        # Determina la grandezza delle icone tramite text_handler_get_size
+        icon_size = get_size('icon')
 
         def clear_text(e):
             search_field.value = ""
-            search_field.update() # Update only the TextField
+            search_field.update()
 
         clear_btn = ft.IconButton(
             icon=ft.Icons.CLOSE,
-            icon_size=18,
+            icon_size=get_size('icon_clear'),
             on_click=clear_text,
-            tooltip="Cancella", # Localize
+            tooltip="Cancella",
             style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12))
         )
 
         search_field = ft.TextField(
-            hint_text="Cerca città...", # Localize
+            hint_text="Cerca città...",
             text_style=initial_text_style,
             border_radius=24,
             bgcolor="transparent",
-            border_color="transparent", # Usually no border shown directly on TextField in this style
-            content_padding=ft.padding.symmetric(horizontal=10, vertical=12), # Adjusted padding
+            border_color="transparent",
+            content_padding=ft.padding.symmetric(horizontal=10, vertical=12),
             border=ft.InputBorder.NONE,
             on_submit=on_submit,
-            # on_focus and on_blur will be set on the outer container
             expand=True,
         )
 
         row_children = []
-        if self._prefix_widget:
-            row_children.append(self._prefix_widget)
-
-        # Add a small margin if prefix widget exists to separate it from icon
-        search_icon_margin = ft.margin.only(left=8) if self._prefix_widget else ft.margin.only(left=0)
-        row_children.append(
-            ft.Container(
-                content=ft.Icon(ft.Icons.SEARCH, size=20, color=self._text_color.get("ICON", "#888888")),
-                margin=search_icon_margin
-            )
-        )
+        # PopMenu a sinistra
+        if popmenu_widget:
+            row_children.append(ft.Container(content=popmenu_widget, margin=ft.margin.only(right=4)))
+        # Icona search
+        row_children.append(ft.Container(
+            content=ft.Icon(ft.Icons.SEARCH, size=icon_size, color=self._text_color.get("ICON", "#888888")),
+            margin=ft.margin.only(right=4)
+        ))
         row_children.append(search_field)
-        row_children.append(clear_btn) # Suffix clear button
-
-        if self._suffix_widget:
-            row_children.append(self._suffix_widget)
+        row_children.append(clear_btn)
+        if filter_widget:
+            # Forza la size del filtro
+            filter_widget.icon_size = get_size('icon_filter') if hasattr(filter_widget, 'icon_size') else get_size('icon_filter')
+            row_children.append(ft.Container(content=filter_widget, margin=ft.margin.only(left=4)))
 
         row = ft.Row(
             row_children,
             alignment=ft.MainAxisAlignment.START,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=8
+            spacing=4
         )
 
         # Define container here so on_focus and on_blur can access it

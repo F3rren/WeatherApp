@@ -15,6 +15,9 @@ class PopMenu:
                  text_color: dict = None, language: str = None, text_handler_get_size = None):
         self.page = page
         self.state_manager = state_manager
+        self.popup_menu_button_control = None
+        if self.state_manager:
+            self.state_manager.register_observer("language_event", self._handle_language_change)
         self.translation_service = page.session.get('translation_service') if page else None
         self.handle_location_toggle = handle_location_toggle
         self.handle_theme_toggle = handle_theme_toggle
@@ -73,6 +76,43 @@ class PopMenu:
             logging.debug("PopMenu will_unmount called. Unregistering observer for language_event.")
             self.state_manager.unregister_observer("language_event", self.handle_language_change)
             
+    def _handle_language_change(self, new_language_code):
+        import flet as ft # Ensure ft is imported if not already at module level
+        self.language = new_language_code
+        if self.popup_menu_button_control: # Check if the button control exists
+            # Re-build items with new language
+            self.popup_menu_button_control.items = self._build_popup_menu_items()
+            # Update the text of ft.Text controls that were stored if any (self.meteo_item_text etc. are not directly part of items after build)
+            # The _build_popup_menu_items method creates new Text controls with updated translations.
+            if self.page:
+                self.popup_menu_button_control.update() # Update the button to reflect new items
+
+        # Propagate to SettingsAlertDialog if it's already created
+        if hasattr(self, 'setting_alert') and self.setting_alert:
+            # Call a method on setting_alert to handle its own language update
+            if hasattr(self.setting_alert, '_handle_language_change'): # Check if method exists
+                self.setting_alert._handle_language_change(new_language_code)
+            elif hasattr(self.setting_alert, 'update_text_sizes'): # Fallback to update_text_sizes
+                 # We need to pass the current text_color and text_handler_get_size
+                 # This assumes text_color and text_handler_get_size are up-to-date or don't change with language alone
+                 current_text_color = self.text_color # Or re-fetch theme based color if necessary
+                 current_text_handler_get_size = self.text_handler_get_size
+                 self.setting_alert.update_text_sizes(current_text_handler_get_size, current_text_color, new_language_code)
+
+        # Update other direct child alerts if they also need language updates
+        if hasattr(self, 'weather_alert') and self.weather_alert and hasattr(self.weather_alert, 'update_text_sizes'):
+            current_text_color = self.text_color
+            current_text_handler_get_size = self.text_handler_get_size
+            self.weather_alert.update_text_sizes(current_text_handler_get_size, current_text_color, new_language_code)
+
+        if hasattr(self, 'map_alert') and self.map_alert and hasattr(self.map_alert, 'update_text_sizes'):
+            current_text_color = self.text_color
+            current_text_handler_get_size = self.text_handler_get_size
+            self.map_alert.update_text_sizes(current_text_handler_get_size, current_text_color, new_language_code)
+
+        # It might be necessary to update the page if PopMenu itself has direct text that changed.
+        # For now, focus on items and child dialogs.
+
     def update_text_sizes(self, text_handler_get_size, text_color: dict, language: str):
         """Aggiorna dinamicamente le dimensioni del testo e i colori in base alla finestra."""
         self.passed_text_handler_get_size = text_handler_get_size
@@ -194,12 +234,17 @@ class PopMenu:
             self.setting_alert.update_theme_toggle(value)
         
     def cleanup(self):
-        """Cleanup method to remove observers"""
-        if hasattr(self, 'text_handler') and self.text_handler:
-            self.text_handler.remove_observer(self.update_text_controls)
+        if self.state_manager:
+            self.state_manager.unregister_observer("language_event", self._handle_language_change)
+        # Keep existing cleanup for text_handler if present
+        if hasattr(self, 'text_handler') and self.text_handler and hasattr(self.text_handler, 'remove_observer'):
+             try: # Add try-except if text_handler might not have this observer
+                self.text_handler.remove_observer(self.update_text_controls)
+             except ValueError: # Observer not found
+                pass
     
     def build(self):
-        return ft.PopupMenuButton(
+        self.popup_menu_button_control = ft.PopupMenuButton(
                 content=ft.Icon(
                     ft.Icons.MENU, 
                         color=self.text_color, 
@@ -241,3 +286,4 @@ class PopMenu:
                 self.map_alert._update_text_elements()
             if hasattr(self.weather_alert, '_update_text_elements'):
                 self.weather_alert._update_text_elements()
+        return self.popup_menu_button_control

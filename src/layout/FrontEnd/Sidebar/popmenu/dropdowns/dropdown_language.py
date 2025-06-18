@@ -125,7 +125,7 @@ class DropdownLanguage:
             
             call_async_safely(self.state_manager.set_state("language", language_code))
             logging.info(f'Stato aggiornato con lingua: {language_code}')
-            call_async_safely(self.state_manager.notify_all("language_event", language_code))
+            call_async_safely(self.state_manager.notify_all("language_event", {"language": language_code}))
         
         logging.info(f'Lingua impostata con successo: {self.selected_language} - {self.get_language_name_by_code(self.selected_language)}')
 

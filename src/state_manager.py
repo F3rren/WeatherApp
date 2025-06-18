@@ -71,6 +71,7 @@ class StateManager:
     
     async def _notify_observers(self, key: str, value: Any) -> None:
         """Notify all observers of a state change"""
+        logging.debug(f"Notifying observers for key: {key} with value: {value}")
         if key in self._observers:
             for callback in self._observers[key]:
                 try:
@@ -98,6 +99,7 @@ class StateManager:
             event_type: Tipo di evento
             data: Dati associati all'evento
         """
+        logging.debug(f"notify_all called for event_type: {event_type} with data: {data}")
         if event_type in self._observers:
             for callback in self._observers[event_type]:
                 try:

@@ -270,8 +270,48 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
 
         self.update()
 
+    def _update_text_elements(self):
+        """Updates only the text elements without rebuilding the entire UI"""
+        if not self.content or not isinstance(self.content, ft.Column):
+            return
+            
+        # Update chart title
+        for control in self.content.controls:
+            if isinstance(control, ft.Text) and getattr(control, "data", {}).get("type") == "title":
+                control.value = TranslationService.get_text("temperature_chart_title", self._current_language)
+                control.update()
+            elif isinstance(control, ft.Container) and control.content and isinstance(control.content, ft.LineChart):
+                chart = control.content
+                
+                # Update x-axis labels (day names)
+                if hasattr(chart, "bottom_axis") and chart.bottom_axis and chart.bottom_axis.labels:
+                    for i, label in enumerate(chart.bottom_axis.labels):
+                        if i < len(self._days):
+                            day_key = self._days[i]
+                            day_display_name = self._translation_service.get_text(day_key, self._current_language) if self._translation_service else day_key
+                            if label.label and isinstance(label.label, ft.Text):
+                                label.label.value = day_display_name[:3]  # First 3 characters
+                                label.label.update()
+                
+                # Update y-axis title
+                if hasattr(chart, "left_axis") and chart.left_axis and chart.left_axis.title_style:
+                    y_axis_title_text = self._translation_service.get_text("temperature", self._current_language) if self._translation_service else "Temperature"
+                    chart.left_axis.title = f"{y_axis_title_text} ({self._unit_symbol})"
+                    # Cannot update individual axis parts directly, update the entire chart
+                    chart.update()
+        
+        self.update()
+
     def _handle_language_change(self, event_data=None):
-        self._request_ui_rebuild()
+        """Handle language changes by updating text elements"""
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_language_change received unexpected event_data type: {type(event_data)}")
+            
+        if self._state_manager:
+            new_language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
+            if self._current_language != new_language:
+                self._current_language = new_language
+                self._update_text_elements()
 
     def _handle_theme_change(self, event_data=None):
         if event_data is not None and not isinstance(event_data, dict):

@@ -244,8 +244,47 @@ class AirPollutionChartDisplay(ft.Container):
         if self.page: # Ensure page context before calling update
             self.update()
 
+    def _update_text_elements(self):
+        """Updates only the text elements without rebuilding the entire UI"""
+        if not self.content or not isinstance(self.content, ft.Column):
+            return
+            
+        # Update chart title
+        for control in self.content.controls:
+            if isinstance(control, ft.Text) and getattr(control, "data", {}).get("type") == "title":
+                control.value = TranslationService.get_text("air_pollution_chart_title", self._current_language)
+                control.update()
+            elif isinstance(control, ft.Container) and control.content and isinstance(control.content, ft.BarChart):
+                chart = control.content
+                
+                # Update x-axis labels (pollution levels)
+                if hasattr(chart, "bottom_axis") and chart.bottom_axis and chart.bottom_axis.labels:
+                    for label in chart.bottom_axis.labels:
+                        if label.label and isinstance(label.label, ft.Text):
+                            category = getattr(label.label, "data", {}).get("category")
+                            if category:
+                                label.label.value = TranslationService.get_text(category, self._current_language)
+                                label.label.update()
+                
+                # Update y-axis title
+                if hasattr(chart, "left_axis") and chart.left_axis and chart.left_axis.title_style:
+                    y_axis_title_text = self._translation_service.get_text("air_quality_index", self._current_language) if self._translation_service else "AQI"
+                    chart.left_axis.title = y_axis_title_text
+                    # Cannot update individual axis parts directly, update the entire chart
+                    chart.update()
+        
+        self.update()
+
     def _handle_language_change(self, event_data=None):
-        self._request_ui_rebuild()
+        """Handle language changes by updating text elements"""
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_language_change received unexpected event_data type: {type(event_data)}")
+            
+        if self._state_manager:
+            new_language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
+            if self._current_language != new_language:
+                self._current_language = new_language
+                self._update_text_elements()
 
     def _handle_theme_change(self, event_data=None):
         if event_data is not None and not isinstance(event_data, dict):

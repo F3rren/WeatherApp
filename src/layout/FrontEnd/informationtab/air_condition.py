@@ -1,5 +1,5 @@
 import flet as ft
-from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME
+from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME, DEFAULT_UNIT_SYSTEM
 from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService
 import logging
@@ -19,9 +19,8 @@ class AirConditionInfo(ft.Container):
         self.page = page
         self.state_manager = None
         self._language = DEFAULT_LANGUAGE
-        self._unit_system = "metric"
+        self._unit_system = DEFAULT_UNIT_SYSTEM
         self._text_color = LIGHT_THEME["TEXT"] # Default to light theme text color
-
         self.padding = 20 # Moved from build method
 
         self.text_handler = ResponsiveTextHandler(
@@ -47,9 +46,10 @@ class AirConditionInfo(ft.Container):
             self._unit_system = self.state_manager.get_state('unit') or "metric"
             current_theme = self.state_manager.get_state('theme') or "light"
             self._text_color = DARK_THEME["TEXT"] if current_theme == "dark" else LIGHT_THEME["TEXT"]
-
+            
             self.state_manager.register_observer("language_event", self._handle_language_or_unit_change)
             self.state_manager.register_observer("unit_event", self._handle_language_or_unit_change)
+            self.state_manager.register_observer("unit_text_change", self._handle_language_or_unit_change)
             self.state_manager.register_observer("theme_event", self._handle_theme_change)
         
         if self.page:
@@ -232,38 +232,78 @@ class AirConditionInfo(ft.Container):
                 control.style.size = new_size
         self._safe_update()
 
-    def _update_colors(self):
-        if not self._ui_elements_initialized:
+    def _update_text_elements(self, event_type=None, data=None):
+        """Updates only text elements without rebuilding the entire UI."""
+        if not self._ui_elements_initialized or not self.content:
             return
-        
-        # Update colors of all relevant controls
-        # The main container's content (a Column) is rebuilt, so its children will get new colors.
-        # We need to update the color of the divider directly if it's stored as an attribute.
-        # However, _build_ui_elements re-creates all elements, so direct color update here might be redundant
-        # if _request_ui_rebuild is called. Let's ensure _text_color is up-to-date before rebuild.
 
-        # If we were to update existing controls:
-        # for control, _ in self.text_controls.items():
-        #     if hasattr(control, 'color'):
-        #         control.color = self._text_color
-        # if hasattr(self, 'divider_control') and hasattr(self.divider_control, 'color'):
-        # self.divider_control.color = self._text_color
-        pass # Colors are handled during _build_ui_elements
+        if event_type == "unit_text_change" and data:
+            self._unit_system = data
+        elif event_type == "language_change" and data:
+            self._language = data
+            
+        # Il column è il container principale
+        main_column = self.content
+        if not isinstance(main_column, ft.Column):
+            return
+
+        # Aggiorna il titolo
+        if main_column.controls and isinstance(main_column.controls[0], ft.Text):
+            title = main_column.controls[0]
+            title.value = TranslationService.get_text("air_condition_title", self._language)
+
+        # Le colonne con i dati sono nel terzo elemento (dopo titolo e divider)
+        if len(main_column.controls) >= 3 and isinstance(main_column.controls[2], ft.Row):
+            data_row = main_column.controls[2]
+            for column in data_row.controls:
+                if isinstance(column, ft.Column):
+                    for control in column.controls:
+                        if isinstance(control, ft.Row):  # Le etichette sono in Row con icone
+                            for text in control.controls:
+                                if isinstance(text, ft.Text):
+                                    # Aggiorna le etichette
+                                    if text.value == TranslationService.get_text("feels_like", self._language == "en"):
+                                        text.value = TranslationService.get_text("feels_like", self._language)
+                                    elif text.value == TranslationService.get_text("humidity", self._language == "en"):
+                                        text.value = TranslationService.get_text("humidity", self._language)
+                                    elif text.value == TranslationService.get_text("wind", self._language == "en"):
+                                        text.value = TranslationService.get_text("wind", self._language)
+                                    elif text.value == TranslationService.get_text("pressure", self._language == "en"):
+                                        text.value = TranslationService.get_text("pressure", self._language)
+                        elif isinstance(control, ft.Text):  # I valori sono Text diretti
+                            # Aggiorna i valori con le unità corrette
+                            if "°" in control.value:  # temperatura
+                                unit = TranslationService.get_unit_symbol("temperature", self._unit_system)
+                                control.value = f"{self._feels_like_data}{unit}"
+                            elif "%" in control.value:  # umidità
+                                control.value = f"{self._humidity_data}%"
+                            elif "m/s" in control.value or "mph" in control.value:  # vento
+                                unit = TranslationService.get_unit_symbol("wind", self._unit_system)
+                                control.value = f"{self._wind_speed_data} {unit}"
+                            elif "hPa" in control.value:  # pressione
+                                unit = TranslationService.get_unit_symbol("pressure", self._unit_system)
+                                control.value = f"{self._pressure_data} {unit}"
+
+        self._safe_update()
 
     def _handle_language_or_unit_change(self, event_data=None):
+        """Handles language or unit changes."""
         if event_data is not None and not isinstance(event_data, dict):
             logging.warning(f"_handle_language_or_unit_change received unexpected event_data type: {type(event_data)}")
+        
         if self.state_manager:
             new_language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
             new_unit_system = self.state_manager.get_state('unit') or "metric"
-            changed = False
+            
+            # Se è cambiata solo la lingua o l'unità di misura, aggiorna solo i testi
             if self._language != new_language:
+                self._update_text_elements(event_type="language_change", data=new_language)
+            elif self._unit_system != new_unit_system:
+                self._update_text_elements(event_type="unit_text_change", data=new_unit_system)
+            # Se sono cambiate entrambe o ci sono altri cambiamenti, ricostruisci l'UI
+            if self._language != new_language and self._unit_system != new_unit_system:
                 self._language = new_language
-                changed = True
-            if self._unit_system != new_unit_system:
                 self._unit_system = new_unit_system
-                changed = True
-            if changed:
                 self._request_ui_rebuild()
 
     def _handle_theme_change(self, event_data=None):

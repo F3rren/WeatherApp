@@ -165,7 +165,7 @@ class HourlyForecastDisplay(ft.Container):
         self._safe_update()
 
     def _handle_language_or_unit_change(self, event_data=None):
-        """Handles language or unit system changes."""
+        """Handles language or unit changes."""
         if event_data is not None and not isinstance(event_data, dict):
             logging.warning(f"_handle_language_or_unit_change received unexpected event_data type: {type(event_data)}")
         if self._state_manager:
@@ -178,8 +178,14 @@ class HourlyForecastDisplay(ft.Container):
             if self._unit_system != new_unit_system:
                 self._unit_system = new_unit_system
                 changed = True
+            
             if changed:
-                self._request_ui_rebuild()
+                if self._unit_system != new_unit_system:
+                    # Unit changes affect data values, so rebuild the entire UI
+                    self._request_ui_rebuild()
+                else:
+                    # Language changes only affect text, so update selectively
+                    self._update_text_elements()
 
     def _handle_theme_change(self, event_data=None):
         """Handles theme changes."""
@@ -214,8 +220,27 @@ class HourlyForecastDisplay(ft.Container):
                 item_container.update()
         # RIMOSSO: nessuna chiamata a page.update() globale
 
-    # The old build method is no longer needed as the class itself is a container.
-    # Old _update_all_item_visuals is replaced by _request_ui_rebuild and specific updates.
-    # Old _determine_text_color is integrated into theme handling.
-    # Old _handle_state_change is split into more specific handlers.
+    def _update_text_elements(self):
+        """Updates only the text elements without rebuilding the entire UI"""
+        if not self.content or not isinstance(self.content, ft.Row):
+            return
+        
+        for item_container in self.content.controls:
+            if isinstance(item_container, ft.Container) and isinstance(item_container.content, ft.Column):
+                column_content = item_container.content
+                
+                # Find and update temperature text
+                for control in column_content.controls:
+                    if isinstance(control, ft.Text):
+                        category = getattr(control, "data", {}).get("category")
+                        if category == "temp":
+                            # Find the temperature value and update with correct unit
+                            data_item = getattr(control, "data", {}).get("data_item")
+                            if data_item:
+                                temp_value = round(data_item["main"]["temp"])
+                                unit_symbol = TranslationService.get_unit_symbol("temperature", self._unit_system)
+                                control.value = f"{temp_value}{unit_symbol}"
+                                control.update()
+        
+        self.update()
 

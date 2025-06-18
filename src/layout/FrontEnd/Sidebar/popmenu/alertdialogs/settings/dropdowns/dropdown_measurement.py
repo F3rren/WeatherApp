@@ -104,8 +104,7 @@ class DropdownMeasurement:
         # label_style is not actively used for this dropdown based on current setup
         # if self.dropdown.label_style is None: self.dropdown.label_style = ft.TextStyle()
         # self.dropdown.label_style.color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color["TEXT"])))
-        return self.dropdown
-
+        return self.dropdown    
     def set_unit(self, unit_code):
         self.selected_unit = unit_code
         logging.info(f"DropdownMeasurement: selected_unit updated to {unit_code}")
@@ -113,6 +112,27 @@ class DropdownMeasurement:
         # Aggiorna lo stato dell'applicazione se state_manager è disponibile
         if self.state_manager and self.page:
             logging.info(f"DropdownMeasurement: Queuing state update for unit: {unit_code} via page.run_task")
+            
+            # Prima invia un evento unit_text_change che permette all'UI di aggiornare i testi
+            # senza rifetch dei dati o ricostruzione completa
+            import asyncio
+            
+            def call_async_safely(coro):
+                try:
+                    loop = asyncio.get_event_loop()
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                
+                if not loop.is_running():
+                    return loop.run_until_complete(coro)
+                else:
+                    return asyncio.create_task(coro)
+            
+            # Prima notifica per aggiornamento del solo testo (senza ricostruzione completa)
+            call_async_safely(self.state_manager.notify_all("unit_text_change", {"unit": unit_code}))
+            
+            # Poi effettua l'aggiornamento dello stato che può causare il refetch dei dati
             self.page.run_task(self.state_manager.set_state, "unit", unit_code)
         elif not self.page:
             logging.warning("DropdownMeasurement: self.page is not available, cannot run task for set_state.")

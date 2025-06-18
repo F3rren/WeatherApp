@@ -50,6 +50,7 @@ class WeatherView:
             state_manager.register_observer("theme_event", self.handle_theme_change)
             state_manager.register_observer("language_event", self.handle_language_change)
             state_manager.register_observer("unit", self.handle_unit_system_change) # Register observer for unit changes
+            state_manager.register_observer("unit_text_change", self.handle_unit_text_change)
 
         self.info_container = ft.Container(content=ft.Text("Caricamento...", color=self.text_color)) # Apply initial text color
         self.hourly_container = ft.Container()
@@ -131,10 +132,35 @@ class WeatherView:
             self.info_container.content.color = self.text_color
         self._safe_update()
 
+    def handle_unit_text_change(self, event_data=None):
+        """Handles unit text change events by updating relevant UI text parts without a full rebuild."""
+        logging.debug(f"WeatherView: Handling unit_text_change with data: {event_data}")
+        self._update_component_texts(event_type="unit_text_change", data=event_data)
+
+    def _update_component_texts(self, event_type=None, data=None):
+        """Update text elements in child components that support selective updates"""
+        # Check for components with _update_text_elements method
+        for container in [self.info_container, self.hourly_container, self.weekly_container, self.chart_container,
+                         self.air_pollution_chart_container, self.air_pollution_container]:
+            if container and container.content:
+                # If the component itself has the method
+                if hasattr(container.content, '_update_text_elements'):
+                    container.content._update_text_elements(event_type=event_type, data=data)
+                # Or if it's a container with items that have the method
+                elif hasattr(container.content, 'controls'):
+                    for item in container.content.controls:
+                        if hasattr(item, '_update_text_elements'):
+                            item._update_text_elements(event_type=event_type, data=data)
+
     def handle_language_change(self, event_data=None):
         """Aggiorna i contenuti della UI quando cambia la lingua."""
         if event_data is not None and not isinstance(event_data, dict):
             logging.warning(f"handle_language_change received unexpected event_data type: {type(event_data)}")
+        
+        # First update any text elements that can be updated without rebuilding
+        self._update_component_texts(event_type="language_change", data=event_data)
+        
+        # Then handle data re-fetching for a full update if needed
         if self.current_city or (self.current_lat is not None and self.current_lon is not None):
             state_manager = self.page.session.get('state_manager')
             language = state_manager.get_state('language') if state_manager else 'en'

@@ -1,8 +1,11 @@
-﻿import flet as ft
+import flet as ft
 from components.responsive_text_handler import ResponsiveTextHandler
+import logging
 
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
+
+DEFAULT_LANGUAGE = "en"  # Define a default language
 
 class SettingsAlertDialog:
     """
@@ -74,14 +77,32 @@ class SettingsAlertDialog:
         )
         # Styling will be applied by _apply_current_styling_and_text
         return self.theme_toggle_control
-
-    def update_text_sizes(self, text_color, language):
-        self.text_color = text_color
-        self.language = language
+        
+    def update_text_sizes(self, text_handler_get_size=None, text_color=None, language=None):
+        """
+        Aggiorna testi, dimensioni del testo e colori nel dialog.
+        Può essere chiamato con solo text_color e language o con tutti e tre i parametri.
+        """
+        if text_color:
+            self.text_color = text_color
+        if language:
+            self.language = language
+        
+        # Log per debug
+        logging.debug(f"SettingsAlertDialog.update_text_sizes chiamato con language={language}")
+            
         if hasattr(self.language_dropdown, 'update_text_sizes'):
-            self.language_dropdown.update_text_sizes(self._text_handler.get_size, text_color, language)
+            get_size = text_handler_get_size if text_handler_get_size else self._text_handler.get_size
+            self.language_dropdown.update_text_sizes(get_size, self.text_color, self.language)
+            
         if hasattr(self.measurement_dropdown, 'update_text_sizes'):
-            self.measurement_dropdown.update_text_sizes(self._text_handler.get_size, text_color, language)
+            get_size = text_handler_get_size if text_handler_get_size else self._text_handler.get_size
+            self.measurement_dropdown.update_text_sizes(get_size, self.text_color, self.language)
+            
+        # Aggiorna i testi senza ricostruire tutto
+        self._update_text_elements()
+        
+        # Applica le modifiche di stile se il dialogo esiste
         if self.dialog:
             self._apply_current_styling_and_text()
 
@@ -258,3 +279,104 @@ class SettingsAlertDialog:
         if self.dialog is None:
             self.createAlertDialog(self.page)
         return self.dialog
+
+    def did_mount(self):
+        """
+        Called when the control is added to the page.
+        """
+        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+            self.state_manager = self.page.session.get('state_manager')
+            self.language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
+            self.state_manager.register_observer("language_event", self.handle_language_change)
+
+    def will_unmount(self):
+        """
+        Called when the control is removed from the page.
+        """
+        if self.state_manager:
+            self.state_manager.unregister_observer("language_event", self.handle_language_change)
+            
+    def _update_text_elements(self):
+        """
+        Update text elements without rebuilding the entire UI.
+        """
+        if not self.dialog:
+            return
+            
+        logging.debug(f"SettingsAlertDialog._update_text_elements chiamato, language={self.language}")
+        
+        # Aggiorna il titolo
+        if self.dialog.title and isinstance(self.dialog.title, ft.Text):
+            self.dialog.title.value = self._get_translation("settings")
+            self.dialog.title.update()
+            
+        # Aggiorna i testi delle sezioni
+        if self.dialog.content and hasattr(self.dialog.content, 'content') and isinstance(self.dialog.content.content, ft.Column):
+            rows = self.dialog.content.content.controls
+            
+            sections_config = [
+                ("language_setting", ft.Icons.LANGUAGE, "#ff6b35"), 
+                ("measurement_setting", ft.Icons.STRAIGHTEN, "#22c55e"),
+                ("use_current_location_setting", ft.Icons.LOCATION_ON, "#ef4444"),
+                ("dark_theme_setting", ft.Icons.DARK_MODE, "#3b82f6"),
+            ]
+            
+            for i, config in enumerate(sections_config):
+                key, _, _ = config
+                if len(rows) > i and isinstance(rows[i], ft.Row) and \
+                   len(rows[i].controls) > 0 and isinstance(rows[i].controls[0], ft.Row) and \
+                   len(rows[i].controls[0].controls) > 1:
+                    
+                    label_control = rows[i].controls[0].controls[1]
+                    if isinstance(label_control, ft.Text):
+                        label_control.value = self._get_translation(key)
+                        label_control.update()
+                    
+        # Aggiorna button di chiusura
+        if self.dialog.actions and len(self.dialog.actions) > 0:
+            action_button = self.dialog.actions[0]
+            if isinstance(action_button, ft.TextButton) and hasattr(action_button, 'content') and isinstance(action_button.content, ft.Text):
+                action_button.content.value = self._get_translation("close_button")
+                action_button.content.update()
+                
+        # Aggiorna i dropdown
+        if self.language_dropdown and hasattr(self.language_dropdown, 'update_text_sizes'):
+            self.language_dropdown.update_text_sizes(self._text_handler.get_size, self.text_color, self.language)
+            
+        if self.measurement_dropdown and hasattr(self.measurement_dropdown, 'update_text_sizes'):
+            self.measurement_dropdown.update_text_sizes(self._text_handler.get_size, self.text_color, self.language)
+            
+        # Aggiorna il dialogo se è aperto
+        if self.dialog and hasattr(self.dialog, 'open') and self.dialog.open:
+            self.dialog.update()
+
+    def handle_language_change(self, event_data=None):
+        """
+        Handle language change event.
+        """
+        new_language = None
+        
+        # Handle different formats of event_data
+        if event_data is None:
+            if self.state_manager:
+                new_language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
+            else:
+                new_language = DEFAULT_LANGUAGE
+        elif isinstance(event_data, dict):
+            new_language = event_data.get('language', DEFAULT_LANGUAGE)
+        elif isinstance(event_data, str):
+            new_language = event_data
+        else:
+            logging.warning(f"handle_language_change received unexpected event_data type: {type(event_data)}")
+            if self.state_manager:
+                new_language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
+            else:
+                new_language = DEFAULT_LANGUAGE
+        
+        if self.language != new_language:
+            logging.info(f"SettingsAlertDialog: Updating language from {self.language} to {new_language}")
+            self.language = new_language
+            self._update_text_elements()
+            # Verifica se il dialog è attualmente visualizzato
+            if self.dialog and hasattr(self.dialog, 'open') and self.dialog.open:
+                self._apply_current_styling_and_text()

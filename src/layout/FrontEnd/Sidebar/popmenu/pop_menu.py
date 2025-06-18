@@ -1,11 +1,10 @@
 import flet as ft
-import logging
-
-from components.responsive_text_handler import ResponsiveTextHandler
 from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME
+from utils.translations_data import TRANSLATIONS
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
+import logging
 
 
 class PopMenu:
@@ -55,6 +54,25 @@ class PopMenu:
         self.settings_item_text = ft.Text(self._get_translation("settings"), color=self.text_color) # Added for settings
         self.popup_menu_button_icon = ft.Icon(ft.Icons.FILTER_ALT_OUTLINED, color=self.text_color) # Apply text_color to icon
 
+    def did_mount(self):
+        """
+        Called when the control is added to the page.
+        """
+        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+            self.state_manager = self.page.session.get('state_manager')
+            self.language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
+            self.state_manager.register_observer("language_event", self.handle_language_change)
+            logging.debug(f"PopMenu did_mount called. Language: {self.language}")
+            logging.debug("PopMenu registered observer for language_event.")
+
+    def will_unmount(self):
+        """
+        Called when the control is removed from the page.
+        """        
+        if self.state_manager:
+            logging.debug("PopMenu will_unmount called. Unregistering observer for language_event.")
+            self.state_manager.unregister_observer("language_event", self.handle_language_change)
+            
     def update_text_sizes(self, text_handler_get_size, text_color: dict, language: str):
         """Aggiorna dinamicamente le dimensioni del testo e i colori in base alla finestra."""
         self.passed_text_handler_get_size = text_handler_get_size
@@ -79,7 +97,7 @@ class PopMenu:
         if hasattr(self.map_alert, 'update_text_sizes'):
             self.map_alert.update_text_sizes(self.passed_text_handler_get_size, self.text_color, self.language)
         if hasattr(self.setting_alert, 'update_text_sizes'):
-            self.setting_alert.update_text_sizes(self.passed_text_handler_get_size, self.text_color, self.language)
+            self.setting_alert.update_text_sizes(self.text_color, self.language)
         if self.page:
             self.page.update()
 
@@ -103,11 +121,8 @@ class PopMenu:
     def _get_translation(self, key):
         """Helper method to get translation with fallback"""
         if self.translation_service and hasattr(self.translation_service, 'get_text'):
-            # Use self.language (passed prop) instead of fetching from state_manager here
-            # as this component should reflect the language it was given.
-            current_language = self.language 
-            return self.translation_service.get_text(key, current_language)
-        return key  # Fallback to key if no translation service
+            return self.translation_service.get_text(key, self.language)
+        return TRANSLATIONS.get(self.language, {}).get(key, key)  # Fallback to key if no translation found
 
     def _open_alert_dialog(self, alert_instance):
         if not self.page:
@@ -193,3 +208,36 @@ class PopMenu:
                 items=self._build_popup_menu_items(),
                 style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12))
             )
+
+    def _update_text_elements(self):
+        """
+        Update text elements without rebuilding the entire UI.
+        """
+        self.meteo_item_text.value = self._get_translation("weather")
+        self.map_item_text.value = self._get_translation("map")
+        self.settings_item_text.value = self._get_translation("settings")
+        if self.page:
+            self.meteo_item_text.update()            
+            self.map_item_text.update()
+            self.settings_item_text.update()
+            
+    def handle_language_change(self, event_data=None):
+        """
+        Handle language change event.
+        """
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"handle_language_change received unexpected event_data type: {type(event_data)}")
+            return
+        new_language = event_data.get('language', DEFAULT_LANGUAGE)
+        if self.language != new_language:
+            self.language = new_language
+            # Aggiorna i testi del menu popup
+            self._update_text_elements()
+            
+            # Aggiorna esplicitamente i testi nei dialog
+            if hasattr(self.setting_alert, '_update_text_elements'):
+                self.setting_alert._update_text_elements()
+            if hasattr(self.map_alert, '_update_text_elements'):
+                self.map_alert._update_text_elements()
+            if hasattr(self.weather_alert, '_update_text_elements'):
+                self.weather_alert._update_text_elements()

@@ -260,10 +260,40 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
 
         # RIMOSSO: self.page.update() globale
 
+    def _update_text_elements(self):
+        """Updates only the text elements without rebuilding the entire UI"""
+        if not self.content or not isinstance(self.content, ft.Column):
+            return
+        
+        # Find and update title and category text
+        for control in self.content.controls:
+            if isinstance(control, ft.Text):
+                if getattr(control, "data", {}).get("type") == "title":
+                    control.value = TranslationService.get_text("air_pollution_title", self._current_language)
+                    control.update()
+            elif isinstance(control, ft.Row):
+                # Update the category titles
+                for child in control.controls:
+                    if isinstance(child, ft.Column):
+                        for text in child.controls:
+                            if isinstance(text, ft.Text):
+                                category = getattr(text, "data", {}).get("category")
+                                if category and category.startswith("aqi_"):
+                                    text.value = TranslationService.get_text(category, self._current_language)
+                                    text.update()
+        
+        self.update()
+
     def _handle_language_change(self, event_data=None):
-        """Handles language changes: updates text and rebuilds UI."""
-        # Pollution data itself doesn't change with language, only labels
-        self._request_ui_rebuild()
+        """Handles language changes: updates text elements only"""
+        if event_data is not None and not isinstance(event_data, dict):
+            logging.warning(f"_handle_language_change received unexpected event_data type: {type(event_data)}")
+            
+        if self._state_manager:
+            new_language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
+            if self._current_language != new_language:
+                self._current_language = new_language
+                self._update_text_elements()
 
     def _handle_theme_change(self, event_data=None):
         """Handles theme changes: updates colors and rebuilds UI."""

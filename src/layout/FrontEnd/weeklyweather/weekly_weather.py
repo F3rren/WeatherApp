@@ -62,20 +62,21 @@ class WeeklyForecastDisplay(ft.Container):
             self._state_manager = self.page.session.get('state_manager')
             self._current_language = self._state_manager.get_state('language') or self._current_language
             self._current_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
-            
             self._state_manager.register_observer("language_event", self._handle_language_or_unit_change)
             self._state_manager.register_observer("unit_event", self._handle_language_or_unit_change) # Corrected key from 'unit' to 'unit_event' if consistent
+            self._state_manager.register_observer("unit_text_change", self._handle_language_or_unit_change) # Registro per aggiornamento solo testi
             self._state_manager.register_observer("theme_event", self._handle_theme_change)
         
         if self.page: # ResponsiveTextHandler's observer is managed by its own on_resize binding
             self._original_on_resize = self.page.on_resize
             self.page.on_resize = self._combined_resize_handler
-
+            
     def will_unmount(self):
         """Called when the control is removed from the page."""
         if self._state_manager:
             self._state_manager.unregister_observer("language_event", self._handle_language_or_unit_change)
             self._state_manager.unregister_observer("unit_event", self._handle_language_or_unit_change)
+            self._state_manager.unregister_observer("unit_text_change", self._handle_language_or_unit_change)
             self._state_manager.unregister_observer("theme_event", self._handle_theme_change)
         
         if self.page and hasattr(self, '_original_on_resize'):
@@ -197,6 +198,44 @@ class WeeklyForecastDisplay(ft.Container):
         new_content = self._build_ui_elements()
         if self.content != new_content:
             self.content = new_content
+        self.update()    
+        
+    def _update_text_elements(self, event_type=None, data=None):
+        """Updates only the text elements without rebuilding the entire UI"""
+        if not self.content or not isinstance(self.content, ft.Column):
+            return
+
+        # Update state based on event type
+        if event_type == "unit_text_change" and data:
+            self._current_unit_system = data
+        elif event_type == "language_change" and data:
+            self._current_language = data
+            
+        # Update all text elements in daily items
+        for control in self.content.controls:
+            if isinstance(control, ft.Row) and len(control.controls) == 3:
+                day_container = control.controls[0]
+                icon_container = control.controls[1]
+                temp_container = control.controls[2]
+
+                # Update day name
+                if isinstance(day_container, ft.Container) and isinstance(day_container.content, ft.Text):
+                    day_text = day_container.content
+                    if hasattr(day_text, "value"):
+                        translated_day = TranslationService.translate_weekday(day_text.value, self._current_language)
+                        day_text.value = translated_day
+
+                # Update temperature text with correct unit
+                if isinstance(temp_container, ft.Container) and isinstance(temp_container.content, ft.Text):
+                    temp_text = temp_container.content
+                    if hasattr(temp_text, "spans") and temp_text.spans:
+                        unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
+                        # Update min and max temperatures
+                        for i, span in enumerate(temp_text.spans):
+                            if i == 0 or i == 2:  # min and max temp spans
+                                value = ''.join(filter(lambda c: (c.isdigit() or c == '.' or c == '-'), span.text))
+                                span.text = f"{value}{unit_symbol}"
+        
         self.update()
 
     async def _handle_language_or_unit_change(self, event_data=None):
@@ -215,9 +254,16 @@ class WeeklyForecastDisplay(ft.Container):
                  self._current_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
             
             if lang_changed or unit_changed:
-                await self._fetch_forecast_data() # Re-fetch data with new lang/unit
-        
-        self._request_ui_rebuild() # Rebuild UI with potentially new data and translations
+                # If data needs to be refetched (e.g., for different unit)
+                if unit_changed:
+                    await self._fetch_forecast_data() # Re-fetch data with new lang/unit
+                    self._request_ui_rebuild() # Full rebuild for unit change as it affects the data
+                elif lang_changed:
+                    # For language changes only, just update the text elements
+                    self._update_text_elements()
+        else:
+            # Fallback to full rebuild if no state manager
+            self._request_ui_rebuild()
 
     def _handle_theme_change(self, event_data=None):
         """Handles theme changes: updates colors and rebuilds UI."""

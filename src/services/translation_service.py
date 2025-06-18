@@ -3,8 +3,6 @@ from utils.translations_data import TRANSLATIONS
 from utils.config import DEFAULT_LANGUAGE, UNIT_SYSTEMS # Added UNIT_SYSTEMS
 
 class TranslationService:
-    
-    TRANSLATIONS = TRANSLATIONS
 
     def __init__(self, session=None):  # Modified to accept session
         self.session = session
@@ -92,25 +90,30 @@ class TranslationService:
 
     @classmethod
     def translate_weekday(cls, day_key: str, language: str) -> str:
-        """Translates a weekday key (e.g., 'mon', 'tue') to the target language."""
-        target_lang = cls.normalize_lang_code(language) # Updated call
-        day_key_lower = str(day_key).lower() # Ensure key is lowercased string
+        """Translates a weekday key to the target language."""
+        target_lang = cls.normalize_lang_code(language)
+        day_key_lower = str(day_key).lower()
+
+        # Se il giorno è in italiano, convertilo prima nella chiave standard
+        if day_key_lower in cls.ITALIAN_WEEKDAY_TO_KEY:
+            day_key_lower = cls.ITALIAN_WEEKDAY_TO_KEY[day_key_lower]
 
         try:
-            # Attempt to find the translation directly under the language key
+            # Cerca la traduzione nella lingua target
             return cls.TRANSLATIONS[target_lang][day_key_lower]
         except KeyError:
-            # Fallback for missing translations
+            # Fallback per traduzioni mancanti
             print(f"[TranslationService] Weekday translation not found for lang='{target_lang}', day_key='{day_key_lower}'")
-            # Fallback to English if the specific language translation is not found
+            # Fallback all'inglese se la traduzione specifica non è trovata
             if target_lang != 'en':
                 try:
-                    return cls.TRANSLATIONS['en'][day_key_lower] # Use lowercase 'en' for fallback
+                    return cls.TRANSLATIONS['en'][day_key_lower]
                 except KeyError:
-                    # If English fallback also fails, return the original key or a placeholder
-                    print(f"[TranslationService] English fallback failed for weekday_key=\'{day_key_lower}\'")
-                    pass # Fallback failed
-            return day_key_lower.capitalize() # Capitalize as a last resort if no translation found
+                    print(f"[TranslationService] English fallback failed for weekday_key='{day_key_lower}'")
+                    # Se anche il fallback inglese fallisce, ritorna la chiave originale
+                    if day_key_lower in cls.ITALIAN_WEEKDAY_TO_KEY:
+                        return day_key.capitalize()  # Ritorna il nome italiano originale
+            return day_key_lower.capitalize()  # Ultima risorsa
 
     @classmethod
     def get_chemical_elements(cls, language_code: str) -> dict: # Added class method

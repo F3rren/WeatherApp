@@ -9,6 +9,7 @@ from utils.config import LIGHT_THEME, DARK_THEME
 import asyncio
 
 from services.api_service import ApiService
+from services.translation_service import TranslationService # Import TranslationService
 
 from layout.frontend.weather_card import WeatherCard
 from layout.frontend.informationtab.hourly_forecast import HourlyForecastDisplay # Importa la nuova classe
@@ -287,13 +288,14 @@ class WeatherView:
         icon_code = self.api_service.get_weather_icon_code(self.weather_data)
 
         # Determina la posizione da mostrare
+        location_data = self.weather_data.get('location_data', {})
         if is_current_location:
-            location = "📍 Posizione attuale"
+            location = f"📍 {TranslationService.translate_from_dict('main_information_items', 'current_location', self.page.session.get('state_manager').get_state('language'))}"
         elif self.city_info:
             data = self.city_info[0]
             location = ", ".join(filter(None, [data.get("name"), data.get("state"), data.get("country")]))
         else:
-            location = city
+            location = ", ".join(filter(None, [location_data.get('city', 'Unknown'), location_data.get('region', 'Unknown'), location_data.get('country', 'Unknown')]))
         
         # Create and store the MainWeatherInfo instance
         self.main_weather_info_instance = MainWeatherInfo(

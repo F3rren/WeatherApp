@@ -30,7 +30,7 @@ class DropdownMeasurement:
             self.dropdown.focused_border_color = self.text_color["ACCENT"]
             self.dropdown.bgcolor = self.text_color["CARD_BACKGROUND"]
 
-            translated_hint_text = TranslationService.translate("select_measurement_hint", self.current_language_display)
+            translated_hint_text = TranslationService.translate_from_dict("settings_alert_dialog_items", "measurement", self.current_language_display)
             self.dropdown.hint_text = translated_hint_text
 
             if self.dropdown.hint_style:
@@ -54,7 +54,7 @@ class DropdownMeasurement:
         # Uses self.current_language_display and self.text_color for styling options
         options = []
         for unit_system_code, name_key in self.unit_name_keys.items():
-            translated_name = TranslationService.translate(name_key, self.current_language_display)
+            translated_name = TranslationService.translate_from_dict("settings_alert_dialog_items", name_key, self.current_language_display) if name_key in ["measurement"] else TranslationService.translate(name_key, self.current_language_display)
             options.append(
                 ft.dropdown.Option(
                     key=unit_system_code,
@@ -83,7 +83,7 @@ class DropdownMeasurement:
             self.selected_unit = current_unit
 
         # Use the passed-in text_color (theme) and text_handler_get_size
-        translated_hint_text = TranslationService.translate("select_measurement_hint", self.current_language_display)
+        translated_hint_text = TranslationService.translate_from_dict("settings_alert_dialog_items", "measurement", self.current_language_display)
 
         self.dropdown = ft.Dropdown(
             hint_text=translated_hint_text,
@@ -149,7 +149,7 @@ class DropdownMeasurement:
             self.dropdown.bgcolor = self.text_color.get("CARD_BACKGROUND", ft.Colors.WHITE)
             self.dropdown.color = self.text_color.get("TEXT", ft.Colors.BLACK)
             
-            translated_hint_text = TranslationService.translate("select_measurement_hint", self.current_language_display)
+            translated_hint_text = TranslationService.translate_from_dict("settings_alert_dialog_items", "measurement", self.current_language_display)
             self.dropdown.hint_text = translated_hint_text
 
             if self.dropdown.hint_style:

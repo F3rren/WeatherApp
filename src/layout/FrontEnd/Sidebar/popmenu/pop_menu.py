@@ -29,9 +29,9 @@ class PopMenu:
 
         # Initialize popup menu items dictionary
         self.pop_menu_items = {
-            "weather": ft.Text(value=TranslationService.translate("weather", self.language), color=self.text_color),
-            "map": ft.Text(value=TranslationService.translate("map", self.language), color=self.text_color),
-            "settings": ft.Text(value=TranslationService.translate("settings", self.language), color=self.text_color)
+            "weather": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "weather", self.language), color=self.text_color),
+            "map": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "map", self.language), color=self.text_color),
+            "settings": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "settings", self.language), color=self.text_color)
         }
         self.popup_menu_button_icon = ft.Icon(ft.Icons.FILTER_ALT_OUTLINED, color=self.text_color)
 
@@ -46,9 +46,9 @@ class PopMenu:
         self.language = self.state_manager.get_state('language') if self.state_manager else DEFAULT_LANGUAGE
 
         # Update popup menu items using translation keys from TRANSLATIONS
-        for key in ["weather", "map", "settings"]:
+        for key in self.pop_menu_items.keys():
             if key in self.pop_menu_items:
-                self.pop_menu_items[key].value = TranslationService.translate(key, self.language)
+                self.pop_menu_items[key].value = TranslationService.translate_from_dict("popup_menu_items", key, self.language)
                 self.pop_menu_items[key].color = self.text_color
                 if self.text_handler_get_size:
                     self.pop_menu_items[key].size = self.text_handler_get_size('button')

@@ -16,46 +16,49 @@ LANGUAGES = [
 
 TRANSLATIONS = {
     "en": {
-        "weather": "Weather",
-        "map": "Map",
-        "settings": "Settings",
-        "feels_like": "Feels like",
-        "humidity": "Humidity",
-        "wind": "Wind",
-        "pressure": "Pressure",
-        "air_condition_title": "Air Conditions",
-        "measurement": "Measurement", # Used in SettingsAlertDialog
-        "use_current_location": "Use current location:", # Used in SettingsAlertDialog
-        "dark_theme": "Dark theme:", # Used in SettingsAlertDialog
-        "language": "Language:", # Used in SettingsAlertDialog
-        "close": "Close", # Used in AlertDialogs
-        "temperature": "Temperature", # Used for chart titles, labels
-        "air_quality_index": "Air Quality Index",
-        "aqi_descriptions": [
-            "N/A",
-            "Good",
-            "Fair",
-            "Moderate",
-            "Poor",
-            "Very Poor"
-        ],
-        "monday": "Monday",
-        "tuesday": "Tuesday",
-        "wednesday": "Wednesday",
-        "thursday": "Thursday",
-        "friday": "Friday",
-        "saturday": "Saturday",
-        "sunday": "Sunday",
-        "mon": "Mon", # Short day names for charts if needed
-        "tue": "Tue",
-        "wed": "Wed",
-        "thu": "Thu",
-        "fri": "Fri",
-        "sat": "Sat",
-        "sun": "Sun",
-        "max": "Max",
-        "min": "Min",
-        "chemical_elements": { # Changed to a dictionary
+        "popup_menu_items": {
+            "weather" : "Weather",
+            "map" : "Map",
+            "settings" : "Settings"
+        },
+        "air_condition_items": {
+            "air_condition_title": "Air Conditions",
+            "feels_like": "Feels like",
+            "humidity": "Humidity",
+            "wind": "Wind",
+            "pressure": "Pressure"
+        },
+        "settings_alert_dialog_items": {
+            "language": "Language:", # Used in SettingsAlertDialog
+            "measurement": "Measurement", # Used in SettingsAlertDialog
+            "use_current_location": "Use current location:", # Used in SettingsAlertDialog
+            "dark_theme": "Dark theme:", # Used in SettingsAlertDialog
+            "close": "Close" # Used in SettingsAlertDialog
+        },
+        "weekly_forecast_items": {
+            "monday": "Monday",
+            "tuesday": "Tuesday",
+            "wednesday": "Wednesday",
+            "thursday": "Thursday",
+            "friday": "Friday",
+            "saturday": "Saturday",
+            "sunday": "Sunday",
+            "no_forecast_data": "Weather forecast data not available.",
+        },
+        "temperature_chart_items": {
+            "mon": "Mon", # Short day names for charts if needed
+            "tue": "Tue",
+            "wed": "Wed",
+            "thu": "Thu",
+            "fri": "Fri",
+            "sat": "Sat",
+            "sun": "Sun",
+            "max": "Max",
+            "min": "Min",
+            "temperature": "Temperature", # Used for chart titles, labels
+        },
+        "air_pollution_items": {
+            "air_quality_index": "Air Quality Index", # Used in AirQualityIndexCard
             "CO": "Carbon Monoxide",
             "NO": "Nitrogen Monoxide",
             "NO2": "Nitrogen Dioxide",
@@ -63,74 +66,76 @@ TRANSLATIONS = {
             "SO2": "Sulphur Dioxide",
             "PM2.5": "Fine Particulate Matter",
             "PM10": "Coarse Particulate Matter",
-            "NH3": "Ammonia"
+            "NH3": "Ammonia",
+            "aqi_descriptions": [
+                "N/A",
+                "Good",
+                "Fair",
+                "Moderate",
+                "Poor",
+                "Very Poor"
+            ]
         },
-        "current_location": "Current Location",
-        "no_forecast_data": "Weather forecast data not available.",
-        "error_page_context_missing": "Error: Page context missing",
-        "maps_title": "Maps", # For MapsAlertDialog title
-        "air_pollution_chart_title": "Air Pollution (μg/m³)", # For AirPollutionChart y-axis title
-        "weather_card_title": "Weather Details", # Example for a potential WeatherAlertDialog title
-        "settings_title": "Settings", # Explicitly for SettingsAlertDialog title
-        "loading": "Loading...", # General loading text
-        "search_city": "Search for a city...", # Placeholder for search bar
-        "filter_options": "Filter Options", # Title for a filter section
-        "unit_metric": "Metric", # Unit option
-        "unit_imperial": "Imperial", # Unit option
-        "unit_standard": "Standard", # Unit option
-        "select_language": "Select Language", # Dropdown placeholder or label
-        "theme_light": "Light Theme",
-        "theme_dark": "Dark Theme",
-        "theme_system": "System Theme",
-        "language_setting": "Language", # Specific for settings dialog section
-        "measurement_setting": "Measurement", # Specific for settings dialog section
-        "use_current_location_setting": "Use current location", # Specific for settings dialog section
-        "dark_theme_setting": "Dark theme", # Specific for settings dialog section
-        "close_button": "Close", # Specific for settings dialog button
-        "air_pollution_chart_y_axis_title": "Concentration (µg/m³)" # Y-axis title for AirPollutionChart
+        "main_information_items": {
+            "current_location": "Current Location",
+        },
+        "air_pollution_chart_title_items": {
+            "air_pollution_chart_title": "Air Pollution (μg/m³)", # For AirPollutionChart y-axis title
+        },
+        "unit_items": {
+            "unit_metric": "Metric", # Unit option
+            "unit_imperial": "Imperial", # Unit option
+            "unit_standard": "Standard", # Unit option
+        },  
+        "air_pollution_chart_items": {
+            "air_pollution_chart_y_axis_title": "Concentration (µg/m³)", # Y-axis title for AirPollutionChart
+        },
     },
     
     "zh_cn": {
-        "weather": "天气",
-        "map": "地图",
-        "settings": "设置",
-        "feels_like": "体感温度",
-        "humidity": "湿度",
-        "wind": "风速",
-        "pressure": "气压",
-        "air_condition_title": "空气状况",
-        "measurement": "测量单位",
-        "use_current_location": "使用当前位置：",
-        "dark_theme": "深色主题：",
-        "language": "语言：",
-        "close": "关闭",
-        "temperature": "温度",
-        "air_quality_index": "空气质量指数",
-        "aqi_descriptions": [
-            "无数据",
-            "优",
-            "良",
-            "中等",
-            "差",
-            "非常差"
-        ],
-        "monday": "星期一",
-        "tuesday": "星期二",
-        "wednesday": "星期三",
-        "thursday": "星期四",
-        "friday": "星期五",
-        "saturday": "星期六",
-        "sunday": "星期日",
-        "mon": "周一",
-        "tue": "周二",
-        "wed": "周三",
-        "thu": "周四",
-        "fri": "周五",
-        "sat": "周六",
-        "sun": "周日",
-        "max": "最大值",
-        "min": "最小值",
-        "chemical_elements": { # Changed to a dictionary
+        "popup_menu_items": {
+            "weather": "天气",
+            "map": "地图",
+            "settings": "设置"
+        },
+        "air_condition_items": {
+            "air_condition_title": "空气状况",
+            "feels_like": "体感温度",
+            "humidity": "湿度",
+            "wind": "风速",
+            "pressure": "气压"
+        },
+        "settings_alert_dialog_items": {
+            "language": "语言：",
+            "measurement": "测量单位",
+            "use_current_location": "使用当前位置：",
+            "dark_theme": "深色主题：",
+            "close": "关闭"
+        },
+        "weekly_forecast_items": {
+            "monday": "星期一",
+            "tuesday": "星期二",
+            "wednesday": "星期三",
+            "thursday": "星期四",
+            "friday": "星期五",
+            "saturday": "星期六",
+            "sunday": "星期日",
+            "no_forecast_data": "天气预报数据不可用。"
+        },
+        "temperature_chart_items": {
+            "mon": "周一",
+            "tue": "周二",
+            "wed": "周三",
+            "thu": "周四",
+            "fri": "周五",
+            "sat": "周六",
+            "sun": "周日",
+            "max": "最大值",
+            "min": "最小值",
+            "temperature": "温度"
+        },
+        "air_pollution_items": {
+            "air_quality_index": "空气质量指数",
             "CO": "一氧化碳",
             "NO": "一氧化氮",
             "NO2": "二氧化氮",
@@ -138,72 +143,100 @@ TRANSLATIONS = {
             "SO2": "二氧化硫",
             "PM2.5": "细颗粒物",
             "PM10": "粗颗粒物",
-            "NH3": "氨"
+            "NH3": "氨",
+            "aqi_descriptions": [
+                "无数据",
+                "优",
+                "良",
+                "中等",
+                "差",
+                "非常差"
+            ]
         },
-        "current_location": "当前位置",
-        "no_forecast_data": "天气预报数据不可用。",
-        "maps_title": "地图",
-        "air_pollution_chart_title": "空气污染 (微克/立方米)",
-        "weather_card_title": "天气详情",
-        "settings_title": "设置",
-        "loading": "加载中...",
-        "search_city": "搜索城市...",
-        "filter_options": "筛选选项",
-        "unit_metric": "公制",
-        "unit_imperial": "英制",
-        "unit_standard": "标准", # Added translation for Standard
-        "select_language": "选择语言",
-        "theme_light": "浅色主题",
-        "theme_dark": "深色主题",
-        "theme_system": "系统主题",
-        "language_setting": "语言",
-        "measurement_setting": "测量单位",
-        "use_current_location_setting": "使用当前位置",
-        "dark_theme_setting": "深色主题",
-        "close_button": "关闭",
-        "air_pollution_chart_y_axis_title": "浓度 (微克/立方米)"
+        "main_information_items": {
+            "current_location": "当前位置"
+        },
+        "air_pollution_chart_title_items": {
+            "air_pollution_chart_title": "空气污染 (微克/立方米)"
+        },
+        "unit_items": {
+            "unit_metric": "公制",
+            "unit_imperial": "英制",
+            "unit_standard": "标准"
+        },
+        "air_pollution_chart_items": {
+            "air_pollution_chart_y_axis_title": "浓度 (微克/立方米)"
+        },
+        "other": {
+            "weather_card_title": "天气详情",
+            "settings_title": "设置",
+            "loading": "加载中...",
+            "search_city": "搜索城市...",
+            "filter_options": "筛选选项",
+            "select_language": "选择语言",
+            "theme_light": "浅色主题",
+            "theme_dark": "深色主题",
+            "theme_system": "系统主题",
+            "language_setting": "语言",
+            "measurement_setting": "测量单位",
+            "use_current_location_setting": "使用当前位置",
+            "dark_theme_setting": "深色主题",
+            "close_button": "关闭",
+            "aqi_descriptions": [
+                "无数据",
+                "优",
+                "良",
+                "中等",
+                "差",
+                "非常差"
+            ]
+        }
     },
+
     "hi": {
-        "weather": "मौसम",
-        "map": "नक्शा",
-        "settings": "सेटिंग्स",
-        "feels_like": "अनुभूत तापमान",
-        "humidity": "नमी",
-        "wind": "हवा",
-        "pressure": "दबाव",
-        "air_condition_title": "वायु की स्थिति",
-        "measurement": "मापन इकाई",
-        "use_current_location": "वर्तमान स्थान का उपयोग करें:",
-        "dark_theme": "डार्क थीम:",
-        "language": "भाषा:",
-        "close": "बंद करें",
-        "temperature": "तापमान",
-        "air_quality_index": "सूचकांक वायु गुणवत्ता",
-        "aqi_descriptions": [
-            "अज्ञात",
-            "अच्छा",
-            "ठीक",
-            "मध्यम",
-            "खराब",
-            "बहुत खराब"
-        ],
-        "monday": "सोमवार",
-        "tuesday": "मंगलवार",
-        "wednesday": "बुधवार",
-        "thursday": "गुरुवार",
-        "friday": "शुक्रवार",
-        "saturday": "शनिवार",
-        "sunday": "रविवार",
-        "mon": "सोम",
-        "tue": "मंगल",
-        "wed": "बुध",
-        "thu": "गुरु",
-        "fri": "शुक्र",
-        "sat": "शनि",
-        "sun": "रवि",
-        "max": "अधिकतम",
-        "min": "न्यूनतम",
-        "chemical_elements": { # Changed to a dictionary
+        "popup_menu_items": {
+            "weather": "मौसम",
+            "map": "नक्शा",
+            "settings": "सेटिंग्स"
+        },
+        "air_condition_items": {
+            "air_condition_title": "वायु की स्थिति",
+            "feels_like": "अनुभूत तापमान",
+            "humidity": "नमी",
+            "wind": "हवा",
+            "pressure": "दबाव"
+        },
+        "settings_alert_dialog_items": {
+            "language": "भाषा:",
+            "measurement": "मापन इकाई",
+            "use_current_location": "वर्तमान स्थान का उपयोग करें:",
+            "dark_theme": "डार्क थीम:",
+            "close": "बंद करें"
+        },
+        "weekly_forecast_items": {
+            "monday": "सोमवार",
+            "tuesday": "मंगलवार",
+            "wednesday": "बुधवार",
+            "thursday": "गुरुवार",
+            "friday": "शुक्रवार",
+            "saturday": "शनिवार",
+            "sunday": "रविवार",
+            "no_forecast_data": "मौसम पूर्वानुमान डेटा उपलब्ध नहीं है।"
+        },
+        "temperature_chart_items": {
+            "mon": "सोम",
+            "tue": "मंगल",
+            "wed": "बुध",
+            "thu": "गुरु",
+            "fri": "शुक्र",
+            "sat": "शनि",
+            "sun": "रवि",
+            "max": "अधिकतम",
+            "min": "न्यूनतम",
+            "temperature": "तापमान"
+        },
+        "air_pollution_items": {
+            "air_quality_index": "वायु गुणवत्ता सूचकांक",
             "CO": "कार्बन मोनोऑक्साइड",
             "NO": "नाइट्रोजन मोनोऑक्साइड",
             "NO2": "नाइट्रोजन डाइऑक्साइड",
@@ -211,668 +244,303 @@ TRANSLATIONS = {
             "SO2": "सल्फर डाइऑक्साइड",
             "PM2.5": " महीन कण पदार्थ",
             "PM10": "मोटे कण पदार्थ",
-            "NH3": "अमोनिया"
+            "NH3": "अमोनिया",
+            "aqi_descriptions": [
+                "N/A",
+                "Good",
+                "Fair",
+                "Moderate",
+                "Poor",
+                "Very Poor"
+            ]
         },
-        "current_location": "वर्तमान स्थान",
-        "no_forecast_data": "मौसम पूर्वानुमान डेटा उपलब्ध नहीं है।",
-        "maps_title": "नक्शे",
-        "air_pollution_chart_title": "वायु प्रदूषण (माइक्रोग्राम/घन मीटर)",
-        "weather_card_title": "मौसम विवरण",
-        "settings_title": "सेटिंग्स",
-        "loading": "लोड हो रहा है...",
-        "search_city": "शहर खोजें...",
-        "filter_options": "फ़िल्टर विकल्प",
-        "unit_metric": "मीट्रिक",
-        "unit_imperial": "इंपीरियल",
-        "unit_standard": "मानक", # Added translation for Standard
-        "select_language": "भाषा चुनें",
-        "theme_light": "लाइट थीम",
-        "theme_dark": "डार्क थीम",
-        "theme_system": "सिस्टम थीम",
-        "language_setting": "भाषा",
-        "measurement_setting": "मापन इकाई",
-        "use_current_location_setting": "वर्तमान स्थान का उपयोग करें",
-        "dark_theme_setting": "डार्क थीम",
-        "close_button": "बंद करें",
-        "air_pollution_chart_y_axis_title": "सांद्रता (माइक्रोग्राम/घन मीटर)"
+        "main_information_items": {
+            "current_location": "वर्तमान स्थान"
+        },
+        "air_pollution_chart_title_items": {
+            "air_pollution_chart_title": "वायु प्रदूषण (माइक्रोग्राम/घन मीटर)"
+        },
+        "unit_items": {
+            "unit_metric": "मीट्रिक",
+            "unit_imperial": "इंपीरियल",
+            "unit_standard": "मानक"
+        },
+        "air_pollution_chart_items": {
+            "air_pollution_chart_y_axis_title": "सांद्रता (माइक्रोग्राम/घन मीटर)"
+        }
     },
     "es": {
-        "weather": "Clima",
-        "map": "Mapa",
-        "settings": "Configuración",
-        "feels_like": "Sensación térmica",
-        "humidity": "Humedad",
-        "wind": "Viento",
-        "pressure": "Presión",
-        "air_condition_title": "Condiciones del aire",
-        "measurement": "Unidad de medida",
-        "use_current_location": "Usar ubicación actual:",
-        "dark_theme": "Tema oscuro:",
-        "language": "Idioma:",
-        "close": "Cerrar",
-        "temperature": "Temperatura",
-        "air_quality_index": "Índice de calidad del aire",
-        "aqi_descriptions": [
-            "N/A", # Assuming N/A is fine for Spanish too, or replace with "No disponible"
-            "Buena",
-            "Aceptable", # Changed from "Fair" to "Aceptable" as "Fair" is not a direct translation for AQI context
-            "Moderada",
-            "Mala",
-            "Muy mala"
-        ],
-        "monday": "Lunes",
-        "tuesday": "Martes",
-        "wednesday": "Miércoles",
-        "thursday": "Jueves",
-        "friday": "Viernes",
-        "saturday": "Sábado",
-        "sunday": "Domingo",
-        "mon": "Lun",
-        "tue": "Mar",
-        "wed": "Mié",
-        "thu": "Jue",
-        "fri": "Vie",
-        "sat": "Sáb",
-        "sun": "Dom",
-        "max": "Máx",
-        "min": "Mín",
-        "chemical_elements": { # Changed to a dictionary
+        "popup_menu_items": {
+            "weather": "Clima",
+            "map": "Mapa",
+            "settings": "Configuración"
+        },
+        "air_condition_items": {
+            "air_condition_title": "Condiciones del aire",
+            "feels_like": "Sensación térmica",
+            "humidity": "Humedad",
+            "wind": "Viento",
+            "pressure": "Presión"
+        },
+        "settings_alert_dialog_items": {
+            "language": "Idioma:",
+            "measurement": "Unidad de medida",
+            "use_current_location": "Usar ubicación actual:",
+            "dark_theme": "Tema oscuro:",
+            "close": "Cerrar"
+        },
+        "weekly_forecast_items": {
+            "monday": "Lunes",
+            "tuesday": "Martes",
+            "wednesday": "Miércoles",
+            "thursday": "Jueves",
+            "friday": "Viernes",
+            "saturday": "Sábado",
+            "sunday": "Domingo",
+            "no_forecast_data": "Datos de pronóstico del tiempo no disponibles."
+        },
+        "temperature_chart_items": {
+            "mon": "Lun",
+            "tue": "Mar",
+            "wed": "Mié",
+            "thu": "Jue",
+            "fri": "Vie",
+            "sat": "Sáb",
+            "sun": "Dom",
+            "max": "Máx",
+            "min": "Mín",
+            "temperature": "Temperatura"
+        },
+        "air_pollution_items": {
+            "air_quality_index": "Índice de calidad del aire",
             "CO": "Monóxido de carbono",
             "NO": "Monóxido de nitrógeno",
             "NO2": "Dióxido de nitrógeno",
             "O3": "Ozono",
             "SO2": "Dióxido de azufre",
-            "PM2.5": "Partículas finas PM2.5", # Clarified PM2.5
-            "PM10": "Partículas gruesas PM10", # Clarified PM10
-            "NH3": "Amoníaco"
+            "PM2.5": "Partículas finas PM2.5",
+            "PM10": "Partículas gruesas PM10",
+            "NH3": "Amoníaco",
+            "aqi_descriptions": [
+                "N/A",
+                "Good",
+                "Fair",
+                "Moderate",
+                "Poor",
+                "Very Poor"
+            ]
         },
-        "current_location": "Ubicación Actual",
-        "no_forecast_data": "Datos de pronóstico del tiempo no disponibles.",
-        "error_page_context_missing": "Error: Falta el contexto de la página",
-        "maps_title": "Mapas",
-        "air_pollution_chart_title": "Contaminación del Aire (μg/m³)",
-        "weather_card_title": "Detalles del Clima",
-        "settings_title": "Configuración",
-        "loading": "Cargando...",
-        "search_city": "Buscar ciudad...",
-        "filter_options": "Opciones de Filtro",
-        "unit_metric": "Métrico",
-        "unit_imperial": "Imperial",
-        "unit_standard": "Estándar", # Added translation for Standard
-        "select_language": "Seleccionar Idioma",
-        "theme_light": "Tema Claro",
-        "theme_dark": "Tema Oscuro",
-        "theme_system": "Tema del Sistema",
-        "language_setting": "Idioma",
-        "measurement_setting": "Unidad de medida",
-        "use_current_location_setting": "Usar ubicación actual",
-        "dark_theme_setting": "Tema oscuro",
-        "close_button": "Cerrar",
-        "air_pollution_chart_y_axis_title": "Concentración (µg/m³)"
+        "main_information_items": {
+            "current_location": "Ubicación Actual"
+        },
+        "air_pollution_chart_title_items": {
+            "air_pollution_chart_title": "Contaminación del Aire (μg/m³)"
+        },
+        "unit_items": {
+            "unit_metric": "Métrico",
+            "unit_imperial": "Imperial",
+            "unit_standard": "Estándar"
+        },
+        "air_pollution_chart_items": {
+            "air_pollution_chart_y_axis_title": "Concentración (µg/m³)"
+        }
     },
     "ar": {
-        "weather": "الطقس",
-        "map": "خريطة",
-        "settings": "الإعدادات",
-        "feels_like": "يشعر كأنها", # Or "الإحساس الحراري"
-        "humidity": "رطوبة",
-        "wind": "رياح",
-        "pressure": "الضغط",
-        "air_condition_title": "ظروف الهواء",
-        "measurement": "وحدة القياس",
-        "use_current_location": "استخدم الموقع الحالي:",
-        "dark_theme": "الوضع الداكن:",
-        "language": "اللغة:",
-        "close": "إغلاق",
-        "temperature": "درجة الحرارة",
-        "air_quality_index": "مؤشر جودة الهواء",
-        "aqi_descriptions": [
-            "غير متاح", # N/A
-            "جيد",      # Good
-            "مقبول",    # Fair
-            "متوسط",    # Moderate
-            "رديء",     # Poor
-            "رديء جدا" # Very Poor
-        ],
-        "monday": "الاثنين",
-        "tuesday": "الثلاثاء",
-        "wednesday": "الأربعاء",
-        "thursday": "الخميس",
-        "friday": "الجمعة",
-        "saturday": "السبت",
-        "sunday": "الأحد",
-        "mon": "إثن",
-        "tue": "ثلا",
-        "wed": "أرب",
-        "thu": "خمي",
-        "fri": "جمع",
-        "sat": "سبت",
-        "sun": "أحد",
-        "max": "الأقصى", # Changed from الأعلى
-        "min": "الأدنى",
-        "chemical_elements": { # Changed to a dictionary
+        "popup_menu_items": {
+            "weather": "الطقس",
+            "map": "الخريطة",
+            "settings": "الإعدادات"
+        },
+        "air_condition_items": {
+            "air_condition_title": "حالة الهواء",
+            "feels_like": "يشعر وكأنه",
+            "humidity": "الرطوبة",
+            "wind": "الرياح",
+            "pressure": "الضغط"
+        },
+        "settings_alert_dialog_items": {
+            "language": "اللغة:",
+            "measurement": "القياس",
+            "use_current_location": "استخدام الموقع الحالي:",
+            "dark_theme": "الوضع الداكن:",
+            "close": "إغلاق"
+        },
+        "weekly_forecast_items": {
+            "monday": "الإثنين",
+            "tuesday": "الثلاثاء",
+            "wednesday": "الأربعاء",
+            "thursday": "الخميس",
+            "friday": "الجمعة",
+            "saturday": "السبت",
+            "sunday": "الأحد",
+            "no_forecast_data": "بيانات التوقعات الجوية غير متوفرة."
+        },
+        "temperature_chart_items": {
+            "mon": "الإثنين",
+            "tue": "الثلاثاء",
+            "wed": "الأربعاء",
+            "thu": "الخميس",
+            "fri": "الجمعة",
+            "sat": "السبت",
+            "sun": "الأحد",
+            "max": "الحد الأقصى",
+            "min": "الحد الأدنى",
+            "temperature": "درجة الحرارة"
+        },
+        "air_pollution_items": {
+            "air_quality_index": "إندكس جودة الهواء",
             "CO": "أول أكسيد الكربون",
-            "NO": "أحادي أكسيد النيتروجين",
+            "NO": "أول أكسيد النيتروجين",
             "NO2": "ثاني أكسيد النيتروجين",
             "O3": "الأوزون",
             "SO2": "ثاني أكسيد الكبريت",
-            "PM2.5": "الجسيمات الدقيقة PM2.5",
-            "PM10": "الجسيمات الخشنة PM10",
-            "NH3": "الأمونيا"
+            "PM2.5": "الجسيمات الدقيقة",
+            "PM10": "الجسيمات الخشنة",
+            "NH3": "الأمونيا",
+            "aqi_descriptions": [
+                "N/A",
+                "Good",
+                "Fair",
+                "Moderate",
+                "Poor",
+                "Very Poor"
+            ]
         },
-        "current_location": "الموقع الحالي",
-        "no_forecast_data": "بيانات توقعات الطقس غير متوفرة.",
-        "error_page_context_missing": "خطأ: سياق الصفحة مفقود",
-        "maps_title": "خرائط",
-        "air_pollution_chart_title": "تلوث الهواء (ميكروغرام/م³)",
-        "weather_card_title": "تفاصيل الطقس",
-        "settings_title": "الإعدادات",
-        "loading": "جار التحميل...",
-        "search_city": "ابحث عن مدينة...",
-        "filter_options": "خيارات التصفية",
-        "unit_metric": "متري",
-        "unit_imperial": "إمبراطوري",
-        "unit_standard": "قياسي", # Added translation for Standard
-        "select_language": "اختر اللغة",
-        "theme_light": "سمة فاتحة",
-        "theme_dark": "سمة داكنة",
-        "theme_system": "سمة النظام",
-        "language_setting": "اللغة",
-        "measurement_setting": "وحدة القياس",
-        "use_current_location_setting": "استخدم الموقع الحالي",
-        "dark_theme_setting": "الوضع الداكن",
-        "close_button": "إغلاق",
-        "air_pollution_chart_y_axis_title": "التركيز (ميكروغرام/م³)"
-    },
-    "fr": {
-        "weather": "Météo",
-        "map": "Carte",
-        "settings": "Paramètres",
-        "feels_like": "Ressenti",
-        "humidity": "Humidité",
-        "wind": "Vent",
-        "pressure": "Pression",
-        "air_condition_title": "Conditions atmosphériques",
-        "measurement": "Unité de mesure",
-        "use_current_location": "Utiliser la position actuelle:",
-        "dark_theme": "Thème sombre:",
-        "language": "Langue:",
-        "close": "Fermer",
-        "temperature": "Température",
-        "air_quality_index": "Indice de qualité de l\'air",
-        "aqi_descriptions": [
-            "N/A", # Or "Non disponible"
-            "Bon", # Changed from "Bonne" to "Bon" for AQI context
-            "Passable", # Changed from "Moyenne" to "Passable"
-            "Modéré",   # Changed from "Modérée" to "Modéré"
-            "Mauvais",  # Changed from "Mauvaise" to "Mauvais"
-            "Très mauvais" # Changed from "Très mauvaise" to "Très mauvais"
-        ],
-        "monday": "Lundi",
-        "tuesday": "Mardi",
-        "wednesday": "Mercredi",
-        "thursday": "Jeudi",
-        "friday": "Vendredi",
-        "saturday": "Samedi",
-        "sunday": "Dimanche",
-        "mon": "Lun",
-        "tue": "Mar",
-        "wed": "Mer",
-        "thu": "Jeu",
-        "fri": "Ven",
-        "sat": "Sam",
-        "sun": "Dim",
-        "max": "Max",
-        "min": "Min",
-        "chemical_elements": { # Changed to a dictionary
-            "CO": "Monoxyde de carbone",
-            "NO": "Monoxyde d\'azote",
-            "NO2": "Dioxyde d\'azote",
-            "O3": "Ozone",
-            "SO2": "Dioxyde de soufre",
-            "PM2.5": "Particules fines PM2.5",
-            "PM10": "Particules grossières PM10",
-            "NH3": "Ammoniac"
+        "main_information_items": {
+            "current_location": "الموقع الحالي"
         },
-        "current_location": "Position Actuelle",
-        "no_forecast_data": "Données de prévisions météorologiques non disponibles.",
-        "error_page_context_missing": "Erreur: Contexte de la page manquant",
-        "maps_title": "Cartes",
-        "air_pollution_chart_title": "Pollution de l\'Air (μg/m³)",
-        "weather_card_title": "Détails Météo",
-        "settings_title": "Paramètres",
-        "loading": "Chargement...",
-        "search_city": "Rechercher une ville...",
-        "filter_options": "Options de Filtrage",
-        "unit_metric": "Métrique",
-        "unit_imperial": "Impérial",
-        "unit_standard": "Standard", # Added translation for Standard
-        "select_language": "Sélectionner la Langue",
-        "theme_light": "Thème Clair",
-        "theme_dark": "Thème Sombre",
-        "theme_system": "Thème Système",
-        "language_setting": "Langue",
-        "measurement_setting": "Unité de mesure",
-        "use_current_location_setting": "Utiliser la position actuelle",
-        "dark_theme_setting": "Thème sombre",
-        "close_button": "Fermer",
-        "air_pollution_chart_y_axis_title": "Concentration (µg/m³)"
-    },
-    "pt": {
-        "weather": "Tempo",
-        "map": "Mapa",
-        "settings": "Configurações",
-        "feels_like": "Sensação térmica",
-        "humidity": "Umidade", # Corrected from "Umidade"
-        "wind": "Vento",
-        "pressure": "Pressão",
-        "air_condition_title": "Condições do ar",
-        "measurement": "Unidade de medida",
-        "use_current_location": "Usar localização atual:",
-        "dark_theme": "Tema escuro:",
-        "language": "Idioma:",
-        "close": "Fechar",
-        "temperature": "Temperatura",
-        "air_quality_index": "Índice de qualidade do ar",
-        "aqi_descriptions": [
-            "N/D", # N/A in Portuguese
-            "Bom",      # Good
-            "Razoável", # Fair
-            "Moderado", # Moderate
-            "Ruim",     # Poor
-            "Muito Ruim" # Very Poor
-        ],
-        "monday": "Segunda-feira",
-        "tuesday": "Terça-feira",
-        "wednesday": "Quarta-feira",
-        "thursday": "Quinta-feira",
-        "friday": "Sexta-feira",
-        "saturday": "Sábado",
-        "sunday": "Domingo",
-        "mon": "Seg",
-        "tue": "Ter",
-        "wed": "Qua",
-        "thu": "Qui",
-        "fri": "Sex",
-        "sat": "Sáb",
-        "sun": "Dom",
-        "max": "Máx",
-        "min": "Mín",
-        "chemical_elements": { # Changed to a dictionary
-            "CO": "Monóxido de carbono",
-            "NO": "Monóxido de nitrogênio", # Corrected from "nitrogénio"
-            "NO2": "Dióxido de nitrogênio", # Corrected from "nitrogénio"
-            "O3": "Ozônio", # Corrected from "Ozono"
-            "SO2": "Dióxido de enxofre",
-            "PM2.5": "Partículas finas PM2.5",
-            "PM10": "Partículas grossas PM10",
-            "NH3": "Amônia" # Corrected from "Amoníaco"
+        "air_pollution_chart_title_items": {
+            "air_pollution_chart_title": "تلوث الهواء (ميكروغرام/م³)"
         },
-        "current_location": "Localização Atual",
-        "no_forecast_data": "Dados de previsão do tempo não disponíveis.",
-        "error_page_context_missing": "Erro: Falta contexto da página",
-        "maps_title": "Mapas",
-        "air_pollution_chart_title": "Poluição do Ar (μg/m³)",
-        "weather_card_title": "Detalhes do Tempo",
-        "settings_title": "Configurações",
-        "loading": "Carregando...",
-        "search_city": "Procurar cidade...",
-        "filter_options": "Opções de Filtro",
-        "unit_metric": "Métrico",
-        "unit_imperial": "Imperial",
-        "unit_standard": "Padrão", # Added translation for Standard
-        "select_language": "Selecionar Idioma",
-        "theme_light": "Tema Claro",
-        "theme_dark": "Tema Escuro",
-        "theme_system": "Tema do Sistema",
-        "language_setting": "Idioma",
-        "measurement_setting": "Unidade de medida",
-        "use_current_location_setting": "Usar localização atual",
-        "dark_theme_setting": "Tema escuro",
-        "close_button": "Fechar",
-        "air_pollution_chart_y_axis_title": "Concentração (µg/m³)"
-    },
-    "ru": {
-        "weather": "Погода",
-        "map": "Карта",
-        "settings": "Настройки",
-        "feels_like": "Ощущается как",
-        "humidity": "Влажность",
-        "wind": "Ветер",
-        "pressure": "Давление",
-        "air_condition_title": "Состояние воздуха",
-        "measurement": "Единица измерения",
-        "use_current_location": "Использовать текущее местоположение:",
-        "dark_theme": "Темная тема:",
-        "language": "Язык:",
-        "close": "Закрыть",
-        "temperature": "Температура",
-        "air_quality_index": "Индекс качества воздуха",
-        "aqi_descriptions": [
-            "Н/Д",       # N/A
-            "Хорошее",   # Good
-            "Удовл.",    # Fair (Satisfactory)
-            "Умеренное", # Moderate
-            "Плохое",    # Poor
-            "Очень плохое" # Very Poor
-        ],
-        "monday": "Понедельник",
-        "tuesday": "Вторник",
-        "wednesday": "Среда",
-        "thursday": "Четверг",
-        "friday": "Пятница",
-        "saturday": "Суббота",
-        "sunday": "Воскресенье",
-        "mon": "Пн",
-        "tue": "Вт",
-        "wed": "Ср",
-        "thu": "Чт",
-        "fri": "Пт",
-        "sat": "Сб",
-        "sun": "Вс",
-        "max": "Макс.", # Added period for abbreviation
-        "min": "Мин.",  # Added period for abbreviation
-        "chemical_elements": { # Changed to a dictionary
-            "CO": "Монооксид углерода",
-            "NO": "Монооксид азота",
-            "NO2": "Диоксид азота",
-            "O3": "Озон",
-            "SO2": "Диоксид серы",
-            "PM2.5": "Мелкодисперсные частицы PM2.5",
-            "PM10": "Крупнодисперсные частицы PM10",
-            "NH3": "Аммиак"
+        "unit_items": {
+            "unit_metric": "متري",
+            "unit_imperial": "إمبراطوري",
+            "unit_standard": "قياسي"
         },
-        "current_location": "Текущее местоположение",
-        "no_forecast_data": "Данные прогноза погоды недоступны.",
-        "error_page_context_missing": "Ошибка: отсутствует контекст страницы",
-        "maps_title": "Карты",
-        "air_pollution_chart_title": "Загрязнение воздуха (мкг/м³)",
-        "weather_card_title": "Детали погоды",
-        "settings_title": "Настройки",
-        "loading": "Загрузка...",
-        "search_city": "Поиск города...",
-        "filter_options": "Параметры фильтра",
-        "unit_metric": "Метрическая",
-        "unit_imperial": "Имперская",
-        "unit_standard": "Стандартная", # Added translation for Standard
-        "select_language": "Выберите язык",
-        "theme_light": "Светлая тема",
-        "theme_dark": "Темная тема",
-        "theme_system": "Системная тема",
-        "language_setting": "Язык",
-        "measurement_setting": "Единица измерения",
-        "use_current_location_setting": "Использовать текущее местоположение",
-        "dark_theme_setting": "Темная тема",
-        "close_button": "Закрыть",
-        "air_pollution_chart_y_axis_title": "Концентрация (мкг/м³)"
+        "air_pollution_chart_items": {
+            "air_pollution_chart_y_axis_title": "التركيز (ميكروغرام/م³)"
+        }
     },
-    # Italian translations
-    "it": {
-        "weather": "Meteo",
-        "map": "Mappa",
-        "settings": "Impostazioni",
-        "feels_like": "Percepita",
-        "humidity": "Umidità",
-        "wind": "Vento",
-        "pressure": "Pressione",
-        "air_condition_title": "Condizioni dell\'aria",
-        "measurement": "Misurazione",
-        "use_current_location": "Usa posizione attuale:",
-        "dark_theme": "Tema scuro:",
-        "language": "Lingua:",
-        "close": "Chiudi",
-        "temperature": "Temperatura",
-        "air_quality_index": "Indice qualità dell\'aria",
-        "aqi_descriptions": [
-            "N/D", # Non Disponibile
-            "Buona",
-            "Discreta", # Fair
-            "Moderata",
-            "Scarsa", # Poor
-            "Molto scarsa" # Very Poor
-        ],
-        "monday": "Lunedì",
-        "tuesday": "Martedì",
-        "wednesday": "Mercoledì",
-        "thursday": "Giovedì",
-        "friday": "Venerdì",
-        "saturday": "Sabato",
-        "sunday": "Domenica",
-        "mon": "Lun",
-        "tue": "Mar",
-        "wed": "Mer",
-        "thu": "Gio",
-        "fri": "Ven",
-        "sat": "Sab",
-        "sun": "Dom",
-        "max": "Max",
-        "min": "Min",
-        "chemical_elements": { # Changed to a dictionary
-            "CO": "Monossido di carbonio",
-            "NO": "Monossido di azoto",
-            "NO2": "Diossido di azoto",
-            "O3": "Ozono",
-            "SO2": "Diossido di zolfo",
-            "PM2.5": "Particolato fine PM2.5",
-            "PM10": "Particolato grossolano PM10",
-            "NH3": "Ammoniaca"
-        },
-        "current_location": "Posizione attuale",
-        "no_forecast_data": "Dati previsioni meteo non disponibili.",
-        "error_page_context_missing": "Errore: contesto pagina mancante",
-        "maps_title": "Mappe",
-        "air_pollution_chart_title": "Inquinamento dell\'aria (μg/m³)",
-        "weather_card_title": "Dettagli Meteo",
-        "settings_title": "Impostazioni",
-        "loading": "Caricamento...",
-        "search_city": "Cerca una città...",
-        "filter_options": "Opzioni Filtro",
-        "unit_metric": "Metrico",
-        "unit_imperial": "Imperiale",
-        "unit_standard": "Standard", # Added translation for Standard
-        "select_language": "Seleziona Lingua",
-        "theme_light": "Tema Chiaro",
-        "theme_dark": "Tema Scuro",
-        "theme_system": "Tema di Sistema",
-        "language_setting": "Lingua",
-        "measurement_setting": "Misurazione",
-        "use_current_location_setting": "Usa posizione attuale",
-        "dark_theme_setting": "Tema scuro",
-        "close_button": "Chiudi",
-        "air_pollution_chart_y_axis_title": "Concentrazione (µg/m³)"
-    },
-    # German translations
-    "de": {
-        "weather": "Wetter",
-        "map": "Karte",
-        "settings": "Einstellungen",
-        "feels_like": "Gefühlt",
-        "humidity": "Luftfeuchtigkeit",
-        "wind": "Wind",
-        "pressure": "Druck",
-        "air_condition_title": "Luftbedingungen",
-        "measurement": "Maßeinheit",
-        "use_current_location": "Aktuellen Standort verwenden:",
-        "dark_theme": "Dunkles Thema:",
-        "language": "Sprache:",
-        "close": "Schließen",
-        "temperature": "Temperatur",
-        "air_quality_index": "Luftqualitätsindex",
-        "aqi_descriptions": [
-            "N.V.", # Nicht Verfügbar
-            "Gut",
-            "Mäßig", # Fair
-            "Ausreichend", # Moderate (changed from "Mäßig" to avoid repetition, "Ausreichend" can fit)
-            "Schlecht", # Poor
-            "Sehr schlecht" # Very Poor
-        ],
-        "monday": "Montag",
-        "tuesday": "Dienstag",
-        "wednesday": "Mittwoch",
-        "thursday": "Donnerstag",
-        "friday": "Freitag",
-        "saturday": "Samstag",
-        "sunday": "Sonntag",
-        "mon": "Mo",
-        "tue": "Di",
-        "wed": "Mi",
-        "thu": "Do",
-        "fri": "Fr",
-        "sat": "Sa",
-        "sun": "So",
-        "max": "Max",
-        "min": "Min",
-        "chemical_elements": { # Changed to a dictionary
-            "CO": "Kohlenmonoxid",
-            "NO": "Stickstoffmonoxid",
-            "NO2": "Stickstoffdioxid",
-            "O3": "Ozon",
-            "SO2": "Schwefeldioxid",
-            "PM2.5": "Feinstaub PM2.5",
-            "PM10": "Grobstaub PM10",
-            "NH3": "Ammoniak"
-        },
-        "current_location": "Aktueller Standort",
-        "no_forecast_data": "Wettervorhersagedaten nicht verfügbar.",
-        "error_page_context_missing": "Fehler: Seitenkontext fehlt",
-        "maps_title": "Karten",
-        "air_pollution_chart_title": "Luftverschmutzung (μg/m³)",
-        "weather_card_title": "Wetterdetails",
-        "settings_title": "Einstellungen",
-        "loading": "Wird geladen...",
-        "search_city": "Stadt suchen...",
-        "filter_options": "Filteroptionen",
-        "unit_metric": "Metrisch",
-        "unit_imperial": "Imperial",
-        "unit_standard": "Standard", # Added translation for Standard
-        "select_language": "Sprache auswählen",
-        "theme_light": "Helles Thema",
-        "theme_dark": "Dunkles Thema",
-        "theme_system": "Systemthema",
-        "language_setting": "Sprache",
-        "measurement_setting": "Maßeinheit",
-        "use_current_location_setting": "Aktuellen Standort verwenden",
-        "dark_theme_setting": "Dunkles Thema",
-        "close_button": "Schließen",
-        "air_pollution_chart_y_axis_title": "Konzentration (µg/m³)"
-    },
-    # Indonesian translations
     "id": {
-        "weather": "Cuaca",
-        "map": "Peta",
-        "settings": "Pengaturan",
-        "feels_like": "Terasa seperti",
-        "humidity": "Kelembapan",
-        "wind": "Angin",
-        "pressure": "Tekanan",
-        "air_condition_title": "Kondisi Udara",
-        "measurement": "Pengukuran",
-        "use_current_location": "Gunakan lokasi saat ini:",
-        "dark_theme": "Tema gelap:",
-        "language": "Bahasa:",
-        "close": "Tutup",
-        "temperature": "Suhu",
-        "air_quality_index": "Indeks Kualitas Udara",
-        "aqi_descriptions": [
-            "T/A", # Tidak Tersedia
-            "Baik",
-            "Sedang", # Fair
-            "Cukup",  # Moderate
-            "Buruk",  # Poor
-            "Sangat Buruk" # Very Poor
-        ],
-        "monday": "Senin",
-        "tuesday": "Selasa",
-        "wednesday": "Rabu",
-        "thursday": "Kamis",
-        "friday": "Jumat",
-        "saturday": "Sabtu",
-        "sunday": "Minggu",
-        "mon": "Sen",
-        "tue": "Sel",
-        "wed": "Rab",
-        "thu": "Kam",
-        "fri": "Jum",
-        "sat": "Sab",
-        "sun": "Min",
-        "max": "Maks",
-        "min": "Min",
-        "chemical_elements": { # Changed to a dictionary
+        "popup_menu_items": {
+            "weather": "Cuaca",
+            "map": "Peta",
+            "settings": "Pengaturan"
+        },
+        "air_condition_items": {
+            "air_condition_title": "Kondisi Udara",
+            "feels_like": "Terasa seperti",
+            "humidity": "Kelembaban",
+            "wind": "Angin",
+            "pressure": "Tekanan"
+        },
+        "settings_alert_dialog_items": {
+            "language": "Bahasa:",
+            "measurement": "Pengukuran",
+            "use_current_location": "Gunakan lokasi saat ini:",
+            "dark_theme": "Tema gelap:",
+            "close": "Tutup"
+        },
+        "weekly_forecast_items": {
+            "monday": "Senin",
+            "tuesday": "Selasa",
+            "wednesday": "Rabu",
+            "thursday": "Kamis",
+            "friday": "Jumat",
+            "saturday": "Sabtu",
+            "sunday": "Minggu",
+            "no_forecast_data": "Data prakiraan cuaca tidak tersedia."
+        },
+        "temperature_chart_items": {
+            "mon": "Sen",
+            "tue": "Sel",
+            "wed": "Rab",
+            "thu": "Kam",
+            "fri": "Jum",
+            "sat": "Sab",
+            "sun": "Min",
+            "max": "Maks",
+            "min": "Min",
+            "temperature": "Suhu"
+        },
+        "air_pollution_items": {
+            "air_quality_index": "Indeks Kualitas Udara",
             "CO": "Karbon Monoksida",
             "NO": "Nitrogen Monoksida",
             "NO2": "Nitrogen Dioksida",
             "O3": "Ozon",
             "SO2": "Sulfur Dioksida",
-            "PM2.5": "Partikel Halus PM2.5",
-            "PM10": "Partikel Kasar PM10",
-            "NH3": "Amonia"
+            "PM2.5": "Partikel Halus",
+            "PM10": "Partikel Kasar",
+            "NH3": "Amonia",
+            "aqi_descriptions": [
+                "N/A",
+                "Good",
+                "Fair",
+                "Moderate",
+                "Poor",
+                "Very Poor"
+            ]
         },
-        "current_location": "Lokasi Saat Ini",
-        "no_forecast_data": "Data prakiraan cuaca tidak tersedia.",
-        "error_page_context_missing": "Kesalahan: Konteks halaman hilang",
-        "maps_title": "Peta",
-        "air_pollution_chart_title": "Polusi Udara (μg/m³)",
-        "weather_card_title": "Detail Cuaca",
-        "settings_title": "Pengaturan",
-        "loading": "Memuat...",
-        "search_city": "Cari kota...",
-        "filter_options": "Opsi Filter",
-        "unit_metric": "Metrik",
-        "unit_imperial": "Imperial",
-        "unit_standard": "Standar", # Added translation for Standard
-        "select_language": "Pilih Bahasa",
-        "theme_light": "Tema Terang",
-        "theme_dark": "Tema Gelap",
-        "theme_system": "Tema Sistem",
-        "language_setting": "Bahasa",
-        "measurement_setting": "Pengukuran",
-        "use_current_location_setting": "Gunakan lokasi saat ini",
-        "dark_theme_setting": "Tema gelap",
-        "close_button": "Tutup",
-        "air_pollution_chart_y_axis_title": "Konsentrasi (µg/m³)"
+        "main_information_items": {
+            "current_location": "Lokasi Saat Ini"
+        },
+        "air_pollution_chart_title_items": {
+            "air_pollution_chart_title": "Polusi Udara (μg/m³)"
+        },
+        "unit_items": {
+            "unit_metric": "Metrik",
+            "unit_imperial": "Imperial",
+            "unit_standard": "Standar"
+        },
+        "air_pollution_chart_items": {
+            "air_pollution_chart_y_axis_title": "Konsentrasi (μg/m³)"
+        }
     },
-    # Japanese translations
     "ja": {
-        "weather": "天気",
-        "map": "地図",
-        "settings": "設定",
-        "feels_like": "体感温度",
-        "humidity": "湿度",
-        "wind": "風",
-        "pressure": "気圧",
-        "air_condition_title": "空気の状態",
-        "measurement": "測定単位",
-        "use_current_location": "現在地を使用:",
-        "dark_theme": "ダークテーマ:",
-        "language": "言語:",
-        "close": "閉じる",
-        "temperature": "温度",
-        "air_quality_index": "空気質指数",
-        "aqi_descriptions": [
-            "該当なし", # N/A
-            "良好",    # Good
-            "普通",    # Fair
-            "中程度",  # Moderate
-            "悪い",    # Poor
-            "非常に悪い" # Very Poor
-        ],
-        "monday": "月曜日",
-        "tuesday": "火曜日",
-        "wednesday": "水曜日",
-        "thursday": "木曜日",
-        "friday": "金曜日",
-        "saturday": "土曜日",
-        "sunday": "日曜日",
-        "mon": "月",
-        "tue": "火",
-        "wed": "水",
-        "thu": "木",
-        "fri": "金",
-        "sat": "土",
-        "sun": "日",
-        "max": "最大",
-        "min": "最小",
-        "chemical_elements": { # Changed to a dictionary
+        "popup_menu_items": {
+            "weather": "天気",
+            "map": "地図",
+            "settings": "設定"
+        },
+        "air_condition_items": {
+            "air_condition_title": "空気の状態",
+            "feels_like": "体感温度",
+            "humidity": "湿度",
+            "wind": "風",
+            "pressure": "気圧"
+        },
+        "settings_alert_dialog_items": {
+            "language": "言語:",
+            "measurement": "測定",
+            "use_current_location": "現在地を使用:",
+            "dark_theme": "ダークテーマ:",
+            "close": "閉じる"
+        },
+        "weekly_forecast_items": {
+            "monday": "月曜日",
+            "tuesday": "火曜日",
+            "wednesday": "水曜日",
+            "thursday": "木曜日",
+            "friday": "金曜日",
+            "saturday": "土曜日",
+            "sunday": "日曜日",
+            "no_forecast_data": "天気予報データがありません。"
+        },
+        "temperature_chart_items": {
+            "mon": "月",
+            "tue": "火",
+            "wed": "水",
+            "thu": "木",
+            "fri": "金",
+            "sat": "土",
+            "sun": "日",
+            "max": "最大",
+            "min": "最小",
+            "temperature": "気温"
+        },
+        "air_pollution_items": {
+            "air_quality_index": "大気質指数",
             "CO": "一酸化炭素",
             "NO": "一酸化窒素",
             "NO2": "二酸化窒素",
@@ -880,30 +548,409 @@ TRANSLATIONS = {
             "SO2": "二酸化硫黄",
             "PM2.5": "微小粒子状物質 PM2.5",
             "PM10": "粗大粒子状物質 PM10",
-            "NH3": "アンモニア"
+            "NH3": "アンモニア",
+            "aqi_descriptions": [
+                "N/A",
+                "Good",
+                "Fair",
+                "Moderate",
+                "Poor",
+                "Very Poor"
+            ]
         },
-        "current_location": "現在地",
-        "no_forecast_data": "天気予報データがありません。",
-        "error_page_context_missing": "エラー：ページコンテキストがありません",
-        "maps_title": "地図",
-        "air_pollution_chart_title": "大気汚染 (μg/m³)",
-        "weather_card_title": "天気の詳細",
-        "settings_title": "設定",
-        "loading": "読み込み中...",
-        "search_city": "都市を検索...",
-        "filter_options": "フィルターオプション",
-        "unit_metric": "メートル法",
-        "unit_imperial": "ヤード・ポンド法",
-        "unit_standard": "標準", # Added translation for Standard
-        "select_language": "言語を選択",
-        "theme_light": "ライトテーマ",
-        "theme_dark": "ダークテーマ",
-        "theme_system": "システムテーマ",
-        "language_setting": "言語",
-        "measurement_setting": "測定単位",
-        "use_current_location_setting": "現在地を使用",
-        "dark_theme_setting": "ダークテーマ",
-        "close_button": "閉じる",
-        "air_pollution_chart_y_axis_title": "濃度 (µg/m³)"
+        "main_information_items": {
+            "current_location": "現在地"
+        },
+        "air_pollution_chart_title_items": {
+            "air_pollution_chart_title": "大気汚染 (μg/m³)"
+        },
+        "unit_items": {
+            "unit_metric": "メートル法",
+            "unit_imperial": "ヤード・ポンド法",
+            "unit_standard": "標準"
+        },
+        "air_pollution_chart_items": {
+            "air_pollution_chart_y_axis_title": "濃度 (µg/m³)"
+        }
+    },
+    "it": {
+        "popup_menu_items": {
+            "weather": "Meteo",
+            "map": "Mappa",
+            "settings": "Impostazioni"
+        },
+        "air_condition_items": {
+            "air_condition_title": "Condizioni dell'aria",
+            "feels_like": "Percepito",
+            "humidity": "Umidità",
+            "wind": "Vento",
+            "pressure": "Pressione"
+        },
+        "settings_alert_dialog_items": {
+            "language": "Lingua:",
+            "measurement": "Misurazione",
+            "use_current_location": "Usa posizione corrente:",
+            "dark_theme": "Tema scuro:",
+            "close": "Chiudi"
+        },
+        "weekly_forecast_items": {
+            "monday": "Lunedì",
+            "tuesday": "Martedì",
+            "wednesday": "Mercoledì",
+            "thursday": "Giovedì",
+            "friday": "Venerdì",
+            "saturday": "Sabato",
+            "sunday": "Domenica",
+            "no_forecast_data": "Dati previsione meteo non disponibili."
+        },
+        "temperature_chart_items": {
+            "mon": "Lun",
+            "tue": "Mar",
+            "wed": "Mer",
+            "thu": "Gio",
+            "fri": "Ven",
+            "sat": "Sab",
+            "sun": "Dom",
+            "max": "Max",
+            "min": "Min",
+            "temperature": "Temperatura"
+        },
+        "air_pollution_items": {
+            "air_quality_index": "Indice di qualità dell'aria",
+            "CO": "Monossido di carbonio",
+            "NO": "Monossido di azoto",
+            "NO2": "Biossido di azoto",
+            "O3": "Ozono",
+            "SO2": "Biossido di zolfo",
+            "PM2.5": "Particolato fine PM2.5",
+            "PM10": "Particolato grossolano PM10",
+            "NH3": "Ammoniaca",
+            "aqi_descriptions": [
+                "N/A",
+                "Good",
+                "Fair",
+                "Moderate",
+                "Poor",
+                "Very Poor"
+            ]
+        },
+        "main_information_items": {
+            "current_location": "Posizione Corrente"
+        },
+        "air_pollution_chart_title_items": {
+            "air_pollution_chart_title": "Inquinamento dell'aria (μg/m³)"
+        },
+        "unit_items": {
+            "unit_metric": "Metrico",
+            "unit_imperial": "Imperiale",
+            "unit_standard": "Standard"
+        },
+        "air_pollution_chart_items": {
+            "air_pollution_chart_y_axis_title": "Concentrazione (µg/m³)"
+        }
+    },
+    "de": {
+        "popup_menu_items": {
+            "weather": "Wetter",
+            "map": "Karte",
+            "settings": "Einstellungen"
+        },
+        "air_condition_items": {
+            "air_condition_title": "Luftbedingungen",
+            "feels_like": "Gefühlt",
+            "humidity": "Luftfeuchtigkeit",
+            "wind": "Wind",
+            "pressure": "Druck"
+        },
+        "settings_alert_dialog_items": {
+            "language": "Sprache:",
+            "measurement": "Messung",
+            "use_current_location": "Aktuellen Standort verwenden:",
+            "dark_theme": "Dunkles Thema:",
+            "close": "Schließen"
+        },
+        "weekly_forecast_items": {
+            "monday": "Montag",
+            "tuesday": "Dienstag",
+            "wednesday": "Mittwoch",
+            "thursday": "Donnerstag",
+            "friday": "Freitag",
+            "saturday": "Samstag",
+            "sunday": "Sonntag",
+            "no_forecast_data": "Wettervorhersagedaten nicht verfügbar."
+        },
+        "temperature_chart_items": {
+            "mon": "Mo",
+            "tue": "Di",
+            "wed": "Mi",
+            "thu": "Do",
+            "fri": "Fr",
+            "sat": "Sa",
+            "sun": "So",
+            "max": "Max",
+            "min": "Min",
+            "temperature": "Temperatur"
+        },
+        "air_pollution_items": {
+            "air_quality_index": "Luftqualitätsindex",
+            "CO": "Kohlenmonoxid",
+            "NO": "Stickstoffmonoxid",
+            "NO2": "Stickstoffdioxid",
+            "O3": "Ozon",
+            "SO2": "Schwefeldioxid",
+            "PM2.5": "Feinstaub PM2.5",
+            "PM10": "Grobstaub PM10",
+            "NH3": "Ammoniak",
+            "aqi_descriptions": [
+                "N/A",
+                "Good",
+                "Fair",
+                "Moderate",
+                "Poor",
+                "Very Poor"
+            ]
+        },
+        "main_information_items": {
+            "current_location": "Aktueller Standort"
+        },
+        "air_pollution_chart_title_items": {
+            "air_pollution_chart_title": "Luftverschmutzung (μg/m³)"
+        },
+        "unit_items": {
+            "unit_metric": "Metrisch",
+            "unit_imperial": "Imperial",
+            "unit_standard": "Standard"
+        },
+        "air_pollution_chart_items": {
+            "air_pollution_chart_y_axis_title": "Konzentration (µg/m³)"
+        }
+    },
+    "fr": {
+        "popup_menu_items": {
+            "weather": "Météo",
+            "map": "Carte",
+            "settings": "Paramètres"
+        },
+        "air_condition_items": {
+            "air_condition_title": "Conditions de l'air",
+            "feels_like": "Ressenti",
+            "humidity": "Humidité",
+            "wind": "Vent",
+            "pressure": "Pression"
+        },
+        "settings_alert_dialog_items": {
+            "language": "Langue:",
+            "measurement": "Mesure",
+            "use_current_location": "Utiliser la position actuelle:",
+            "dark_theme": "Thème sombre:",
+            "close": "Fermer"
+        },
+        "weekly_forecast_items": {
+            "monday": "Lundi",
+            "tuesday": "Mardi",
+            "wednesday": "Mercredi",
+            "thursday": "Jeudi",
+            "friday": "Vendredi",
+            "saturday": "Samedi",
+            "sunday": "Dimanche",
+            "no_forecast_data": "Données de prévision météo non disponibles."
+        },
+        "temperature_chart_items": {
+            "mon": "Lun",
+            "tue": "Mar",
+            "wed": "Mer",
+            "thu": "Jeu",
+            "fri": "Ven",
+            "sat": "Sam",
+            "sun": "Dim",
+            "max": "Max",
+            "min": "Min",
+            "temperature": "Température"
+        },
+        "air_pollution_items": {
+            "air_quality_index": "Qualité de l'air",
+            "CO": "Monoxyde de carbone",
+            "NO": "Monoxyde d'azote",
+            "NO2": "Dioxyde d'azote",
+            "O3": "Ozone",
+            "SO2": "Dioxyde de soufre",
+            "PM2.5": "Particules fines PM2.5",
+            "PM10": "Particules grossières PM10",
+            "NH3": "Ammoniac",
+            "aqi_descriptions": [
+                "N/A",
+                "Good",
+                "Fair",
+                "Moderate",
+                "Poor",
+                "Very Poor"
+            ]
+        },
+        "main_information_items": {
+            "current_location": "Position actuelle"
+        },
+        "air_pollution_chart_title_items": {
+            "air_pollution_chart_title": "Pollution de l'air (μg/m³)"
+        },
+        "unit_items": {
+            "unit_metric": "Métrique",
+            "unit_imperial": "Impérial",
+            "unit_standard": "Standard"
+        },
+        "air_pollution_chart_items": {
+            "air_pollution_chart_y_axis_title": "Concentration (µg/m³)"
+        }
+    },
+    "pt": {
+        "popup_menu_items": {
+            "weather": "Tempo",
+            "map": "Mapa",
+            "settings": "Configurações"
+        },
+        "air_condition_items": {
+            "air_condition_title": "Condições do ar",
+            "feels_like": "Sensação térmica",
+            "humidity": "Umidade",
+            "wind": "Vento",
+            "pressure": "Pressão"
+        },
+        "settings_alert_dialog_items": {
+            "language": "Idioma:",
+            "measurement": "Medição",
+            "use_current_location": "Usar localização atual:",
+            "dark_theme": "Tema escuro:",
+            "close": "Fechar"
+        },
+        "weekly_forecast_items": {
+            "monday": "Segunda-feira",
+            "tuesday": "Terça-feira",
+            "wednesday": "Quarta-feira",
+            "thursday": "Quinta-feira",
+            "friday": "Sexta-feira",
+            "saturday": "Sábado",
+            "sunday": "Domingo",
+            "no_forecast_data": "Dados de previsão do tempo não disponíveis."
+        },
+        "temperature_chart_items": {
+            "mon": "Seg",
+            "tue": "Ter",
+            "wed": "Qua",
+            "thu": "Qui",
+            "fri": "Sex",
+            "sat": "Sáb",
+            "sun": "Dom",
+            "max": "Máx",
+            "min": "Mín",
+            "temperature": "Temperatura"
+        },
+        "air_pollution_items": {
+            "air_quality_index": "Índice de qualidade do ar",
+            "CO": "Monóxido de carbono",
+            "NO": "Monóxido de nitrogênio",
+            "NO2": "Dióxido de nitrogênio",
+            "O3": "Ozônio",
+            "SO2": "Dióxido de enxofre",
+            "PM2.5": "Material particulado fino PM2.5",
+            "PM10": "Material particulado grosso PM10",
+            "NH3": "Amônia",
+            "aqi_descriptions": [
+                "N/A",
+                "Good",
+                "Fair",
+                "Moderate",
+                "Poor",
+                "Very Poor"
+            ]
+        },
+        "main_information_items": {
+            "current_location": "Localização Atual"
+        },
+        "air_pollution_chart_title_items": {
+            "air_pollution_chart_title": "Poluição do Ar (μg/m³)"
+        },
+        "unit_items": {
+            "unit_metric": "Métrico",
+            "unit_imperial": "Imperial",
+            "unit_standard": "Padrão"
+        },
+        "air_pollution_chart_items": {
+            "air_pollution_chart_y_axis_title": "Concentração (µg/m³)"
+        }
+    },
+    "ru": {
+        "popup_menu_items": {
+            "weather": "Погода",
+            "map": "Карта",
+            "settings": "Настройки"
+        },
+        "air_condition_items": {
+            "air_condition_title": "Состояние воздуха",
+            "feels_like": "Ощущается как",
+            "humidity": "Влажность",
+            "wind": "Ветер",
+            "pressure": "Давление"
+        },
+        "settings_alert_dialog_items": {
+            "language": "Язык:",
+            "measurement": "Измерение",
+            "use_current_location": "Использовать текущее местоположение:",
+            "dark_theme": "Темная тема:",
+            "close": "Закрыть"
+        },
+        "weekly_forecast_items": {
+            "monday": "Понедельник",
+            "tuesday": "Вторник",
+            "wednesday": "Среда",
+            "thursday": "Четверг",
+            "friday": "Пятница",
+            "saturday": "Суббота",
+            "sunday": "Воскресенье",
+            "no_forecast_data": "Данные о прогнозе погоды недоступны."
+        },
+        "temperature_chart_items": {
+            "mon": "Пн",
+            "tue": "Вт",
+            "wed": "Ср",
+            "thu": "Чт",
+            "fri": "Пт",
+            "sat": "Сб",
+            "sun": "Вс",
+            "max": "Макс",
+            "min": "Мин",
+            "temperature": "Температура"
+        },
+        "air_pollution_items": {
+            "air_quality_index": "Индекс качества воздуха",
+            "CO": "Угарный газ",
+            "NO": "Оксид азота",
+            "NO2": "Диоксид азота",
+            "O3": "Озон",
+            "SO2": "Диоксид серы",
+            "PM2.5": "Мелкие твердые частицы PM2.5",
+            "PM10": "Крупные твердые частицы PM10",
+            "NH3": "Аммиак",
+            "aqi_descriptions": [
+                "N/A",
+                "Good",
+                "Fair",
+                "Moderate",
+                "Poor",
+                "Very Poor"
+            ]
+        },
+        "main_information_items": {
+            "current_location": "Текущее местоположение"
+        },
+        "air_pollution_chart_title_items": {
+            "air_pollution_chart_title": "Загрязнение воздуха (μг/м³)"
+        },
+        "unit_items": {
+            "unit_metric": "Метрическая",
+            "unit_imperial": "Имперская",
+            "unit_standard": "Стандартная"
+        },
+        "air_pollution_chart_items": {
+            "air_pollution_chart_y_axis_title": "Концентрация (мкг/м³)"
+        }
     }
 }

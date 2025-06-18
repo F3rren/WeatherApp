@@ -117,3 +117,25 @@ class TranslationService:
         if key in TRANSLATIONS.get("en", {}):
             return TRANSLATIONS["en"][key]
         return key
+
+    @classmethod
+    def translate_from_dict(cls, dict_key, key, language=None):
+        """
+        Restituisce la traduzione per la chiave richiesta all'interno di un sotto-dizionario strutturato.
+        dict_key: es. 'main_information_items', 'weekly_forecast_items', ...
+        key: la chiave da tradurre all'interno del sotto-dizionario
+        language: codice lingua
+        """
+        from utils.translations_data import TRANSLATIONS
+        from utils.config import DEFAULT_LANGUAGE
+        lang = cls.normalize_lang_code(language or DEFAULT_LANGUAGE)
+        if lang in TRANSLATIONS and dict_key in TRANSLATIONS[lang]:
+            subdict = TRANSLATIONS[lang][dict_key]
+            if key in subdict:
+                return subdict[key]
+        # Fallback su inglese
+        if dict_key in TRANSLATIONS.get("en", {}):
+            subdict = TRANSLATIONS["en"][dict_key]
+            if key in subdict:
+                return subdict[key]
+        return key

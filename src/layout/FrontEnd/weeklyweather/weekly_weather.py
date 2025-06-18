@@ -108,8 +108,9 @@ class WeeklyForecastDisplay(ft.Container):
     def _build_ui_elements(self):
         """Constructs the UI for the weekly forecast as a ft.Column of daily items."""
         if not self._forecast_data:
+            no_data_text = TranslationService.translate_from_dict("weekly_forecast_items", "no_forecast_data", self._current_language)
             return ft.Text(
-                TranslationService.translate("no_forecast_data", self._current_language), 
+                no_data_text,
                 color=self._current_text_color
             )
 
@@ -122,7 +123,7 @@ class WeeklyForecastDisplay(ft.Container):
 
         for i, day_data in enumerate(self._forecast_data):
             try:
-                translated_day = TranslationService.translate_weekday(day_data["day_key"], self._current_language)
+                translated_day = TranslationService.translate_from_dict("weekly_forecast_items", day_data["day_key"], self._current_language)
                 day_text_control = ft.Text(
                     translated_day,
                     weight=ft.FontWeight.BOLD,

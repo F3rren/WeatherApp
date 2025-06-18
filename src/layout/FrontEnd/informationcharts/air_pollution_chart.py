@@ -106,7 +106,7 @@ class AirPollutionChartDisplay(ft.Container):
     def _build_ui_elements(self):
         if not self._pollution_data or "co" not in self._pollution_data:
             return ft.Text(
-                self._translation_service.translate("no_air_pollution_data", self._current_language) if self._translation_service else "No air pollution data",
+                self._translation_service.translate_from_dict("air_pollution_chart_items", "no_air_pollution_data", self._current_language) if self._translation_service else "No air pollution data",
                 color=self._current_text_color,
                 size=self._text_handler.get_size('label')
             )
@@ -143,7 +143,7 @@ class AirPollutionChartDisplay(ft.Container):
             final_max_y = math.ceil(raw_dynamic_max_y / 50) * 50
         final_max_y = max(final_max_y, 10.0)
 
-        unit_text = self._translation_service.translate("micrograms_per_cubic_meter_short", self._current_language) if self._translation_service else "μg/m³"
+        unit_text = self._translation_service.translate_from_dict("air_pollution_chart_items", "micrograms_per_cubic_meter_short", self._current_language) if self._translation_service else "μg/m³"
 
         bar_groups = []
         component_keys = ["co", "no", "no2", "o3", "so2", "pm2_5", "pm10", "nh3"]
@@ -174,7 +174,7 @@ class AirPollutionChartDisplay(ft.Container):
                 )
             )
         
-        y_axis_title_text = self._translation_service.translate("air_pollution_chart_y_axis_title", self._current_language) if self._translation_service else "Pollutant Level"
+        y_axis_title_text = self._translation_service.translate_from_dict("air_pollution_chart_items", "air_pollution_chart_y_axis_title", self._current_language) if self._translation_service else "Pollutant Level"
         y_axis_title_control = ft.Text(
             y_axis_title_text,
             color=self._current_text_color,
@@ -252,7 +252,7 @@ class AirPollutionChartDisplay(ft.Container):
         # Update chart title
         for control in self.content.controls:
             if isinstance(control, ft.Text) and getattr(control, "data", {}).get("type") == "title":
-                control.value = TranslationService.translate("air_pollution_chart_title", self._current_language)
+                control.value = TranslationService.translate_from_dict("air_pollution_chart_title_items", "air_pollution_chart_title", self._current_language)
                 control.update()
             elif isinstance(control, ft.Container) and control.content and isinstance(control.content, ft.BarChart):
                 chart = control.content
@@ -263,14 +263,13 @@ class AirPollutionChartDisplay(ft.Container):
                         if label.label and isinstance(label.label, ft.Text):
                             category = getattr(label.label, "data", {}).get("category")
                             if category:
-                                label.label.value = TranslationService.translate(category, self._current_language)
+                                label.label.value = TranslationService.translate_from_dict("chemical_elements", category, self._current_language)
                                 label.label.update()
                 
                 # Update y-axis title
                 if hasattr(chart, "left_axis") and chart.left_axis and chart.left_axis.title_style:
-                    y_axis_title_text = self._translation_service.translate("air_quality_index", self._current_language) if self._translation_service else "AQI"
+                    y_axis_title_text = self._translation_service.translate_from_dict("air_pollution_chart_items", "air_quality_index", self._current_language) if self._translation_service else "AQI"
                     chart.left_axis.title = y_axis_title_text
-                    # Cannot update individual axis parts directly, update the entire chart
                     chart.update()
         
         self.update()

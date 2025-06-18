@@ -110,7 +110,7 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
         # CHANGED: Check for 'aqi' key in the processed data
         if not self._pollution_data or "aqi" not in self._pollution_data:
             return ft.Text(
-                TranslationService.translate("no_air_pollution_data", self._current_language),
+                TranslationService.translate_from_dict("air_pollution_items", "no_air_pollution_data", self._current_language),
                 color=self._current_text_color,
                 size=self._text_handler.get_size('label')
             )
@@ -123,7 +123,7 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
 
         # AQI Title and Value
         aqi_title_control = ft.Text(
-            TranslationService.translate("air_quality_index", self._current_language),
+            TranslationService.translate_from_dict("air_pollution_items", "air_quality_index", self._current_language),
             weight=ft.FontWeight.BOLD, 
             color=self._current_text_color,
             size=self._text_handler.get_size('title'),
@@ -149,17 +149,16 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         
         # Pollutant Details
-        elements = TranslationService.get_chemical_elements(self._current_language)
         # Map API component keys to display names and values
         pollutant_details_map = {
-            "co": {"name": elements.get("CO", "CO"), "value": components.get("co", 0)},
-            "no": {"name": elements.get("NO", "NO"), "value": components.get("no", 0)},
-            "no2": {"name": elements.get("NO2", "NO2"), "value": components.get("no2", 0)},
-            "o3": {"name": elements.get("O3", "O3"), "value": components.get("o3", 0)},
-            "so2": {"name": elements.get("SO2", "SO2"), "value": components.get("so2", 0)},
-            "pm2_5": {"name": elements.get("PM2.5", "PM2.5"), "value": components.get("pm2_5", 0)},
-            "pm10": {"name": elements.get("PM10", "PM10"), "value": components.get("pm10", 0)},
-            "nh3": {"name": elements.get("NH3", "NH3"), "value": components.get("nh3", 0)},
+            "co": {"name": TranslationService.translate_from_dict("air_pollution_items", "CO", self._current_language), "value": components.get("co", 0)},
+            "no": {"name": TranslationService.translate_from_dict("air_pollution_items", "NO", self._current_language), "value": components.get("no", 0)},
+            "no2": {"name": TranslationService.translate_from_dict("air_pollution_items", "NO2", self._current_language), "value": components.get("no2", 0)},
+            "o3": {"name": TranslationService.translate_from_dict("air_pollution_items", "O3", self._current_language), "value": components.get("o3", 0)},
+            "so2": {"name": TranslationService.translate_from_dict("air_pollution_items", "SO2", self._current_language), "value": components.get("so2", 0)},
+            "pm2_5": {"name": TranslationService.translate_from_dict("air_pollution_items", "PM2.5", self._current_language), "value": components.get("pm2_5", 0)},
+            "pm10": {"name": TranslationService.translate_from_dict("air_pollution_items", "PM10", self._current_language), "value": components.get("pm10", 0)},
+            "nh3": {"name": TranslationService.translate_from_dict("air_pollution_items", "NH3", self._current_language), "value": components.get("nh3", 0)},
         }
 
         column1_controls = []
@@ -267,7 +266,7 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
         for control in self.content.controls:
             if isinstance(control, ft.Text):
                 if getattr(control, "data", {}).get("type") == "title":
-                    control.value = TranslationService.translate("air_pollution_title", self._current_language)
+                    control.value = TranslationService.translate_from_dict("air_pollution_items", "air_quality_index", self._language)
                     control.update()
             elif isinstance(control, ft.Row):
                 # Update the category titles
@@ -370,9 +369,9 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
         """Get localized description based on Air Quality Index using only translations_data.py"""
         from utils.translations_data import TRANSLATIONS
         lang_code = TranslationService.normalize_lang_code(self._current_language)
-        aqi_descriptions = TRANSLATIONS.get(lang_code, {}).get("aqi_descriptions")
+        aqi_descriptions = TRANSLATIONS.get(lang_code, {}).get("air_pollution_items", {}).get("aqi_descriptions")
         if not aqi_descriptions:
-            aqi_descriptions = TRANSLATIONS.get("en", {}).get("aqi_descriptions", ["N/A"] * 6)
+            aqi_descriptions = TRANSLATIONS.get("en", {}).get("air_pollution_items", {}).get("aqi_descriptions", ["N/A"] * 6)
         idx = min(max(aqi_value, 0), 5)  # AQI is 1-5, fallback to 0 if out of range
         return aqi_descriptions[idx] if idx < len(aqi_descriptions) else "N/A"
 

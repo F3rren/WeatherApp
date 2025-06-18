@@ -127,60 +127,53 @@ class MainWeatherInfo(ft.Container):
                 logging.error(f"MainWeatherInfo ({self._city_data}): Text handler is None in _build_ui_elements.")
                 return ft.Text("Error: Text handler not available.", color=ft.Colors.RED)
 
+            # Use translations for location label if available
+            location_label = TranslationService.translate_from_dict("main_information_items", "current_location", self._current_language)
+
             city_text_control = ft.Text(
                 self._city_data.split(", ")[0],
                 size=self._text_handler.get_size('city'),
                 weight="bold",
                 color=self._current_text_color
             )
-            
+
             location_text_control = ft.Text(
-                self._location_data,
+                f"{self._location_data}",
                 size=self._text_handler.get_size('location'),
                 color=self._current_text_color
             )
-            
+
             temperature_text_control = ft.Text(
                 self._get_formatted_temperature(),
                 size=self._text_handler.get_size('temperature'),
                 weight="bold",
                 color=self._current_text_color
             )
-            
-            # Placeholder for weather icon if it needs to be displayed
-            # weather_icon_control = ft.Image(
-            #     src=f"https://openweathermap.org/img/wn/{self._weather_icon_data}@2x.png", # Example
-            #     width=self._text_handler.get_size('icon', 50), # Assuming an 'icon' size in text_handler
-            #     height=self._text_handler.get_size('icon', 50),
-            #     fit=ft.ImageFit.CONTAIN
-            # )
+
+            controls=[
+                city_text_control,
+                # Mostra la posizione solo se la geolocalizzazione è attiva
+                location_text_control if self._location_data else None,
+                temperature_text_control,
+            ]
+            controls = [c for c in controls if c is not None]
 
             return ft.Container(
                 content=ft.ResponsiveRow(
                     [
                         ft.Container(
                             ft.Column(
-                                controls=[
-                                    city_text_control,
-                                    location_text_control,
-                                    temperature_text_control,
-                                    # weather_icon_control, # Add if displaying icon
-                                ],
-                                expand=True, 
-                                # horizontal_alignment=ft.CrossAxisAlignment.START, # Default
-                                # spacing=5, # Adjust spacing between text elements
+                                controls=controls,
+                                expand=True,
                             ),
-                            padding=ft.padding.all(5), # Padding for the column container
+                            padding=ft.padding.all(5),
                         ),
                     ],
-                    expand=True, 
-                    # alignment=ft.MainAxisAlignment.CENTER, # Center content in ResponsiveRow
-                    # vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    expand=True,
                 ),
                 padding=self.padding if self.padding is not None else ft.padding.all(20),
-                expand=self.expand if self.expand is not None else True, # Usually True if it's a main block
-                alignment=ft.alignment.center, # Center the ResponsiveRow within MainWeatherInfo container
-                # bgcolor=ft.colors.with_opacity(0.1, ft.colors.BLUE) # For debugging layout
+                expand=self.expand if self.expand is not None else True,
+                alignment=ft.alignment.center,
             )
         except Exception as e:
             logging.error(f"MainWeatherInfo ({self._city_data}): Failed to build UI elements: {e}\nTraceback: {traceback.format_exc()}")
@@ -232,19 +225,6 @@ class MainWeatherInfo(ft.Container):
                             elif category == "location":
                                 text_control.value = self._location_data
                                 text_control.update()
-                
-                # Temperature text
-                elif isinstance(container.content, ft.Row):
-                    for text_control in container.content.controls:
-                        if isinstance(text_control, ft.Text):
-                            if getattr(text_control, "data", {}).get("category") == "temperature":
-                                text_control.value = self._get_formatted_temperature()
-                                text_control.update()
-                            elif getattr(text_control, "data", {}).get("category") == "weather_condition":
-                                weather_key = getattr(text_control, "data", {}).get("weather_key")
-                                if weather_key:
-                                    text_control.value = TranslationService.translate(weather_key, self._current_language)
-                                    text_control.update()
         
         self.update()
 

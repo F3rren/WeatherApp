@@ -85,7 +85,7 @@ class AirConditionInfo(ft.Container):
         self.text_controls = {} # Reset for rebuild
 
         title_text = ft.Text(
-            value=TranslationService.translate("air_condition_title", self._language),
+            value=TranslationService.translate_from_dict("air_condition_items", "air_condition_title", self._language),
             size=self.text_handler.get_size('title'),
             weight="bold",
             color=self._text_color
@@ -98,7 +98,7 @@ class AirConditionInfo(ft.Container):
         self.text_controls[feels_like_icon] = 'icon'
         
         feels_like_label_text = ft.Text(
-            value=TranslationService.translate("feels_like", self._language),
+            value=TranslationService.translate_from_dict("air_condition_items", "feels_like", self._language),
             size=self.text_handler.get_size('label'),
             weight=ft.FontWeight.BOLD,
             color=self._text_color
@@ -119,7 +119,7 @@ class AirConditionInfo(ft.Container):
         humidity_icon = ft.Icon(ft.Icons.WATER_DROP, size=self.text_handler.get_size('icon'), color=self._text_color)
         self.text_controls[humidity_icon] = 'icon'
         humidity_label_text = ft.Text(
-            value=TranslationService.translate("humidity", self._language),
+            value=TranslationService.translate_from_dict("air_condition_items", "humidity", self._language),
             size=self.text_handler.get_size('label'),
             weight=ft.FontWeight.BOLD,
             color=self._text_color
@@ -138,7 +138,7 @@ class AirConditionInfo(ft.Container):
         wind_icon = ft.Icon(ft.Icons.WIND_POWER, size=self.text_handler.get_size('icon'), color=self._text_color)
         self.text_controls[wind_icon] = 'icon'
         wind_label_text = ft.Text(
-            value=TranslationService.translate("wind", self._language),
+            value=TranslationService.translate_from_dict("air_condition_items", "wind", self._language),
             size=self.text_handler.get_size('label'),
             weight=ft.FontWeight.BOLD,
             color=self._text_color
@@ -159,7 +159,7 @@ class AirConditionInfo(ft.Container):
         pressure_icon = ft.Icon(ft.Icons.COMPRESS, size=self.text_handler.get_size('icon'), color=self._text_color)
         self.text_controls[pressure_icon] = 'icon'
         pressure_label_text = ft.Text(
-            value=TranslationService.translate("pressure", self._language),
+            value=TranslationService.translate_from_dict("air_condition_items", "pressure", self._language),
             size=self.text_handler.get_size('label'),
             weight=ft.FontWeight.BOLD,
             color=self._text_color

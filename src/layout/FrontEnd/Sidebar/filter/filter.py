@@ -57,8 +57,8 @@ class Filter:
             self.page.update()
 
     def _get_translation(self, key):
-        if self.translation_service and hasattr(self.translation_service, 'get_text'):
-            return self.translation_service.get_text(key, self.language)
+        if self.translation_service and hasattr(self.translation_service, 'translate'):
+            return self.translation_service.translate(key, self.language)
         return key
 
     def _open_alert_dialog(self, alert_instance):

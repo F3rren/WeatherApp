@@ -1,14 +1,13 @@
 import flet as ft
 from utils.config import DARK_THEME, LIGHT_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
+from services.translation_service import TranslationService
 
 class MapsAlertDialog:
-    def __init__(self, page: ft.Page, state_manager=None, translation_service=None, 
-                 handle_location_toggle=None, handle_theme_toggle=None, 
+    def __init__(self, page: ft.Page, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None, 
                  text_color: str = None, language: str = "en"):
         self.page = page
         self.state_manager = state_manager
-        self.translation_service = translation_service or (page.session.get('translation_service') if page else None)
         self.current_language = language
         self.text_color = text_color if text_color else (DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"])
         self.dialog = None
@@ -77,12 +76,7 @@ class MapsAlertDialog:
             self.page.update()
 
     def _get_translation(self, key):
-        if self.translation_service and hasattr(self.translation_service, 'get_text'):
-            return self.translation_service.get_text(key, self.current_language)
-        # Fallback for placeholder keys if not in translation files
-        if key == "maps_content_placeholder": 
-            return "Maps content will be displayed here."
-        return key
+        return TranslationService.translate(key, str(self.current_language))
 
     def createAlertDialog(self):
         get_size = self._text_handler.get_size

@@ -212,7 +212,7 @@ class MainWeatherInfo(ft.Container):
                     control_obj.color = self.text_color
         # RIMOSSO: self.page.update()
     
-    def _update_text_elements(self):
+    def _update_text_elements(self, event_type=None, data=None):
         """Updates only the text elements without rebuilding the entire UI"""
         if not self.content or not isinstance(self.content, ft.Column):
             return
@@ -243,7 +243,7 @@ class MainWeatherInfo(ft.Container):
                             elif getattr(text_control, "data", {}).get("category") == "weather_condition":
                                 weather_key = getattr(text_control, "data", {}).get("weather_key")
                                 if weather_key:
-                                    text_control.value = TranslationService.get_text(weather_key, self._current_language)
+                                    text_control.value = TranslationService.translate(weather_key, self._current_language)
                                     text_control.update()
         
         self.update()

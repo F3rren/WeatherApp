@@ -1,15 +1,14 @@
 import flet as ft
 from utils.config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
+from services.translation_service import TranslationService
 
 class WeatherAlertDialog:
         
-    def __init__(self, page: ft.Page, state_manager=None, translation_service=None, 
-                 handle_location_toggle=None, handle_theme_toggle=None, 
+    def __init__(self, page: ft.Page, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None, 
                  text_color: str = None, language: str = "en"):
         self.page = page
         self.state_manager = state_manager
-        self.translation_service = translation_service or (page.session.get('translation_service') if page else None)
         self.handle_location_toggle = handle_location_toggle # Will be used for toggles if re-added
         self.handle_theme_toggle = handle_theme_toggle # Will be used for toggles if re-added
         
@@ -103,9 +102,7 @@ class WeatherAlertDialog:
             self.page.update() # Fallback, though dialog should ideally be on page to update
 
     def _get_translation(self, key):
-        if self.translation_service and hasattr(self.translation_service, 'get_text'):
-            return self.translation_service.get_text(key, self.current_language)
-        return key 
+        return TranslationService.translate(key, str(self.current_language))
 
     def createAlertDialog(self):
         current_get_size = self._text_handler.get_size

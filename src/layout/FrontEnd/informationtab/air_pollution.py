@@ -22,9 +22,8 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
         self._api_service = ApiService()
         self._state_manager = None
         self._current_language = DEFAULT_LANGUAGE
-        # Air pollution units (μg/m³) are standard, no _current_unit_system needed for data fetching
         self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
-        self._pollution_data = {} # To store fetched pollution data
+        self._pollution_data = {} 
         self._ui_elements_built = False
 
         # ResponsiveTextHandler for elements within this component
@@ -111,7 +110,7 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
         # CHANGED: Check for 'aqi' key in the processed data
         if not self._pollution_data or "aqi" not in self._pollution_data:
             return ft.Text(
-                TranslationService.get_text("no_air_pollution_data", self._current_language),
+                TranslationService.translate("no_air_pollution_data", self._current_language),
                 color=self._current_text_color,
                 size=self._text_handler.get_size('label')
             )
@@ -123,9 +122,8 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
 
 
         # AQI Title and Value
-        aqi_title_text = TranslationService.get_text("air_quality_index", self._current_language)
         aqi_title_control = ft.Text(
-            aqi_title_text, 
+            TranslationService.translate("air_quality_index", self._current_language),
             weight=ft.FontWeight.BOLD, 
             color=self._current_text_color,
             size=self._text_handler.get_size('title'),
@@ -269,7 +267,7 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
         for control in self.content.controls:
             if isinstance(control, ft.Text):
                 if getattr(control, "data", {}).get("type") == "title":
-                    control.value = TranslationService.get_text("air_pollution_title", self._current_language)
+                    control.value = TranslationService.translate("air_pollution_title", self._current_language)
                     control.update()
             elif isinstance(control, ft.Row):
                 # Update the category titles
@@ -279,21 +277,26 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
                             if isinstance(text, ft.Text):
                                 category = getattr(text, "data", {}).get("category")
                                 if category and category.startswith("aqi_"):
-                                    text.value = TranslationService.get_text(category, self._current_language)
+                                    text.value = TranslationService.translate(category, self._current_language)
                                     text.update()
         
         self.update()
 
     def _handle_language_change(self, event_data=None):
-        """Handles language changes: updates text elements only"""
-        if event_data is not None and not isinstance(event_data, dict):
-            logging.warning(f"_handle_language_change received unexpected event_data type: {type(event_data)}")
-            
+        """Handles language changes: rebuilds UI if language changes."""
         if self._state_manager:
-            new_language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
-            if self._current_language != new_language:
-                self._current_language = new_language
-                self._update_text_elements()
+            new_language = self._state_manager.get_state('language') or self._current_language
+            language_changed = self._current_language != new_language
+
+            self._current_language = new_language
+            # Rebuild UI if language changes
+            if language_changed:
+                self._request_ui_rebuild()
+
+    def on_language_change(self, new_language_code):
+        """Metodo chiamato dal parent observer per aggiornare la lingua e i testi."""
+        self._current_language = new_language_code
+        self._update_text_elements()  # Aggiorna i testi senza rifetch dei dati
 
     def _handle_theme_change(self, event_data=None):
         """Handles theme changes: updates colors and rebuilds UI."""
@@ -364,27 +367,15 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
                 self.update() # Corrected: put self.update() on a new line
 
     def _get_aqi_description(self, aqi_value: int) -> str:
-        """Get localized description based on Air Quality Index"""
+        """Get localized description based on Air Quality Index using only translations_data.py"""
+        from utils.translations_data import TRANSLATIONS
         lang_code = TranslationService.normalize_lang_code(self._current_language)
-        # Fallback to English if specific language or key is missing
-        aqi_translations = TranslationService.TRANSLATIONS.get(lang_code, TranslationService.TRANSLATIONS.get("en", {}))
-        aqi_descriptions = aqi_translations.get("aqi_descriptions", 
-            TranslationService.TRANSLATIONS.get("en", {}).get("aqi_descriptions", ["N/A"] * 6) # Default to English or N/A
-        )
-        idx = min(aqi_value, 5) # AQI is 1-5, description list is 0-indexed for value 0, then 1-5
-        if idx == 0: # API AQI is 1-based, descriptions might be 0-indexed if "N/A" or similar is at index 0
-            # Assuming aqi_descriptions[0] is for an invalid/unknown state, and aqi_descriptions[1] for AQI 1 (Good)
-            # If API returns AQI 1, we need aqi_descriptions[1].
-            # Let's adjust: if aqi_value is 1, use index 1. If aqi_value is 0 (error/default), use index 0.
-             actual_idx = aqi_value # if aqi_value is 0, use index 0. if 1, use 1.
-        else:
-             actual_idx = aqi_value # API AQI is 1-5. List index should be aqi_value.
-                                    # Example: AQI 1 -> index 1 ("Good")
+        aqi_descriptions = TRANSLATIONS.get(lang_code, {}).get("aqi_descriptions")
+        if not aqi_descriptions:
+            aqi_descriptions = TRANSLATIONS.get("en", {}).get("aqi_descriptions", ["N/A"] * 6)
+        idx = min(max(aqi_value, 0), 5)  # AQI is 1-5, fallback to 0 if out of range
+        return aqi_descriptions[idx] if idx < len(aqi_descriptions) else "N/A"
 
-        if actual_idx < len(aqi_descriptions):
-            return aqi_descriptions[actual_idx]
-        return aqi_descriptions[0] if aqi_descriptions else "N/A" # Fallback
-    
     def _get_aqi_color(self, aqi_value: int) -> str:
         """Get color based on Air Quality Index"""
         colors = [

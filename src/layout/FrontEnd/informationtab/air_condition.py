@@ -85,7 +85,7 @@ class AirConditionInfo(ft.Container):
         self.text_controls = {} # Reset for rebuild
 
         title_text = ft.Text(
-            value=TranslationService.get_text("air_condition_title", self._language),
+            value=TranslationService.translate("air_condition_title", self._language),
             size=self.text_handler.get_size('title'),
             weight="bold",
             color=self._text_color
@@ -96,8 +96,9 @@ class AirConditionInfo(ft.Container):
         # Feels Like
         feels_like_icon = ft.Icon(ft.Icons.THERMOSTAT, size=self.text_handler.get_size('icon'), color=self._text_color)
         self.text_controls[feels_like_icon] = 'icon'
+        
         feels_like_label_text = ft.Text(
-            value=TranslationService.get_text("feels_like", self._language),
+            value=TranslationService.translate("feels_like", self._language),
             size=self.text_handler.get_size('label'),
             weight=ft.FontWeight.BOLD,
             color=self._text_color
@@ -118,7 +119,7 @@ class AirConditionInfo(ft.Container):
         humidity_icon = ft.Icon(ft.Icons.WATER_DROP, size=self.text_handler.get_size('icon'), color=self._text_color)
         self.text_controls[humidity_icon] = 'icon'
         humidity_label_text = ft.Text(
-            value=TranslationService.get_text("humidity", self._language),
+            value=TranslationService.translate("humidity", self._language),
             size=self.text_handler.get_size('label'),
             weight=ft.FontWeight.BOLD,
             color=self._text_color
@@ -137,7 +138,7 @@ class AirConditionInfo(ft.Container):
         wind_icon = ft.Icon(ft.Icons.WIND_POWER, size=self.text_handler.get_size('icon'), color=self._text_color)
         self.text_controls[wind_icon] = 'icon'
         wind_label_text = ft.Text(
-            value=TranslationService.get_text("wind", self._language),
+            value=TranslationService.translate("wind", self._language),
             size=self.text_handler.get_size('label'),
             weight=ft.FontWeight.BOLD,
             color=self._text_color
@@ -158,7 +159,7 @@ class AirConditionInfo(ft.Container):
         pressure_icon = ft.Icon(ft.Icons.COMPRESS, size=self.text_handler.get_size('icon'), color=self._text_color)
         self.text_controls[pressure_icon] = 'icon'
         pressure_label_text = ft.Text(
-            value=TranslationService.get_text("pressure", self._language),
+            value=TranslationService.translate("pressure", self._language),
             size=self.text_handler.get_size('label'),
             weight=ft.FontWeight.BOLD,
             color=self._text_color
@@ -211,6 +212,7 @@ class AirConditionInfo(ft.Container):
     def _safe_update(self):
         if getattr(self, "page", None) and getattr(self, "visible", True):
             self.update()
+            
 
     def _request_ui_rebuild(self):
         """
@@ -233,7 +235,7 @@ class AirConditionInfo(ft.Container):
         self._safe_update()
 
     def _update_text_elements(self, event_type=None, data=None):
-        """Updates only text elements without rebuilding the entire UI."""
+        """Updates all text elements without comparing current values."""
         if not self._ui_elements_initialized or not self.content:
             return
 
@@ -241,48 +243,43 @@ class AirConditionInfo(ft.Container):
             self._unit_system = data
         elif event_type == "language_change" and data:
             self._language = data
-            
-        # Il column è il container principale
-        main_column = self.content
-        if not isinstance(main_column, ft.Column):
-            return
 
-        # Aggiorna il titolo
-        if main_column.controls and isinstance(main_column.controls[0], ft.Text):
-            title = main_column.controls[0]
-            title.value = TranslationService.get_text("air_condition_title", self._language)
+        # Update title
+        if self.content.controls and isinstance(self.content.controls[0], ft.Text):
+            title = self.content.controls[0]
+            title.value = TranslationService.translate("air_condition_title", self._language)
+            title.update()
 
-        # Le colonne con i dati sono nel terzo elemento (dopo titolo e divider)
-        if len(main_column.controls) >= 3 and isinstance(main_column.controls[2], ft.Row):
-            data_row = main_column.controls[2]
+        # Update data columns
+        if len(self.content.controls) >= 3 and isinstance(self.content.controls[2], ft.Row):
+            data_row = self.content.controls[2]
             for column in data_row.controls:
                 if isinstance(column, ft.Column):
                     for control in column.controls:
-                        if isinstance(control, ft.Row):  # Le etichette sono in Row con icone
+                        if isinstance(control, ft.Row):  # Labels with icons
                             for text in control.controls:
                                 if isinstance(text, ft.Text):
-                                    # Aggiorna le etichette
-                                    if text.value == TranslationService.get_text("feels_like", self._language == "en"):
-                                        text.value = TranslationService.get_text("feels_like", self._language)
-                                    elif text.value == TranslationService.get_text("humidity", self._language == "en"):
-                                        text.value = TranslationService.get_text("humidity", self._language)
-                                    elif text.value == TranslationService.get_text("wind", self._language == "en"):
-                                        text.value = TranslationService.get_text("wind", self._language)
-                                    elif text.value == TranslationService.get_text("pressure", self._language == "en"):
-                                        text.value = TranslationService.get_text("pressure", self._language)
-                        elif isinstance(control, ft.Text):  # I valori sono Text diretti
-                            # Aggiorna i valori con le unità corrette
-                            if "°" in control.value:  # temperatura
+                                    if text.value in [
+                                        TranslationService.translate("feels_like", self._language),
+                                        TranslationService.translate("humidity", self._language),
+                                        TranslationService.translate("wind", self._language),
+                                        TranslationService.translate("pressure", self._language)
+                                    ]:
+                                        text.value = TranslationService.translate(text.value, self._language)
+                                        text.update()
+                        elif isinstance(control, ft.Text):  # Values
+                            if "°" in control.value:  # Temperature
                                 unit = TranslationService.get_unit_symbol("temperature", self._unit_system)
                                 control.value = f"{self._feels_like_data}{unit}"
-                            elif "%" in control.value:  # umidità
+                            elif "%" in control.value:  # Humidity
                                 control.value = f"{self._humidity_data}%"
-                            elif "m/s" in control.value or "mph" in control.value:  # vento
+                            elif "m/s" in control.value or "mph" in control.value:  # Wind
                                 unit = TranslationService.get_unit_symbol("wind", self._unit_system)
                                 control.value = f"{self._wind_speed_data} {unit}"
-                            elif "hPa" in control.value:  # pressione
+                            elif "hPa" in control.value:  # Pressure
                                 unit = TranslationService.get_unit_symbol("pressure", self._unit_system)
                                 control.value = f"{self._pressure_data} {unit}"
+                            control.update()
 
         self._safe_update()
 
@@ -290,20 +287,20 @@ class AirConditionInfo(ft.Container):
         """Handles language or unit changes."""
         if event_data is not None and not isinstance(event_data, dict):
             logging.warning(f"_handle_language_or_unit_change received unexpected event_data type: {type(event_data)}")
-        
+
         if self.state_manager:
             new_language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
             new_unit_system = self.state_manager.get_state('unit') or "metric"
-            
-            # Se è cambiata solo la lingua o l'unità di misura, aggiorna solo i testi
-            if self._language != new_language:
-                self._update_text_elements(event_type="language_change", data=new_language)
-            elif self._unit_system != new_unit_system:
-                self._update_text_elements(event_type="unit_text_change", data=new_unit_system)
-            # Se sono cambiate entrambe o ci sono altri cambiamenti, ricostruisci l'UI
-            if self._language != new_language and self._unit_system != new_unit_system:
-                self._language = new_language
-                self._unit_system = new_unit_system
+
+            # Update language and unit system
+            language_changed = self._language != new_language
+            unit_changed = self._unit_system != new_unit_system
+
+            self._language = new_language
+            self._unit_system = new_unit_system
+
+            # Rebuild UI if language or unit system changes
+            if language_changed or unit_changed:
                 self._request_ui_rebuild()
 
     def _handle_theme_change(self, event_data=None):

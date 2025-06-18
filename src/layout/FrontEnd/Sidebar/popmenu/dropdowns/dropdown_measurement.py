@@ -67,7 +67,7 @@ class DropdownMeasurement:
         options = []
         for unit_system_code, details in self.units.items(): # Iterate through UNIT_SYSTEMS directly
             name_key = details["name_key"]
-            translated_name = TranslationService.get_text(name_key, current_language)
+            translated_name = TranslationService.translate(name_key, current_language)
             options.append(
                 ft.dropdown.Option(
                     key=unit_system_code,
@@ -103,7 +103,7 @@ class DropdownMeasurement:
             current_unit = self.state_manager.get_state('unit') or "metric"
             self.selected_unit = current_unit
 
-        translated_hint_text = TranslationService.get_text("select_measurement_hint", current_language)
+        translated_hint_text = TranslationService.translate("select_measurement_hint", current_language)
 
         self.dropdown = ft.Dropdown(
             value=self.selected_unit,
@@ -158,7 +158,7 @@ class DropdownMeasurement:
         if self.dropdown:
             self.dropdown.options = self.get_options(theme=current_theme)
             # Update hint text translation
-            translated_hint_text = TranslationService.get_text("select_measurement_hint", language_code)
+            translated_hint_text = TranslationService.translate("select_measurement_hint", language_code)
             self.dropdown.hint_text = translated_hint_text
             if self.dropdown.page: # Check if dropdown is on page
                 self.dropdown.update()

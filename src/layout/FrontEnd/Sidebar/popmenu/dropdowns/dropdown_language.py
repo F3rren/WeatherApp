@@ -183,7 +183,7 @@ class DropdownLanguage:
             current_language_code = self.state_manager.get_state("language") or "en"
         self.selected_language = current_language_code # Ensure selected_language is initialized
 
-        translated_hint_text = TranslationService.get_text("select_language_hint", current_language)
+        translated_hint_text = TranslationService.translate("select_language_hint", current_language)
 
         self.dropdown = ft.Dropdown(
             value=current_language_code,

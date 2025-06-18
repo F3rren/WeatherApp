@@ -56,9 +56,9 @@ class MapsAlertDialog:
 
     def _get_translation(self, key):
         """Helper method to get translation with fallback"""
-        if self.translation_service and hasattr(self.translation_service, 'get_text'):
+        if self.translation_service and hasattr(self.translation_service, 'translate'):
             current_language = self.state_manager.get_state("language") if self.state_manager else "en"
-            return self.translation_service.get_text(key, current_language)
+            return self.translation_service.translate(key, current_language)
         return key  # Fallback to key if no translation service
 
     def create_location_toggle(self):

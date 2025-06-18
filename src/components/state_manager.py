@@ -80,8 +80,12 @@ class StateManager:
                     logging.error(f"Error notifying observer: {e}")
 
     async def _run_callback(self, callback: Callable, value: Any) -> None:
-        """Run a callback, handling both async and sync callbacks"""
+        """Run a callback, handling both async and sync callbacks."""
         try:
+            # Ensure value is of the correct type
+            if isinstance(value, dict):
+                value = value.get('language', str(value))  # Extract 'language' or convert to string
+
             # Check if the callback is a bound method of a Flet control
             if hasattr(callback, '__self__') and isinstance(callback.__self__, ft.Control):
                 control_instance = callback.__self__

@@ -113,7 +113,7 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
         if not self._days or not self._temp_min or not self._temp_max or \
            len(self._days) != len(self._temp_min) or len(self._days) != len(self._temp_max):
             return ft.Text(
-                self._translation_service.get_text("no_temperature_data", self._current_language) if self._translation_service else "No temperature data",
+                self._translation_service.translate("no_temperature_data", self._current_language) if self._translation_service else "No temperature data",
                 color=self._current_text_color,
                 size=self._text_handler.get_size('label')
             )
@@ -122,7 +122,7 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
         data_points_min = []
         data_points_max = []
         for i, day_label_key in enumerate(self._days): # Assuming _days contains translation keys
-            day_display_name = self._translation_service.get_text(day_label_key, self._current_language) if self._translation_service else day_label_key
+            day_display_name = self._translation_service.translate(day_label_key, self._current_language) if self._translation_service else day_label_key
             
             # Min temperature point
             data_points_min.append(
@@ -159,7 +159,7 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
         # X-axis labels
         x_labels = []
         for i, day_label_key in enumerate(self._days):
-            day_display_name = self._translation_service.get_text(day_label_key, self._current_language) if self._translation_service else day_label_key
+            day_display_name = self._translation_service.translate(day_label_key, self._current_language) if self._translation_service else day_label_key
             x_labels.append(
                 ft.ChartAxisLabel(
                     value=i,
@@ -168,7 +168,7 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
             )
         
         # Y-axis title
-        y_axis_title_text = self._translation_service.get_text("temperature", self._current_language) if self._translation_service else "Temperature"
+        y_axis_title_text = self._translation_service.translate("temperature", self._current_language) if self._translation_service else "Temperature"
         y_axis_title_control = ft.Text(
             f"{y_axis_title_text} ({self._unit_symbol})", 
             size=self._text_handler.get_size('axis_title'), 
@@ -227,8 +227,8 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
         )
 
         # Legend
-        legend_max_text = self._translation_service.get_text("max", self._current_language) if self._translation_service else "Max"
-        legend_min_text = self._translation_service.get_text("min", self._current_language) if self._translation_service else "Min"
+        legend_max_text = self._translation_service.translate("max", self._current_language) if self._translation_service else "Max"
+        legend_min_text = self._translation_service.translate("min", self._current_language) if self._translation_service else "Min"
 
         legend = ft.Row(
             [
@@ -278,7 +278,7 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
         # Update chart title
         for control in self.content.controls:
             if isinstance(control, ft.Text) and getattr(control, "data", {}).get("type") == "title":
-                control.value = TranslationService.get_text("temperature_chart_title", self._current_language)
+                control.value = TranslationService.translate("temperature_chart_title", self._current_language)
                 control.update()
             elif isinstance(control, ft.Container) and control.content and isinstance(control.content, ft.LineChart):
                 chart = control.content
@@ -288,14 +288,14 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
                     for i, label in enumerate(chart.bottom_axis.labels):
                         if i < len(self._days):
                             day_key = self._days[i]
-                            day_display_name = self._translation_service.get_text(day_key, self._current_language) if self._translation_service else day_key
+                            day_display_name = self._translation_service.translate(day_key, self._current_language) if self._translation_service else day_key
                             if label.label and isinstance(label.label, ft.Text):
                                 label.label.value = day_display_name[:3]  # First 3 characters
                                 label.label.update()
                 
                 # Update y-axis title
                 if hasattr(chart, "left_axis") and chart.left_axis and chart.left_axis.title_style:
-                    y_axis_title_text = self._translation_service.get_text("temperature", self._current_language) if self._translation_service else "Temperature"
+                    y_axis_title_text = self._translation_service.translate("temperature", self._current_language) if self._translation_service else "Temperature"
                     chart.left_axis.title = f"{y_axis_title_text} ({self._unit_symbol})"
                     # Cannot update individual axis parts directly, update the entire chart
                     chart.update()
@@ -303,15 +303,21 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
         self.update()
 
     def _handle_language_change(self, event_data=None):
-        """Handle language changes by updating text elements"""
-        if event_data is not None and not isinstance(event_data, dict):
-            logging.warning(f"_handle_language_change received unexpected event_data type: {type(event_data)}")
-            
+        """Handles language changes: rebuilds UI if language changes."""
         if self._state_manager:
-            new_language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
-            if self._current_language != new_language:
-                self._current_language = new_language
-                self._update_text_elements()
+            new_language = self._state_manager.get_state('language') or self._current_language
+            language_changed = self._current_language != new_language
+
+            self._current_language = new_language
+
+            # Rebuild UI if language changes
+            if language_changed:
+                self._request_ui_rebuild()
+
+    def on_language_change(self, new_language_code):
+        """Metodo chiamato dal parent observer per aggiornare la lingua e i testi."""
+        self._current_language = new_language_code
+        self._update_text_elements()  # Aggiorna i testi senza rifetch dei dati
 
     def _handle_theme_change(self, event_data=None):
         if event_data is not None and not isinstance(event_data, dict):

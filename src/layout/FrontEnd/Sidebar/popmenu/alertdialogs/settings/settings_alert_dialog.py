@@ -1,6 +1,7 @@
 import flet as ft
 from components.responsive_text_handler import ResponsiveTextHandler
 import logging
+from services.translation_service import TranslationService
 
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
 from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
@@ -11,14 +12,13 @@ class SettingsAlertDialog:
     """
     Versione semplificata per test dell'alert dialog delle impostazioni.
     """    
-    def __init__(self, page, text_color, language, state_manager=None, translation_service=None, handle_location_toggle=None, handle_theme_toggle=None):
+    def __init__(self, page, text_color, language, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None):
         self.page = page
         self.text_color = text_color
         self.language = language
         self.state_manager = state_manager
         if self.state_manager:
             self.state_manager.register_observer("language_event", self._handle_language_change)
-        self.translation_service = translation_service or (page.session.get('translation_service') if page else None)
         
         # Store callbacks for toggles
         self.handle_location_toggle_callback = handle_location_toggle
@@ -50,7 +50,19 @@ class SettingsAlertDialog:
             language=self.language,
             text_handler_get_size=self._text_handler.get_size
         )
-        
+        # --- Observer pattern: collega measurement_dropdown come child observer ---
+        self.language_dropdown.register_child_observer(self.measurement_dropdown)
+        self.language_dropdown.register_child_observer(self)  # Registra se stesso come child observer
+        # Collegamento degli altri figli observer:
+        if hasattr(self, 'weekly_weather'):
+            self.language_dropdown.register_child_observer(self.weekly_weather)
+        if hasattr(self, 'air_pollution'):
+            self.language_dropdown.register_child_observer(self.air_pollution)
+        if hasattr(self, 'temperature_chart'):
+            self.language_dropdown.register_child_observer(self.temperature_chart)
+        if hasattr(self, 'air_pollution_chart'):
+            self.language_dropdown.register_child_observer(self.air_pollution_chart)
+
         self.location_toggle_control = None # Will hold the ft.Switch control
         self.theme_toggle_control = None    # Will hold the ft.Switch control
         self.dialog = None
@@ -72,11 +84,7 @@ class SettingsAlertDialog:
             self.measurement_dropdown.update_text_sizes(current_text_handler_get_size, current_text_color, new_language_code)
 
     def _get_translation(self, key):
-        """Helper method to get translation with fallback"""
-        if self.translation_service and hasattr(self.translation_service, 'get_text'):
-            # Use self.language which is passed in and updated
-            return self.translation_service.get_text(key, self.language)
-        return key  # Fallback to key if no translation service
+        return TranslationService.translate(key, str(self.language))
 
     def _create_location_toggle_instance(self):
         using_location = self.state_manager.get_state('using_location') if self.state_manager else False
@@ -104,7 +112,7 @@ class SettingsAlertDialog:
         if text_color:
             self.text_color = text_color
         if language:
-            self.language = language
+            self.language = str(language) if language is not None else DEFAULT_LANGUAGE
         
         # Log per debug
         logging.debug(f"SettingsAlertDialog.update_text_sizes chiamato con language={language}")
@@ -197,7 +205,7 @@ class SettingsAlertDialog:
         get_size = self._text_handler.get_size
         self.dialog = ft.AlertDialog(
             title=ft.Text(
-                self._get_translation("settings"), 
+                TranslationService.translate("settings", self.language),
                 size=get_size('title'), 
                 weight=ft.FontWeight.BOLD, 
                 color=self.text_color["TEXT"] 
@@ -214,8 +222,9 @@ class SettingsAlertDialog:
                                 ft.Row(
                                     controls=[
                                         ft.Icon(ft.Icons.LANGUAGE, size=get_size('label'), color="#ff6b35"),
-                                        ft.Text(self._get_translation("language_setting"), size=get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
+                                        ft.Text(TranslationService.translate("language_setting", self.language), size=get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
                                     ], spacing=10),
+                                    
                                 language_dropdown_control,
                             ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                         # Measurement Section
@@ -224,8 +233,9 @@ class SettingsAlertDialog:
                                 ft.Row(
                                     controls=[
                                         ft.Icon(ft.Icons.STRAIGHTEN, size=get_size('label'), color="#22c55e"),
-                                        ft.Text(self._get_translation("measurement_setting"), size=get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
+                                        ft.Text(TranslationService.translate("measurement_setting", self.language), size=get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
                                     ], spacing=10),
+                                    
                                 measurement_dropdown_control,
                             ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                         # Location Section
@@ -234,8 +244,9 @@ class SettingsAlertDialog:
                                 ft.Row(
                                     controls=[
                                         ft.Icon(ft.Icons.LOCATION_ON, size=get_size('label'), color="#ef4444"),
-                                        ft.Text(self._get_translation("use_current_location_setting"), size=get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
+                                        ft.Text(TranslationService.translate("use_current_location_setting", self.language), size=get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
                                     ], spacing=10),
+                                    
                                 self._create_location_toggle_instance(), 
                             ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                         # Theme Section
@@ -244,9 +255,10 @@ class SettingsAlertDialog:
                                 ft.Row(
                                     controls=[
                                         ft.Icon(ft.Icons.DARK_MODE, size=get_size('label'), color="#3b82f6"),
-                                        ft.Text(self._get_translation("dark_theme_setting"), size=get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
+                                        ft.Text(TranslationService.translate("dark_theme_setting", self.language), size=get_size('label'), weight=ft.FontWeight.W_500, color=self.text_color["TEXT"]),
                                     ], spacing=10),
                                 self._create_theme_toggle_instance(), 
+                                
                             ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                     ],
                     expand=True, 
@@ -402,3 +414,15 @@ class SettingsAlertDialog:
         if self.state_manager:
             self.state_manager.unregister_observer("language_event", self._handle_language_change)
         # Add other cleanup if necessary, e.g., for self._text_handler if it uses observers
+
+    def on_language_change(self, new_language_code):
+        """Metodo chiamato dal parent observer per aggiornare la lingua e i testi delle label."""
+        self.language = new_language_code
+        # Aggiorna le label/dialoghi/testi
+        if self.dialog:
+            self._apply_current_styling_and_text()
+        # Aggiorna anche i dropdown se necessario
+        if hasattr(self.language_dropdown, 'update_text_sizes'):
+            self.language_dropdown.update_text_sizes(self._text_handler.get_size, self.text_color, new_language_code)
+        if hasattr(self.measurement_dropdown, 'update_text_sizes'):
+            self.measurement_dropdown.update_text_sizes(self._text_handler.get_size, self.text_color, new_language_code)

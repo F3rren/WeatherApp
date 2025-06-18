@@ -1,6 +1,7 @@
 ﻿import flet as ft
 import logging
 from utils.translations_data import LANGUAGES 
+from services.translation_service import TranslationService
 
 class DropdownLanguage:
     
@@ -10,10 +11,37 @@ class DropdownLanguage:
         self.text_color = text_color
         self.current_language_display = language # For potential future use if this component had its own translatable text
         self.text_handler_get_size = text_handler_get_size
-        self.translation_service = self.page.session.get('translation_service') if self.page and hasattr(self.page, 'session') else None
         
         self.selected_language = None # This will be set from state_manager or during selection
         self.dropdown = None
+
+        # --- Observer pattern ---
+        self.child_observers = []  # List of child components to notify
+        if self.state_manager:
+            self.state_manager.register_observer("language_event", self._handle_language_event)
+
+    def register_child_observer(self, observer):
+        if observer not in self.child_observers:
+            self.child_observers.append(observer)
+
+    def unregister_child_observer(self, observer):
+        if observer in self.child_observers:
+            self.child_observers.remove(observer)
+
+    def notify_child_observers(self, new_language_code):
+        for observer in self.child_observers:
+            if hasattr(observer, "on_language_change"):
+                observer.on_language_change(new_language_code)
+
+    def _handle_language_event(self, event_data=None):
+        # Called when language_event is received from state_manager
+        new_language_code = None
+        if event_data and isinstance(event_data, dict):
+            new_language_code = event_data.get("language", None)
+        if new_language_code:
+            self.current_language_display = new_language_code
+            self.update_text_sizes(self.text_handler_get_size, self.text_color, new_language_code)
+            self.notify_child_observers(new_language_code)
 
     def update_text_sizes(self, text_handler_get_size, text_color: dict, language: str):
         """Update text sizes and colors for the dropdown."""
@@ -22,9 +50,7 @@ class DropdownLanguage:
         self.current_language_display = language # Update if this component had its own text
 
         if self.dropdown:
-            translated_hint_text = "Select language" # Default fallback
-            if self.translation_service: # Ensure translation_service is available
-                translated_hint_text = self.translation_service.get_text("select_language", self.current_language_display)
+            translated_hint_text = TranslationService.translate("select_language", self.current_language_display)
             self.dropdown.hint_text = translated_hint_text
             self.dropdown.text_size = self.text_handler_get_size('dropdown_text')
             self.dropdown.color = self.text_color["TEXT"]
@@ -133,10 +159,7 @@ class DropdownLanguage:
 
         # Use the passed-in text_color (theme) and text_handler_get_size
         
-        translated_hint_text = "Select language" # Default fallback
-        if self.translation_service:
-            translated_hint_text = self.translation_service.get_text("select_language", self.current_language_display)
-
+        translated_hint_text = TranslationService.translate("select_language", self.current_language_display)
         self.dropdown = ft.Dropdown(
             hint_text=translated_hint_text,
             options=self.get_options(),
@@ -169,23 +192,21 @@ class DropdownLanguage:
 
         if self.state_manager:
             import asyncio
-            
             def call_async_safely(coro):
                 try:
                     loop = asyncio.get_event_loop()
                 except RuntimeError:
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
-                
                 if not loop.is_running():
                     return loop.run_until_complete(coro)
                 else:
                     return asyncio.create_task(coro)
-            
             call_async_safely(self.state_manager.set_state("language", language_code))
             logging.info(f'Stato aggiornato con lingua: {language_code}')
             call_async_safely(self.state_manager.notify_all("language_event", {"language": language_code}))
-        
+            # --- AGGIUNTA: Notifica anche unit_text_change per forzare refresh UI come per il cambio unità ---
+            call_async_safely(self.state_manager.notify_all("unit_text_change", {"unit": self.state_manager.get_state("unit") or "metric"}))
         logging.info(f'Lingua impostata con successo: {self.selected_language} - {self.get_language_name_by_code(self.selected_language)}')
 
     def handle_theme_change(self, event_data=None): # This method might be deprecated by direct calls to update_text_sizes

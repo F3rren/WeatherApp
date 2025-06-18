@@ -108,7 +108,7 @@ class SidebarManager(ft.Container):
                         [
                             ft.Container(
                                 content=self.search_bar.build(
-                                    popmenu_widget=self.pop_menu.build(),
+                                    popmenu_widget=self.pop_menu.build_component(),
                                     clear_icon_size=self.text_handler.get_size('icon'),
                                     filter_widget=self.filter.build()
                                 ),

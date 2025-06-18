@@ -10,6 +10,7 @@ class DropdownLanguage:
         self.text_color = text_color
         self.current_language_display = language # For potential future use if this component had its own translatable text
         self.text_handler_get_size = text_handler_get_size
+        self.translation_service = self.page.session.get('translation_service') if self.page and hasattr(self.page, 'session') else None
         
         self.selected_language = None # This will be set from state_manager or during selection
         self.dropdown = None
@@ -18,9 +19,13 @@ class DropdownLanguage:
         """Update text sizes and colors for the dropdown."""
         self.text_handler_get_size = text_handler_get_size
         self.text_color = text_color
-        # self.current_language_display = language # Update if this component had its own text
+        self.current_language_display = language # Update if this component had its own text
 
         if self.dropdown:
+            translated_hint_text = "Select language" # Default fallback
+            if self.translation_service: # Ensure translation_service is available
+                translated_hint_text = self.translation_service.get_text("select_language", self.current_language_display)
+            self.dropdown.hint_text = translated_hint_text
             self.dropdown.text_size = self.text_handler_get_size('dropdown_text')
             self.dropdown.color = self.text_color["TEXT"]
             self.dropdown.border_color = self.text_color["BORDER"]
@@ -128,8 +133,12 @@ class DropdownLanguage:
 
         # Use the passed-in text_color (theme) and text_handler_get_size
         
+        translated_hint_text = "Select language" # Default fallback
+        if self.translation_service:
+            translated_hint_text = self.translation_service.get_text("select_language", self.current_language_display)
+
         self.dropdown = ft.Dropdown(
-            hint_text='Select language', # This could be made translatable if needed
+            hint_text=translated_hint_text,
             options=self.get_options(),
             on_change=dropdown_changed,
             width=200, 

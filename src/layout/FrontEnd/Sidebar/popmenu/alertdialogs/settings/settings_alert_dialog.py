@@ -13,6 +13,8 @@ class SettingsAlertDialog:
         self.text_color = text_color
         self.language = language
         self.state_manager = state_manager
+        if self.state_manager:
+            self.state_manager.register_observer("language_event", self._handle_language_change)
         self.translation_service = translation_service or (page.session.get('translation_service') if page else None)
         
         # Store callbacks for toggles
@@ -49,6 +51,22 @@ class SettingsAlertDialog:
         self.location_toggle_control = None # Will hold the ft.Switch control
         self.theme_toggle_control = None    # Will hold the ft.Switch control
         self.dialog = None
+
+    def _handle_language_change(self, new_language_code):
+        self.language = new_language_code
+        # If dialog is built, update its components
+        if self.dialog:
+            self._apply_current_styling_and_text()
+
+        # Also ensure child dropdowns get the new language for their internal texts (e.g., hints)
+        # Need to pass the current text_color and text_handler.get_size
+        current_text_color = self.text_color # Or re-fetch if it could change
+        current_text_handler_get_size = self._text_handler.get_size
+
+        if hasattr(self.language_dropdown, 'update_text_sizes'):
+            self.language_dropdown.update_text_sizes(current_text_handler_get_size, current_text_color, new_language_code)
+        if hasattr(self.measurement_dropdown, 'update_text_sizes'):
+            self.measurement_dropdown.update_text_sizes(current_text_handler_get_size, current_text_color, new_language_code)
 
     def _get_translation(self, key):
         """Helper method to get translation with fallback"""
@@ -258,3 +276,8 @@ class SettingsAlertDialog:
         if self.dialog is None:
             self.createAlertDialog(self.page)
         return self.dialog
+
+    def cleanup(self):
+        if self.state_manager:
+            self.state_manager.unregister_observer("language_event", self._handle_language_change)
+        # Add other cleanup if necessary, e.g., for self._text_handler if it uses observers

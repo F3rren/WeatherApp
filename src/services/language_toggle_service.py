@@ -17,29 +17,21 @@ class LanguageToggleService:
         Args:
             e: Evento di controllo Flet
         """
-        # Pulisci la cache delle traduzioni quando la lingua cambia
-        TranslationService.clear_cache()
         try:
             using_language = e.control.value
             
             # Aggiorna lo stato dell'applicazione
-            await self.state_manager.set_state("using_language", using_language)
-
-            # Cambia il tema della pagina
-            self.page.theme_mode = ft.ThemeMode.DARK if using_language == "it" else ft.ThemeMode.LIGHT
-
-            # Notifica il cambio lingua globalmente
-            self.page.session.set('language_mode', self.page.language_mode)
+            await self.state_manager.set_state("language", using_language)
 
             # Notifica a eventuali osservatori che il tema è cambiato
             # In modo che possano aggiornare i colori dei loro componenti
-            language_event = {"type": "language_changed", "is_language": using_language}
-            await self.state_manager.notify_all("language_event", language_event)
+            language_event_data = using_language
+            await self.state_manager.notify_all("language_event", language_event_data)
 
             # Aggiorna la pagina per applicare il nuovo tema
             self.page.update()
 
-            logging.info(f"Lingua cambiato: {'italiano' if using_language == 'it' else DEFAULT_LANGUAGE}")
+            logging.info(f"Language changed to: {using_language} via LanguageToggleService")
 
         except Exception as ex:
             logging.error(f"Errore nel cambio tema: {ex}")
@@ -55,14 +47,14 @@ class LanguageToggleService:
         """
         try:
             # Ottieni il tema salvato nello stato, se presente
-            using_language = self.state_manager.get_state("using_language")
+            current_language = self.state_manager.get_state("language")
             
             # Se non è definito, usa lingua inglese come predefinita
-            if using_language is None:
-                using_language = "en"  # Imposta la lingua predefinita a inglese
-            logging.info(f"Lingua inizializzato: {using_language}")
+            if current_language is None:
+                current_language = DEFAULT_LANGUAGE  # Imposta la lingua predefinita a inglese
+            logging.info(f"Language initialized to: {current_language}")
 
-            await self.state_manager.set_state("using_language", using_language)
+            await self.state_manager.set_state("language", current_language)
 
 
         except Exception as e:

@@ -95,7 +95,7 @@ class SettingsAlertDialog:
 
         self.dialog.bgcolor = self.text_color.get("DIALOG_BACKGROUND", ft.Colors.WHITE)
         if isinstance(self.dialog.title, ft.Text):
-            self.dialog.title.value = self._get_translation("settings", "settings_alert_dialog_items")
+            self.dialog.title.value = TranslationService.translate_from_dict("settings_alert_dialog_items", "settings_alert_dialog_title", self.language)
             self.dialog.title.size = self._text_handler.get_size('title')
             self.dialog.title.color = self.text_color["TEXT"]
 
@@ -147,7 +147,7 @@ class SettingsAlertDialog:
         get_size = self._text_handler.get_size
         self.dialog = ft.AlertDialog(
             title=ft.Text(
-                TranslationService.translate_from_dict("settings_alert_dialog_items", "settings", self.language),
+                TranslationService.translate_from_dict("settings_alert_dialog_items", "settings_alert_dialog_title", self.language),
                 size=get_size('title'),
                 weight=ft.FontWeight.BOLD,
                 color=self.text_color["TEXT"]
@@ -199,16 +199,22 @@ class SettingsAlertDialog:
                 ),
                 padding=ft.padding.all(20),
             ),
-            actions=[
+            actions=[                
                 ft.TextButton(
                     content=ft.Text(TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language), size=get_size('body'), color=self.text_color.get("ACCENT", ft.Colors.BLUE)),
-                    on_click=lambda e: self.dialog.open is False if self.dialog and hasattr(self.dialog, 'open') else None
+                    on_click=lambda e: self._close_dialog(e)
                 )
             ],
             actions_alignment=ft.MainAxisAlignment.END,
             open=False,
         )
         return self.dialog
+
+    def _close_dialog(self, e=None):
+        """Close the dialog when close button is clicked"""
+        if self.dialog and hasattr(self.dialog, 'open'):
+            self.dialog.open = False
+            self.page.update()
 
     def open_dialog(self):
         """Creates (if necessary) and opens the alert dialog in the correct Flet sequence."""
@@ -266,7 +272,7 @@ class SettingsAlertDialog:
         
         # Aggiorna il titolo
         if self.dialog.title and isinstance(self.dialog.title, ft.Text):
-            self.dialog.title.value = self._get_translation("settings")
+            self.dialog.title.value = TranslationService.translate_from_dict("settings_alert_dialog_items", "settings_alert_dialog_title", self.language)
             self.dialog.title.update()
             
         # Aggiorna i testi delle sezioni

@@ -33,14 +33,12 @@ class PopMenu:
             "map": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "map", self.language), color=self.text_color),
             "settings": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "settings", self.language), color=self.text_color)
         }
-        self.popup_menu_button_icon = ft.Icon(ft.Icons.FILTER_ALT_OUTLINED, color=self.text_color)
-
-        # Register observers
+        self.popup_menu_button_icon = ft.Icon(ft.Icons.FILTER_ALT_OUTLINED, color=self.text_color)        # Register observers
         if self.state_manager:
             self.state_manager.register_observer("language_event", self.update_component)
             self.state_manager.register_observer("theme_event", self.update_component)
 
-    def update_component(self):
+    def update_component(self, event_data=None):
         """Update theme, language, text sizes, and rebuild UI."""
         self.text_color = self._determine_text_color_from_theme()
         self.language = self.state_manager.get_state('language') if self.state_manager else DEFAULT_LANGUAGE

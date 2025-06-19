@@ -29,6 +29,7 @@ TRANSLATIONS = {
             "pressure": "Pressure"
         },
         "settings_alert_dialog_items": {
+            "settings_alert_dialog_title": "Settings",
             "language": "Language:", # Used in SettingsAlertDialog
             "measurement": "Measurement", # Used in SettingsAlertDialog
             "use_current_location": "Use current location:", # Used in SettingsAlertDialog
@@ -44,15 +45,14 @@ TRANSLATIONS = {
             "saturday": "Saturday",
             "sunday": "Sunday",
             "no_forecast_data": "Weather forecast data not available.",
-        },
-        "temperature_chart_items": {
-            "mon": "Mon", # Short day names for charts if needed
-            "tue": "Tue",
-            "wed": "Wed",
-            "thu": "Thu",
-            "fri": "Fri",
-            "sat": "Sat",
-            "sun": "Sun",
+        },        "temperature_chart_items": {
+            "monday": "Mon", # Short day names for charts if needed
+            "tuesday": "Tue",
+            "wednesday": "Wed",
+            "thursday": "Thu",
+            "friday": "Fri",
+            "saturday": "Sat",
+            "sunday": "Sun",
             "max": "Max",
             "min": "Min",
             "temperature": "Temperature", # Used for chart titles, labels
@@ -106,6 +106,7 @@ TRANSLATIONS = {
             "pressure": "气压"
         },
         "settings_alert_dialog_items": {
+            "settings_alert_dialog_title": "设置",
             "language": "语言：",
             "measurement": "测量单位",
             "use_current_location": "使用当前位置：",
@@ -121,15 +122,14 @@ TRANSLATIONS = {
             "saturday": "星期六",
             "sunday": "星期日",
             "no_forecast_data": "天气预报数据不可用。"
-        },
-        "temperature_chart_items": {
-            "mon": "周一",
-            "tue": "周二",
-            "wed": "周三",
-            "thu": "周四",
-            "fri": "周五",
-            "sat": "周六",
-            "sun": "周日",
+        },        "temperature_chart_items": {
+            "monday": "周一",
+            "tuesday": "周二",
+            "wednesday": "周三",
+            "thursday": "周四",
+            "friday": "周五",
+            "saturday": "周六",
+            "sunday": "周日",
             "max": "最大值",
             "min": "最小值",
             "temperature": "温度"
@@ -207,6 +207,7 @@ TRANSLATIONS = {
             "pressure": "दबाव"
         },
         "settings_alert_dialog_items": {
+            "settings_alert_dialog_title": "सेटिंग्स",
             "language": "भाषा:",
             "measurement": "मापन इकाई",
             "use_current_location": "वर्तमान स्थान का उपयोग करें:",
@@ -222,15 +223,14 @@ TRANSLATIONS = {
             "saturday": "शनिवार",
             "sunday": "रविवार",
             "no_forecast_data": "मौसम पूर्वानुमान डेटा उपलब्ध नहीं है।"
-        },
-        "temperature_chart_items": {
-            "mon": "सोम",
-            "tue": "मंगल",
-            "wed": "बुध",
-            "thu": "गुरु",
-            "fri": "शुक्र",
-            "sat": "शनि",
-            "sun": "रवि",
+        },        "temperature_chart_items": {
+            "monday": "सोम",
+            "tuesday": "मंगल",
+            "wednesday": "बुध",
+            "thursday": "गुरु",
+            "friday": "शुक्र",
+            "saturday": "शनि",
+            "sunday": "रवि",
             "max": "अधिकतम",
             "min": "न्यूनतम",
             "temperature": "तापमान"
@@ -283,6 +283,7 @@ TRANSLATIONS = {
             "pressure": "Presión"
         },
         "settings_alert_dialog_items": {
+            "settings_alert_dialog_title": "Configuración",
             "language": "Idioma:",
             "measurement": "Unidad de medida",
             "use_current_location": "Usar ubicación actual:",
@@ -298,15 +299,14 @@ TRANSLATIONS = {
             "saturday": "Sábado",
             "sunday": "Domingo",
             "no_forecast_data": "Datos de pronóstico del tiempo no disponibles."
-        },
-        "temperature_chart_items": {
-            "mon": "Lun",
-            "tue": "Mar",
-            "wed": "Mié",
-            "thu": "Jue",
-            "fri": "Vie",
-            "sat": "Sáb",
-            "sun": "Dom",
+        },        "temperature_chart_items": {
+            "monday": "Lun",
+            "tuesday": "Mar",
+            "wednesday": "Mié",
+            "thursday": "Jue",
+            "friday": "Vie",
+            "saturday": "Sáb",
+            "sunday": "Dom",
             "max": "Máx",
             "min": "Mín",
             "temperature": "Temperatura"
@@ -359,6 +359,7 @@ TRANSLATIONS = {
             "pressure": "الضغط"
         },
         "settings_alert_dialog_items": {
+            "settings_alert_dialog_title": "الإعدادات",
             "language": "اللغة:",
             "measurement": "القياس",
             "use_current_location": "استخدام الموقع الحالي:",
@@ -374,15 +375,14 @@ TRANSLATIONS = {
             "saturday": "السبت",
             "sunday": "الأحد",
             "no_forecast_data": "بيانات التوقعات الجوية غير متوفرة."
-        },
-        "temperature_chart_items": {
-            "mon": "الإثنين",
-            "tue": "الثلاثاء",
-            "wed": "الأربعاء",
-            "thu": "الخميس",
-            "fri": "الجمعة",
-            "sat": "السبت",
-            "sun": "الأحد",
+        },        "temperature_chart_items": {
+            "monday": "الإثنين",
+            "tuesday": "الثلاثاء",
+            "wednesday": "الأربعاء",
+            "thursday": "الخميس",
+            "friday": "الجمعة",
+            "saturday": "السبت",
+            "sunday": "الأحد",
             "max": "الحد الأقصى",
             "min": "الحد الأدنى",
             "temperature": "درجة الحرارة"
@@ -435,6 +435,7 @@ TRANSLATIONS = {
             "pressure": "Tekanan"
         },
         "settings_alert_dialog_items": {
+            "settings_alert_dialog_title": "Pengaturan",
             "language": "Bahasa:",
             "measurement": "Pengukuran",
             "use_current_location": "Gunakan lokasi saat ini:",
@@ -450,15 +451,14 @@ TRANSLATIONS = {
             "saturday": "Sabtu",
             "sunday": "Minggu",
             "no_forecast_data": "Data prakiraan cuaca tidak tersedia."
-        },
-        "temperature_chart_items": {
-            "mon": "Sen",
-            "tue": "Sel",
-            "wed": "Rab",
-            "thu": "Kam",
-            "fri": "Jum",
-            "sat": "Sab",
-            "sun": "Min",
+        },        "temperature_chart_items": {
+            "monday": "Sen",
+            "tuesday": "Sel",
+            "wednesday": "Rab",
+            "thursday": "Kam",
+            "friday": "Jum",
+            "saturday": "Sab",
+            "sunday": "Min",
             "max": "Maks",
             "min": "Min",
             "temperature": "Suhu"
@@ -511,6 +511,7 @@ TRANSLATIONS = {
             "pressure": "気圧"
         },
         "settings_alert_dialog_items": {
+            "settings_alert_dialog_title": "設定",
             "language": "言語:",
             "measurement": "測定",
             "use_current_location": "現在地を使用:",
@@ -526,15 +527,14 @@ TRANSLATIONS = {
             "saturday": "土曜日",
             "sunday": "日曜日",
             "no_forecast_data": "天気予報データがありません。"
-        },
-        "temperature_chart_items": {
-            "mon": "月",
-            "tue": "火",
-            "wed": "水",
-            "thu": "木",
-            "fri": "金",
-            "sat": "土",
-            "sun": "日",
+        },        "temperature_chart_items": {
+            "monday": "月",
+            "tuesday": "火",
+            "wednesday": "水",
+            "thursday": "木",
+            "friday": "金",
+            "saturday": "土",
+            "sunday": "日",
             "max": "最大",
             "min": "最小",
             "temperature": "気温"
@@ -587,6 +587,7 @@ TRANSLATIONS = {
             "pressure": "Pressione"
         },
         "settings_alert_dialog_items": {
+            "settings_alert_dialog_title": "Impostazioni",
             "language": "Lingua:",
             "measurement": "Misurazione",
             "use_current_location": "Usa posizione corrente:",
@@ -604,13 +605,13 @@ TRANSLATIONS = {
             "no_forecast_data": "Dati previsione meteo non disponibili."
         },
         "temperature_chart_items": {
-            "mon": "Lun",
-            "tue": "Mar",
-            "wed": "Mer",
-            "thu": "Gio",
-            "fri": "Ven",
-            "sat": "Sab",
-            "sun": "Dom",
+            "monday": "Lun",
+            "tuesday": "Mar",
+            "wednesday": "Mer",
+            "thursday": "Gio",
+            "friday": "Ven",
+            "saturday": "Sab",
+            "sunday": "Dom",
             "max": "Max",
             "min": "Min",
             "temperature": "Temperatura"
@@ -663,6 +664,7 @@ TRANSLATIONS = {
             "pressure": "Druck"
         },
         "settings_alert_dialog_items": {
+            "settings_alert_dialog_title": "Einstellungen",
             "language": "Sprache:",
             "measurement": "Messung",
             "use_current_location": "Aktuellen Standort verwenden:",
@@ -678,15 +680,14 @@ TRANSLATIONS = {
             "saturday": "Samstag",
             "sunday": "Sonntag",
             "no_forecast_data": "Wettervorhersagedaten nicht verfügbar."
-        },
-        "temperature_chart_items": {
-            "mon": "Mo",
-            "tue": "Di",
-            "wed": "Mi",
-            "thu": "Do",
-            "fri": "Fr",
-            "sat": "Sa",
-            "sun": "So",
+        },        "temperature_chart_items": {
+            "monday": "Mo",
+            "tuesday": "Di",
+            "wednesday": "Mi",
+            "thursday": "Do",
+            "friday": "Fr",
+            "saturday": "Sa",
+            "sunday": "So",
             "max": "Max",
             "min": "Min",
             "temperature": "Temperatur"
@@ -739,6 +740,7 @@ TRANSLATIONS = {
             "pressure": "Pression"
         },
         "settings_alert_dialog_items": {
+            "settings_alert_dialog_title": "Paramètres",
             "language": "Langue:",
             "measurement": "Mesure",
             "use_current_location": "Utiliser la position actuelle:",
@@ -754,15 +756,14 @@ TRANSLATIONS = {
             "saturday": "Samedi",
             "sunday": "Dimanche",
             "no_forecast_data": "Données de prévision météo non disponibles."
-        },
-        "temperature_chart_items": {
-            "mon": "Lun",
-            "tue": "Mar",
-            "wed": "Mer",
-            "thu": "Jeu",
-            "fri": "Ven",
-            "sat": "Sam",
-            "sun": "Dim",
+        },        "temperature_chart_items": {
+            "monday": "Lun",
+            "tuesday": "Mar",
+            "wednesday": "Mer",
+            "thursday": "Jeu",
+            "friday": "Ven",
+            "saturday": "Sam",
+            "sunday": "Dim",
             "max": "Max",
             "min": "Min",
             "temperature": "Température"
@@ -815,6 +816,7 @@ TRANSLATIONS = {
             "pressure": "Pressão"
         },
         "settings_alert_dialog_items": {
+            "settings_alert_dialog_title": "Configurações",
             "language": "Idioma:",
             "measurement": "Medição",
             "use_current_location": "Usar localização atual:",
@@ -830,15 +832,14 @@ TRANSLATIONS = {
             "saturday": "Sábado",
             "sunday": "Domingo",
             "no_forecast_data": "Dados de previsão do tempo não disponíveis."
-        },
-        "temperature_chart_items": {
-            "mon": "Seg",
-            "tue": "Ter",
-            "wed": "Qua",
-            "thu": "Qui",
-            "fri": "Sex",
-            "sat": "Sáb",
-            "sun": "Dom",
+        },        "temperature_chart_items": {
+            "monday": "Seg",
+            "tuesday": "Ter",
+            "wednesday": "Qua",
+            "thursday": "Qui",
+            "friday": "Sex",
+            "saturday": "Sáb",
+            "sunday": "Dom",
             "max": "Máx",
             "min": "Mín",
             "temperature": "Temperatura"
@@ -891,6 +892,7 @@ TRANSLATIONS = {
             "pressure": "Давление"
         },
         "settings_alert_dialog_items": {
+            "settings_alert_dialog_title": "Настройки",
             "language": "Язык:",
             "measurement": "Измерение",
             "use_current_location": "Использовать текущее местоположение:",
@@ -906,15 +908,14 @@ TRANSLATIONS = {
             "saturday": "Суббота",
             "sunday": "Воскресенье",
             "no_forecast_data": "Данные о прогнозе погоды недоступны."
-        },
-        "temperature_chart_items": {
-            "mon": "Пн",
-            "tue": "Вт",
-            "wed": "Ср",
-            "thu": "Чт",
-            "fri": "Пт",
-            "sat": "Сб",
-            "sun": "Вс",
+        },        "temperature_chart_items": {
+            "monday": "Пн",
+            "tuesday": "Вт",
+            "wednesday": "Ср",
+            "thursday": "Чт",
+            "friday": "Пт",
+            "saturday": "Сб",
+            "sunday": "Вс",
             "max": "Макс",
             "min": "Мин",
             "temperature": "Температура"

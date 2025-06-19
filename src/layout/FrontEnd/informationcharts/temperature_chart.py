@@ -68,6 +68,7 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
             # Initialize TranslationService here as page.session should be available
             self._translation_service = TranslationService(self.page.session) 
 
+            
             if self._state_manager:
                 self._current_language = self._state_manager.get_state('language') or self._current_language
                 self._current_unit_system = self._state_manager.get_state('unit') or self._current_unit_system

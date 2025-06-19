@@ -40,19 +40,32 @@ class WeatherAlertDialog:
         self.location_icon_control = None
         self.theme_icon_control = None
         
-        self.createAlertDialog()
-
-    def update_text_sizes(self, text_color, language):
-        self.text_color = text_color
-        self.current_language = language
+        self.createAlertDialog()    
+    def update_text_sizes(self, text_handler_get_size=None, text_color=None, language=None):
+        """
+        Update text sizes and colors based on the current theme and language.
+        
+        Args:
+            text_handler_get_size: Optional function to get text sizes. If provided, updates the handler.
+            text_color: Optional text color to use. If provided, updates the stored text color.
+            language: Optional language code. If provided, updates the stored language.
+        """
+        if text_color is not None:
+            self.text_color = text_color
+        if language is not None:
+            self.current_language = language
         if not self.dialog or not self._text_handler:
             return
+            
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         current_theme = DARK_THEME if is_dark else LIGHT_THEME
         self.dialog.bgcolor = current_theme["DIALOG_BACKGROUND"]
-        title_size = self._text_handler.get_size('title')
-        body_size = self._text_handler.get_size('body')
-        icon_size = self._text_handler.get_size('icon')
+        
+        # Use either provided handler or existing handler
+        get_size = text_handler_get_size or self._text_handler.get_size
+        title_size = get_size('title')
+        body_size = get_size('body')
+        icon_size = get_size('icon')
 
         if self.title_text_control:
             self.title_text_control.value = self._get_translation("weather")

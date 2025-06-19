@@ -4,7 +4,6 @@ import logging
 from services.translation_service import TranslationService
 from components.responsive_text_handler import ResponsiveTextHandler
 import traceback
-import asyncio
 
 class MainWeatherInfo(ft.Container):
     """
@@ -53,9 +52,7 @@ class MainWeatherInfo(ft.Container):
                 logging.debug(f"MainWeatherInfo ({self._city_data}): Text handler page set in did_mount.")
 
         self._initialize_state_and_observers()
-        # Fetch temperature async on mount
-        if self.page:
-            self.page.run_task(self._fetch_data_and_request_rebuild)
+        self._request_ui_rebuild()
 
     def _initialize_state_and_observers(self):
         """Initializes state manager and registers observers."""
@@ -77,8 +74,7 @@ class MainWeatherInfo(ft.Container):
         if self._state_manager:
             self._state_manager.unregister_observer("language_event", self._handle_language_or_unit_change)
             self._state_manager.unregister_observer("unit_event", self._handle_language_or_unit_change)
-            self._state_manager.unregister_observer("unit_text_change", self._handle_language_or_unit_change)            
-            self._state_manager.unregister_observer("theme_event", self._handle_theme_change)
+            self._state_manager.unregister_observer("unit_text_change", self._handle_language_or_unit_change)            self._state_manager.unregister_observer("theme_event", self._handle_theme_change)
         
         if self.page and hasattr(self, '_original_on_resize'):
             self.page.on_resize = self._original_on_resize
@@ -90,16 +86,9 @@ class MainWeatherInfo(ft.Container):
 
         self._text_handler._handle_resize(e) # Update ResponsiveTextHandler
         self._update_text_and_icon_sizes()   # Update elements within this component
-        
-    def _handle_theme_change(self, event_data=None):
-        """Handles theme changes: updates colors and rebuilds UI."""
-        if event_data is not None and not isinstance(event_data, dict):
-            logging.warning(f"_handle_theme_change received unexpected event_data type: {type(event_data)}")
-        self._current_text_color = self._determine_text_color_from_theme()
-        self._request_ui_rebuild() # Rebuild UI with new colors
 
     async def _handle_language_or_unit_change(self, event_data=None):
-        """Handles language or unit changes: fetches new temperature and updates UI."""
+        """Handles language or unit changes: rebuilds UI if either changes."""
         if self._state_manager:
             new_language = self._state_manager.get_state('language') or self._current_language
             new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
@@ -110,81 +99,41 @@ class MainWeatherInfo(ft.Container):
             self._current_language = new_language
             self._current_unit_system = new_unit_system
 
+            # Rebuild UI if language or unit system changes
             if language_changed or unit_changed:
-                if self.page:
-                    self.page.run_task(self._fetch_data_and_request_rebuild)
+                await self._fetch_data_and_request_rebuild()
 
-    async def _fetch_data_and_request_rebuild(self):
-        """Fetches current temperature and updates UI."""
-        try:
-            from services.api_service import ApiService
-            api = ApiService()
-            weather_data = await asyncio.to_thread(
-                api.get_weather_data,
-                city=self._city_data,
-                language=self._current_language,
-                unit=self._current_unit_system
-            )
-            temp = api.get_current_temperature(weather_data)
-            if temp is not None:
-                self._temperature_data = temp
-            self._request_ui_rebuild()
-        except Exception as e:
-            logging.error(f"MainWeatherInfo: Error fetching temperature: {e}")
+    def _handle_theme_change(self, event_data=None):
+        """Handles theme change events by updating the appearance."""
+        self._current_text_color = self._determine_text_color_from_theme()
+        self._update_text_and_icon_sizes()
 
-    def _update_text_and_icon_sizes(self):
-        """Updates text and icon sizes for all elements in the UI."""
-        if not self.content or not isinstance(self.content, ft.Container):
-            return
-        try:
-            responsive_row = self.content.content
-            if isinstance(responsive_row, ft.ResponsiveRow) and responsive_row.controls:
-                container = responsive_row.controls[0]
-                if hasattr(container, 'content') and isinstance(container.content, ft.Column):
-                    column = container.content
-                    for control in column.controls:
-                        if isinstance(control, ft.Text) and hasattr(control, 'data'):
-                            category = control.data.get("category")
-                            if category == "city":
-                                control.size = self._text_handler.get_size('city')
-                                control.color = self._current_text_color
-                            elif category == "location":
-                                control.size = self._text_handler.get_size('location')
-                                control.color = self._current_text_color
-                            elif category == "temperature":
-                                control.size = self._text_handler.get_size('temperature')
-                                control.color = self._current_text_color
-                                control.value = self._get_formatted_temperature()
-            self._safe_update()
-        except Exception as e:
-            logging.error(f"MainWeatherInfo: Error updating text and icon sizes: {e}")
-
-    def _safe_update(self):
-        if getattr(self, "page", None) and getattr(self, "visible", True):
-            self.update()
-
-    def _request_ui_rebuild(self, event_data=None):
-        """Updates state, rebuilds UI, and updates the control - similar to WeeklyForecastDisplay."""
-        if not self.page or not self.visible:
-            return
-        if self._state_manager:
-            self._current_language = self._state_manager.get_state('language') or self._current_language
-            self._current_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
-            self._current_text_color = self._determine_text_color_from_theme()
-        
-        # Always rebuild UI content to avoid hashable comparison issues with data attributes
-        new_content = self._build_ui_elements()
-        self.content = new_content
-        self.page.update()
-        
     def _determine_text_color_from_theme(self):
         """Determines text color based on the current page theme."""
         if self.page and self.page.theme_mode:
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
             return current_theme_config.get("TEXT", ft.Colors.BLACK)
-        return LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
-    
+        return LIGHT_THEME.get("TEXT", ft.Colors.BLACK) # Overall fallback
+
+    def _safe_update(self):
+        if getattr(self, "page", None) and getattr(self, "visible", True):
+            self.update()    def _request_ui_rebuild(self, event_data=None):
+        """Updates state, rebuilds UI, and updates the control - similar to WeeklyForecastDisplay."""
+        if not self.page or not self.visible:
+            return
+
+        if self._state_manager:
+            self._current_language = self._state_manager.get_state('language') or self._current_language
+            self._current_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
+        
+        self._current_text_color = self._determine_text_color_from_theme()
+        
+        new_content = self._build_ui_elements()
+        if self.content != new_content:
+            self.content = new_content
+            self._safe_update()
+        
     def _get_formatted_temperature(self):
         """Formats temperature with the correct unit symbol."""
         unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)

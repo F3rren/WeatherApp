@@ -159,7 +159,7 @@ class DropdownLanguage:
 
         # Use the passed-in text_color (theme) and text_handler_get_size
         
-        translated_hint_text = TranslationService.translate_from_dict("settings_alert_dialog_items", "language", self.current_language_display)
+        translated_hint_text = TranslationService.translate_from_dict("unit_items", "language", self.current_language_display)
         self.dropdown = ft.Dropdown(
             hint_text=translated_hint_text,
             options=self.get_options(),

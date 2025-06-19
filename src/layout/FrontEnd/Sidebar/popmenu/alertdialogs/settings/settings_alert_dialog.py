@@ -202,7 +202,7 @@ class SettingsAlertDialog:
             actions=[
                 ft.TextButton(
                     content=ft.Text(TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language), size=get_size('body'), color=self.text_color.get("ACCENT", ft.Colors.BLUE)),
-                    on_click=lambda e: self.page.dialog.close() if self.page and hasattr(self.page, 'dialog') else None
+                    on_click=lambda e: self.dialog.open is False if self.dialog and hasattr(self.dialog, 'open') else None
                 )
             ],
             actions_alignment=ft.MainAxisAlignment.END,

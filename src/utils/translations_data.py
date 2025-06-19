@@ -81,12 +81,12 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Air Pollution (μg/m³)", # For AirPollutionChart y-axis title
-        },
-        "unit_items": {
+        },        "unit_items": {
             "unit_metric": "Metric", # Unit option
             "unit_imperial": "Imperial", # Unit option
             "unit_standard": "Standard", # Unit option
-        },  
+            "measurement": "Measurement", # Used in settings dialog
+        },
         "air_pollution_chart_items": {
             "air_pollution_chart_y_axis_title": "Concentration (µg/m³)", # Y-axis title for AirPollutionChart
         },
@@ -158,11 +158,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "空气污染 (微克/立方米)"
-        },
-        "unit_items": {
+        },        "unit_items": {
             "unit_metric": "公制",
             "unit_imperial": "英制",
-            "unit_standard": "标准"
+            "unit_standard": "标准",
+            "measurement": "测量单位"
         },
         "air_pollution_chart_items": {
             "air_pollution_chart_y_axis_title": "浓度 (微克/立方米)"
@@ -241,17 +241,17 @@ TRANSLATIONS = {
             "NO": "नाइट्रोजन मोनोऑक्साइड",
             "NO2": "नाइट्रोजन डाइऑक्साइड",
             "O3": "ओजोन",
-            "SO2": "सल्फर डाइऑक्साइड",
+            "SO2": "सल्फर डाइऑक्साइड",            
             "PM2.5": " महीन कण पदार्थ",
             "PM10": "मोटे कण पदार्थ",
             "NH3": "अमोनिया",
             "aqi_descriptions": [
-                "N/A",
-                "Good",
-                "Fair",
-                "Moderate",
-                "Poor",
-                "Very Poor"
+                "उपलब्ध नहीं",
+                "अच्छा",
+                "संतोषजनक",
+                "मध्यम",
+                "खराब",
+                "बहुत खराब"
             ]
         },
         "main_information_items": {
@@ -259,11 +259,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "वायु प्रदूषण (माइक्रोग्राम/घन मीटर)"
-        },
-        "unit_items": {
+        },        "unit_items": {
             "unit_metric": "मीट्रिक",
             "unit_imperial": "इंपीरियल",
-            "unit_standard": "मानक"
+            "unit_standard": "मानक",
+            "measurement": "मापन इकाई"
         },
         "air_pollution_chart_items": {
             "air_pollution_chart_y_axis_title": "सांद्रता (माइक्रोग्राम/घन मीटर)"
@@ -319,15 +319,15 @@ TRANSLATIONS = {
             "O3": "Ozono",
             "SO2": "Dióxido de azufre",
             "PM2.5": "Partículas finas PM2.5",
-            "PM10": "Partículas gruesas PM10",
+            "PM10": "Partículas gruesas PM10",            
             "NH3": "Amoníaco",
             "aqi_descriptions": [
-                "N/A",
-                "Good",
-                "Fair",
-                "Moderate",
-                "Poor",
-                "Very Poor"
+                "N/D",
+                "Buena",
+                "Aceptable",
+                "Moderada",
+                "Mala",
+                "Muy mala"
             ]
         },
         "main_information_items": {
@@ -335,11 +335,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Contaminación del Aire (μg/m³)"
-        },
-        "unit_items": {
+        },        "unit_items": {
             "unit_metric": "Métrico",
             "unit_imperial": "Imperial",
-            "unit_standard": "Estándar"
+            "unit_standard": "Estándar",
+            "measurement": "Medición"
         },
         "air_pollution_chart_items": {
             "air_pollution_chart_y_axis_title": "Concentración (µg/m³)"
@@ -395,15 +395,15 @@ TRANSLATIONS = {
             "O3": "الأوزون",
             "SO2": "ثاني أكسيد الكبريت",
             "PM2.5": "الجسيمات الدقيقة",
-            "PM10": "الجسيمات الخشنة",
+            "PM10": "الجسيمات الخشنة",            
             "NH3": "الأمونيا",
             "aqi_descriptions": [
-                "N/A",
-                "Good",
-                "Fair",
-                "Moderate",
-                "Poor",
-                "Very Poor"
+                "غير متوفر",
+                "جيد",
+                "عادل",
+                "معتدل",
+                "سيء",
+                "سيء جدا"
             ]
         },
         "main_information_items": {
@@ -411,11 +411,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "تلوث الهواء (ميكروغرام/م³)"
-        },
-        "unit_items": {
+        },        "unit_items": {
             "unit_metric": "متري",
             "unit_imperial": "إمبراطوري",
-            "unit_standard": "قياسي"
+            "unit_standard": "قياسي",
+            "measurement": "القياس"
         },
         "air_pollution_chart_items": {
             "air_pollution_chart_y_axis_title": "التركيز (ميكروغرام/م³)"
@@ -471,15 +471,15 @@ TRANSLATIONS = {
             "O3": "Ozon",
             "SO2": "Sulfur Dioksida",
             "PM2.5": "Partikel Halus",
-            "PM10": "Partikel Kasar",
+            "PM10": "Partikel Kasar",            
             "NH3": "Amonia",
             "aqi_descriptions": [
-                "N/A",
-                "Good",
-                "Fair",
-                "Moderate",
-                "Poor",
-                "Very Poor"
+                "T/A",
+                "Baik",
+                "Cukup",
+                "Sedang",
+                "Buruk",
+                "Sangat Buruk"
             ]
         },
         "main_information_items": {
@@ -487,11 +487,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Polusi Udara (μg/m³)"
-        },
-        "unit_items": {
+        },        "unit_items": {
             "unit_metric": "Metrik",
             "unit_imperial": "Imperial",
-            "unit_standard": "Standar"
+            "unit_standard": "Standar",
+            "measurement": "Pengukuran"
         },
         "air_pollution_chart_items": {
             "air_pollution_chart_y_axis_title": "Konsentrasi (μg/m³)"
@@ -547,15 +547,15 @@ TRANSLATIONS = {
             "O3": "オゾン",
             "SO2": "二酸化硫黄",
             "PM2.5": "微小粒子状物質 PM2.5",
-            "PM10": "粗大粒子状物質 PM10",
+            "PM10": "粗大粒子状物質 PM10",            
             "NH3": "アンモニア",
             "aqi_descriptions": [
-                "N/A",
-                "Good",
-                "Fair",
-                "Moderate",
-                "Poor",
-                "Very Poor"
+                "該当なし",
+                "良好",
+                "まあまあ",
+                "普通",
+                "悪い",
+                "非常に悪い"
             ]
         },
         "main_information_items": {
@@ -563,11 +563,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "大気汚染 (μg/m³)"
-        },
-        "unit_items": {
+        },        "unit_items": {
             "unit_metric": "メートル法",
             "unit_imperial": "ヤード・ポンド法",
-            "unit_standard": "標準"
+            "unit_standard": "標準",
+            "measurement": "測定"
         },
         "air_pollution_chart_items": {
             "air_pollution_chart_y_axis_title": "濃度 (µg/m³)"
@@ -623,15 +623,15 @@ TRANSLATIONS = {
             "O3": "Ozono",
             "SO2": "Biossido di zolfo",
             "PM2.5": "Particolato fine PM2.5",
-            "PM10": "Particolato grossolano PM10",
+            "PM10": "Particolato grossolano PM10",            
             "NH3": "Ammoniaca",
             "aqi_descriptions": [
-                "N/A",
-                "Good",
-                "Fair",
-                "Moderate",
-                "Poor",
-                "Very Poor"
+                "N/D",
+                "Buona",
+                "Discreta",
+                "Moderata",
+                "Scarsa",
+                "Molto Scarsa"
             ]
         },
         "main_information_items": {
@@ -639,11 +639,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Inquinamento dell'aria (μg/m³)"
-        },
-        "unit_items": {
+        },        "unit_items": {
             "unit_metric": "Metrico",
             "unit_imperial": "Imperiale",
-            "unit_standard": "Standard"
+            "unit_standard": "Standard",
+            "measurement": "Misurazione"
         },
         "air_pollution_chart_items": {
             "air_pollution_chart_y_axis_title": "Concentrazione (µg/m³)"
@@ -699,15 +699,15 @@ TRANSLATIONS = {
             "O3": "Ozon",
             "SO2": "Schwefeldioxid",
             "PM2.5": "Feinstaub PM2.5",
-            "PM10": "Grobstaub PM10",
+            "PM10": "Grobstaub PM10",            
             "NH3": "Ammoniak",
             "aqi_descriptions": [
-                "N/A",
-                "Good",
-                "Fair",
-                "Moderate",
-                "Poor",
-                "Very Poor"
+                "N/V",
+                "Gut",
+                "Befriedigend",
+                "Mäßig",
+                "Schlecht",
+                "Sehr schlecht"
             ]
         },
         "main_information_items": {
@@ -715,11 +715,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Luftverschmutzung (μg/m³)"
-        },
-        "unit_items": {
+        },        "unit_items": {
             "unit_metric": "Metrisch",
             "unit_imperial": "Imperial",
-            "unit_standard": "Standard"
+            "unit_standard": "Standard",
+            "measurement": "Messung"
         },
         "air_pollution_chart_items": {
             "air_pollution_chart_y_axis_title": "Konzentration (µg/m³)"
@@ -775,15 +775,15 @@ TRANSLATIONS = {
             "O3": "Ozone",
             "SO2": "Dioxyde de soufre",
             "PM2.5": "Particules fines PM2.5",
-            "PM10": "Particules grossières PM10",
+            "PM10": "Particules grossières PM10",            
             "NH3": "Ammoniac",
             "aqi_descriptions": [
-                "N/A",
-                "Good",
-                "Fair",
-                "Moderate",
-                "Poor",
-                "Very Poor"
+                "N/D",
+                "Bon",
+                "Assez bon",
+                "Modéré",
+                "Mauvais",
+                "Très mauvais"
             ]
         },
         "main_information_items": {
@@ -791,11 +791,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Pollution de l'air (μg/m³)"
-        },
-        "unit_items": {
+        },        "unit_items": {
             "unit_metric": "Métrique",
             "unit_imperial": "Impérial",
-            "unit_standard": "Standard"
+            "unit_standard": "Standard",
+            "measurement": "Mesure"
         },
         "air_pollution_chart_items": {
             "air_pollution_chart_y_axis_title": "Concentration (µg/m³)"
@@ -851,15 +851,15 @@ TRANSLATIONS = {
             "O3": "Ozônio",
             "SO2": "Dióxido de enxofre",
             "PM2.5": "Material particulado fino PM2.5",
-            "PM10": "Material particulado grosso PM10",
+            "PM10": "Material particulado grosso PM10",            
             "NH3": "Amônia",
             "aqi_descriptions": [
-                "N/A",
-                "Good",
-                "Fair",
-                "Moderate",
-                "Poor",
-                "Very Poor"
+                "N/D",
+                "Bom",
+                "Razoável",
+                "Moderado",
+                "Ruim",
+                "Muito Ruim"
             ]
         },
         "main_information_items": {
@@ -867,11 +867,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Poluição do Ar (μg/m³)"
-        },
-        "unit_items": {
+        },        "unit_items": {
             "unit_metric": "Métrico",
             "unit_imperial": "Imperial",
-            "unit_standard": "Padrão"
+            "unit_standard": "Padrão",
+            "measurement": "Medição"
         },
         "air_pollution_chart_items": {
             "air_pollution_chart_y_axis_title": "Concentração (µg/m³)"
@@ -927,15 +927,15 @@ TRANSLATIONS = {
             "O3": "Озон",
             "SO2": "Диоксид серы",
             "PM2.5": "Мелкие твердые частицы PM2.5",
-            "PM10": "Крупные твердые частицы PM10",
+            "PM10": "Крупные твердые частицы PM10",            
             "NH3": "Аммиак",
             "aqi_descriptions": [
-                "N/A",
-                "Good",
-                "Fair",
-                "Moderate",
-                "Poor",
-                "Very Poor"
+                "Н/Д",
+                "Хороший",
+                "Приемлемый",
+                "Умеренный",
+                "Плохой",
+                "Очень плохой"
             ]
         },
         "main_information_items": {
@@ -943,11 +943,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Загрязнение воздуха (μг/м³)"
-        },
-        "unit_items": {
+        },        "unit_items": {
             "unit_metric": "Метрическая",
             "unit_imperial": "Имперская",
-            "unit_standard": "Стандартная"
+            "unit_standard": "Стандартная",
+            "measurement": "Измерение"
         },
         "air_pollution_chart_items": {
             "air_pollution_chart_y_axis_title": "Концентрация (мкг/м³)"

@@ -158,9 +158,6 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
         x_labels = []
         for i, day_label_key in enumerate(self._days):
             day_display_name = self._translation_service.translate_from_dict("temperature_chart_items", day_label_key, self._current_language) if self._translation_service else day_label_key
-            # Assicuriamoci che il nome del giorno inizi con maiuscola
-            if day_display_name and isinstance(day_display_name, str):
-                day_display_name = day_display_name[0].upper() + day_display_name[1:] if len(day_display_name) > 1 else day_display_name.upper()
             x_labels.append(
                 ft.ChartAxisLabel(
                     value=i,
@@ -265,7 +262,7 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
         new_content = self._build_ui_elements()
         if self.content != new_content:
             self.content = new_content
-        if self._ui_elements_built:
+          if self._ui_elements_built:
             self._update_text_sizes() 
 
         self.update()
@@ -287,10 +284,7 @@ class TemperatureChartDisplay(ft.Container): # CHANGED: Inherits from ft.Contain
                     for i, label in enumerate(chart.bottom_axis.labels):
                         if i < len(self._days):
                             day_key = self._days[i]
-                            day_display_name = TranslationService.translate_from_dict("temperature_chart_items", day_key, self._current_language) if self._translation_service else day_key
-                            # Assicuriamoci che il nome del giorno inizi con maiuscola
-                            if day_display_name and isinstance(day_display_name, str):
-                                day_display_name = day_display_name[0].upper() + day_display_name[1:] if len(day_display_name) > 1 else day_display_name.upper()
+                            day_display_name = self._translation_service.translate_from_dict("temperature_chart_items", day_key, self._current_language) if self._translation_service else day_key
                             if label.label and isinstance(label.label, ft.Text):
                                 label.label.value = day_display_name  # Mostro il nome completo tradotto
                                 label.label.update()

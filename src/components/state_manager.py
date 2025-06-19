@@ -71,7 +71,6 @@ class StateManager:
     
     async def _notify_observers(self, key: str, value: Any) -> None:
         """Notify all observers of a state change"""
-        logging.debug(f"Notifying observers for key: {key} with value: {value}")
         if key in self._observers:
             for callback in self._observers[key]:
                 try:
@@ -81,14 +80,28 @@ class StateManager:
                     logging.error(f"Error notifying observer: {e}")
 
     async def _run_callback(self, callback: Callable, value: Any) -> None:
-        """Run a callback, handling both async and sync callbacks"""
+        """Run a callback, handling both async and sync callbacks."""
         try:
+            # Ensure value is of the correct type
+            if isinstance(value, dict):
+                value = value.get('language', str(value))  # Extract 'language' or convert to string
+
+            # Check if the callback is a bound method of a Flet control
+            if hasattr(callback, '__self__') and isinstance(callback.__self__, ft.Control):
+                control_instance = callback.__self__
+                if control_instance.page is None:
+                    logging.warning(
+                        f"Skipping callback for {control_instance.__class__.__name__} "
+                        f"because its page attribute is None. Callback: {callback.__name__}"
+                    )
+                    return  # Skip if page is None
+
             if asyncio.iscoroutinefunction(callback):
                 await callback(value)
             else:
                 callback(value)
         except Exception as e:
-            logging.error(f"Error in observer callback: {e}")
+            logging.error(f"Error in observer callback: {e}", exc_info=True)
 
     async def notify_all(self, event_type: str, data: Any) -> None:
         """
@@ -99,7 +112,6 @@ class StateManager:
             event_type: Tipo di evento
             data: Dati associati all'evento
         """
-        logging.debug(f"notify_all called for event_type: {event_type} with data: {data}")
         if event_type in self._observers:
             for callback in self._observers[event_type]:
                 try:

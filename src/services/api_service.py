@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Tuple, List, Optional
 from dotenv import load_dotenv
 import unicodedata
+import asyncio
 
 from utils.config import (
     API_BASE_URL,
@@ -384,6 +385,13 @@ class ApiService:
         except requests.exceptions.RequestException as e:
             logging.error(f"Error fetching air pollution data: {e}")
             return {}
+    
+    async def get_air_pollution_async(self, lat: float, lon: float) -> dict:
+        """
+        Asynchronous version of get_air_pollution using run_in_executor to avoid blocking the event loop.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.get_air_pollution, lat, lon)
     
     def getDailyForecast(self):
         """

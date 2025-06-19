@@ -1,195 +1,210 @@
 import flet as ft
 from utils.config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
+from services.translation_service import TranslationService
 
 class WeatherAlertDialog:
         
-    def __init__(self, page, state_manager=None, translation_service=None, handle_location_toggle=None, handle_theme_toggle=None, text_color=None):
+    def __init__(self, page: ft.Page, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None, 
+                 text_color: str = None, language: str = "en"):
         self.page = page
         self.state_manager = state_manager
-        self.translation_service = translation_service or (page.session.get('translation_service') if page else None)
-        self.handle_location_toggle = handle_location_toggle
-        self.handle_theme_toggle = handle_theme_toggle
+        self.handle_location_toggle = handle_location_toggle # Will be used for toggles if re-added
+        self.handle_theme_toggle = handle_theme_toggle # Will be used for toggles if re-added
+        
+        self.current_language = language
+
         self.text_color = text_color if text_color else (DARK_THEME["TEXT"] if page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME["TEXT"])
         self.dialog = None
-        
-        # Inizializzazione del ResponsiveTextHandler
-        self.text_handler = ResponsiveTextHandler(
+
+        # ResponsiveTextHandler locale come in main_information
+        self._text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes={
-                'title': 20,      # Titolo del dialogo
-                'body': 14,       # Testo normale
-                'icon': 20,       # Icone
+                'title': 20,
+                'body': 14,
+                'icon': 20,
             },
             breakpoints=[600, 900, 1200, 1600]
         )
+
+        # Controls will be initialized in createAlertDialog
+        self.title_text_control = None
+        self.language_text_control = None
+        self.measurement_text_control = None
+        self.location_text_control = None
+        self.theme_text_control = None
+        self.close_button_text_control = None
+        self.language_icon_control = None
+        self.measurement_icon_control = None
+        self.location_icon_control = None
+        self.theme_icon_control = None
         
-        # Dizionario dei controlli di testo per aggiornamento facile
-        self.text_controls = {}
+        self.createAlertDialog()
+
+    def update_text_sizes(self, text_color, language):
+        self.text_color = text_color
+        self.current_language = language
+        if not self.dialog or not self._text_handler:
+            return
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        current_theme = DARK_THEME if is_dark else LIGHT_THEME
+        self.dialog.bgcolor = current_theme["DIALOG_BACKGROUND"]
+        title_size = self._text_handler.get_size('title')
+        body_size = self._text_handler.get_size('body')
+        icon_size = self._text_handler.get_size('icon')
+
+        if self.title_text_control:
+            self.title_text_control.value = self._get_translation("weather")
+            self.title_text_control.size = title_size
+            self.title_text_control.color = self.text_color
         
-        # Sovrascrivi il gestore di ridimensionamento della pagina
-        if self.page:
-            # Salva l'handler originale se presente
-            original_resize_handler = self.page.on_resize
+        if self.language_text_control:
+            self.language_text_control.value = self._get_translation("language_setting")
+            self.language_text_control.size = body_size
+            self.language_text_control.color = self.text_color
+
+        if self.measurement_text_control:
+            self.measurement_text_control.value = self._get_translation("measurement_setting")
+            self.measurement_text_control.size = body_size
+            self.measurement_text_control.color = self.text_color
+
+        if self.location_text_control:
+            self.location_text_control.value = self._get_translation("use_current_location_setting")
+            self.location_text_control.size = body_size
+            self.location_text_control.color = self.text_color
             
-            def combined_resize_handler(e):
-                # Aggiorna le dimensioni del testo
-                self.text_handler._handle_resize(e)
-                # Aggiorna i controlli di testo
-                self.update_text_controls()
-                # Chiama anche l'handler originale se esiste
-                if original_resize_handler:
-                    original_resize_handler(e)
-            
-            self.page.on_resize = combined_resize_handler
- 
-    def update_text_controls(self):
-        """Aggiorna le dimensioni del testo per tutti i controlli registrati"""
-        for control, size_category in self.text_controls.items():
-            if size_category == 'icon':
-                # Per le icone, aggiorna size
-                if hasattr(control, 'size'):
-                    control.size = self.text_handler.get_size(size_category)
-            else:
-                # Per i testi, aggiorna size
-                if hasattr(control, 'size'):
-                    control.size = self.text_handler.get_size(size_category)
+        if self.theme_text_control:
+            self.theme_text_control.value = self._get_translation("dark_theme_setting")
+            self.theme_text_control.size = body_size
+            self.theme_text_control.color = self.text_color
+
+        if self.close_button_text_control:
+            self.close_button_text_control.value = self._get_translation("close_button")
+            self.close_button_text_control.color = current_theme["ACCENT"]
+            self.close_button_text_control.size = body_size
+            if self.dialog.actions and isinstance(self.dialog.actions[0], ft.TextButton):
+                self.dialog.actions[0].style.color = current_theme["ACCENT"]
+                self.dialog.actions[0].style.overlay_color = ft.Colors.with_opacity(0.1, current_theme["ACCENT"])
+
+        if self.language_icon_control:
+            self.language_icon_control.size = icon_size
+        if self.measurement_icon_control:
+            self.measurement_icon_control.size = icon_size
+        if self.location_icon_control:
+            self.location_icon_control.size = icon_size
+        if self.theme_icon_control:
+            self.theme_icon_control.size = icon_size
         
-        # Richiedi l'aggiornamento della pagina
-        if self.page and self.dialog and self.dialog.page:
+        if self.dialog.page: # Check if dialog is on page before updating
             self.dialog.update()
+        elif self.page: 
+            self.page.update() # Fallback, though dialog should ideally be on page to update
 
     def _get_translation(self, key):
-        """Helper method to get translation with fallback"""
-        if self.translation_service and hasattr(self.translation_service, 'get_text'):
-            current_language = self.state_manager.get_state("language") if self.state_manager else "en"
-            return self.translation_service.get_text(key, current_language)
-        return key  # Fallback to key if no translation service
+        return TranslationService.translate(key, str(self.current_language))
 
-    def createAlertDialog(self, page):
-        # Reset text controls dictionary before rebuilding
-        self.text_controls = {}
-        
-        # Determina i colori in base al tema corrente
-        is_dark = page.theme_mode == ft.ThemeMode.DARK
+    def createAlertDialog(self):
+        current_get_size = self._text_handler.get_size
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         current_theme = DARK_THEME if is_dark else LIGHT_THEME
-        self.text_color = current_theme["TEXT"]
-        
-        # Utilizza i colori dal tema corrente
+        dialog_text_color = self.text_color
         bg_color = current_theme["DIALOG_BACKGROUND"]
+        title_size = current_get_size('title')
+        body_size = current_get_size('body')
+        icon_size = current_get_size('icon')
 
-        # Creare i controlli di testo con dimensioni responsive
-        title_text = ft.Text(
+        self.title_text_control = ft.Text(
             self._get_translation("weather"), 
-            size=self.text_handler.get_size('title'), 
+            size=title_size, 
             weight=ft.FontWeight.BOLD, 
-            color=self.text_color
+            color=dialog_text_color
         )
         
-        # Creazione delle icone con dimensioni responsive
-        language_icon = ft.Icon(ft.Icons.LANGUAGE, size=self.text_handler.get_size('icon'), color="#ff6b35")
-        measurement_icon = ft.Icon(ft.Icons.STRAIGHTEN, size=self.text_handler.get_size('icon'), color="#22c55e")
-        location_icon = ft.Icon(ft.Icons.LOCATION_ON, size=self.text_handler.get_size('icon'), color="#ef4444")
-        theme_icon = ft.Icon(ft.Icons.DARK_MODE, size=self.text_handler.get_size('icon'), color="#3b82f6")
+        self.language_icon_control = ft.Icon(ft.Icons.LANGUAGE, size=icon_size, color="#ff6b35")
+        self.measurement_icon_control = ft.Icon(ft.Icons.STRAIGHTEN, size=icon_size, color="#22c55e")
+        self.location_icon_control = ft.Icon(ft.Icons.LOCATION_ON, size=icon_size, color="#ef4444")
+        self.theme_icon_control = ft.Icon(ft.Icons.DARK_MODE, size=icon_size, color="#3b82f6")
         
-        # Creazione dei testi con dimensioni responsive
-        language_text = ft.Text(self._get_translation("language_setting"), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
-        measurement_text = ft.Text(self._get_translation("measurement_setting"), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
-        location_text = ft.Text(self._get_translation("use_current_location_setting"), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
-        theme_text = ft.Text(self._get_translation("dark_theme_setting"), size=self.text_handler.get_size('body'), weight=ft.FontWeight.W_500, color=self.text_color)
+        self.language_text_control = ft.Text(self._get_translation("language_setting"), size=body_size, weight=ft.FontWeight.W_500, color=dialog_text_color)
+        self.measurement_text_control = ft.Text(self._get_translation("measurement_setting"), size=body_size, weight=ft.FontWeight.W_500, color=dialog_text_color)
+        self.location_text_control = ft.Text(self._get_translation("use_current_location_setting"), size=body_size, weight=ft.FontWeight.W_500, color=dialog_text_color)
+        self.theme_text_control = ft.Text(self._get_translation("dark_theme_setting"), size=body_size, weight=ft.FontWeight.W_500, color=dialog_text_color)
         
-        # Pulsante di chiusura con dimensioni responsive
-        close_button_text = ft.Text(self._get_translation("close_button"), color=current_theme["ACCENT"], size=self.text_handler.get_size('body'))
-        
-        # Registra i controlli nel dizionario
-        self.text_controls[title_text] = 'title'
-        self.text_controls[language_text] = 'body'
-        self.text_controls[measurement_text] = 'body'
-        self.text_controls[location_text] = 'body'
-        self.text_controls[theme_text] = 'body'
-        self.text_controls[language_icon] = 'icon'
-        self.text_controls[measurement_icon] = 'icon'
-        self.text_controls[location_icon] = 'icon'
-        self.text_controls[theme_icon] = 'icon'
-        self.text_controls[close_button_text] = 'body'
+        self.close_button_text_control = ft.Text(self._get_translation("close_button"), color=current_theme["ACCENT"], size=body_size)
 
-        # Dialog semplificato per test
         self.dialog = ft.AlertDialog(
-            title=title_text,
+            title=self.title_text_control,
             bgcolor=bg_color,
             content=ft.Container(
-                width=400,  # Imposta una larghezza fissa per il dialogo
+                width=400,
                 content=ft.Column(
                 controls=[
-                    # Sezione lingua
                     ft.Row(
                         controls=[
-                            ft.Row(                                
-                                controls=[language_icon, language_text],
-                                spacing=10,
-                            ),
-                            #self.language_dropdown.build(),
+                            ft.Row(controls=[self.language_icon_control, self.language_text_control], spacing=10),
+                            # Placeholder for language_dropdown (e.g., self.language_dropdown.build())
                         ],
-                        spacing=10,
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    ),
-                    # Sezione unità di misura
-                    ft.Row(
-                        controls=[
-                            ft.Row(                                
-                                controls=[measurement_icon, measurement_text],
-                                spacing=10,
-                            ),
-                            #self.measurement_dropdown.build(),
-                        ],
-                        spacing=10,
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    ),
-                    # Sezione posizione attuale
-                    ft.Row(
-                        controls=[
-                            ft.Row(                                
-                                controls=[location_icon, location_text],
-                                spacing=10,
-                            ),
-                            #self.create_location_toggle(),
-                        ],
-                        spacing=10,
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
                     ft.Row(
                         controls=[
-                            ft.Row(                                
-                                controls=[theme_icon, theme_text],
-                                spacing=10,
-                            ),
-                            #self.create_theme_toggle(),
+                            ft.Row(controls=[self.measurement_icon_control, self.measurement_text_control], spacing=10),
+                            # Placeholder for measurement_dropdown (e.g., self.measurement_dropdown.build())
                         ],
-                        spacing=10,
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.Row(controls=[self.location_icon_control, self.location_text_control], spacing=10),
+                            # Placeholder for location_toggle (e.g., self.create_location_toggle())
+                        ],
+                        spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.Row(controls=[self.theme_icon_control, self.theme_text_control], spacing=10),
+                            # Placeholder for theme_toggle (e.g., self.create_theme_toggle())
+                        ],
+                        spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
                 ],
                 height=280,
-                expand=True,
                 spacing=20,
             ),
             ),
             actions=[
                 ft.TextButton(
-                    self._get_translation("close_button"),
-                    content=close_button_text,
+                    content=self.close_button_text_control,
                     style=ft.ButtonStyle(
-                        color=current_theme["ACCENT"],
+                        color=current_theme["ACCENT"], 
                         overlay_color=ft.Colors.with_opacity(0.1, current_theme["ACCENT"]),
                     ),
-                    on_click=lambda e: page.close(self.dialog)
+                    on_click=lambda e: self.close_dialog()
                 ),
             ],
-            on_dismiss=lambda e: print("Dialog closed"),
+            on_dismiss=lambda e: print("Weather Dialog dismissed"),
+            modal=True
         )
-        
-        return self.dialog
+
+    def open_dialog(self):
+        if not self.dialog:
+            self.createAlertDialog()
+        if self.page and self.dialog:
+            if self.dialog not in self.page.controls:
+                self.page.controls.append(self.dialog)
+            self.page.dialog = self.dialog
+            self.page.dialog.open = True
+            self.update_text_sizes(self.text_color, self.current_language)
+            self.page.update()
+
+    def close_dialog(self):
+        if self.dialog:
+            self.dialog.open = False
+            if self.page:
+                 self.page.update()
+
+    def cleanup(self):
+        print(f"Cleaning up WeatherAlertDialog for page: {self.page}")
+        # No specific observers to unregister in this version
+        pass

@@ -398,12 +398,10 @@ class WeatherView:
         weather_card = WeatherCard(self.page) 
         self._update_text_color() # Ensure text_color is current for components not self-managing it
 
-        hourly_data = self.api_service.get_hourly_forecast_data(self.weather_data)[:6]
-        
         # Instantiate the refactored HourlyForecastDisplay
         self.hourly_forecast_instance = HourlyForecastDisplay(
-            hourly_data=hourly_data,
             page=self.page,
+            city=self.current_city,
             # expand=True # HourlyForecastDisplay sets its own expand property if needed
         )
         # The WeatherCard is a generic wrapper, the HourlyForecastDisplay is the actual content.

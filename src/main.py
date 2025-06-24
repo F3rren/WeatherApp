@@ -5,7 +5,6 @@ Main application file for the MeteoApp.
 import flet as ft # MODIFIED: Use standard alias 'ft'
 import logging
 
-
 from utils.config import (DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, DEFAULT_THEME_MODE, DARK_THEME, LIGHT_THEME)
 from layout.frontend.layout_manager import LayoutManager
 from layout.frontend.sidebar.sidebar_manager import SidebarManager

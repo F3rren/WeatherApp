@@ -1,5 +1,6 @@
 ﻿import flet as ft
 import logging
+from utils.config import DEFAULT_LANGUAGE
 from utils.translations_data import LANGUAGES 
 from services.translation_service import TranslationService
 
@@ -52,7 +53,7 @@ class DropdownLanguage:
         if self.dropdown:
             translated_hint_text = TranslationService.translate_from_dict("settings_alert_dialog_items", "language", self.current_language_display)
             self.dropdown.hint_text = translated_hint_text
-            self.dropdown.text_size = self.text_handler_get_size('dropdown_text')
+            self.dropdown.text_size = self.text_color['dropdown_text']
             self.dropdown.color = self.text_color["TEXT"]
             self.dropdown.border_color = self.text_color["BORDER"]
             self.dropdown.focused_border_color = self.text_color["ACCENT"]
@@ -141,7 +142,17 @@ class DropdownLanguage:
         return options
 
     def createDropdown(self):
-        
+        # Always set self.text_color based on current theme
+        from utils.config import DARK_THEME, LIGHT_THEME
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            self.text_color = DARK_THEME if is_dark else LIGHT_THEME
+        elif isinstance(self.text_color, str):
+            if self.text_color.lower() in ("#fff", "#ffffff", "white"):
+                self.text_color = LIGHT_THEME
+            else:
+                self.text_color = DARK_THEME
+
         def dropdown_changed(e):
             # Ottieni direttamente il codice lingua dalla selezione
             # Poiché hai impostato key=language["code"] nelle opzioni
@@ -151,7 +162,7 @@ class DropdownLanguage:
                 self.parent.update()
 
         # Ottieni il valore corrente della lingua dallo state manager, se disponibile
-        current_language_code = 'en'  # Valore predefinito
+        current_language_code = DEFAULT_LANGUAGE  # Valore predefinito
         if self.state_manager:
             current_language_code = self.state_manager.get_state('language') or 'en'
             self.selected_language = current_language_code

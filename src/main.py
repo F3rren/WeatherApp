@@ -6,8 +6,7 @@ import flet as ft # MODIFIED: Use standard alias 'ft'
 import logging
 
 
-from utils.config import (DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, DEFAULT_THEME_MODE)
-
+from utils.config import (DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, DEFAULT_THEME_MODE, DARK_THEME, LIGHT_THEME)
 from layout.frontend.layout_manager import LayoutManager
 from layout.frontend.sidebar.sidebar_manager import SidebarManager
 from state_manager import StateManager
@@ -46,7 +45,6 @@ class MeteoApp:
         """Aggiorna solo i colori dei container principali e dei testi senza ricostruire i container."""
         if not self.page:
             return
-        from utils.config import DARK_THEME, LIGHT_THEME
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         theme = DARK_THEME if is_dark else LIGHT_THEME
         default_card = theme.get("CARD", "#ffffff" if not is_dark else "#222222")

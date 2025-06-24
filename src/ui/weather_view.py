@@ -429,7 +429,7 @@ class WeatherView:
             self.air_pollution_display_instance._current_language = state_manager.get_state('language') or self.air_pollution_display_instance._current_language
             self.air_pollution_display_instance._current_unit = state_manager.get_state('unit') or getattr(self.air_pollution_display_instance, '_current_unit', 'metric')
         # --------------------------------------------------------
-        await self.air_pollution_display_instance.refresh()
+
 
         self.air_pollution_container.content = weather_card.build(self.air_pollution_display_instance)
         # self.air_pollution_container.update() # Covered by page.update() in _update_ui

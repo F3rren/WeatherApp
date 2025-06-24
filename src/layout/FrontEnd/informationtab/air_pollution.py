@@ -39,14 +39,6 @@ class AirPollutionDisplay(ft.Container):
         if 'padding' not in kwargs:
             self.padding = ft.padding.all(10)
         
-        self._initialize_state_and_observers()
-        
-        self.content = self.build()
-        if self.page:
-            self.page.run_task(self.update_ui)
-
-    def _initialize_state_and_observers(self):
-        """Initializes state manager and registers observers.""" 
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
             self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
@@ -62,6 +54,10 @@ class AirPollutionDisplay(ft.Container):
                 if self.page:
                     self.page.run_task(self.update_ui)
             self.page.on_resize = resize_handler
+        
+        self.content = self.build()
+        if self.page:
+            self.page.run_task(self.update_ui)
 
     async def update_ui(self, event_data=None):
         """Updates the UI based on state changes, fetching new data if necessary."""
@@ -112,8 +108,20 @@ class AirPollutionDisplay(ft.Container):
             color=self._current_text_color,
             size=self._text_handler.get_size('title')
         )
+          # Get AQI description and color inline
+        from utils.translations_data import TRANSLATIONS
+        lang_code = TranslationService.normalize_lang_code(self._current_language)
+        aqi_descriptions = TRANSLATIONS.get(lang_code, {}).get("air_pollution_items", {}).get("aqi_descriptions")
+        if not aqi_descriptions:
+            aqi_descriptions = TRANSLATIONS.get("en", {}).get("air_pollution_items", {}).get("aqi_descriptions", ["N/A"] * 6)
+        aqi_idx = min(max(aqi, 0), 5)
+        aqi_desc = aqi_descriptions[aqi_idx] if aqi_idx < len(aqi_descriptions) else "N/A"
         
-        aqi_desc = self._get_aqi_description(aqi)
+        # AQI colors
+        aqi_colors = ["#D3D3D3", "#00E400", "#FFFF00", "#FF7E00", "#FF0000", "#99004C"]
+        aqi_color_idx = max(0, min(aqi, len(aqi_colors) - 1))
+        aqi_color = aqi_colors[aqi_color_idx]
+        
         aqi_value_control = ft.Text(
             aqi_desc, 
             weight=ft.FontWeight.BOLD, 
@@ -125,7 +133,7 @@ class AirPollutionDisplay(ft.Container):
             aqi_title_control,
             ft.Container(
                 content=aqi_value_control,
-                bgcolor=self._get_aqi_color(aqi),
+                bgcolor=aqi_color,
                 border_radius=10, padding=10, alignment=ft.alignment.center, expand=True
             )
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
@@ -137,18 +145,19 @@ class AirPollutionDisplay(ft.Container):
             "o3": {"name": TranslationService.translate_from_dict("air_pollution_items", "O3", self._current_language), "value": components.get("o3", 0)},
             "so2": {"name": TranslationService.translate_from_dict("air_pollution_items", "SO2", self._current_language), "value": components.get("so2", 0)},
             "pm2_5": {"name": TranslationService.translate_from_dict("air_pollution_items", "PM2.5", self._current_language), "value": components.get("pm2_5", 0)},
-            "pm10": {"name": TranslationService.translate_from_dict("air_pollution_items", "PM10", self._current_language), "value": components.get("pm10", 0)},
-            "nh3": {"name": TranslationService.translate_from_dict("air_pollution_items", "NH3", self._current_language), "value": components.get("nh3", 0)},
+            "pm10": {"name": TranslationService.translate_from_dict("air_pollution_items", "PM10", self._current_language), "value": components.get("pm10", 0)},            "nh3": {"name": TranslationService.translate_from_dict("air_pollution_items", "NH3", self._current_language), "value": components.get("nh3", 0)},
         }
 
         column1_controls = []
         column2_controls = []
+        
         ordered_keys = ["co", "no", "no2", "o3", "so2", "pm2_5", "pm10", "nh3"]
         mid_point = (len(ordered_keys) + 1) // 2
-
+        
         for i, key in enumerate(ordered_keys):
             detail = pollutant_details_map.get(key)
-            if not detail: continue
+            if not detail:
+                continue
 
             value_str = f"{detail['value']:.2f} μg/m³"
             
@@ -207,36 +216,9 @@ class AirPollutionDisplay(ft.Container):
             expand=True
         )
 
-    def _get_aqi_description(self, aqi_value: int) -> str:
-        """Get localized description based on Air Quality Index using only translations_data.py"""
-        from utils.translations_data import TRANSLATIONS
-        lang_code = TranslationService.normalize_lang_code(self._current_language)
-        aqi_descriptions = TRANSLATIONS.get(lang_code, {}).get("air_pollution_items", {}).get("aqi_descriptions")
-        if not aqi_descriptions:
-            aqi_descriptions = TRANSLATIONS.get("en", {}).get("air_pollution_items", {}).get("aqi_descriptions", ["N/A"] * 6)
-        idx = min(max(aqi_value, 0), 5)
-        return aqi_descriptions[idx] if idx < len(aqi_descriptions) else "N/A"
-
-    def _get_aqi_color(self, aqi_value: int) -> str:
-        """Get color based on Air Quality Index"""
-        colors = [
-            "#D3D3D3", "#00E400", "#FFFF00", "#FF7E00", "#FF0000", "#99004C"
-        ]
-        idx = max(0, min(aqi_value, len(colors) - 1))
-        return colors[idx]
-
-    def update_location(self, lat: float, lon: float):
-        """Allows updating the location and refreshing the air pollution data."""
-        if self._lat != lat or self._lon != lon:
-            self._lat = lat
-            self._lon = lon
-            self._pollution_data = {} # Force refetch
-            if self.page:
-                self.page.run_task(self.update_ui)
-
     async def refresh(self):
         """Forces a data refetch and UI update."""
-        self._pollution_data = {} # By clearing the data, we ensure update_ui will fetch new data.
+        self._pollution_data = {}  # By clearing the data, we ensure update_ui will fetch new data.
         if self.page:
             await self.update_ui()
 

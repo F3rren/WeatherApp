@@ -1,6 +1,7 @@
 import flet as ft
 import traceback
 import asyncio
+import logging
 from services.api_service import ApiService
 from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService
@@ -34,14 +35,6 @@ class WeeklyForecastDisplay(ft.Container):
         if 'padding' not in kwargs:
             self.padding = ft.padding.all(10)
         
-        self.content = ft.Text("Loading weekly forecast...")
-
-        self._initialize_state_and_observers()
-        if self.page:
-            self.page.run_task(self.update_ui)
-
-    def _initialize_state_and_observers(self):
-        """Initializes state manager and registers observers."""
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
             self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
@@ -58,54 +51,62 @@ class WeeklyForecastDisplay(ft.Container):
                 if self.page:
                     self.page.run_task(self.update_ui)
             self.page.on_resize = resize_handler
+        
+        self.content = self.build()
+        if self.page:
+            self.page.run_task(self.update_ui)
 
     async def update_ui(self, event_data=None):
         """Updates the UI based on state changes, fetching new data if necessary."""
         if not self.page or not self.visible:
             return
 
-        if self._state_manager:
-            new_language = self._state_manager.get_state('language') or self._current_language
-            new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
-            
-            lang_changed = self._current_language != new_language
-            unit_changed = self._current_unit_system != new_unit_system
+        try:
+            data_changed = False
+            if self._state_manager:
+                new_language = self._state_manager.get_state('language') or self._current_language
+                new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
+                
+                lang_changed = self._current_language != new_language
+                unit_changed = self._current_unit_system != new_unit_system
 
-            self._current_language = new_language
-            self._current_unit_system = new_unit_system
+                self._current_language = new_language
+                self._current_unit_system = new_unit_system
+                
+                data_changed = lang_changed or unit_changed
 
-            if lang_changed or unit_changed:
-                await self._fetch_forecast_data()
+            if not self._forecast_data or data_changed:
+                if self._city:
+                    weather_data_payload = await asyncio.to_thread(
+                        self._api_service.get_weather_data,
+                        city=self._city, 
+                        language=self._current_language, 
+                        unit=self._current_unit_system
+                    )
+                    self._forecast_data = self._api_service.get_weekly_forecast_data(weather_data_payload) if weather_data_payload else []
+                else:
+                    self._forecast_data = []
 
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        theme = DARK_THEME if is_dark else LIGHT_THEME
-        self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            theme = DARK_THEME if is_dark else LIGHT_THEME
+            self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
-        self.content = self.build()
-        self.update()
-
-    async def _fetch_forecast_data(self):
-        """Fetches weekly forecast data using ApiService."""
-        if not self._city:
-            self._forecast_data = []
-            return
-        
-        weather_data_payload = await asyncio.to_thread(
-            self._api_service.get_weather_data,
-            city=self._city, 
-            language=self._current_language, 
-            unit=self._current_unit_system
-        )
-        self._forecast_data = self._api_service.get_weekly_forecast_data(weather_data_payload) if weather_data_payload else []
+            self.content = self.build()
+            if self.page:
+                self.update()
+        except Exception as e:
+            logging.error(f"WeeklyForecastDisplay: Error updating UI: {e}\n{traceback.format_exc()}")
 
     def build(self):
         """Constructs the UI for the weekly forecast as a ft.Column of daily items."""
         if not self._forecast_data:
             no_data_text = TranslationService.translate_from_dict("weekly_forecast_items", "no_forecast_data", self._current_language)
-            return ft.Text(
-                no_data_text,
-                color=self._current_text_color
-            )
+            return ft.Column([
+                ft.Text(
+                    no_data_text,
+                    color=self._current_text_color
+                )
+            ])
 
         daily_item_controls = []
         text_size = self._text_handler.get_size('day_label')
@@ -159,17 +160,10 @@ class WeeklyForecastDisplay(ft.Container):
                         ft.Divider(height=self._text_handler.get_size('divider_height'), color=divider_color)
                     )
             except Exception as e:
-                print(f"[ERROR WeeklyForecastDisplay] Failed to build item for {day_data.get('day_key', 'Unknown Day')}: {e}\\nTraceback: {traceback.format_exc()}")
+                logging.error(f"[ERROR WeeklyForecastDisplay] Failed to build item for {day_data.get('day_key', 'Unknown Day')}: {e}\nTraceback: {traceback.format_exc()}")
                 daily_item_controls.append(ft.Text("Error loading item.", color=ft.Colors.RED))
         
         return ft.Column(
             controls=daily_item_controls,
             spacing=5,
         )
-
-    def update_city(self, new_city: str):
-        """Allows updating the city and refreshing the forecast."""
-        if self._city != new_city:
-            self._city = new_city
-            if self.page:
-                self.page.run_task(self.update_ui)

@@ -14,7 +14,6 @@ from utils.config import DARK_THEME, LIGHT_THEME
 from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
 from layout.frontend.sidebar.searchbar.search_bar import SearchBar
 from layout.frontend.sidebar.filter.filter import Filter
-from services.translation_service import TranslationService
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class SidebarManager(ft.Container):
@@ -113,7 +112,7 @@ class SidebarManager(ft.Container):
                                 content=self.search_bar.build(
                                     popmenu_widget=self.pop_menu.build(),
                                     clear_icon_size=self.text_handler.get_size('icon'),
-                                    filter_widget=self.filter.build()
+                                    #filter_widget=self.filter.build()
                                 ),
                                 expand=True,
                                 margin=ft.margin.only(right=8, left=8)

@@ -314,6 +314,7 @@ class WeatherView:
             wind_speed=wind_speed,
             pressure=pressure,
             page=self.page,
+            city=city,
             expand=True # Ensure it expands if needed within the column
         )
         

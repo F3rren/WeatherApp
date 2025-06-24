@@ -45,8 +45,7 @@ class AirPollutionDisplay(ft.Container): # CHANGED: Inherits from ft.Container, 
         if 'padding' not in kwargs:
             self.padding = ft.padding.all(10)
         
-        self.content = ft.Text("Loading air pollution data...") # Initial placeholder
-
+        
     def did_mount(self):
         """Called when the control is added to the page."""
         if self.page and self._text_handler and not self._text_handler.page:

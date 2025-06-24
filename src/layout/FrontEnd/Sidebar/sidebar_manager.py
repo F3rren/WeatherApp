@@ -14,7 +14,6 @@ from utils.config import DARK_THEME, LIGHT_THEME
 from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
 from layout.frontend.sidebar.searchbar.search_bar import SearchBar
 from layout.frontend.sidebar.filter.filter import Filter
-from services.translation_service import TranslationService
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class SidebarManager(ft.Container):
@@ -36,9 +35,6 @@ class SidebarManager(ft.Container):
         self.location_toggle_service = location_toggle_service
         self.theme_toggle_service = theme_toggle_service
         self.update_weather_callback = update_weather_callback
-
-        cities = []  # Rimosso il caricamento delle città dal DB
-
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes={
@@ -51,16 +47,23 @@ class SidebarManager(ft.Container):
             },
             breakpoints=[600, 900, 1200, 1600]
         )
+        self.cities = []  # Lista vuota per le città
+        self.pop_menu = None
+        self.search_bar = None
+        self.filter = None
+        self.update_ui()  # Initial UI setup
+        self.content = self.build()
 
+    def update_ui(self):
+        """
+        Aggiorna lo stato e i componenti della sidebar in base a tema, lingua, ecc.
+        """
         text_color = (DARK_THEME if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME)
         language = self.state_manager.get_state("language") or "en"
-
         def handle_city_selected(city):
             language = self.state_manager.get_state("language") or "en"
             unit = self.state_manager.get_state("unit") or "metric"
-            # Restituisci sempre la coroutine, sarà attesa da chi la invoca (SearchBar)
             return self.update_weather_callback(city, language, unit)
-
         self.pop_menu = PopMenu(
             page=self.page,
             state_manager=self.state_manager,
@@ -72,16 +75,14 @@ class SidebarManager(ft.Container):
             language=language,
             text_handler_get_size=self.text_handler.get_size
         )
-
         self.search_bar = SearchBar(
             page=self.page,
             text_color=text_color,
-            cities=cities,  # Lista vuota per le città
+            cities=self.cities,
             on_city_selected=handle_city_selected,
             language=language,
             text_handler_get_size=self.text_handler.get_size,
         )
-
         self.filter = Filter(
             page=self.page,
             state_manager=self.state_manager,
@@ -93,24 +94,25 @@ class SidebarManager(ft.Container):
             language=language,
             text_handler_get_size=self.text_handler.get_size
         )
-
-        # --- MODERN SIDEBAR LAYOUT ---
         self.border_radius = 22
         self.shadow = ft.BoxShadow(blur_radius=18, color="#00000033")
+        self.content = self.build()
+        # self.update()  # <-- RIMOSSO: Non chiamare update() finché il controllo non è aggiunto alla pagina
 
-        # Usa la logica del text_handler anche per le icone della X e del filtro
-
-        # Row con popmenu a sinistra, searchbar al centro (espansa), filter a destra
-        self.content = ft.Column(
+    def build(self):
+        """
+        Costruisce la UI della sidebar.
+        """
+        return ft.Column(
             [
                 ft.Container(
                     content=ft.Row(
                         [
                             ft.Container(
                                 content=self.search_bar.build(
-                                    popmenu_widget=self.pop_menu.build_component(),
+                                    popmenu_widget=self.pop_menu.build(),
                                     clear_icon_size=self.text_handler.get_size('icon'),
-                                    filter_widget=self.filter.build()
+                                    #filter_widget=self.filter.build()
                                 ),
                                 expand=True,
                                 margin=ft.margin.only(right=8, left=8)

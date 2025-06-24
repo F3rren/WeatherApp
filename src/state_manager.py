@@ -88,22 +88,21 @@ class StateManager:
             else:
                 callback(value)
         except Exception as e:
-            logging.error(f"Error in observer callback: {e}")
+            logging.error(f"Error in observer callback {getattr(callback, '__name__', 'N/A')}: {e}")
 
     async def notify_all(self, event_type: str, data: Any) -> None:
         """
-        Notifica tutti gli osservatori di un evento generico.
-        Utile per eventi che non sono associati a un cambio di stato specifico.
-        
-        Args:
-            event_type: Tipo di evento
-            data: Dati associati all'evento
+        Notifies all observers of a generic event.
+        Passes only the data payload to the callback.
         """
-        logging.debug(f"notify_all called for event_type: {event_type} with data: {data}")
+        logging.debug(f"Notifying all observers for event: {event_type} with data: {data}")
         if event_type in self._observers:
             for callback in self._observers[event_type]:
                 try:
-                    # Crea un task per eseguire il callback in modo asincrono
-                    asyncio.create_task(self._run_callback(callback, data))
+                    # Ensure the callback is called only with the data payload.
+                    if asyncio.iscoroutinefunction(callback):
+                        await callback(data)
+                    else:
+                        callback(data)
                 except Exception as e:
-                    logging.error(f"Errore nella notifica dell'evento {event_type}: {e}")
+                    logging.error(f"Error in observer callback {getattr(callback, '__name__', 'N/A')} for event {event_type}: {e}")

@@ -4,6 +4,7 @@ import logging
 from services.translation_service import TranslationService
 from components.responsive_text_handler import ResponsiveTextHandler
 import traceback
+import asyncio
 
 class MainWeatherInfo(ft.Container):
     """
@@ -19,7 +20,7 @@ class MainWeatherInfo(ft.Container):
         self._temperature_data = temperature
         self._weather_icon_data = weather_icon
         
-        self._passed_page_ref = page
+        self.page = page
 
         # Initialize state variables
         self._state_manager = None
@@ -28,9 +29,8 @@ class MainWeatherInfo(ft.Container):
         self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
 
         # Initialize ResponsiveTextHandler
-        # Page will be set properly in did_mount if not available now
         self._text_handler = ResponsiveTextHandler(
-            page=self._passed_page_ref,
+            page=self.page,
             base_sizes={
                 'city': 36,
                 'location': 20,
@@ -39,120 +39,117 @@ class MainWeatherInfo(ft.Container):
             breakpoints=[600, 900, 1200, 1600]
         )
         
-        # Initial content placeholder
         self.content = ft.Text("Loading Main Info...")
-        
-        # To store the original page.on_resize if we decide to use it.
-        self._original_page_resize_handler = None    
-    def did_mount(self):
-        """Called when the control is added to the page."""
-        if self.page and self._text_handler:
-            if not self._text_handler.page:
-                 self._text_handler.page = self.page
-                 logging.debug(f"MainWeatherInfo ({self._city_data}): Text handler page set in did_mount.")
 
-        self._initialize_state_and_observers()
-        self._request_ui_rebuild()
-
-    def _initialize_state_and_observers(self):
-        """Initializes state manager and registers observers."""
-        logger = logging.getLogger(__name__)
-        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
-            self._state_manager = self.page.session.get('state_manager')
-            self._current_language = self._state_manager.get_state('language') or self._current_language
-            self._current_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
+        # Setup observers and handlers
+        if self.page:
+            if self._text_handler and not self._text_handler.page:
+                self._text_handler.page = self.page
             
-            self._state_manager.register_observer("theme_event", self._request_ui_rebuild)
-            self._state_manager.register_observer("unit", self._request_ui_rebuild)
-            self._state_manager.register_observer("language_event", self._request_ui_rebuild)
-            logger.debug(f"MainWeatherInfo ({self._city_data}): State manager observers registered.")
-        else:
-            logger.warning(f"MainWeatherInfo ({self._city_data}): State manager not found. Using defaults.")
+            if hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+                self._state_manager = self.page.session.get('state_manager')
+                # NOTE: Without a dedicated cleanup method (like will_unmount),
+                # these observers are never unregistered.
+                self._state_manager.register_observer("language_event", self.update_ui)
+                self._state_manager.register_observer("unit_event", self.update_ui)
+                self._state_manager.register_observer("theme_event", self.update_ui)
+            
+            original_on_resize = self.page.on_resize
+            def resize_handler(e):
+                if original_on_resize:
+                    original_on_resize(e)
+                if self._text_handler:
+                    self._text_handler._handle_resize(e)
+                if self.page:
+                    self.page.run_task(self.update_ui)
+            self.page.on_resize = resize_handler
 
-        if self._text_handler and hasattr(self._text_handler, 'add_observer'):
-            self._text_handler.add_observer(self._request_ui_rebuild) # Rebuild UI on text size change
-            logger.debug(f"MainWeatherInfo ({self._city_data}): ResponsiveTextHandler observer registered.")
-        else:
-            logger.warning(f"MainWeatherInfo ({self._city_data}): Text handler does not support observers or not available.")
+            # Initial update
+            self.page.run_task(self.update_ui)
 
-    def will_unmount(self):
-        """Called when the control is removed from the page."""
-        logger = logging.getLogger(__name__)
-        if self._state_manager:
-            self._state_manager.unregister_observer("theme_event", self._request_ui_rebuild)
-            self._state_manager.unregister_observer("unit", self._request_ui_rebuild)
-            self._state_manager.unregister_observer("language_event", self._request_ui_rebuild)
-            logger.debug(f"MainWeatherInfo ({self._city_data}): State manager observers unregistered.")
-        
-        if self._text_handler and hasattr(self._text_handler, 'remove_observer'):
-            try:
-                self._text_handler.remove_observer(self._request_ui_rebuild)
-                logger.debug(f"MainWeatherInfo ({self._city_data}): ResponsiveTextHandler observer unregistered.")
-            except Exception as e:
-                logger.error(f"MainWeatherInfo ({self._city_data}): Error unregistering from text_handler: {e}")
-        
-    def _determine_text_color_from_theme(self):
-        """Determines text color based on the current page theme."""
-        if self.page and self.page.theme_mode:
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-            return current_theme_config.get("TEXT", ft.Colors.BLACK)
-        return LIGHT_THEME.get("TEXT", ft.Colors.BLACK) # Overall fallback
-
-    def _safe_update(self):
-        if getattr(self, "page", None) and getattr(self, "visible", True):
-            self.update()
-
-    def _request_ui_rebuild(self, event_data=None):
+    async def update_ui(self, event_data=None):
+        """Fetches data, updates state, and rebuilds the UI."""
         if not self.page or not self.visible:
             return
-        if self._state_manager:
-            self._current_language = self._state_manager.get_state('language') or self._current_language
-            self._current_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
-        self._current_text_color = self._determine_text_color_from_theme()
-        new_content = self._build_ui_elements()
-        if self.content != new_content:
-            self.content = new_content
-            self._safe_update()
-        
-    def _get_formatted_temperature(self):
-        """Formats temperature with the correct unit symbol."""
-        unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
-        return f"{self._temperature_data}{unit_symbol}"
-        
-    def _build_ui_elements(self):
+
+        try:
+            # Update state from state_manager
+            if self._state_manager:
+                new_language = self._state_manager.get_state('language') or self._current_language
+                new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
+                
+                language_changed = self._current_language != new_language
+                unit_changed = self._current_unit_system != new_unit_system
+
+                self._current_language = new_language
+                self._current_unit_system = new_unit_system
+
+                # Fetch data if language or unit changed
+                if language_changed or unit_changed:
+                    from services.api_service import ApiService
+                    api = ApiService()
+                    weather_data = await asyncio.to_thread(
+                        api.get_weather_data,
+                        city=self._city_data,
+                        language=self._current_language,
+                        unit=self._current_unit_system
+                    )
+                    temp = api.get_current_temperature(weather_data)
+                    if temp is not None:
+                        self._temperature_data = temp
+
+            # Update theme color
+            if self.page and self.page.theme_mode:
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+                current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
+                self._current_text_color = current_theme_config.get("TEXT", ft.Colors.BLACK)
+            else:
+                self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+
+            # Rebuild and update UI
+            self.content = self.build()
+            if self.page:
+                self.page.update()
+
+        except Exception as e:
+            logging.error(f"MainWeatherInfo: Error updating UI: {e}\n{traceback.format_exc()}")
+
+    def build(self):
         """Constructs the UI elements for the main weather information."""
         try:
             if not self._text_handler:
-                logging.error(f"MainWeatherInfo ({self._city_data}): Text handler is None in _build_ui_elements.")
+                logging.error(f"MainWeatherInfo ({self._city_data}): Text handler is None in build.")
                 return ft.Text("Error: Text handler not available.", color=ft.Colors.RED)
 
-            # Use translations for location label if available
-            location_label = TranslationService.translate_from_dict("main_information_items", "current_location", self._current_language)
+            # Format temperature
+            unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
+            formatted_temp = f"{self._temperature_data}{unit_symbol}"
 
             city_text_control = ft.Text(
                 self._city_data.split(", ")[0],
                 size=self._text_handler.get_size('city'),
                 weight="bold",
-                color=self._current_text_color
+                color=self._current_text_color,
+                data={"category": "city"}
             )
 
             location_text_control = ft.Text(
                 f"{self._location_data}",
                 size=self._text_handler.get_size('location'),
-                color=self._current_text_color
+                color=self._current_text_color,
+                data={"category": "location"}
             )
 
             temperature_text_control = ft.Text(
-                self._get_formatted_temperature(),
+                formatted_temp,
                 size=self._text_handler.get_size('temperature'),
                 weight="bold",
-                color=self._current_text_color
+                color=self._current_text_color,
+                data={"category": "temperature"}
             )
 
-            controls=[
+            controls = [
                 city_text_control,
-                # Mostra la posizione solo se la geolocalizzazione è attiva
                 location_text_control if self._location_data else None,
                 temperature_text_control,
             ]
@@ -178,78 +175,3 @@ class MainWeatherInfo(ft.Container):
         except Exception as e:
             logging.error(f"MainWeatherInfo ({self._city_data}): Failed to build UI elements: {e}\nTraceback: {traceback.format_exc()}")
             return ft.Text(f"Error displaying {self._city_data}", color=ft.Colors.RED)
-
-    def handle_resize(self, e=None):
-        """
-        This method should be called by the parent component when the page resizes.
-        It triggers the ResponsiveTextHandler to update sizes, which in turn
-        notifies this component (via its observer) to rebuild its UI.
-        """
-        if self._text_handler:
-            # logging.debug(f"MainWeatherInfo ({self._city_data}): handle_resize called, forwarding to text_handler.")
-            self._text_handler._handle_resize(e)
-        # else:
-            # logging.warning(f"MainWeatherInfo ({self._city_data}): handle_resize called, but no text_handler.")
-
-    def handle_theme_change(self, event_data=None):
-        """Updates the text color based on the current theme."""
-        if not self.page:
-            return
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-        self.text_color = current_theme_config["TEXT"]
-        controls = {"city_text": self.city_text, "location_text": self.location_text, "temperature_text": self.temperature_text}
-        for name, control_obj in controls.items():
-            if control_obj is not None:
-                if hasattr(control_obj, 'color'):
-                    control_obj.color = self.text_color
-        # RIMOSSO: self.page.update()
-    
-    def _update_text_elements(self, event_type=None, data=None):
-        """Updates only the text elements without rebuilding the entire UI"""
-        if not self.content or not isinstance(self.content, ft.Column):
-            return
-        
-        # Find and update text controls
-        for container in self.content.controls:
-            if isinstance(container, ft.Container) and container.content:
-                # First container should be the location/city info
-                if isinstance(container.content, ft.Column):
-                    for text_control in container.content.controls:
-                        if isinstance(text_control, ft.Text):
-                            # City or Location text
-                            category = getattr(text_control, "data", {}).get("category")
-                            if category == "city":
-                                text_control.value = self._city_data.split(", ")[0]
-                                text_control.update()
-                            elif category == "location":
-                                text_control.value = self._location_data
-                                text_control.update()
-        
-        self.update()
-
-    def _handle_language_change(self, event_data=None):
-        """Handles language changes by updating text elements"""
-        if event_data is not None and not isinstance(event_data, dict):
-            logging.warning(f"_handle_language_change received unexpected event_data type: {type(event_data)}")
-            
-        if self._state_manager:
-            new_language = self._state_manager.get_state('language') or DEFAULT_LANGUAGE
-            if self._current_language != new_language:
-                self._current_language = new_language
-                self._update_text_elements()
-        
-    def _handle_unit_change(self, event_data=None):
-        """Handles unit system changes by updating text elements"""
-        if event_data is not None and not isinstance(event_data, dict):
-            logging.warning(f"_handle_unit_change received unexpected event_data type: {type(event_data)}")
-            
-        if self._state_manager:
-            new_unit = self._state_manager.get_state('unit') or "metric"
-            if self._current_unit_system != new_unit:
-                self._current_unit_system = new_unit
-                self._update_text_elements()
-
-# Old methods like __init__ (original), update_text_controls, _update_temperature_display, 
-# cleanup, handle_unit_change, handle_language_change, handle_theme_change, and build
-# are now effectively replaced or integrated into the new structure.

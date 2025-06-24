@@ -314,6 +314,7 @@ class WeatherView:
             wind_speed=wind_speed,
             pressure=pressure,
             page=self.page,
+            city=city,
             expand=True # Ensure it expands if needed within the column
         )
         
@@ -397,12 +398,10 @@ class WeatherView:
         weather_card = WeatherCard(self.page) 
         self._update_text_color() # Ensure text_color is current for components not self-managing it
 
-        hourly_data = self.api_service.get_hourly_forecast_data(self.weather_data)[:6]
-        
         # Instantiate the refactored HourlyForecastDisplay
         self.hourly_forecast_instance = HourlyForecastDisplay(
-            hourly_data=hourly_data,
             page=self.page,
+            city=self.current_city,
             # expand=True # HourlyForecastDisplay sets its own expand property if needed
         )
         # The WeatherCard is a generic wrapper, the HourlyForecastDisplay is the actual content.
@@ -429,8 +428,7 @@ class WeatherView:
         if state_manager:
             self.air_pollution_display_instance._current_language = state_manager.get_state('language') or self.air_pollution_display_instance._current_language
             self.air_pollution_display_instance._current_unit = state_manager.get_state('unit') or getattr(self.air_pollution_display_instance, '_current_unit', 'metric')
-        # --------------------------------------------------------
-        await self.air_pollution_display_instance.refresh()
+
 
         self.air_pollution_container.content = weather_card.build(self.air_pollution_display_instance)
         # self.air_pollution_container.update() # Covered by page.update() in _update_ui

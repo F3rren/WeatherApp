@@ -92,7 +92,7 @@ class ApiService:
             # Specific handling for HTTP errors (4xx, 5xx)
             if lat is not None and lon is not None and city:
                 # This block means coordinate call failed, now try city
-                logging.warning(f"Coordinate call failed ({http_err}), trying with city name '{city}'...")
+                #logging.warning(f"Coordinate call failed ({http_err}), trying with city name '{city}'...")
                 try:
                     city_normalized = self._normalize_city_name(city)
                     params = {

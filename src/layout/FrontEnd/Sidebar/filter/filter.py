@@ -1,9 +1,8 @@
-import logging
 import flet as ft
-from utils.config import LIGHT_THEME, DARK_THEME
-from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
+from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from layout.frontend.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
+from utils.config import LIGHT_THEME, DARK_THEME
 
 
 class Filter:

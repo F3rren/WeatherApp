@@ -6,10 +6,11 @@ import flet as ft # MODIFIED: Use standard alias 'ft'
 import logging
 
 
+from layout.frontend.sidebar.sidebar_manager import SidebarManager
+from layout.frontend.layout_manager import LayoutManager
 from utils.config import (DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, DEFAULT_THEME_MODE)
 
-from layout.frontend.layout_manager import LayoutManager
-from layout.frontend.sidebar.sidebar_manager import SidebarManager
+
 from state_manager import StateManager
 from services.geolocation_service import GeolocationService
 from services.location_toggle_service import LocationToggleService

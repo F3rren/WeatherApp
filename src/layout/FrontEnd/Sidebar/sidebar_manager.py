@@ -7,14 +7,14 @@ Now a Flet component itself.
 import flet as ft
 from typing import Callable, Optional
 
+from layout.frontend.sidebar.filter.filter import Filter
+from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
+from layout.frontend.sidebar.searchbar.search_bar import SearchBar
 from state_manager import StateManager
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
 from utils.config import DARK_THEME, LIGHT_THEME
-from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
-from layout.frontend.sidebar.searchbar.search_bar import SearchBar
-from layout.frontend.sidebar.filter.filter import Filter
-from services.translation_service import TranslationService
+
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class SidebarManager(ft.Container):

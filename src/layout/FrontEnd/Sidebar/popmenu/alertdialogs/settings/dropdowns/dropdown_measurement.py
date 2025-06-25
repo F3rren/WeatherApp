@@ -63,6 +63,13 @@ class DropdownMeasurement:
 
     def get_options(self):
         """Get translated dropdown options based on the current language."""
+        # Defensive: ensure self.text_color is a dict, not a string
+        if isinstance(self.text_color, str):
+            from utils.config import DARK_THEME, LIGHT_THEME
+            if self.text_color.lower() in ("#fff", "#ffffff", "white"):
+                self.text_color = LIGHT_THEME
+            else:
+                self.text_color = DARK_THEME
         options = []
         for unit_system_code, name_key in self.unit_name_keys.items():
             translated_name = TranslationService.translate_from_dict("unit_items", name_key, self.current_language_display)
@@ -80,6 +87,17 @@ class DropdownMeasurement:
     
     def createDropdown(self):
         """Create a new dropdown with the current settings."""
+        # Always set self.text_color based on current theme
+        from utils.config import DARK_THEME, LIGHT_THEME
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            self.text_color = DARK_THEME if is_dark else LIGHT_THEME
+        elif isinstance(self.text_color, str):
+            if self.text_color.lower() in ("#fff", "#ffffff", "white"):
+                self.text_color = LIGHT_THEME
+            else:
+                self.text_color = DARK_THEME
+        
         def dropdown_changed(e):
             unit_code = e.control.value
             print(f"Selected unit: {unit_code}")

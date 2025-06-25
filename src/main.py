@@ -7,8 +7,8 @@ import logging
 
 
 from utils.config import (DARK_THEME, DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, DEFAULT_THEME_MODE, LIGHT_THEME)
-from layout.frontend.layout_manager import LayoutManager
-from layout.frontend.sidebar.sidebar_manager import SidebarManager
+from layout.layout_manager import LayoutManager
+from layout.sidebar.sidebar_manager import SidebarManager
 from state_manager import StateManager
 from services.geolocation_service import GeolocationService
 from services.location_toggle_service import LocationToggleService

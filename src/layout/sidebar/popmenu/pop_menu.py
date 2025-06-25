@@ -1,8 +1,8 @@
 from services.translation_service import TranslationService
 from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME
-from layout.frontend.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
-from layout.frontend.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
-from layout.frontend.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
+from layout.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
+from layout.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
+from layout.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
 import flet as ft
 
 

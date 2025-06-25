@@ -7,9 +7,9 @@ Now a Flet component itself.
 import flet as ft
 from typing import Callable, Optional
 
-from layout.frontend.sidebar.filter.filter import Filter
-from layout.frontend.sidebar.popmenu.pop_menu import PopMenu
-from layout.frontend.sidebar.searchbar.search_bar import SearchBar
+from layout.sidebar.filter.filter import Filter
+from layout.sidebar.popmenu.pop_menu import PopMenu
+from layout.sidebar.searchbar.search_bar import SearchBar
 from state_manager import StateManager
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService

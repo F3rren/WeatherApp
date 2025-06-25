@@ -7,7 +7,7 @@ import flet as ft
 import logging
 from typing import Dict
 
-from layout.frontend.layout_builder import LayoutBuilder
+from layout.layout_builder import LayoutBuilder
 from utils.config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
 

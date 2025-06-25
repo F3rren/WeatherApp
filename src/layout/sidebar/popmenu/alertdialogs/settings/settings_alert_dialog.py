@@ -1,12 +1,9 @@
 import flet as ft
 from components.responsive_text_handler import ResponsiveTextHandler
-import logging
 from services.translation_service import TranslationService
+from layout.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
+from layout.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
 
-from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
-from layout.frontend.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
-
-DEFAULT_LANGUAGE = "en"  # Define a default language
 
 class SettingsAlertDialog:
     """

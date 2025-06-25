@@ -11,14 +11,14 @@ import asyncio
 from services.api_service import ApiService
 from services.translation_service import TranslationService # Import TranslationService
 
-from layout.frontend.weather_card import WeatherCard
-from layout.frontend.informationtab.hourly_forecast import HourlyForecastDisplay # Importa la nuova classe
-from layout.frontend.weeklyweather.weekly_weather import WeeklyForecastDisplay # CHANGED: Import WeeklyForecastDisplay
-from layout.frontend.informationtab.main_information import MainWeatherInfo
-from layout.frontend.informationtab.air_condition import AirConditionInfo
-from layout.frontend.informationtab.air_pollution import AirPollutionDisplay # CHANGED: Import AirPollutionDisplay
-from layout.frontend.informationcharts.temperature_chart import TemperatureChartDisplay # CHANGED: Import TemperatureChartDisplay
-from layout.frontend.informationcharts.air_pollution_chart import AirPollutionChartDisplay # CHANGED: Import AirPollutionChartDisplay
+from layout.weather_card import WeatherCard
+from layout.informationtab.hourly_forecast import HourlyForecastDisplay # Importa la nuova classe
+from layout.weeklyweather.weekly_weather import WeeklyForecastDisplay # CHANGED: Import WeeklyForecastDisplay
+from layout.informationtab.main_information import MainWeatherInfo
+from layout.informationtab.air_condition import AirConditionInfo
+from layout.informationtab.air_pollution import AirPollutionDisplay # CHANGED: Import AirPollutionDisplay
+from layout.informationcharts.temperature_chart import TemperatureChartDisplay # CHANGED: Import TemperatureChartDisplay
+from layout.informationcharts.air_pollution_chart import AirPollutionChartDisplay # CHANGED: Import AirPollutionChartDisplay
 
 class WeatherView:
     """

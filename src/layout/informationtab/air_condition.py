@@ -95,60 +95,239 @@ class AirConditionInfo(ft.Container):
             logging.error(f"AirConditionInfo: Error updating UI: {e}\n{traceback.format_exc()}")
 
     def build(self):
-        """Constructs the UI elements for the air condition information."""
-        title_text = ft.Text(
-            value=TranslationService.translate_from_dict("air_condition_items", "air_condition_title", self._language),
-            size=self._text_handler.get_size('title'),
-            weight="bold",
-            color=self._text_color
+        """Constructs a modern, professional UI for air condition information."""
+        # Get translation service for header
+        translation_service = None
+        if self.page and hasattr(self.page, 'session'):
+            translation_service = self.page.session.get('translation_service')
+        
+        header_text = "Air Conditions"
+        if translation_service:
+            header_text = translation_service.translate_from_dict(
+                "air_condition_items", 
+                "air_condition_title",
+                self._language
+            ) or header_text
+
+        # Professional header with accent bar
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        header = ft.Container(
+            content=ft.Row([
+                ft.Icon(
+                    ft.Icons.INFO,
+                    color=ft.Colors.ORANGE_400 if not is_dark else ft.Colors.ORANGE_300,
+                    size=24
+                ),
+                ft.Container(width=12),  # Spacer
+                ft.Text(
+                    header_text,
+                    size=self._text_handler.get_size('axis_title') + 2,
+                    weight=ft.FontWeight.BOLD,
+                    color=self._text_color,
+                    font_family="system-ui",
+                ),
+            ], alignment=ft.MainAxisAlignment.START),
+            padding=ft.padding.only(left=20, top=20, bottom=16)
         )
 
-        divider = ft.Divider(height=1, color=self._text_color)
-
-        def create_info_column(items):
-            controls = []
-            for item in items:
-                icon = ft.Icon(item["icon"], size=self._text_handler.get_size('icon'), color=self._text_color)
-                label = ft.Text(
-                    value=TranslationService.translate_from_dict("air_condition_items", item["label"], self._language),
-                    size=self._text_handler.get_size('label'),
-                    weight=ft.FontWeight.BOLD,
-                    color=self._text_color
-                )
-                value = ft.Text(
-                    value=item["value"],
-                    size=self._text_handler.get_size('value'),
-                    italic=True,
-                    color=self._text_color
-                )
-                controls.extend([ft.Row(controls=[icon, label]), value])
-            return ft.Column(controls=controls, expand=True)
-
+        # Get unit symbols
         temp_unit = TranslationService.get_unit_symbol("temperature", self._unit_system)
         wind_unit = TranslationService.get_unit_symbol("wind", self._unit_system)
         pressure_unit = TranslationService.get_unit_symbol("pressure", self._unit_system)
 
-        col1_items = [
-            {"icon": ft.Icons.THERMOSTAT, "label": "feels_like", "value": f"{self._feels_like_data}{temp_unit}"},
-            {"icon": ft.Icons.WATER_DROP, "label": "humidity", "value": f"{self._humidity_data}%"},
-        ]
+        # Helper function to create modern metric cards
+        def create_metric_card(icon, label_key, value, unit="", color_scheme="blue"):
+            # Get translated label
+            label_text = label_key
+            if translation_service:
+                label_text = translation_service.translate_from_dict(
+                    "air_condition_items", 
+                    label_key,
+                    self._language
+                ) or label_key
 
-        col2_items = [
-            {"icon": ft.Icons.WIND_POWER, "label": "wind", "value": f"{self._wind_speed_data} {wind_unit}"},
-            {"icon": ft.Icons.COMPRESS, "label": "pressure", "value": f"{self._pressure_data} {pressure_unit}"},
-        ]
-
-        return ft.Column(
-            controls=[
-                title_text,
-                divider,
-                ft.Row(
-                    controls=[
-                        create_info_column(col1_items),
-                        create_info_column(col2_items),
-                    ],
-                    expand=True,
+            # Color schemes for different metrics
+            color_schemes = {
+                "blue": {"bg": ft.Colors.BLUE_400, "shadow": ft.Colors.BLUE_200},
+                "green": {"bg": ft.Colors.GREEN_400, "shadow": ft.Colors.GREEN_200},
+                "orange": {"bg": ft.Colors.ORANGE_400, "shadow": ft.Colors.ORANGE_200},
+                "purple": {"bg": ft.Colors.PURPLE_400, "shadow": ft.Colors.PURPLE_200},
+                "teal": {"bg": ft.Colors.TEAL_400, "shadow": ft.Colors.TEAL_200},
+            }
+            
+            scheme = color_schemes.get(color_scheme, color_schemes["blue"])
+            
+            # Create icon container with compact gradient background
+            icon_container = ft.Container(
+                width=40,  # Smaller icon container
+                height=40,
+                border_radius=20,
+                bgcolor=scheme["bg"],
+                shadow=ft.BoxShadow(
+                    spread_radius=0,
+                    blur_radius=6,  # Reduced blur for subtle effect
+                    color=ft.Colors.with_opacity(0.25, scheme["shadow"]),
+                    offset=ft.Offset(0, 2),
                 ),
-            ],
-            expand=True,
+                content=ft.Icon(
+                    icon,
+                    color=ft.Colors.WHITE,
+                    size=20,  # Smaller icon
+                ),
+                alignment=ft.alignment.center,
+            )
+
+            # Compact value with unit
+            value_text = ft.Text(
+                f"{value}{unit}",
+                size=18,  # Smaller font
+                weight="w700",
+                color=self._text_color,
+                font_family="system-ui",
+            )
+
+            # Compact label text
+            label_text_widget = ft.Text(
+                label_text,
+                size=12,  # Smaller label
+                color=ft.Colors.with_opacity(0.7, self._text_color),
+                weight="w500",
+                font_family="system-ui",
+            )
+
+            # Quality indicator for specific metrics
+            quality_indicator = None
+            
+            if label_key == "humidity":
+                # Humidity quality indicator
+                humidity_val = int(str(value).replace('%', ''))
+                if 40 <= humidity_val <= 60:
+                    quality_color = ft.Colors.GREEN_400
+                    quality_text = "Optimal"
+                elif 30 <= humidity_val <= 70:
+                    quality_color = ft.Colors.ORANGE_400
+                    quality_text = "Good"
+                else:
+                    quality_color = ft.Colors.RED_400
+                    quality_text = "Poor"
+                    
+                quality_indicator = ft.Container(
+                    content=ft.Text(
+                        quality_text,
+                        size=10,  # Smaller badge text
+                        color=ft.Colors.WHITE,
+                        weight="w600",
+                    ),
+                    bgcolor=quality_color,
+                    padding=ft.padding.symmetric(horizontal=6, vertical=1),  # Tighter padding
+                    border_radius=8,  # Smaller radius
+                )
+            
+            elif label_key == "pressure":
+                # Pressure quality indicator
+                pressure_val = int(str(value).split()[0])
+                if 1013 <= pressure_val <= 1020:
+                    quality_color = ft.Colors.GREEN_400
+                    quality_text = "Normal"
+                elif 1000 <= pressure_val <= 1030:
+                    quality_color = ft.Colors.ORANGE_400
+                    quality_text = "Fair"
+                else:
+                    quality_color = ft.Colors.RED_400
+                    quality_text = "Unusual"
+                    
+                quality_indicator = ft.Container(
+                    content=ft.Text(
+                        quality_text,
+                        size=10,  # Smaller badge text
+                        color=ft.Colors.WHITE,
+                        weight="w600",
+                    ),
+                    bgcolor=quality_color,
+                    padding=ft.padding.symmetric(horizontal=6, vertical=1),  # Tighter padding
+                    border_radius=8,  # Smaller radius
+                )
+
+            # Compact card content layout
+            card_content = ft.Column([
+                ft.Row([
+                    icon_container,
+                    ft.Container(width=12),  # Smaller spacer
+                    ft.Column([
+                        value_text,
+                        label_text_widget,
+                        quality_indicator if quality_indicator else ft.Container(height=0),
+                    ], alignment=ft.MainAxisAlignment.CENTER, spacing=2),  # Tighter spacing
+                ], alignment=ft.MainAxisAlignment.START),
+            ], spacing=4)  # Reduced spacing
+
+            # Compact modern card container
+            return ft.Container(
+                content=card_content,
+                padding=ft.padding.all(16),  # Reduced padding
+                border_radius=14,  # Slightly smaller radius
+                bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.WHITE if not is_dark else ft.Colors.BLACK),
+                border=ft.border.all(
+                    1, 
+                    ft.Colors.with_opacity(0.1, ft.Colors.GREY_400 if not is_dark else ft.Colors.GREY_600)
+                ),
+                width=180,  # Smaller width
+                height=100,  # Smaller height
+                animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
+            )
+
+        # Create metric cards
+        cards = [
+            create_metric_card(
+                ft.Icons.THERMOSTAT_OUTLINED, 
+                "feels_like", 
+                self._feels_like_data, 
+                temp_unit,
+                "orange"
+            ),
+            create_metric_card(
+                ft.Icons.WATER_DROP_OUTLINED, 
+                "humidity", 
+                self._humidity_data, 
+                "%",
+                "blue"
+            ),
+            create_metric_card(
+                ft.Icons.AIR_OUTLINED, 
+                "wind", 
+                self._wind_speed_data, 
+                f" {wind_unit}",
+                "teal"
+            ),
+            create_metric_card(
+                ft.Icons.COMPRESS_OUTLINED, 
+                "pressure", 
+                self._pressure_data, 
+                f" {pressure_unit}",
+                "purple"
+            ),
+        ]
+
+        # Horizontal layout - all cards in a single row
+        grid_content = ft.Row([
+            cards[0],  # Feels like
+            ft.Container(width=12),  # Spacer
+            cards[1],  # Humidity
+            ft.Container(width=12),  # Spacer
+            cards[2],  # Wind
+            ft.Container(width=12),  # Spacer
+            cards[3],  # Pressure
+        ], alignment=ft.MainAxisAlignment.START, scroll=ft.ScrollMode.AUTO)  # Add scroll for smaller screens
+
+        grid_container = ft.Container(
+            content=grid_content,
+            padding=ft.padding.symmetric(horizontal=20, vertical=8),
+        )
+
+        return ft.Container(
+            content=ft.Column([
+                header,
+                grid_container,
+            ], spacing=4),  # Tighter spacing between header and content
+            padding=ft.padding.only(bottom=16),  # Reduced bottom padding
         )

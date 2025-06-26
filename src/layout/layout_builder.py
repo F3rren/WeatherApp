@@ -48,7 +48,7 @@ class LayoutBuilder:
     def build_content_container(content, col_size, animation_duration=500, 
                                animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> ft.Container:
         """
-        Crea un container responsive con animazioni.
+        Crea un container responsive con animazioni e stile moderno.
         
         Args:
             content: Contenuto del container
@@ -57,24 +57,34 @@ class LayoutBuilder:
             animation_curve: Curva di animazione
             
         Returns:
-            ft.Container: Container configurato
+            ft.Container: Container configurato con stile moderno
         """
         return ft.Container(
             content=content,
             animate=ft.Animation(animation_duration, animation_curve),
-            border_radius=15,
-            padding=10,
+            border_radius=20,  # Angoli più arrotondati
+            padding=ft.padding.all(20),  # Padding più generoso
+            margin=ft.margin.all(5),  # Piccolo margine per spaziatura
+            shadow=ft.BoxShadow(
+                spread_radius=1,
+                blur_radius=10,
+                color=ft.Colors.with_opacity(0.1, ft.Colors.BLACK),
+                offset=ft.Offset(0, 2),
+                blur_style=ft.ShadowBlurStyle.OUTER,
+            ),
             col=col_size
         )
 
     @staticmethod
     def build_main_layout(sidebar, info, hourly, weekly, air_pollution, chart, air_pollution_chart) -> ft.Control:
         """
-        Costruisce il layout principale responsivo dell'applicazione.
+        Costruisce il layout principale responsivo dell'applicazione con design moderno.
+        Layout orizzontale: sidebar sinistra + contenuto principale a destra.
         
         Args:
             sidebar: Container della barra laterale
             info: Container delle informazioni principali meteo
+            hourly: Container delle previsioni orarie
             weekly: Container delle previsioni settimanali
             air_pollution: Container delle informazioni sull'inquinamento
             chart: Container del grafico temperature
@@ -83,30 +93,52 @@ class LayoutBuilder:
         Returns:
             ft.ResponsiveRow: Layout principale responsivo
         """
-        return ft.Column([
-            # Prima riga: sidebar
-            ft.ResponsiveRow([
-                sidebar
-            ]),
+        # Layout principale orizzontale
+        return ft.ResponsiveRow([
+            # Sidebar sinistra (25% larghezza)
+            ft.Container(
+                content=sidebar,
+                col={"sm": 12, "md": 4, "lg": 3, "xl": 3},
+                padding=ft.padding.all(10),
+            ),
             
-            # Seconda riga: info
-            ft.ResponsiveRow([
-                info
-            ]),
-            
-            ft.ResponsiveRow([
-                hourly
-            ]),
-
-            # Terza riga: previsioni settimanali + inquinamento aria
-            ft.ResponsiveRow([
-                weekly,
-                air_pollution
-            ]),
-            
-            # Quarta riga: grafici
-            ft.ResponsiveRow([
-                chart,
-                air_pollution_chart
-            ])
-        ])
+            # Area contenuto principale (75% larghezza)
+            ft.Container(
+                content=ft.Column([
+                    # Header principale con info meteo
+                    ft.ResponsiveRow([
+                        info
+                    ]),
+                    
+                    # Previsioni orarie
+                    ft.ResponsiveRow([
+                        hourly
+                    ]),
+                    
+                    # Riga con condizioni attuali e dettagli
+                    ft.ResponsiveRow([
+                        # Condizioni attuali (sinistra)
+                        ft.Container(
+                            content=ft.Column([
+                                weekly,
+                                air_pollution
+                            ], spacing=10),
+                            col={"sm": 12, "md": 6, "lg": 6},
+                            padding=ft.padding.all(5),
+                        ),
+                        
+                        # Dettagli e grafici (destra)
+                        ft.Container(
+                            content=ft.Column([
+                                chart,
+                                air_pollution_chart
+                            ], spacing=10),
+                            col={"sm": 12, "md": 6, "lg": 6},
+                            padding=ft.padding.all(5),
+                        )
+                    ])
+                ], spacing=15),
+                col={"sm": 12, "md": 8, "lg": 9, "xl": 9},
+                padding=ft.padding.all(10),
+            )
+        ], spacing=0)

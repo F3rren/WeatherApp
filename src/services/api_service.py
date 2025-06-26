@@ -324,6 +324,12 @@ class ApiService:
                 icon = icon_item["weather"][0]["icon"]
                 description = icon_item["weather"][0]["description"]
                 
+                # Calculate additional daily statistics
+                avg_humidity = round(sum(x["main"]["humidity"] for x in items_in_day) / len(items_in_day))
+                avg_rain_probability = round(sum(x.get("pop", 0) for x in items_in_day) / len(items_in_day) * 100)
+                avg_wind_speed = round(sum(x["wind"]["speed"] for x in items_in_day) / len(items_in_day), 1)
+                avg_pressure = round(sum(x["main"]["pressure"] for x in items_in_day) / len(items_in_day))
+                
                 result.append({
                     "date": date_obj,
                     # Use lowercase English full day name as key for TranslationService
@@ -331,7 +337,11 @@ class ApiService:
                     "temp_min": round(temp_min),
                     "temp_max": round(temp_max),
                     "icon": icon,
-                    "description": description
+                    "description": description,
+                    "humidity": avg_humidity,
+                    "rain_probability": avg_rain_probability,
+                    "wind_speed": avg_wind_speed,
+                    "pressure": avg_pressure
                 })
             
             return result

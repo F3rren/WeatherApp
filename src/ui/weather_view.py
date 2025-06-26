@@ -6,8 +6,6 @@ Handles the display of weather information.
 import flet as ft
 import logging # Add logging import
 from utils.config import LIGHT_THEME, DARK_THEME
-import asyncio
-
 from services.api_service import ApiService
 from services.translation_service import TranslationService # Import TranslationService
 
@@ -70,9 +68,6 @@ class WeatherView:
             # with their own combined handler.
             self._original_page_resize_handler = self.page.on_resized # Corrected: store page.on_resize not on_resized
             self.page.on_resize = self._handle_page_resize
-
-        self._update_event = asyncio.Event()
-        self._background_task = None
 
     def _handle_page_resize(self, e=None):
         """Handles page resize events for WeatherView and propagates to children."""
@@ -480,37 +475,6 @@ class WeatherView:
             self.air_pollution_chart_container
         )
 
-    async def background_updater(self):
-        """Task persistente che aggiorna la UI quando trigger_update viene chiamato."""
-        while True:
-            await self._update_event.wait()
-            self._update_event.clear()
-            # Recupera parametri correnti
-            state_manager = self.page.session.get('state_manager')
-            language = state_manager.get_state('language') if state_manager else 'en'
-            unit = state_manager.get_state('unit') if state_manager else 'metric'
-            if self.current_city:
-                await self.update_by_city(self.current_city, language, unit)
-            elif self.current_lat is not None and self.current_lon is not None:
-                await self.update_by_coordinates(self.current_lat, self.current_lon, language, unit)
-            # else: non aggiorna se non ci sono dati
-
-    def trigger_update(self):
-        """Richiama un aggiornamento asincrono della UI."""
-        self._update_event.set()
-
-    def start_background_updater(self):
-        """Avvia il task di background updater se non già avviato."""
-        if not self._background_task:
-            self._background_task = asyncio.create_task(self.background_updater())
-
-    def stop_background_updater(self):
-        """(Opzionale) Cancella il task di background updater."""
-        if self._background_task:
-            self._background_task.cancel()
-            self._background_task = None
-
     def cleanup(self):
         """Cleanup method to release resources and child components."""
         self._cleanup_child_components()
-        self.stop_background_updater()

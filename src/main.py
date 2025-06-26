@@ -41,16 +41,20 @@ class MeteoApp:
         self.weather_view_instance = None # Add to store WeatherView instance
         self.translation_service = None # Add to store TranslationService instance
 
+
+       
     def _update_container_colors(self, event_data=None):
         """Aggiorna solo i colori dei container principali e dei testi senza ricostruire i container."""
         if not self.page:
             return
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         theme = DARK_THEME if is_dark else LIGHT_THEME
-        default_card = theme.get("CARD", "#ffffff" if not is_dark else "#222222")
+        
+        # Aggiorna colori specifici per ogni container
         if self.sidebar_container:
-            self.sidebar_container.bgcolor = theme.get("SIDEBAR", default_card)
+            self.sidebar_container.bgcolor = theme.get("SIDEBAR")
             self.sidebar_container.update()
+        
         if self.info_container_wrapper:
             # Applica gradiente se definito nel tema
             if "INFO_GRADIENT" in theme:
@@ -63,26 +67,32 @@ class MeteoApp:
                 )
                 self.info_container_wrapper.bgcolor = None
             else:
-                self.info_container_wrapper.bgcolor = theme.get("INFO", default_card)
+                self.info_container_wrapper.bgcolor = theme.get("CARD_BACKGROUND")
                 self.info_container_wrapper.gradient = None
             self.info_container_wrapper.update()
+        
         if self.hourly_container_wrapper:
-            self.hourly_container_wrapper.bgcolor = theme.get("HOURLY", default_card)
+            self.hourly_container_wrapper.bgcolor = theme.get("HOURLY")
             self.hourly_container_wrapper.update()
+        
         if self.weekly_container_wrapper:
-            self.weekly_container_wrapper.bgcolor = theme.get("WEEKLY", default_card)
+            self.weekly_container_wrapper.bgcolor = theme.get("WEEKLY")
             self.weekly_container_wrapper.update()
+        
         if self.chart_container_wrapper:
-            self.chart_container_wrapper.bgcolor = theme.get("CHART", default_card)
+            self.chart_container_wrapper.bgcolor = theme.get("CHART")
             self.chart_container_wrapper.update()
+        
         if self.air_pollution_chart_container_wrapper:
-            self.air_pollution_chart_container_wrapper.bgcolor = theme.get("AIR_POLLUTION_CHART", default_card)
+            self.air_pollution_chart_container_wrapper.bgcolor = theme.get("AIR_POLLUTION_CHART")
             self.air_pollution_chart_container_wrapper.update()
+        
         if self.air_pollution_container_wrapper:
-            self.air_pollution_container_wrapper.bgcolor = theme.get("AIR_POLLUTION", default_card)
+            self.air_pollution_container_wrapper.bgcolor = theme.get("AIR_POLLUTION")
             self.air_pollution_container_wrapper.update()
+        
         # Aggiorna il colore di sfondo della pagina
-        self.page.bgcolor = theme.get("BACKGROUND", "#f5f5f5" if not is_dark else "#1a1a1a")
+        self.page.bgcolor = theme.get("BACKGROUND")
         self.page.update()
 
     async def main(self, page: ft.Page) -> None: # MODIFIED: ft.Page
@@ -110,9 +120,11 @@ class MeteoApp:
 
         # Register theme update handler for containers
         self.state_manager.register_observer("theme_event", self._update_container_colors)
+        
+        # Register day selection handler
+        self.state_manager.register_observer("day_selected_event", self._handle_day_selection)
 
         self.weather_view_instance = WeatherView(page) # Store instance
-        self.weather_view_instance.start_background_updater()  # Avvia il task persistente
         
         info_container, hourly_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = self.weather_view_instance.get_containers()
         
@@ -203,6 +215,27 @@ class MeteoApp:
                     await on_disconnect_or_close(e)
             page.on_window_event = window_event_handler
 
+    def _handle_day_selection(self, event_data=None):
+        """Gestisce la selezione di un giorno dalla sidebar."""
+        if not event_data:
+            return
+            
+        print(f"UI Update triggered for day: {event_data.get('day', 'Unknown')}")
+        
+        # Qui puoi implementare la logica per aggiornare l'UI basata sul giorno selezionato
+        # Ad esempio, potresti:
+        # 1. Aggiornare le previsioni orarie per quel giorno
+        # 2. Modificare le informazioni principali
+        # 3. Aggiornare i grafici
+        
+        # Per ora, forza un refresh dell'UI
+        if self.weather_view_instance:
+            # Potremmo implementare un metodo specifico per aggiornare in base al giorno
+            print(f"Refreshing UI for selected day: {event_data}")
+            # self.weather_view_instance.update_for_selected_day(event_data)
+            
+        # Aggiorna anche i container se necessario
+        self._update_container_colors()
 
 def main():
     """Entry point for the application"""

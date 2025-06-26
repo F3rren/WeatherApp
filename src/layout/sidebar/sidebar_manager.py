@@ -101,30 +101,128 @@ class SidebarManager(ft.Container):
 
     def build(self):
         """
-        Costruisce la UI della sidebar.
+        Costruisce una moderna sidebar con previsioni giornaliere simile al design mostrato.
         """
-        return ft.Column(
-            [
+        # Header della sidebar con controlli
+        header_section = ft.Container(
+            content=ft.Row([
+                # Search bar compatta
                 ft.Container(
-                    content=ft.Row(
-                        [
-                            ft.Container(
-                                content=self.search_bar.build(
-                                    popmenu_widget=self.pop_menu.build(),
-                                    clear_icon_size=self.text_handler.get_size('icon'),
-                                    #filter_widget=self.filter.build()
-                                ),
-                                expand=True,
-                                margin=ft.margin.only(right=8, left=8)
-                            ),
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=0,
+                    content=self.search_bar.build(
+                        popmenu_widget=self.pop_menu.build(),
+                        clear_icon_size=self.text_handler.get_size('icon'),
                     ),
-                    margin=ft.margin.only(bottom=8)
+                    expand=True,
                 ),
-            ],
-            spacing=0,
-            expand=False,
+            ]),
+            padding=ft.padding.all(15),
+            margin=ft.margin.only(bottom=10)
         )
+
+        # Sezione previsioni giornaliere
+        daily_forecasts = self._build_daily_forecast_list()
+        
+        return ft.Column([
+            header_section,
+            daily_forecasts,
+        ], spacing=0, expand=True)
+
+    def _build_daily_forecast_list(self):
+        """Costruisce la lista delle previsioni giornaliere per la sidebar."""
+        # Dati esempio per le previsioni giornaliere (sostituisci con dati reali)
+        daily_data = [
+            {"day": "Today", "high": 41, "low": 37, "icon": "01d", "desc": "Sunny cloudy"},
+            {"day": "Tomorrow", "high": 39, "low": 33, "icon": "02d", "desc": "Partly cloudy"},
+            {"day": "Wednesday", "high": 37, "low": 31, "icon": "03d", "desc": "Mostly cloudy"},
+            {"day": "Thursday", "high": 36, "low": 30, "icon": "04d", "desc": "Cloudy"},
+            {"day": "Friday", "high": 37, "low": 29, "icon": "01d", "desc": "Sunny"},
+            {"day": "Saturday", "high": 39, "low": 31, "icon": "02d", "desc": "Partly cloudy"},
+            {"day": "Sunday", "high": 38, "low": 32, "icon": "01d", "desc": "Sunny"},
+            {"day": "Monday", "high": 36, "low": 29, "icon": "03d", "desc": "Cloudy"},
+            {"day": "Tuesday", "high": 34, "low": 28, "icon": "04d", "desc": "Overcast"},
+            {"day": "Wednesday", "high": 33, "low": 27, "icon": "09d", "desc": "Rain"},
+        ]
+
+        daily_items = []
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        theme = DARK_THEME if is_dark else LIGHT_THEME
+        text_color = theme.get("TEXT")
+
+        for index, day_data in enumerate(daily_data):
+            # Icona meteo piccola
+            weather_icon = ft.Container(
+                content=ft.Image(
+                    src=f"https://openweathermap.org/img/wn/{day_data['icon']}@2x.png",
+                    width=32,
+                    height=32,
+                    fit=ft.ImageFit.CONTAIN,
+                ),
+                width=40,
+                alignment=ft.alignment.center
+            )
+
+            # Informazioni giorno
+            day_info = ft.Column([
+                ft.Text(
+                    day_data["day"],
+                    size=14,
+                    weight="w500" if index == 0 else "w400",
+                    color=text_color
+                ),
+                ft.Text(
+                    day_data["desc"],
+                    size=12,
+                    color=theme.get("SECONDARY_TEXT"),
+                    opacity=0.8
+                )
+            ], spacing=2, expand=True)
+
+            # Temperature high/low
+            temp_display = ft.Text(
+                f"{day_data['high']}°/{day_data['low']}°",
+                size=14,
+                weight="w500",
+                color=text_color
+            )
+
+            # Container per ogni giorno
+            day_container = ft.Container(
+                content=ft.Row([
+                    weather_icon,
+                    day_info,
+                    temp_display,
+                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, spacing=10),
+                padding=ft.padding.symmetric(horizontal=15, vertical=12),
+                margin=ft.margin.only(bottom=2),
+                bgcolor=theme.get("ACCENT", ft.Colors.BLUE_50) if index == 0 else None,  # Highlight today
+                border_radius=10,
+                on_click=lambda e, day=day_data: self._on_day_selected(day)
+            )
+
+            daily_items.append(day_container)
+
+        return ft.Container(
+            content=ft.Column(
+                daily_items,
+                spacing=0,
+                scroll=ft.ScrollMode.AUTO,
+            ),
+            expand=True,
+            padding=ft.padding.symmetric(horizontal=5)
+        )
+
+    def _on_day_selected(self, day_data):
+        """Gestisce la selezione di un giorno specifico."""
+        print(f"Selected day: {day_data['day']}")
+        
+        # Notifica il cambio di giorno attraverso lo state manager
+        if self.state_manager:
+            # Salva i dati del giorno selezionato
+            self.state_manager.set_state('selected_day', day_data)
+            
+            # Notifica l'evento per aggiornare l'UI
+            self.page.run_task(
+                self.state_manager._notify_observers, 
+                'day_selected_event', 
+                day_data
+            )

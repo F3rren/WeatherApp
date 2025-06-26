@@ -59,12 +59,12 @@ class LayoutManager:
     def create_containers(self, sidebar_content, info_content, hourly_content, weekly_content, chart_content,
         air_pollution_chart_content, air_pollution_content, animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
         """
-        Crea tutti i contenitori per il layout dell'applicazione.
+        Crea tutti i contenitori per il layout dell'applicazione con design moderno.
         
         Args:
             sidebar_content: Oggetto Sidebar da inserire nel container
             info_content: Contenuto del container info meteo
-            hourly_content: Contenuto del container info meteo
+            hourly_content: Contenuto del container previsioni orarie
             weekly_content: Contenuto del container previsioni settimanali
             chart_content: Contenuto del container grafico
             air_pollution_chart_content: Contenuto del container grafico inquinamento
@@ -72,52 +72,61 @@ class LayoutManager:
             animation_duration: Durata delle animazioni in millisecondi
             animation_curve: Curva di animazione
         """
+        # Sidebar con stile moderno
         self.containers['sidebar'] = LayoutBuilder.build_content_container(
             sidebar_content, 
-            {"xs": 12}, 
+            {"sm": 12, "md": 4, "lg": 3, "xl": 3}, 
             animation_duration,
             animation_curve
         )
         
+        # Container principale info meteo - full width nel contenuto principale
         self.containers['info'] = LayoutBuilder.build_content_container(
             info_content,
-            {"xs": 12, "sm": 12},
+            {"xs": 12},
             animation_duration,
             animation_curve
         )
+        
+        # Previsioni orarie - full width
         self.containers['hourly'] = LayoutBuilder.build_content_container(
             hourly_content, 
             {"xs": 12}, 
             animation_duration,
             animation_curve
         )
+        
+        # Previsioni settimanali - metà larghezza nel layout a due colonne
         self.containers['weekly'] = LayoutBuilder.build_content_container(
             weekly_content,
-            {"xs": 12, "sm": 12, "lg": 8},
+            {"xs": 12},
             animation_duration,
             animation_curve
         )
         
+        # Informazioni inquinamento - metà larghezza
         self.containers['air_pollution'] = LayoutBuilder.build_content_container(
             air_pollution_content,
-            {"xs": 12, "sm": 12, "lg": 4},
+            {"xs": 12},
             animation_duration,
             animation_curve
         )
 
+        # Grafico temperature - metà larghezza
         self.containers['chart'] = LayoutBuilder.build_content_container(
             chart_content,
-            {"xs": 12, "sm": 12, "md": 12, "lg": 5},
+            {"xs": 12},
             animation_duration,
             animation_curve
         )
 
+        # Grafico inquinamento - metà larghezza
         self.containers['air_pollution_chart'] = LayoutBuilder.build_content_container(
             air_pollution_chart_content,
-            {"xs": 12, "sm": 12, "md": 12, "lg": 7},
+            {"xs": 12},
             animation_duration,
             animation_curve
-            )        
+        )        
     def build_layout(self) -> ft.Control:
         """
         Costruisce il layout principale dell'applicazione.

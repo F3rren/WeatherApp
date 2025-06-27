@@ -82,8 +82,13 @@ class AirPollutionChartDisplay(ft.Container):
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
             self.content = self.build()
-            if self.page:
-                self.update()
+            # Only update if this control is already in the page
+            try:
+                if self.page and hasattr(self, 'page') and self.page is not None:
+                    self.update()
+            except Exception:
+                # Control not yet added to page, update will happen when added
+                pass
         except Exception as e:
             logging.error(f"AirPollutionChartDisplay: Error updating UI: {e}")
 

@@ -300,7 +300,7 @@ class WeatherView:
         else:
             location = ", ".join(filter(None, [location_data.get('city', 'Unknown'), location_data.get('region', 'Unknown'), location_data.get('country', 'Unknown')]))
         
-        # Create and store the MainWeatherInfo instance
+        # Create new MainWeatherInfo instance for each update to ensure proper refresh
         self.main_weather_info_instance = MainWeatherInfo(
             city=city,
             location=location,
@@ -316,7 +316,7 @@ class WeatherView:
         self.main_weather_info_instance._temp_min = temp_min
         self.main_weather_info_instance._temp_max = temp_max
 
-        # Create and store the AirConditionInfo instance
+        # Create new AirConditionInfo instance for each update to ensure proper refresh  
         self.air_condition_instance = AirConditionInfo(
             feels_like=feels_like,
             humidity=humidity,
@@ -327,7 +327,7 @@ class WeatherView:
             expand=True # Ensure it expands if needed within the column
         )
         
-        # Combine MainWeatherInfo and AirConditionInfo in a Column
+        # Always recreate the Column to ensure proper refresh
         self.info_container.content = ft.Column(
             controls=[
                 self.main_weather_info_instance,

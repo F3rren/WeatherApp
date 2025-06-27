@@ -98,9 +98,13 @@ class WeeklyForecastDisplay(ft.Container):
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
             self.content = self.build()
-            # Only update if this control is already in the page
-            if self.page and hasattr(self, '_Control__uid') and self._Control__uid is not None:
-                self.update()
+            # Only update if this control is already in the page - use try/catch for safety
+            if self.page:
+                try:
+                    self.update()
+                except (AssertionError, AttributeError) as update_error:
+                    # Control not yet added to page, skip update
+                    logging.debug(f"WeeklyForecastDisplay: Skipping update - control not in page yet: {update_error}")
         except Exception as e:
             logging.error(f"WeeklyForecastDisplay: Error updating UI: {e}\n{traceback.format_exc()}")
 
@@ -229,7 +233,7 @@ class WeeklyForecastDisplay(ft.Container):
                     )
                 ),
                 ft.TextSpan(
-                    " / ", 
+                    "\n", 
                     ft.TextStyle(
                         color=self._current_text_color, 
                         size=self._text_handler.get_size('temp_value')

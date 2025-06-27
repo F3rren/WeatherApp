@@ -50,7 +50,7 @@ class ApiService:
         Attempts first with coordinates, then with city name if coordinates are not available.
         """
         try:
-            logging.info(f"get_weather_data called with: city='{city}', lat={lat}, lon={lon}, language='{language}', unit='{unit}'")
+            #logging.info(f"get_weather_data called with: city='{city}', lat={lat}, lon={lon}, language='{language}', unit='{unit}'")
             url = f"{API_BASE_URL}{API_WEATHER_ENDPOINT}"
             # First attempt with coordinates
             if lat is not None and lon is not None:
@@ -61,7 +61,7 @@ class ApiService:
                     "lang": language,
                     "appid": self._api_key
                 }
-                logging.info(f"Making API call with coordinates. URL: {url}, params: {params}")
+                #logging.info(f"Making API call with coordinates. URL: {url}, params: {params}")
                 response = requests.get(url, params=params)
                 response.raise_for_status() # Added for consistent error handling
                 # if response.status_code == 200: # No longer needed due to raise_for_status
@@ -78,11 +78,11 @@ class ApiService:
                     "units": unit,
                     "lang": language
                 }
-                logging.info(f"Making API call with city. URL: {url}, params: {params}")
+                #logging.info(f"Making API call with city. URL: {url}, params: {params}")
                 response = requests.get(url, params=params)
                 response.raise_for_status()
                 result = response.json()
-                logging.info(f"API call successful. Response contains {len(result.get('list', []))} forecast items")
+                #logging.info(f"API call successful. Response contains {len(result.get('list', []))} forecast items")
                 return result
             else:
                 # This case should ideally not be reached if called from WeatherView,

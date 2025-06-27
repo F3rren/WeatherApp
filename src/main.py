@@ -237,12 +237,16 @@ class MeteoApp:
 
     async def update_weather_with_sidebar(self, city: str, language: str, unit: str):
         """Update both main weather view and sidebar weekly forecast."""
+        print(f"DEBUG: update_weather_with_sidebar called with city: {city}, language: {language}, unit: {unit}")
+        
         # Update main weather view
         result = await self.weather_view_instance.update_by_city(city, language, unit)
+        print(f"DEBUG: Main weather view updated for city: {city}")
         
         # Update sidebar weekly forecast
         if self.sidebar_manager:
             self.sidebar_manager.update_weekly_forecast(city)
+            print(f"DEBUG: Sidebar weekly forecast updated for city: {city}")
         
         return result
 

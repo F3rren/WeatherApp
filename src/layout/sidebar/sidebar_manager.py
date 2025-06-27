@@ -63,10 +63,13 @@ class SidebarManager(ft.Container):
         """
         text_color = (DARK_THEME if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME)
         language = self.state_manager.get_state("language") or "en"
-        def handle_city_selected(city):
+        async def handle_city_selected(city):
+            print(f"DEBUG: handle_city_selected called with city: {city}")
             language = self.state_manager.get_state("language") or "en"
             unit = self.state_manager.get_state("unit") or "metric"
-            return self.update_weather_callback(city, language, unit)
+            result = await self.update_weather_callback(city, language, unit)
+            print(f"DEBUG: Weather update completed for city: {city}")
+            return result
         self.pop_menu = PopMenu(
             page=self.page,
             state_manager=self.state_manager,
@@ -112,9 +115,13 @@ class SidebarManager(ft.Container):
             )
             # Trigger UI refresh by updating the content and then updating the sidebar
             self.content = self.build()
-            # Only update if this sidebar is already in the page
-            if self.page and hasattr(self, '_Control__uid') and self._Control__uid is not None:
-                self.update()
+            # Only update if this sidebar is already in the page - use try/catch for safety
+            if self.page:
+                try:
+                    self.update()
+                except (AssertionError, AttributeError):
+                    # Control not yet added to page, skip update
+                    pass
         
     def get_weekly_forecast_content(self):
         """Get the weekly forecast content for the sidebar."""

@@ -96,8 +96,13 @@ class TemperatureChartDisplay(ft.Container):
             # Verifica che i dati siano validi prima di ricostruire il contenuto
             if self._validate_data():
                 self.content = self.build()
-                if self.page:
-                    self.update()
+                # Only update if this control is already in the page
+                try:
+                    if self.page and hasattr(self, 'page') and self.page is not None:
+                        self.update()
+                except Exception:
+                    # Control not yet added to page, update will happen when added
+                    pass
             else:
                 logging.warning("Dati non validi per l'aggiornamento del grafico")
                 
@@ -133,8 +138,13 @@ class TemperatureChartDisplay(ft.Container):
                 alignment=ft.alignment.center,
                 padding=20
             )
-            if self.page:
-                self.update()
+            # Only update if this control is already in the page
+            try:
+                if self.page and hasattr(self, 'page') and self.page is not None:
+                    self.update()
+            except Exception:
+                # Control not yet added to page, update will happen when added
+                pass
         except Exception as e:
             logging.error(f"Failed to reset to safe state: {str(e)}", exc_info=True)
 

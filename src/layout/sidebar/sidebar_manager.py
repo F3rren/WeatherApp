@@ -10,6 +10,7 @@ from typing import Callable, Optional
 from layout.sidebar.filter.filter import Filter
 from layout.sidebar.popmenu.pop_menu import PopMenu
 from layout.sidebar.searchbar.search_bar import SearchBar
+from layout.weeklyweather.weekly_weather import WeeklyForecastDisplay  # Import WeeklyForecastDisplay
 from state_manager import StateManager
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
@@ -51,6 +52,8 @@ class SidebarManager(ft.Container):
         self.pop_menu = None
         self.search_bar = None
         self.filter = None
+        self.weekly_forecast_display = None  # Add WeeklyForecastDisplay instance
+        self.current_city = None  # Track current city for weekly forecast
         self.update_ui()  # Initial UI setup
         self.content = self.build()
 
@@ -99,6 +102,37 @@ class SidebarManager(ft.Container):
         self.content = self.build()
         # self.update()  # <-- RIMOSSO: Non chiamare update() finché il controllo non è aggiunto alla pagina
 
+    def update_weekly_forecast(self, city: str):
+        """Update the weekly forecast display with new city data."""
+        self.current_city = city
+        if city:
+            self.weekly_forecast_display = WeeklyForecastDisplay(
+                page=self.page,
+                city=city
+            )
+            # Trigger UI refresh by updating the content and then updating the sidebar
+            self.content = self.build()
+            # Only update if this sidebar is already in the page
+            if self.page and hasattr(self, '_Control__uid') and self._Control__uid is not None:
+                self.update()
+        
+    def get_weekly_forecast_content(self):
+        """Get the weekly forecast content for the sidebar."""
+        if self.weekly_forecast_display:
+            return self.weekly_forecast_display
+        else:
+            # Placeholder when no city is selected
+            return ft.Container(
+                content=ft.Text(
+                    "Select a city to view weekly forecast",
+                    size=14,
+                    color=(DARK_THEME if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME).get("SECONDARY_TEXT"),
+                    text_align=ft.TextAlign.CENTER
+                ),
+                padding=ft.padding.all(20),
+                alignment=ft.alignment.center
+            )
+
     def build(self):
         """
         Costruisce una moderna sidebar con previsioni giornaliere simile al design mostrato.
@@ -119,97 +153,15 @@ class SidebarManager(ft.Container):
             margin=ft.margin.only(bottom=10)
         )
 
-        # Sezione previsioni giornaliere
-        daily_forecasts = self._build_daily_forecast_list()
+        # Sezione previsioni giornaliere - usa il WeeklyForecastDisplay completo
+        weekly_forecast_content = self.get_weekly_forecast_content()
         
         return ft.Column([
             header_section,
-            daily_forecasts,
+            weekly_forecast_content,
         ], spacing=0, expand=True)
 
-    def _build_daily_forecast_list(self):
-        """Costruisce la lista delle previsioni giornaliere per la sidebar."""
-        # Dati esempio per le previsioni giornaliere (sostituisci con dati reali)
-        daily_data = [
-            {"day": "Today", "high": 41, "low": 37, "icon": "01d", "desc": "Sunny cloudy"},
-            {"day": "Tomorrow", "high": 39, "low": 33, "icon": "02d", "desc": "Partly cloudy"},
-            {"day": "Wednesday", "high": 37, "low": 31, "icon": "03d", "desc": "Mostly cloudy"},
-            {"day": "Thursday", "high": 36, "low": 30, "icon": "04d", "desc": "Cloudy"},
-            {"day": "Friday", "high": 37, "low": 29, "icon": "01d", "desc": "Sunny"},
-            {"day": "Saturday", "high": 39, "low": 31, "icon": "02d", "desc": "Partly cloudy"},
-            {"day": "Sunday", "high": 38, "low": 32, "icon": "01d", "desc": "Sunny"},
-            {"day": "Monday", "high": 36, "low": 29, "icon": "03d", "desc": "Cloudy"},
-            {"day": "Tuesday", "high": 34, "low": 28, "icon": "04d", "desc": "Overcast"},
-            {"day": "Wednesday", "high": 33, "low": 27, "icon": "09d", "desc": "Rain"},
-        ]
 
-        daily_items = []
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        theme = DARK_THEME if is_dark else LIGHT_THEME
-        text_color = theme.get("TEXT")
-
-        for index, day_data in enumerate(daily_data):
-            # Icona meteo piccola
-            weather_icon = ft.Container(
-                content=ft.Image(
-                    src=f"https://openweathermap.org/img/wn/{day_data['icon']}@2x.png",
-                    width=32,
-                    height=32,
-                    fit=ft.ImageFit.CONTAIN,
-                ),
-                width=40,
-                alignment=ft.alignment.center
-            )
-
-            # Informazioni giorno
-            day_info = ft.Column([
-                ft.Text(
-                    day_data["day"],
-                    size=14,
-                    weight="w500" if index == 0 else "w400",
-                    color=text_color
-                ),
-                ft.Text(
-                    day_data["desc"],
-                    size=12,
-                    color=theme.get("SECONDARY_TEXT"),
-                    opacity=0.8
-                )
-            ], spacing=2, expand=True)
-
-            # Temperature high/low
-            temp_display = ft.Text(
-                f"{day_data['high']}°/{day_data['low']}°",
-                size=14,
-                weight="w500",
-                color=text_color
-            )
-
-            # Container per ogni giorno
-            day_container = ft.Container(
-                content=ft.Row([
-                    weather_icon,
-                    day_info,
-                    temp_display,
-                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, spacing=10),
-                padding=ft.padding.symmetric(horizontal=15, vertical=12),
-                margin=ft.margin.only(bottom=2),
-                bgcolor=theme.get("ACCENT", ft.Colors.BLUE_50) if index == 0 else None,  # Highlight today
-                border_radius=10,
-                on_click=lambda e, day=day_data: self._on_day_selected(day)
-            )
-
-            daily_items.append(day_container)
-
-        return ft.Container(
-            content=ft.Column(
-                daily_items,
-                spacing=0,
-                scroll=ft.ScrollMode.AUTO,
-            ),
-            expand=True,
-            padding=ft.padding.symmetric(horizontal=5)
-        )
 
     def _on_day_selected(self, day_data):
         """Gestisce la selezione di un giorno specifico."""

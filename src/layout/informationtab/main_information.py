@@ -19,7 +19,10 @@ class MainWeatherInfo(ft.Container):
         self._location_data = location
         self._temperature_data = temperature
         self._weather_icon_data = weather_icon
-        
+        self._weather_description = ""
+        self._feels_like = None
+        self._temp_min = None
+        self._temp_max = None
         self.page = page
 
         # Initialize state variables
@@ -97,6 +100,12 @@ class MainWeatherInfo(ft.Container):
                     temp = api.get_current_temperature(weather_data)
                     if temp is not None:
                         self._temperature_data = temp
+                    # Aggiorna anche descrizione, feels_like, min/max
+                    self._weather_description = api.get_weather_description(weather_data)
+                    self._feels_like = api.get_feels_like_temperature(weather_data)
+                    tmin, tmax = api.get_min_max_temperature(weather_data)
+                    self._temp_min = tmin
+                    self._temp_max = tmax
 
             # Update theme color
             if self.page and self.page.theme_mode:
@@ -115,7 +124,7 @@ class MainWeatherInfo(ft.Container):
             logging.error(f"MainWeatherInfo: Error updating UI: {e}\n{traceback.format_exc()}")
 
     def build(self):
-        """Constructs a modern UI for the main weather information similar to the design shown."""
+        """Costruisce la UI principale con testo tradotto e dati API."""
         try:
             if not self._text_handler:
                 logging.error(f"MainWeatherInfo ({self._city_data}): Text handler is None in build.")
@@ -124,9 +133,20 @@ class MainWeatherInfo(ft.Container):
             # Format temperature unit symbol
             unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
 
-            # Get current weather description (you might need to get this from the weather data)
-            weather_description = "Mostly sunny • Feels like 47°"  # Placeholder - replace with actual data
-            
+            # Usa la descrizione già tradotta dalla API
+            weather_description = (self._weather_description or "").capitalize()
+
+            # Mostra anche il feels_like se disponibile
+            feels_like_str = ""
+            if self._feels_like is not None:
+                feels_like_label = TranslationService.translate_from_dict("air_condition_items", "feels_like", self._current_language)
+                feels_like_str = f"{feels_like_label} {self._feels_like}{unit_symbol}"
+
+            # Unisce descrizione e feels_like
+            description_line = weather_description
+            if feels_like_str:
+                description_line = f"{weather_description} • {feels_like_str}"
+
             # Determine weather icon and color based on weather icon code
             weather_icon = ft.Icons.WB_SUNNY
             icon_color = ft.Colors.ORANGE_400
@@ -220,7 +240,7 @@ class MainWeatherInfo(ft.Container):
                     # Weather description
                     ft.Container(
                         content=ft.Text(
-                            weather_description,
+                            description_line,
                             size=16,
                             color=self._current_text_color,
                             weight="w400"
@@ -230,10 +250,13 @@ class MainWeatherInfo(ft.Container):
                     
                     # Today's additional info (high/low temperatures)
                     ft.Row([
-                        ft.Text("High: 41° ", size=14, color=self._current_text_color),
-                        ft.Text("Low: 30°", size=14, color=self._current_text_color),
-                    ], spacing=20),
-                    
+                        ft.Text(
+                            f"{TranslationService.translate_from_dict('main_information_items', 'high', self._current_language).capitalize()}: {self._temp_max}{unit_symbol}",
+                            size=14, color=self._current_text_color),
+                        ft.Text(
+                            f"{TranslationService.translate_from_dict('main_information_items', 'low', self._current_language).capitalize()}: {self._temp_min}{unit_symbol}",
+                            size=14, color=self._current_text_color),
+                       ], spacing=20),
                 ], alignment=ft.MainAxisAlignment.START, spacing=0),
                 padding=ft.padding.only(bottom=10)
             )

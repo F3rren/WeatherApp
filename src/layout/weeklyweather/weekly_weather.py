@@ -14,7 +14,7 @@ class WeeklyForecastDisplay(ft.Container):
     """
 
     def __init__(self, page: ft.Page, city: str, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         self.page = page
         self._city = city
         self._api_service = ApiService()
@@ -98,7 +98,8 @@ class WeeklyForecastDisplay(ft.Container):
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
             self.content = self.build()
-            if self.page:
+            # Only update if this control is already in the page
+            if self.page and hasattr(self, '_Control__uid') and self._Control__uid is not None:
                 self.update()
         except Exception as e:
             logging.error(f"WeeklyForecastDisplay: Error updating UI: {e}\n{traceback.format_exc()}")

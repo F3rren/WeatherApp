@@ -32,7 +32,6 @@ class MeteoApp:
         self.sidebar_container = None
         self.info_container_wrapper = None
         self.hourly_container_wrapper = None
-        self.weekly_container_wrapper = None
         self.chart_container_wrapper = None
         self.air_pollution_chart_container_wrapper = None
         self.air_pollution_container_wrapper = None
@@ -74,10 +73,6 @@ class MeteoApp:
         if self.hourly_container_wrapper:
             self.hourly_container_wrapper.bgcolor = theme.get("HOURLY")
             self.hourly_container_wrapper.update()
-        
-        if self.weekly_container_wrapper:
-            self.weekly_container_wrapper.bgcolor = theme.get("WEEKLY")
-            self.weekly_container_wrapper.update()
         
         if self.chart_container_wrapper:
             self.chart_container_wrapper.bgcolor = theme.get("CHART")
@@ -126,7 +121,7 @@ class MeteoApp:
 
         self.weather_view_instance = WeatherView(page) # Store instance
         
-        info_container, hourly_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = self.weather_view_instance.get_containers()
+        info_container, hourly_container, chart_container, air_pollution_container, air_pollution_chart_container = self.weather_view_instance.get_containers()
         
         # Inizializza il servizio di location toggle
         self.location_toggle_service = LocationToggleService(
@@ -146,7 +141,7 @@ class MeteoApp:
             state_manager=self.state_manager,
             location_toggle_service=self.location_toggle_service,
             theme_toggle_service=self.theme_toggle_service,
-            update_weather_callback=self.weather_view_instance.update_by_city # Use instance
+            update_weather_callback=self.update_weather_with_sidebar # Use unified callback
         )
         
         # Ottieni l'istanza della sidebar dal gestore
@@ -163,7 +158,6 @@ class MeteoApp:
             sidebar_content=sidebar_control, # Usa l'istanza di SidebarManager
             info_content=info_container,
             hourly_content=hourly_container,
-            weekly_content=weekly_container,
             chart_content=chart_container,
             air_pollution_chart_content=air_pollution_chart_container,
             air_pollution_content=air_pollution_container
@@ -174,7 +168,6 @@ class MeteoApp:
         self.sidebar_container = containers['sidebar']
         self.info_container_wrapper = containers['info']
         self.hourly_container_wrapper = containers['hourly']
-        self.weekly_container_wrapper = containers['weekly']
         self.chart_container_wrapper = containers['chart']
         self.air_pollution_chart_container_wrapper = containers['air_pollution_chart']
         self.air_pollution_container_wrapper = containers['air_pollution']
@@ -185,7 +178,12 @@ class MeteoApp:
         # Initial update of container colors
         self._update_container_colors()
 
-        await self.weather_view_instance.update_by_city( # Use instance
+        # Assicuriamoci che lo StateManager sia correttamente inizializzato
+        await self.state_manager.set_state("language", DEFAULT_LANGUAGE)
+        await self.state_manager.set_state("unit", DEFAULT_UNIT_SYSTEM)
+        await self.state_manager.set_state("city", DEFAULT_CITY)
+
+        await self.update_weather_with_sidebar( # Use unified method
             city=DEFAULT_CITY,
             language=DEFAULT_LANGUAGE,
             unit=DEFAULT_UNIT_SYSTEM
@@ -236,6 +234,17 @@ class MeteoApp:
             
         # Aggiorna anche i container se necessario
         self._update_container_colors()
+
+    async def update_weather_with_sidebar(self, city: str, language: str, unit: str):
+        """Update both main weather view and sidebar weekly forecast."""
+        # Update main weather view
+        result = await self.weather_view_instance.update_by_city(city, language, unit)
+        
+        # Update sidebar weekly forecast
+        if self.sidebar_manager:
+            self.sidebar_manager.update_weekly_forecast(city)
+        
+        return result
 
 def main():
     """Entry point for the application"""

@@ -81,6 +81,8 @@ TRANSLATIONS = {
         },
         "main_information_items": {
             "current_location": "Current Location",
+            "high": "High",
+            "low": "Low",
         },
         "hourly_forecast_items": {
             "hourly_forecast": "Hourly Forecast",
@@ -175,7 +177,9 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "当前位置"
+            "current_location": "当前位置",
+            "high": "最高",
+            "low": "最低",
         },
         "hourly_forecast_items": {
             "hourly_forecast": "每小时预报",
@@ -295,7 +299,9 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "वर्तमान स्थान"
+            "current_location": "वर्तमान स्थान",
+            "high": "उच्च",
+            "low": "निम्न",
         },
         "hourly_forecast_items": {
             "hourly_forecast": "प्रति घंटा पूर्वानुमान",
@@ -391,7 +397,9 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Ubicación Actual"
+            "current_location": "Ubicación Actual",
+            "high": "Alta",
+            "low": "Baja",
         },
         "hourly_forecast_items": {
             "hourly_forecast": "Pronóstico por Horas",
@@ -487,7 +495,9 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "الموقع الحالي"
+            "current_location": "الموقع الحالي",
+            "high": "مرتفع",
+            "low": "منخفض",
         },
         "hourly_forecast_items": {
             "hourly_forecast": "التوقعات بالساعة",
@@ -582,7 +592,9 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Lokasi Saat Ini"
+            "current_location": "Lokasi Saat Ini",
+            "high": "Tinggi",
+            "low": "Rendah",
         },
         "hourly_forecast_items": {
             "hourly_forecast": "Prakiraan Per Jam",
@@ -677,7 +689,9 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "現在地"
+            "current_location": "現在地",
+            "high": "最高",
+            "low": "最低",
         },
         "hourly_forecast_items": {
             "hourly_forecast": "時間別予報",
@@ -773,7 +787,9 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Posizione Corrente"
+            "current_location": "Posizione Corrente",
+            "high": "Massima",
+            "low": "Minima",
         },
         "hourly_forecast_items": {
             "hourly_forecast": "Previsioni Orarie",
@@ -869,7 +885,9 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Aktueller Standort"
+            "current_location": "Aktueller Standort",
+            "high": "Hoch",
+            "low": "Niedrig",
         },
         "hourly_forecast_items": {
             "hourly_forecast": "Stündliche Vorhersage",
@@ -964,7 +982,9 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Position actuelle"
+            "current_location": "Position actuelle",
+            "high": "Haute",
+            "low": "Basse",
         },
         "hourly_forecast_items": {
             "hourly_forecast": "Prévisions Horaires",
@@ -1059,7 +1079,9 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Localização Atual"
+            "current_location": "Localização Atual",
+            "high": "Alta",
+            "low": "Baixa",
         },
         "hourly_forecast_items": {
             "hourly_forecast": "Previsão Horária",
@@ -1154,7 +1176,9 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Текущее местоположение"
+            "current_location": "Текущее местоположение",
+            "high": "Высокая",
+            "low": "Низкая",
         },
         "hourly_forecast_items": {
             "hourly_forecast": "Почасовой прогноз",

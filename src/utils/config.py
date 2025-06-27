@@ -4,7 +4,7 @@ Centralizes all configuration values and settings.
 """
 
 # Default application settings
-DEFAULT_CITY = "Milano"
+DEFAULT_CITY = "Milano,IT"
 DEFAULT_LANGUAGE = "it"
 DEFAULT_UNIT_SYSTEM = "metric"  # "metric", "imperial", or "standard"
 DEFAULT_THEME_MODE = "light"  # "light" or "dark"

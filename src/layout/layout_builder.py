@@ -76,7 +76,7 @@ class LayoutBuilder:
         )
 
     @staticmethod
-    def build_main_layout(sidebar, info, hourly, weekly, air_pollution, chart, air_pollution_chart) -> ft.Control:
+    def build_main_layout(sidebar, info, hourly, air_pollution, chart, air_pollution_chart) -> ft.Control:
         """
         Costruisce il layout principale responsivo dell'applicazione con design moderno.
         Layout orizzontale: sidebar sinistra + contenuto principale a destra.
@@ -85,7 +85,6 @@ class LayoutBuilder:
             sidebar: Container della barra laterale
             info: Container delle informazioni principali meteo
             hourly: Container delle previsioni orarie
-            weekly: Container delle previsioni settimanali
             air_pollution: Container delle informazioni sull'inquinamento
             chart: Container del grafico temperature
             air_pollution_chart: Container del grafico inquinamento
@@ -117,10 +116,9 @@ class LayoutBuilder:
                     
                     # Riga con condizioni attuali e dettagli
                     ft.ResponsiveRow([
-                        # Condizioni attuali (sinistra)
+                        # Condizioni attuali (sinistra) - ora solo air_pollution
                         ft.Container(
                             content=ft.Column([
-                                weekly,
                                 air_pollution
                             ], spacing=10),
                             col={"sm": 12, "md": 6, "lg": 6},

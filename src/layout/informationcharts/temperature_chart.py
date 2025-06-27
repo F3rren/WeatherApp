@@ -68,24 +68,75 @@ class TemperatureChartDisplay(ft.Container):
 
         try:
             if self._state_manager:
-                new_language = self._state_manager.get_state('language') or self._current_language
-                new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
+                new_language = self._state_manager.get_state('language')
+                new_unit_system = self._state_manager.get_state('unit')
                 
-                self._current_language = new_language
-                self._current_unit_system = new_unit_system
+                # Usa i valori predefiniti se i nuovi valori sono None
+                self._current_language = new_language if new_language is not None else self._current_language
+                self._current_unit_system = new_unit_system if new_unit_system is not None else self._current_unit_system
 
-            # Update unit symbol and text color
-            self._unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
+            # Verifica che TranslationService sia disponibile
+            if not hasattr(TranslationService, 'get_unit_symbol'):
+                logging.warning("TranslationService.get_unit_symbol non disponibile, uso simbolo predefinito")
+                self._unit_symbol = "°"
+            else:
+                # Update unit symbol and text color
+                self._unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
             
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            # Verifica che la pagina abbia un tema impostato
+            if not hasattr(self.page, 'theme_mode'):
+                logging.warning("theme_mode non disponibile nella pagina, uso tema chiaro")
+                is_dark = False
+            else:
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            
             theme = DARK_THEME if is_dark else LIGHT_THEME
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
-            self.content = self.build()
+            # Verifica che i dati siano validi prima di ricostruire il contenuto
+            if self._validate_data():
+                self.content = self.build()
+                if self.page:
+                    self.update()
+            else:
+                logging.warning("Dati non validi per l'aggiornamento del grafico")
+                
+        except Exception as e:
+            logging.error(f"TemperatureChartDisplay: Error updating UI: {str(e)}", exc_info=True)
+            # Prova a ripristinare uno stato stabile
+            self._reset_to_safe_state()
+
+    def _validate_data(self):
+        """Validates the chart data for consistency."""
+        if not isinstance(self._days, list) or not isinstance(self._temp_min, list) or not isinstance(self._temp_max, list):
+            return False
+        
+        if len(self._days) != len(self._temp_min) or len(self._days) != len(self._temp_max):
+            return False
+        
+        return all(isinstance(temp, (int, float)) for temp in self._temp_min + self._temp_max)
+
+    def _reset_to_safe_state(self):
+        """Resets the component to a safe state in case of errors."""
+        try:
+            self._days = []
+            self._temp_min = []
+            self._temp_max = []
+            self._unit_symbol = "°"
+            self.content = ft.Container(
+                content=ft.Text(
+                    "Error loading temperature chart",
+                    color=ft.Colors.RED_400,
+                    size=14,
+                    weight=ft.FontWeight.W_500
+                ),
+                alignment=ft.alignment.center,
+                padding=20
+            )
             if self.page:
                 self.update()
         except Exception as e:
-            logging.error(f"TemperatureChartDisplay: Error updating UI: {e}")
+            logging.error(f"Failed to reset to safe state: {str(e)}", exc_info=True)
 
     def build(self):
         """Constructs modern UI for the temperature chart."""

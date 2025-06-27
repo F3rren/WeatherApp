@@ -197,18 +197,22 @@ class WeatherView:
 
 
     async def update_by_city(self, city: str, language: str, unit: str) -> None:
+        logging.info(f"update_by_city called with: city='{city}', language='{language}', unit='{unit}'")
         self._set_loading(True)
         import asyncio
         try:
             try:
                 # Recupera i dati in thread separato
                 weather_data, city_info = await asyncio.gather(
-                    asyncio.to_thread(self.api_service.get_weather_data, city, None, language, unit),
+                    asyncio.to_thread(self.api_service.get_weather_data, city=city, lat=None, lon=None, language=language, unit=unit),
                     asyncio.to_thread(self.api_service.get_city_info, city)
                 )
                 self.weather_data = weather_data
                 self.city_info = city_info
+                logging.info(f"Weather data keys: {list(weather_data.keys()) if weather_data else 'None'}")
+                logging.info(f"City info: {city_info}")
             except Exception as e:
+                logging.error(f"Errore durante il recupero dati: {e}")
                 print(f"Errore durante il recupero dati: {e}")
                 return
 
@@ -281,6 +285,10 @@ class WeatherView:
         wind_speed = self.api_service.get_wind_speed(self.weather_data)
         pressure = self.api_service.get_pressure(self.weather_data)
         icon_code = self.api_service.get_weather_icon_code(self.weather_data)
+        weather_description = self.api_service.get_weather_description(self.weather_data)
+        temp_min, temp_max = self.api_service.get_min_max_temperature(self.weather_data)
+
+        logging.info(f"Extracted weather data: temp={temperature}, temp_min={temp_min}, temp_max={temp_max}, description='{weather_description}'")
 
         # Determina la posizione da mostrare
         location_data = self.weather_data.get('location_data', {})
@@ -301,6 +309,12 @@ class WeatherView:
             page=self.page,
             expand=True # Ensure it expands if needed within the column
         )
+
+        # Immediately set the additional weather data
+        self.main_weather_info_instance._weather_description = weather_description
+        self.main_weather_info_instance._feels_like = feels_like
+        self.main_weather_info_instance._temp_min = temp_min
+        self.main_weather_info_instance._temp_max = temp_max
 
         # Create and store the AirConditionInfo instance
         self.air_condition_instance = AirConditionInfo(
@@ -465,11 +479,10 @@ class WeatherView:
 
     def get_containers(self) -> tuple:
         """Frontend: Returns UI containers for display"""
-        # Non restituire più loading_container
+        # Non restituire più loading_container e weekly_container (ora nella sidebar)
         return (
             self.info_container,
             self.hourly_container,
-            self.weekly_container,
             self.chart_container,
             self.air_pollution_container,
             self.air_pollution_chart_container

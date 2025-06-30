@@ -54,7 +54,7 @@ class MainWeatherInfo(ft.Container):
                 # NOTE: Without a dedicated cleanup method (like will_unmount),
                 # these observers are never unregistered.
                 self._state_manager.register_observer("language_event", self.update_ui)
-                self._state_manager.register_observer("unit_event", self.update_ui)
+                self._state_manager.register_observer("unit", self.update_ui)
                 self._state_manager.register_observer("theme_event", self.update_ui)
             
             original_on_resize = self.page.on_resize
@@ -221,118 +221,128 @@ class MainWeatherInfo(ft.Container):
                 margin=ft.margin.only(bottom=24)
             )
 
-            # Create main weather section with temperature and large icon - design hero
+            # Create main weather section with temperature and icon - design hero migliorato
             weather_main_section = ft.Container(
-                content=ft.Row([
-                    # Left side: Temperature display modernizzato
-                    ft.Container(
-                        content=ft.Column([
-                            ft.Row([
-                                ft.Text(
-                                    str(self._temperature_data),
-                                    size=80,  # Temperatura più grande
-                                    weight="w200",  # Peso ancora più leggero
-                                    color=self._current_text_color,
-                                ),
-                                ft.Container(
-                                    content=ft.Text(
-                                        unit_symbol,
-                                        size=28,
-                                        weight="w300",
-                                        color=ft.Colors.with_opacity(0.8, self._current_text_color),
-                                    ),
-                                    padding=ft.padding.only(top=8)
-                                ),
-                            ], alignment=ft.MainAxisAlignment.START, spacing=4),
-                            
-                            # Weather description con stile moderno
-                            ft.Container(
-                                content=ft.Text(
-                                    description_line,
-                                    size=18,
-                                    color=ft.Colors.with_opacity(0.9, self._current_text_color),
-                                    weight="w400"
-                                ),
-                                margin=ft.margin.only(top=8, bottom=16)
+                content=ft.Column([
+                    # Temperature and icon on same row
+                    ft.Row([
+                        ft.Text(
+                            str(self._temperature_data),
+                            size=72,
+                            weight="w200",
+                            color=self._current_text_color,
+                        ),
+                        ft.Container(
+                            content=ft.Text(
+                                unit_symbol,
+                                size=24,
+                                weight="w300",
+                                color=ft.Colors.with_opacity(0.8, self._current_text_color),
                             ),
-                            
-                            # High/Low temperatures con design cards
-                            ft.Row([
-                                ft.Container(
-                                    content=ft.Column([
-                                        ft.Text(
-                                            TranslationService.translate_from_dict('main_information_items', 'high', self._current_language).upper(),
-                                            size=11,
-                                            color=ft.Colors.with_opacity(0.7, self._current_text_color),
-                                            weight="w500"
-                                        ),
-                                        ft.Text(
-                                            f"{self._temp_max}{unit_symbol}",
-                                            size=16,
-                                            color=self._current_text_color,
-                                            weight="w600"
-                                        ),
-                                    ], spacing=2, alignment=ft.MainAxisAlignment.CENTER),
-                                    padding=ft.padding.symmetric(horizontal=16, vertical=8),
-                                    border_radius=12,
-                                    bgcolor=ft.Colors.with_opacity(0.1, bg_color),
-                                    border=ft.border.all(1, ft.Colors.with_opacity(0.2, bg_color)),
+                            padding=ft.padding.only(top=6)
+                        ),
+                        # Weather icon inline with temperature
+                        ft.Container(
+                            content=ft.Container(
+                                content=ft.Icon(
+                                    weather_icon,
+                                    size=64,
+                                    color=ft.Colors.WHITE,
                                 ),
-                                ft.Container(
-                                    content=ft.Column([
-                                        ft.Text(
-                                            TranslationService.translate_from_dict('main_information_items', 'low', self._current_language).upper(),
-                                            size=11,
-                                            color=ft.Colors.with_opacity(0.7, self._current_text_color),
-                                            weight="w500"
-                                        ),
-                                        ft.Text(
-                                            f"{self._temp_min}{unit_symbol}",
-                                            size=16,
-                                            color=self._current_text_color,
-                                            weight="w600"
-                                        ),
-                                    ], spacing=2, alignment=ft.MainAxisAlignment.CENTER),
-                                    padding=ft.padding.symmetric(horizontal=16, vertical=8),
-                                    border_radius=12,
-                                    bgcolor=ft.Colors.with_opacity(0.1, bg_color),
-                                    border=ft.border.all(1, ft.Colors.with_opacity(0.2, bg_color)),
+                                width=96,
+                                height=96,
+                                border_radius=24,
+                                gradient=ft.LinearGradient(
+                                    begin=ft.alignment.top_left,
+                                    end=ft.alignment.bottom_right,
+                                    colors=[
+                                        ft.Colors.with_opacity(0.9, bg_color),
+                                        ft.Colors.with_opacity(0.7, bg_color),
+                                    ]
                                 ),
-                            ], spacing=12),
-                        ], alignment=ft.MainAxisAlignment.START, spacing=0),
-                        expand=True
+                                shadow=ft.BoxShadow(
+                                    spread_radius=0,
+                                    blur_radius=16,
+                                    color=ft.Colors.with_opacity(0.25, bg_color),
+                                    offset=ft.Offset(0, 6),
+                                ),
+                                alignment=ft.alignment.center,
+                            ),
+                            margin=ft.margin.only(left=24)
+                        ),
+                    ], alignment=ft.MainAxisAlignment.START, spacing=2),
+                    
+                    # Weather description con stile moderno
+                    ft.Container(
+                        content=ft.Text(
+                            description_line,
+                            size=16,
+                            color=ft.Colors.with_opacity(0.85, self._current_text_color),
+                            weight="w400"
+                        ),
+                        margin=ft.margin.only(top=8, bottom=24)
                     ),
                     
-                    # Right side: Large weather icon con design moderno
-                    ft.Container(
-                        content=ft.Container(
-                            content=ft.Icon(
-                                weather_icon,
-                                size=80,  # Icona più grande
-                                color=ft.Colors.WHITE,
-                            ),
-                            width=120,
-                            height=120,
-                            border_radius=30,  # Bordi più arrotondati
-                            gradient=ft.LinearGradient(
-                                begin=ft.alignment.top_left,
-                                end=ft.alignment.bottom_right,
-                                colors=[
-                                    ft.Colors.with_opacity(0.9, bg_color),
-                                    ft.Colors.with_opacity(0.7, bg_color),
-                                ]
-                            ),
-                            shadow=ft.BoxShadow(
-                                spread_radius=0,
-                                blur_radius=20,
-                                color=ft.Colors.with_opacity(0.3, bg_color),
-                                offset=ft.Offset(0, 8),
-                            ),
-                            alignment=ft.alignment.center,
+                    # High/Low temperatures con design cards migliorato
+                    ft.Row([
+                        ft.Container(
+                            content=ft.Row([
+                                ft.Icon(
+                                    ft.Icons.KEYBOARD_ARROW_UP,
+                                    size=18,
+                                    color=ft.Colors.RED_400,
+                                ),
+                                ft.Column([
+                                    ft.Text(
+                                        TranslationService.translate_from_dict('main_information_items', 'high', self._current_language).upper(),
+                                        size=10,
+                                        color=ft.Colors.with_opacity(0.6, self._current_text_color),
+                                        weight="w500"
+                                    ),
+                                    ft.Text(
+                                        f"{self._temp_max}{unit_symbol}",
+                                        size=15,
+                                        color=self._current_text_color,
+                                        weight="w600"
+                                    ),
+                                ], spacing=1, alignment=ft.MainAxisAlignment.CENTER),
+                            ], alignment=ft.MainAxisAlignment.CENTER, spacing=4),
+                            padding=ft.padding.symmetric(horizontal=14, vertical=10),
+                            border_radius=16,
+                            bgcolor=ft.Colors.with_opacity(0.08, self._current_text_color),
+                            border=ft.border.all(1, ft.Colors.with_opacity(0.12, self._current_text_color)),
+                            expand=True,
                         ),
-                        alignment=ft.alignment.center_right
-                    ),
-                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, spacing=24)
+                        ft.Container(
+                            content=ft.Row([
+                                ft.Icon(
+                                    ft.Icons.KEYBOARD_ARROW_DOWN,
+                                    size=18,
+                                    color=ft.Colors.BLUE_400,
+                                ),
+                                ft.Column([
+                                    ft.Text(
+                                        TranslationService.translate_from_dict('main_information_items', 'low', self._current_language).upper(),
+                                        size=10,
+                                        color=ft.Colors.with_opacity(0.6, self._current_text_color),
+                                        weight="w500"
+                                    ),
+                                    ft.Text(
+                                        f"{self._temp_min}{unit_symbol}",
+                                        size=15,
+                                        color=self._current_text_color,
+                                        weight="w600"
+                                    ),
+                                ], spacing=1, alignment=ft.MainAxisAlignment.CENTER),
+                            ], alignment=ft.MainAxisAlignment.CENTER, spacing=4),
+                            padding=ft.padding.symmetric(horizontal=14, vertical=10),
+                            border_radius=16,
+                            bgcolor=ft.Colors.with_opacity(0.08, self._current_text_color),
+                            border=ft.border.all(1, ft.Colors.with_opacity(0.12, self._current_text_color)),
+                            expand=True,
+                        ),
+                    ], spacing=12),
+                ], alignment=ft.MainAxisAlignment.START, spacing=0)
             )
 
             return ft.Container(

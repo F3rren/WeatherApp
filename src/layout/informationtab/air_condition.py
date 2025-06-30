@@ -71,6 +71,7 @@ class AirConditionComponent(ft.Container):
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
             self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
+            self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
             self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
         
         self.content = self.build()
@@ -296,7 +297,7 @@ class AirConditionInfo(ft.Container):
             if hasattr(self.page, 'session') and self.page.session.get('state_manager'):
                 self._state_manager = self.page.session.get('state_manager')
                 self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-                self._state_manager.register_observer("unit_event", lambda e=None: self.page.run_task(self.update_ui, e))
+                self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
                 self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
 
             original_on_resize = self.page.on_resize
@@ -546,6 +547,7 @@ class AirConditionGroupComponent(ft.Container):
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
             self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
+            self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
             self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
         
         self.content = self.build()
@@ -690,10 +692,11 @@ class AirConditionGroupComponent(ft.Container):
                 alignment=ft.alignment.center
             )
         
-        # Group title
-        title_text = config["title"]
+        # Group title - ensure it's always translated
+        title_text = config["title"]  # Fallback
         if translation_service:
             try:
+                # Try to get translated title using group_type + "_group" pattern
                 translated_title = translation_service.translate_from_dict(
                     "air_condition_items", 
                     f"{self.group_type}_group",
@@ -701,13 +704,14 @@ class AirConditionGroupComponent(ft.Container):
                 )
                 if translated_title:
                     title_text = translated_title
+                    logging.debug(f"Successfully translated {self.group_type}_group to '{translated_title}' for language {self._language}")
                 else:
                     # Debug: log if translation not found
-                    logging.debug(f"Translation not found for {self.group_type}_group in language {self._language}")
+                    logging.debug(f"Translation not found for {self.group_type}_group in language {self._language}, using fallback: {title_text}")
             except Exception as e:
                 logging.error(f"Error translating group title: {e}")
         else:
-            logging.debug(f"Translation service not available for group {self.group_type}")
+            logging.debug(f"Translation service not available for group {self.group_type}, using fallback: {title_text}")
         
         return ft.Container(
             content=ft.Column([
@@ -722,7 +726,7 @@ class AirConditionGroupComponent(ft.Container):
                         ft.Container(width=6),  # Small spacing
                         ft.Text(
                             title_text,
-                            size=self._text_handler.get_size('title'),
+                            size=self._text_handler.get_size('axis_title') + 2,
                             weight=ft.FontWeight.BOLD,
                             color=config["color"],
                         )

@@ -35,7 +35,7 @@ class HourlyForecastDisplay(ft.Container):
             if hasattr(self.page, 'session') and self.page.session.get('state_manager'):
                 self._state_manager = self.page.session.get('state_manager')
                 self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-                self._state_manager.register_observer("unit_event", lambda e=None: self.page.run_task(self.update_ui, e))
+                self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
                 self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
 
             original_on_resize = self.page.on_resize

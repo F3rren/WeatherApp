@@ -16,6 +16,7 @@ from layout.informationtab.main_information import MainWeatherInfo
 from layout.informationtab.air_condition import AirConditionInfo
 from layout.informationtab.air_pollution import AirPollutionDisplay # CHANGED: Import AirPollutionDisplay
 from layout.informationcharts.temperature_chart import TemperatureChartDisplay # CHANGED: Import TemperatureChartDisplay
+from layout.informationtab.air_pollution import AirPollutionDisplay # Add air pollution chart import
 from layout.informationcharts.precipitation_chart import PrecipitationChartDisplay # CHANGED: Import PrecipitationChartDisplay instead of AirPollutionChartDisplay
 
 class WeatherView:
@@ -41,6 +42,7 @@ class WeatherView:
         self.hourly_forecast_instance = None # ADDED
         self.temperature_chart_instance = None # ADDED
         self.air_pollution_display_instance = None # CHANGED: Renamed from air_pollution_instance
+        self.air_pollution_chart_instance = None # Add air pollution chart instance
         self.precipitation_chart_instance = None # CHANGED: Renamed from air_pollution_chart_instance
 
         # Register for theme change events
@@ -56,6 +58,7 @@ class WeatherView:
         self.weekly_container = ft.Container()
         self.chart_container = ft.Container()
         self.air_pollution_container = ft.Container()
+        self.air_pollution_chart_container = ft.Container() # Add air pollution chart container
         self.precipitation_chart_container = ft.Container() # CHANGED: Renamed from air_pollution_chart_container
         self.loading = False
         # RIMOSSO: self._loading_dialog e ProgressRing modale
@@ -94,6 +97,7 @@ class WeatherView:
             self.hourly_forecast_instance,
             self.temperature_chart_instance,
             self.air_pollution_display_instance, # CHANGED: Renamed
+            self.air_pollution_chart_instance, # Add air pollution chart instance
             self.precipitation_chart_instance # CHANGED: Renamed from air_pollution_chart_instance
         ]
         for child in children_to_cleanup:
@@ -108,6 +112,7 @@ class WeatherView:
         self.hourly_forecast_instance = None
         self.temperature_chart_instance = None
         self.air_pollution_display_instance = None # CHANGED: Renamed
+        self.air_pollution_chart_instance = None # Add air pollution chart instance
         self.precipitation_chart_instance = None # CHANGED: Renamed from air_pollution_chart_instance
 
     def _update_text_color(self):
@@ -195,19 +200,33 @@ class WeatherView:
 
         # import asyncio # No longer needed here
         if using_location and current_lat_from_state is not None and current_lon_from_state is not None:
-            self.page.run_task(self.update_by_coordinates, current_lat_from_state, current_lon_from_state, language, new_unit_system)
+            await self.update_by_coordinates(current_lat_from_state, current_lon_from_state, language, new_unit_system)
         elif current_city_from_state:
-            self.page.run_task(self.update_by_city, current_city_from_state, language, new_unit_system)
+            await self.update_by_city(current_city_from_state, language, new_unit_system)
         # Fallback to WeatherView's internally stored context if state manager doesn't have fresh info
         elif self.current_city:
-            self.page.run_task(self.update_by_city, self.current_city, language, new_unit_system)
+            await self.update_by_city(self.current_city, language, new_unit_system)
         elif self.current_lat is not None and self.current_lon is not None:
-            self.page.run_task(self.update_by_coordinates, self.current_lat, self.current_lon, language, new_unit_system)
+            await self.update_by_coordinates(self.current_lat, self.current_lon, language, new_unit_system)
         else:
             # If no location context at all, we might not be able to update.
             # This could happen if unit is changed before any location is set.
             # Consider fetching with a default city if this case is problematic.
             logging.warning("Unit system changed, but no location context (city/coords) available in WeatherView or StateManager to refresh data.")
+
+        # Update air condition components immediately for unit changes
+        if hasattr(self, 'air_condition_instance') and self.air_condition_instance:
+            self.update_air_condition_components()
+            print("DEBUG: Air condition components updated due to unit change")
+            
+            # Also notify main app to update layout with new components
+            if hasattr(self.page, 'session') and self.page.session.get('main_app'):
+                main_app = self.page.session.get('main_app')
+                if hasattr(main_app, 'layout_manager') and main_app.layout_manager:
+                    air_condition_components = self.get_air_condition_components()
+                    if air_condition_components:
+                        main_app.layout_manager.update_air_condition_layout(air_condition_components)
+                        print("DEBUG: Layout manager updated with new air condition components due to unit change")
 
 
     async def update_by_city(self, city: str, language: str, unit: str) -> None:
@@ -276,6 +295,7 @@ class WeatherView:
                 self.current_lat = lat
                 self.current_lon = lon
                 await self._update_air_pollution(lat, lon)
+                await self._update_air_pollution_chart(lat, lon) # Add air pollution chart update
                 await self._update_precipitation_chart(self.weather_data) # CHANGED: Use precipitation chart with weather data
             elif "city" in self.weather_data and "coord" in self.weather_data["city"]:
                 lat = self.weather_data["city"]["coord"]["lat"]
@@ -283,6 +303,7 @@ class WeatherView:
                 self.current_lat = lat
                 self.current_lon = lon
                 await self._update_air_pollution(lat, lon)
+                await self._update_air_pollution_chart(lat, lon) # Add air pollution chart update
                 await self._update_precipitation_chart(self.weather_data) # CHANGED: Use precipitation chart with weather data
             else:
                 print("No coordinates available for air pollution data")
@@ -502,6 +523,30 @@ class WeatherView:
             print("DEBUG: Container not ready for update")
             pass
 
+    async def _update_air_pollution_chart(self, lat: float, lon: float) -> None:
+        """Frontend: Updates air pollution chart UI using AirPollutionChartDisplay."""
+        print(f"DEBUG: _update_air_pollution_chart called with lat: {lat}, lon: {lon}")
+
+        # Always create a new instance to ensure proper updates
+        self.air_pollution_chart_instance = AirPollutionDisplay(
+            page=self.page,
+            lat=lat,
+            lon=lon
+        )
+        print("DEBUG: Created new AirPollutionChartDisplay instance")
+
+        # Set the chart directly as content (no wrapper needed)
+        self.air_pollution_chart_container.content = self.air_pollution_chart_instance
+        print("DEBUG: Set air pollution chart container content")
+        
+        # Force container update
+        try:
+            self.air_pollution_chart_container.update()
+            print("DEBUG: Updated air pollution chart container")
+        except AssertionError:
+            print("DEBUG: Container not ready for update")
+            pass
+
     def _set_loading(self, value: bool):
         self.loading = value
         # RIMOSSO: logica AlertDialog e print di debug
@@ -511,6 +556,7 @@ class WeatherView:
         self.weekly_container.visible = not value
         self.chart_container.visible = not value
         self.air_pollution_container.visible = not value
+        self.air_pollution_chart_container.visible = not value # Add air pollution chart visibility
         self.precipitation_chart_container.visible = not value # CHANGED: From air_pollution_chart_container
         self._safe_update()
 
@@ -522,6 +568,7 @@ class WeatherView:
             self.hourly_container,
             self.chart_container,
             self.air_pollution_container,
+            self.air_pollution_chart_container, # Add air pollution chart container
             self.precipitation_chart_container # CHANGED: Return precipitation chart instead of air pollution chart
         )
 

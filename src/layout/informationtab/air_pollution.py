@@ -29,7 +29,7 @@ class AirPollutionDisplay(ft.Container):
             page=self.page,
             base_sizes={
                 'title': 20, 'label': 15, 'value': 15, 
-                'subtitle': 15, 'aqi_value': 16
+                'subtitle': 15, 'aqi_value': 16, 'axis_title': 14
             },
             breakpoints=[600, 900, 1200, 1600]
         )
@@ -133,6 +133,14 @@ class AirPollutionDisplay(ft.Container):
         self._pollution_data = {}  # By clearing the data, we ensure update_ui will fetch new data.
         if self.page:
             await self.update_ui()
+
+    def update_location(self, lat: float, lon: float):
+        """Updates the coordinates and clears cached data to force refresh."""
+        self._lat = lat
+        self._lon = lon
+        self._pollution_data = {}  # Clear cached data to force refresh
+        if self.page:
+            self.page.run_task(self.update_ui)
 
     def _build_header(self):
         """Builds a modern header for air pollution section."""
@@ -451,5 +459,5 @@ class AirPollutionDisplay(ft.Container):
                 vertical=10
             )
         )
-               
+
 

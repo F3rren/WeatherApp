@@ -33,7 +33,9 @@ class MeteoApp:
         self.info_container_wrapper = None
         self.hourly_container_wrapper = None
         self.chart_container_wrapper = None
-        self.precipitation_chart_container_wrapper = None # CHANGED: Renamed from air_pollution_chart_container_wrapper
+        self.air_pollution_chart_container_wrapper = None # Add air pollution chart container wrapper
+        self.precipitation_chart_container_wrapper = None # For precipitation chart
+        self.air_pollution_chart_container_wrapper = None # For air pollution chart
         self.air_pollution_container_wrapper = None
         self.page = None
         self.layout_manager = None
@@ -82,8 +84,9 @@ class MeteoApp:
         
         safe_update_container(self.hourly_container_wrapper, "HOURLY")
         safe_update_container(self.chart_container_wrapper, "CHART")
-        safe_update_container(self.precipitation_chart_container_wrapper, "CHART") # CHANGED: Use precipitation chart wrapper
-        safe_update_container(self.air_pollution_container_wrapper, "AIR_POLLUTION")
+        safe_update_container(self.precipitation_chart_container_wrapper, "CHART") # For precipitation chart
+        safe_update_container(self.air_pollution_chart_container_wrapper, "CHART") # For air pollution chart
+        safe_update_container(self.air_pollution_container_wrapper, "CARD_BACKGROUND")
         safe_update_container(self.air_condition_container_wrapper, "CARD_BACKGROUND")
         
         # Aggiorna il colore di sfondo della pagina
@@ -128,7 +131,7 @@ class MeteoApp:
 
         self.weather_view_instance = WeatherView(page) # Store instance
         
-        info_container, hourly_container, chart_container, air_pollution_container, precipitation_chart_container = self.weather_view_instance.get_containers() # CHANGED: precipitation_chart_container instead of air_pollution_chart_container
+        info_container, hourly_container, chart_container, air_pollution_container, air_pollution_chart_container, precipitation_chart_container = self.weather_view_instance.get_containers() # Get all containers including both charts
         
         # Create a method to get air condition components once weather data is loaded
         def get_air_condition_components():
@@ -173,7 +176,8 @@ class MeteoApp:
             info_content=info_container,
             hourly_content=hourly_container,
             chart_content=chart_container,
-            air_pollution_chart_content=precipitation_chart_container, # CHANGED: Use precipitation chart
+            precipitation_chart_content=precipitation_chart_container, # For precipitation chart
+            air_pollution_chart_content=air_pollution_chart_container, # For air pollution chart
             air_pollution_content=air_pollution_container
         )
         
@@ -183,7 +187,8 @@ class MeteoApp:
         self.info_container_wrapper = containers['info']
         self.hourly_container_wrapper = containers['hourly']
         self.chart_container_wrapper = containers['chart']
-        self.precipitation_chart_container_wrapper = containers['air_pollution_chart'] # CHANGED: Now contains precipitation chart
+        self.precipitation_chart_container_wrapper = containers['precipitation_chart'] # For precipitation chart
+        self.air_pollution_chart_container_wrapper = containers['air_pollution_chart'] # For air pollution chart
         self.air_pollution_container_wrapper = containers['air_pollution']
         self.air_condition_container_wrapper = containers.get('air_condition')  # New air condition container
         

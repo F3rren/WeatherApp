@@ -97,7 +97,7 @@ class LayoutBuilder:
         )
 
     @staticmethod
-    def build_main_layout(sidebar, info, hourly, air_pollution, chart, air_pollution_chart) -> ft.Control:
+    def build_main_layout(sidebar, info, hourly, air_pollution, chart, precipitation_chart, air_pollution_chart) -> ft.Control:
         """
         Costruisce il layout principale responsivo dell'applicazione con design moderno.
         Layout: sidebar + info + air condition in alto, previsioni orarie full-width sotto, grafici in basso.
@@ -106,9 +106,10 @@ class LayoutBuilder:
             sidebar: Container della barra laterale
             info: Container delle informazioni principali meteo
             hourly: Container delle previsioni orarie
-            air_pollution: Container delle informazioni sull'inquinamento
+            air_pollution: Container delle informazioni sull'inquinamento (air condition)
             chart: Container del grafico temperature
-            air_pollution_chart: Container del grafico inquinamento
+            precipitation_chart: Container del grafico precipitazioni
+            air_pollution_chart: Container del grafico inquinamento aria
             
         Returns:
             ft.Column: Layout principale con previsioni orarie full-width
@@ -163,14 +164,21 @@ class LayoutBuilder:
                 # Grafico temperature
                 ft.Container(
                     content=chart,
-                    col={"sm": 12, "md": 12, "lg": 6, "xl": 6},
+                    col={"sm": 12, "md": 12, "lg": 4, "xl": 4},
                     padding=ft.padding.only(left=16, right=8, top=4, bottom=16),
                 ),
                 
-                # Grafico precipitazioni (era air_pollution_chart)
+                # Grafico precipitazioni
+                ft.Container(
+                    content=precipitation_chart,
+                    col={"sm": 12, "md": 12, "lg": 4, "xl": 4},
+                    padding=ft.padding.only(left=8, right=8, top=4, bottom=16),
+                ),
+                
+                # Grafico inquinamento aria
                 ft.Container(
                     content=air_pollution_chart,
-                    col={"sm": 12, "md": 12, "lg": 6, "xl": 6},
+                    col={"sm": 12, "md": 12, "lg": 4, "xl": 4},
                     padding=ft.padding.only(left=8, right=16, top=4, bottom=16),
                 )
             ])
@@ -183,10 +191,10 @@ class LayoutBuilder:
         
         Args:
             air_condition_components: Dictionary with component keys and ft.Container values
-            page: Flet page object for theme detection
+            page: Flet page object for theme detection and translation
             
         Returns:
-            ft.Container: Grid container with air condition components
+            ft.Container: Grid container with air condition components and title
         """
         if not air_condition_components:
             return ft.Container(
@@ -194,7 +202,41 @@ class LayoutBuilder:
                 height=200,
                 alignment=ft.alignment.center
             )
+
+        # Get translation service for title
+        translation_service = None
+        if page and hasattr(page, 'session'):
+            translation_service = page.session.get('translation_service')
         
+        # Get current language from state manager
+        current_language = "en"  # Default fallback
+        if page and hasattr(page, 'session') and page.session.get('state_manager'):
+            state_manager = page.session.get('state_manager')
+            current_language = state_manager.get_state('language') or current_language
+        
+        # Get translated title
+        title_text = "Air Conditions"  # Default fallback
+        if translation_service:
+            title_text = translation_service.translate_from_dict(
+                "air_condition_items", 
+                "air_condition_title", 
+                current_language
+            ) or title_text
+
+        # Initialize text handler for title sizing
+        text_handler = LayoutBuilder.init_text_handler(page)
+        title_size = 22  # Default size (axis_title + 2)
+        if text_handler:
+            title_size = text_handler.get_size('axis_title') + 2 or 22
+
+        # Get theme colors
+        is_dark = page.theme_mode == ft.ThemeMode.DARK if page else False
+        
+        # Get correct text color from theme (same as other components)
+        from utils.config import LIGHT_THEME, DARK_THEME
+        theme = DARK_THEME if is_dark else LIGHT_THEME
+        title_color = theme.get("TEXT", ft.Colors.BLACK)
+
         # Get components in preferred order (now grouped)
         components_order = [
             "temperature", "humidity_air", "wind", "atmospheric", "solar"  # Group names
@@ -210,8 +252,31 @@ class LayoutBuilder:
                     padding=4,
                 ))
         
-        # Create responsive grid layout
+        # Create the main title with icon (same style as other components)
+        title_container = ft.Container(
+            content=ft.Row([
+                ft.Icon(
+                    ft.Icons.AIR_OUTLINED,
+                    color=ft.Colors.BLUE_400 if not is_dark else ft.Colors.BLUE_300,
+                    size=24
+                ),
+                ft.Container(width=12),  # Spacer
+                ft.Text(
+                    title_text,
+                    size=title_size,
+                    weight=ft.FontWeight.BOLD,
+                    color=title_color,
+                    font_family="system-ui",
+                ),
+            ], alignment=ft.MainAxisAlignment.START),
+            padding=ft.padding.only(left=20, top=16, bottom=12)
+        )
+
+        # Create responsive grid layout with title
         return ft.Container(
-            content=ft.ResponsiveRow(responsive_components, spacing=8),
+            content=ft.Column([
+                title_container,
+                ft.ResponsiveRow(responsive_components, spacing=8)
+            ], spacing=0),
             padding=8,
         )

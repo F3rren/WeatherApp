@@ -57,7 +57,7 @@ class LayoutManager:
             self.page.update()
     
     def create_containers(self, sidebar_content, info_content, hourly_content, chart_content,
-        air_pollution_chart_content, air_pollution_content, animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
+        precipitation_chart_content, air_pollution_chart_content, air_pollution_content, animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
         """
         Crea tutti i contenitori per il layout dell'applicazione con design moderno.
         
@@ -65,7 +65,8 @@ class LayoutManager:
             sidebar_content: Oggetto Sidebar da inserire nel container
             info_content: Contenuto del container info meteo
             hourly_content: Contenuto del container previsioni orarie
-            chart_content: Contenuto del container grafico
+            chart_content: Contenuto del container grafico temperature
+            precipitation_chart_content: Contenuto del container grafico precipitazioni
             air_pollution_chart_content: Contenuto del container grafico inquinamento
             air_pollution_content: Contenuto del container informazioni inquinamento
             animation_duration: Durata delle animazioni in millisecondi
@@ -129,12 +130,20 @@ class LayoutManager:
             animation_curve
         )
 
-        # Grafico inquinamento
+        # Grafico precipitazioni
+        self.containers['precipitation_chart'] = LayoutBuilder.build_content_container(
+            precipitation_chart_content,
+            {"xs": 12},
+            animation_duration,
+            animation_curve
+        )
+
+        # Grafico inquinamento aria
         self.containers['air_pollution_chart'] = LayoutBuilder.build_content_container(
             air_pollution_chart_content,
             {"xs": 12},
             animation_duration,
-            animation_curve.BOUNCE_IN_OUT
+            animation_curve
         )        
     def build_layout(self) -> ft.Control:
         """
@@ -149,6 +158,7 @@ class LayoutManager:
             self.containers['hourly'], 
             self.containers.get('air_condition', ft.Container()),  # Use air_condition instead of air_pollution
             self.containers['chart'],
+            self.containers['precipitation_chart'],
             self.containers['air_pollution_chart']
         )
         return self.layout

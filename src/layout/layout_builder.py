@@ -4,7 +4,6 @@ Centralizes layout building functions for different UI components.
 """
 
 import flet as ft
-from typing import Dict, Any
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class LayoutBuilder:
@@ -46,7 +45,8 @@ class LayoutBuilder:
     
     @staticmethod
     def build_content_container(content, col_size, animation_duration=500, 
-                               animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> ft.Container:
+                               animation_curve=ft.AnimationCurve.EASE_IN_OUT, 
+                               container_type="default") -> ft.Container:
         """
         Crea un container responsive con animazioni e stile moderno.
         
@@ -55,21 +55,42 @@ class LayoutBuilder:
             col_size: Dizionario delle dimensioni colonna per vari breakpoint
             animation_duration: Durata delle animazioni
             animation_curve: Curva di animazione
+            container_type: Tipo di container per styling specifico
             
         Returns:
             ft.Container: Container configurato con stile moderno
         """
+        # Styling specifico per tipo di container
+        if container_type == "main_info":
+            border_radius = 24
+            padding = ft.padding.symmetric(horizontal=32, vertical=24)
+            margin = ft.margin.only(bottom=16)
+            shadow_blur = 20
+            shadow_spread = 0
+        elif container_type == "sidebar":
+            border_radius = 16
+            padding = ft.padding.all(16)
+            margin = ft.margin.all(8)
+            shadow_blur = 12
+            shadow_spread = 0
+        else:
+            border_radius = 16
+            padding = ft.padding.all(20)
+            margin = ft.margin.symmetric(horizontal=8, vertical=6)
+            shadow_blur = 12
+            shadow_spread = 0
+        
         return ft.Container(
             content=content,
             animate=ft.Animation(animation_duration, animation_curve),
-            border_radius=20,  # Angoli più arrotondati
-            padding=ft.padding.all(20),  # Padding più generoso
-            margin=ft.margin.all(5),  # Piccolo margine per spaziatura
+            border_radius=border_radius,
+            padding=padding,
+            margin=margin,
             shadow=ft.BoxShadow(
-                spread_radius=1,
-                blur_radius=10,
-                color=ft.Colors.with_opacity(0.1, ft.Colors.BLACK),
-                offset=ft.Offset(0, 2),
+                spread_radius=shadow_spread,
+                blur_radius=shadow_blur,
+                color=ft.Colors.with_opacity(0.08, ft.Colors.BLACK),
+                offset=ft.Offset(0, 4),
                 blur_style=ft.ShadowBlurStyle.OUTER,
             ),
             col=col_size
@@ -79,7 +100,7 @@ class LayoutBuilder:
     def build_main_layout(sidebar, info, hourly, air_pollution, chart, air_pollution_chart) -> ft.Control:
         """
         Costruisce il layout principale responsivo dell'applicazione con design moderno.
-        Layout orizzontale: sidebar sinistra + contenuto principale a destra.
+        Layout: sidebar + info + air condition in alto, previsioni orarie full-width sotto, grafici in basso.
         
         Args:
             sidebar: Container della barra laterale
@@ -90,53 +111,107 @@ class LayoutBuilder:
             air_pollution_chart: Container del grafico inquinamento
             
         Returns:
-            ft.ResponsiveRow: Layout principale responsivo
+            ft.Column: Layout principale con previsioni orarie full-width
         """
-        # Layout principale orizzontale
-        return ft.ResponsiveRow([
-            # Sidebar sinistra (25% larghezza)
-            ft.Container(
-                content=sidebar,
-                col={"sm": 12, "md": 4, "lg": 3, "xl": 3},
-                padding=ft.padding.all(10),
-            ),
-            
-            # Area contenuto principale (75% larghezza)
-            ft.Container(
-                content=ft.Column([
-                    # Header principale con info meteo
-                    ft.ResponsiveRow([
-                        info
-                    ]),
-                    
-                    # Previsioni orarie
-                    ft.ResponsiveRow([
-                        hourly
-                    ]),
-                    
-                    # Riga con condizioni attuali e dettagli
-                    ft.ResponsiveRow([
-                        # Condizioni attuali (sinistra) - ora solo air_pollution
-                        ft.Container(
-                            content=ft.Column([
-                                air_pollution
-                            ], spacing=10),
-                            col={"sm": 12, "md": 6, "lg": 6},
-                            padding=ft.padding.all(5),
-                        ),
+        return ft.Column([
+            # Layout orizzontale principale (sidebar + info + air condition)
+            ft.ResponsiveRow([
+                # Sidebar sinistra più ampia (33% larghezza desktop)
+                ft.Container(
+                    content=sidebar,
+                    col={"sm": 12, "md": 5, "lg": 4, "xl": 4},
+                    padding=ft.padding.only(left=16, top=16, bottom=16, right=12),
+                ),
+                
+                # Area contenuto principale (67% larghezza desktop)
+                ft.Container(
+                    content=ft.Column([
+                        # Header principale con info meteo - hero section
+                        ft.ResponsiveRow([
+                            ft.Container(
+                                content=info,
+                                col={"xs": 12},
+                                padding=ft.padding.symmetric(vertical=4),
+                            )
+                        ]),
                         
-                        # Dettagli e grafici (destra)
-                        ft.Container(
-                            content=ft.Column([
-                                chart,
-                                air_pollution_chart
-                            ], spacing=10),
-                            col={"sm": 12, "md": 6, "lg": 6},
-                            padding=ft.padding.all(5),
-                        )
-                    ])
-                ], spacing=15),
-                col={"sm": 12, "md": 8, "lg": 9, "xl": 9},
-                padding=ft.padding.all(10),
-            )
+                        # Air Condition (ora posizionato dopo le info principali)
+                        ft.ResponsiveRow([
+                            ft.Container(
+                                content=air_pollution,  # Questo è il container Air Condition
+                                col={"xs": 12},
+                                padding=ft.padding.symmetric(vertical=4),
+                            )
+                        ]),
+                    ], spacing=16),
+                    col={"sm": 12, "md": 7, "lg": 8, "xl": 8},
+                    padding=ft.padding.only(left=12, top=16, bottom=16, right=16),
+                )
+            ], spacing=0),
+            
+            # Previsioni orarie - full width (occupa tutta la larghezza della finestra)
+            ft.ResponsiveRow([
+                ft.Container(
+                    content=hourly,
+                    col={"xs": 12},  # Sempre 100% della larghezza
+                    padding=ft.padding.symmetric(horizontal=16, vertical=8),
+                )
+            ]),
+            
+            # Layout orizzontale per grafici - full width
+            ft.ResponsiveRow([
+                # Grafico temperature
+                ft.Container(
+                    content=chart,
+                    col={"sm": 12, "md": 12, "lg": 6, "xl": 6},
+                    padding=ft.padding.only(left=16, right=8, top=4, bottom=16),
+                ),
+                
+                # Grafico precipitazioni (era air_pollution_chart)
+                ft.Container(
+                    content=air_pollution_chart,
+                    col={"sm": 12, "md": 12, "lg": 6, "xl": 6},
+                    padding=ft.padding.only(left=8, right=16, top=4, bottom=16),
+                )
+            ])
         ], spacing=0)
+
+    @staticmethod
+    def build_air_condition_grid(air_condition_components, page: ft.Page = None) -> ft.Container:
+        """
+        Build a responsive grid layout for separated air condition components.
+        
+        Args:
+            air_condition_components: Dictionary with component keys and ft.Container values
+            page: Flet page object for theme detection
+            
+        Returns:
+            ft.Container: Grid container with air condition components
+        """
+        if not air_condition_components:
+            return ft.Container(
+                content=ft.Text("Loading air conditions...", size=14),
+                height=200,
+                alignment=ft.alignment.center
+            )
+        
+        # Get components in preferred order (now grouped)
+        components_order = [
+            "temperature", "humidity_air", "wind", "atmospheric", "solar"  # Group names
+        ]
+        
+        responsive_components = []
+        
+        for comp_key in components_order:
+            if comp_key in air_condition_components:
+                responsive_components.append(ft.Container(
+                    content=air_condition_components[comp_key],
+                    col={"sm": 12, "md": 6, "lg": 4, "xl": 3},  # Mobile: 1 col, Tablet: 2 cols, Desktop: 3 cols, Large: 4 cols
+                    padding=4,
+                ))
+        
+        # Create responsive grid layout
+        return ft.Container(
+            content=ft.ResponsiveRow(responsive_components, spacing=8),
+            padding=8,
+        )

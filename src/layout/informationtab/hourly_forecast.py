@@ -86,13 +86,7 @@ class HourlyForecastDisplay(ft.Container):
             self._text_color = theme.get("TEXT", ft.Colors.BLACK)
 
             self.content = self.build()
-            # Only update if this control is already in the page
-            try:
-                if self.page and hasattr(self, 'page') and self.page is not None:
-                    self.update()
-            except Exception:
-                # Control not yet added to page, update will happen when added
-                pass
+            self.update()
         except Exception as e:
             logging.error(f"HourlyForecastDisplay: Error updating UI: {e}\n{traceback.format_exc()}")
 
@@ -152,22 +146,20 @@ class HourlyForecastDisplay(ft.Container):
                     font_family="system-ui",
                 ),
             ], alignment=ft.MainAxisAlignment.START),
-            padding=ft.padding.only(left=20, top=24, bottom=20)
+            padding=ft.padding.only(left=20, top=16, bottom=12)  # Reduced padding
         )
 
         forecast_item_controls = []
         
-        # Show only first 8 hours for cleaner display
-        for index, item_data in enumerate(self._hourly_data_list[:8]):  # Limit to 8 hours for better UX
+        # Show optimal hours to fill width without overwhelming (16 hours)
+        for index, item_data in enumerate(self._hourly_data_list[:16]):  # Show 16 hours for optimal coverage
             try:
                 # Format time to show only hour (like "12", "15", "18", etc.)
                 hour = datetime.strptime(item_data["dt_txt"], "%Y-%m-%d %H:%M:%S").strftime("%H")
                 icon_code = item_data["weather"][0]["icon"]
                 temp_value = round(item_data["main"]["temp"])
                 
-                # Extract additional weather data
-                feels_like = round(item_data["main"]["feels_like"])
-                humidity = item_data["main"]["humidity"]
+                # Extract only essential weather data for compact display
                 rain_probability = round(item_data.get("pop", 0) * 100)  # Probability of precipitation in %
                 
                 # Determine icon color and style based on weather condition
@@ -178,118 +170,118 @@ class HourlyForecastDisplay(ft.Container):
                 is_storm = icon_code.startswith('11')  # Thunderstorm
                 is_snow = icon_code.startswith('13')  # Snow
                 
-                # Create beautiful weather icons with better proportions
+                # Create beautiful weather icons with better proportions (more compact)
                 if is_sunny and is_day:
                     weather_icon = ft.Container(
-                        width=32,  # Slightly smaller for better spacing
-                        height=32,
-                        border_radius=16,
+                        width=28,  # Reduced for more compact display
+                        height=28,
+                        border_radius=14,
                         bgcolor=ft.Colors.AMBER_400,
                         shadow=ft.BoxShadow(
                             spread_radius=1,
-                            blur_radius=6,
-                            color=ft.Colors.with_opacity(0.3, ft.Colors.AMBER_300),
-                            offset=ft.Offset(0, 2),
+                            blur_radius=4,  # Reduced shadow
+                            color=ft.Colors.with_opacity(0.25, ft.Colors.AMBER_300),
+                            offset=ft.Offset(0, 1),
                         ),
                         content=ft.Icon(
                             ft.Icons.WB_SUNNY,
                             color=ft.Colors.WHITE,
-                            size=18,  # Smaller icon to fit better
+                            size=16,  # Smaller icon
                         ),
                         alignment=ft.alignment.center,
                     )
                 elif is_rain:
                     weather_icon = ft.Container(
-                        width=32,
-                        height=32,
-                        border_radius=16,
+                        width=28,
+                        height=28,
+                        border_radius=14,
                         bgcolor=ft.Colors.BLUE_500,
                         shadow=ft.BoxShadow(
                             spread_radius=1,
-                            blur_radius=6,
-                            color=ft.Colors.with_opacity(0.3, ft.Colors.BLUE_300),
-                            offset=ft.Offset(0, 2),
+                            blur_radius=4,
+                            color=ft.Colors.with_opacity(0.25, ft.Colors.BLUE_300),
+                            offset=ft.Offset(0, 1),
                         ),
                         content=ft.Icon(
                             ft.Icons.WATER_DROP,
                             color=ft.Colors.WHITE,
-                            size=18,
+                            size=16,
                         ),
                         alignment=ft.alignment.center,
                     )
                 elif is_storm:
                     weather_icon = ft.Container(
-                        width=32,
-                        height=32,
-                        border_radius=16,
+                        width=28,
+                        height=28,
+                        border_radius=14,
                         bgcolor=ft.Colors.PURPLE_600,
                         shadow=ft.BoxShadow(
                             spread_radius=1,
-                            blur_radius=6,
-                            color=ft.Colors.with_opacity(0.3, ft.Colors.PURPLE_400),
-                            offset=ft.Offset(0, 2),
+                            blur_radius=4,
+                            color=ft.Colors.with_opacity(0.25, ft.Colors.PURPLE_400),
+                            offset=ft.Offset(0, 1),
                         ),
                         content=ft.Icon(
                             ft.Icons.FLASH_ON,
                             color=ft.Colors.WHITE,
-                            size=18,
+                            size=16,
                         ),
                         alignment=ft.alignment.center,
                     )
                 elif is_snow:
                     weather_icon = ft.Container(
-                        width=32,
-                        height=32,
-                        border_radius=16,
+                        width=28,
+                        height=28,
+                        border_radius=14,
                         bgcolor=ft.Colors.LIGHT_BLUE_300,
                         shadow=ft.BoxShadow(
                             spread_radius=1,
-                            blur_radius=6,
-                            color=ft.Colors.with_opacity(0.3, ft.Colors.LIGHT_BLUE_200),
-                            offset=ft.Offset(0, 2),
+                            blur_radius=4,
+                            color=ft.Colors.with_opacity(0.25, ft.Colors.LIGHT_BLUE_200),
+                            offset=ft.Offset(0, 1),
                         ),
                         content=ft.Icon(
                             ft.Icons.AC_UNIT,
                             color=ft.Colors.BLUE_800,
-                            size=18,
+                            size=16,
                         ),
                         alignment=ft.alignment.center,
                     )
                 elif is_cloudy:
                     weather_icon = ft.Container(
-                        width=32,
-                        height=32,
-                        border_radius=16,
+                        width=28,
+                        height=28,
+                        border_radius=14,
                         bgcolor=ft.Colors.GREY_500 if is_day else ft.Colors.BLUE_GREY_700,
                         shadow=ft.BoxShadow(
                             spread_radius=1,
-                            blur_radius=6,
-                            color=ft.Colors.with_opacity(0.25, ft.Colors.GREY_400 if is_day else ft.Colors.BLUE_GREY_500),
-                            offset=ft.Offset(0, 2),
+                            blur_radius=4,
+                            color=ft.Colors.with_opacity(0.2, ft.Colors.GREY_400 if is_day else ft.Colors.BLUE_GREY_500),
+                            offset=ft.Offset(0, 1),
                         ),
                         content=ft.Icon(
                             ft.Icons.CLOUD,
                             color=ft.Colors.WHITE,
-                            size=18,
+                            size=16,
                         ),
                         alignment=ft.alignment.center,
                     )
                 else:  # Night or other conditions
                     weather_icon = ft.Container(
-                        width=32,
-                        height=32,
-                        border_radius=16,
+                        width=28,
+                        height=28,
+                        border_radius=14,
                         bgcolor=ft.Colors.INDIGO_600 if not is_day else ft.Colors.ORANGE_300,
                         shadow=ft.BoxShadow(
                             spread_radius=1,
-                            blur_radius=6,
-                            color=ft.Colors.with_opacity(0.3, ft.Colors.INDIGO_300 if not is_day else ft.Colors.ORANGE_200),
-                            offset=ft.Offset(0, 2),
+                            blur_radius=4,
+                            color=ft.Colors.with_opacity(0.25, ft.Colors.INDIGO_300 if not is_day else ft.Colors.ORANGE_200),
+                            offset=ft.Offset(0, 1),
                         ),
                         content=ft.Icon(
                             ft.Icons.NIGHTLIGHT_ROUND if not is_day else ft.Icons.WB_SUNNY,
                             color=ft.Colors.WHITE,
-                            size=18,
+                            size=16,
                         ),
                         alignment=ft.alignment.center,
                     )
@@ -314,99 +306,48 @@ class HourlyForecastDisplay(ft.Container):
                     font_family="system-ui",
                 )
                 
-                # Additional weather info display
-                # Rain probability (only show if > 0)
+                # Additional weather info display (simplified)
+                # Only show rain probability if significant (> 20%)
                 rain_info = None
-                if rain_probability > 0:
+                if rain_probability > 20:
                     rain_info = ft.Container(
-                        content=ft.Row([
-                            ft.Icon(
-                                ft.Icons.WATER_DROP,
-                                size=10,
-                                color=ft.Colors.BLUE_400,
-                            ),
-                            ft.Text(
-                                f"{rain_probability}%",
-                                size=10,
-                                color=ft.Colors.BLUE_400,
-                                weight="w500",
-                            )
-                        ], spacing=2, alignment=ft.MainAxisAlignment.CENTER),
-                        height=14,
-                        alignment=ft.alignment.center,
-                    )
-                
-                # Humidity info
-                humidity_info = ft.Container(
-                    content=ft.Row([
-                        ft.Icon(
-                            ft.Icons.OPACITY,
-                            size=10,
-                            color=ft.Colors.CYAN_400,
-                        ),
-                        ft.Text(
-                            f"{humidity}%",
-                            size=10,
-                            color=ft.Colors.CYAN_400,
-                            weight="w500",
-                        )
-                    ], spacing=2, alignment=ft.MainAxisAlignment.CENTER),
-                    height=14,
-                    alignment=ft.alignment.center,
-                )
-                
-                # Feels like temperature (only show if different from actual temp)
-                feels_like_info = None
-                if abs(feels_like - temp_value) > 2:  # Show only if difference is significant
-                    feels_like_info = ft.Container(
                         content=ft.Text(
-                            f"↸{feels_like}°",
-                            size=10,
-                            color=ft.Colors.ORANGE_400,
+                            f"{rain_probability}%",
+                            size=9,
+                            color=ft.Colors.BLUE_400,
                             weight="w500",
                             text_align=ft.TextAlign.CENTER,
                         ),
-                        height=14,
+                        height=12,
                         alignment=ft.alignment.center,
                     )
 
-                # Professional layout with optimized spacing and hierarchy
+                # Compact layout with optimized spacing
                 controls_list = [
                     ft.Container(
                         content=time_text,
-                        height=20,
+                        height=16,
                         alignment=ft.alignment.center,
                     ),
-                    ft.Container(height=4),  # Spacer
+                    ft.Container(height=3),  # Reduced spacer
                     ft.Container(
                         content=weather_icon,
-                        height=36,
+                        height=32,  # Reduced from 36
                         alignment=ft.alignment.center,
                     ),
-                    ft.Container(height=4),  # Spacer
+                    ft.Container(height=3),  # Reduced spacer
                     ft.Container(
                         content=temp_text,
-                        height=20,
+                        height=18,  # Reduced from 20
                         alignment=ft.alignment.center,
                     ),
                 ]
                 
-                # Add additional info only if available
+                # Add rain info only if significant
                 if rain_info:
                     controls_list.extend([
                         ft.Container(height=2),
                         rain_info
-                    ])
-                
-                controls_list.extend([
-                    ft.Container(height=2),
-                    humidity_info
-                ])
-                
-                if feels_like_info:
-                    controls_list.extend([
-                        ft.Container(height=2),
-                        feels_like_info
                     ])
                 
                 item_column = ft.Column(
@@ -416,7 +357,7 @@ class HourlyForecastDisplay(ft.Container):
                     spacing=0,  # Use container heights instead
                 )
                 
-                # Professional container with subtle design elements
+                # Optimized compact container to fit more hours without scrolling
                 is_dark = self.page.theme_mode == ft.ThemeMode.DARK
                 
                 # Determine if this is current hour for special styling
@@ -425,11 +366,11 @@ class HourlyForecastDisplay(ft.Container):
                 
                 item_container = ft.Container(
                     content=item_column,
-                    padding=ft.padding.symmetric(horizontal=12, vertical=16),
-                    width=85,
-                    height=155,  # Increased height to accommodate additional info
+                    padding=ft.padding.symmetric(horizontal=6, vertical=12),  # Further reduced padding
+                    width=65,  # Reduced from 70 to fit more elements
+                    height=110,  # Keep same height
                     alignment=ft.alignment.center,
-                    border_radius=20,
+                    border_radius=16,
                     bgcolor=ft.Colors.BLUE_50 if is_current and not is_dark else 
                            ft.Colors.BLUE_GREY_900 if is_current and is_dark else
                            ft.Colors.with_opacity(0.03, ft.Colors.WHITE if not is_dark else ft.Colors.BLACK),
@@ -446,23 +387,23 @@ class HourlyForecastDisplay(ft.Container):
             except Exception as e:
                 logging.error(f"Error processing hourly item: {item_data}, Error: {e}")
 
-        # Professional horizontal scroll with enhanced spacing
+        # Optimized horizontal layout to fill full width without scrolling
         hourly_row = ft.Container(
             content=ft.Row(
                 controls=forecast_item_controls,
                 alignment=ft.MainAxisAlignment.START,
-                spacing=16,  # More generous spacing for professional look
-                scroll=ft.ScrollMode.AUTO,
+                spacing=10,  # Further reduced spacing to fit more elements
+                scroll=ft.ScrollMode.AUTO,  # Keep as backup for smaller screens
             ),
-            padding=ft.padding.symmetric(horizontal=20, vertical=16),
+            padding=ft.padding.symmetric(horizontal=16, vertical=12),
         )
 
         return ft.Container(
             content=ft.Column([
                 header,
                 hourly_row,
-            ], spacing=8),
-            padding=ft.padding.only(bottom=24),
+            ], spacing=6),  # Reduced spacing
+            padding=ft.padding.only(bottom=16),  # Reduced padding
             # Optional: Add subtle background to entire section
             bgcolor=ft.Colors.with_opacity(0.01, ft.Colors.WHITE if not is_dark else ft.Colors.BLACK),
             border_radius=ft.border_radius.only(

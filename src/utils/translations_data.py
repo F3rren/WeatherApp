@@ -26,7 +26,16 @@ TRANSLATIONS = {
             "feels_like": "Feels like",
             "humidity": "Humidity",
             "wind": "Wind",
-            "pressure": "Pressure"
+            "pressure": "Pressure",
+            "visibility": "Visibility",
+            "uv_index": "UV Index",
+            "dew_point": "Dew Point",
+            "cloud_coverage": "Cloud Coverage",
+            "temperature_group": "Temperature",
+            "humidity_air_group": "Humidity & Air",
+            "wind_group": "Wind",
+            "atmospheric_group": "Atmospheric",
+            "solar_group": "Solar"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Settings",
@@ -110,6 +119,13 @@ TRANSLATIONS = {
             "pm2_5_name": "PM2.5 Particles",
             "pm10_name": "PM10 Particles",
             "nh3_name": "Ammonia",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Precipitation Forecast",
+            "precipitation_mm": "Precipitation (mm)",
+            "probability_percent": "Probability (%)",
+            "no_data": "No precipitation data available",
+            "loading": "Loading precipitation data..."
         },
     },
     
@@ -733,7 +749,16 @@ TRANSLATIONS = {
             "feels_like": "Percepito",
             "humidity": "Umidità",
             "wind": "Vento",
-            "pressure": "Pressione"
+            "pressure": "Pressione",
+            "visibility": "Visibilità",
+            "uv_index": "Indice UV",
+            "dew_point": "Punto di rugiada",
+            "cloud_coverage": "Copertura nuvolosa",
+            "temperature_group": "Temperatura",
+            "humidity_air_group": "Umidità e Aria",
+            "wind_group": "Vento",
+            "atmospheric_group": "Atmosferico",
+            "solar_group": "Solare"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Impostazioni",
@@ -819,6 +844,13 @@ TRANSLATIONS = {
             "pm2_5_name": "Particelle PM2.5",
             "pm10_name": "Particelle PM10",
             "nh3_name": "Ammoniaca",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Previsioni Precipitazioni",
+            "precipitation_mm": "Precipitazioni (mm)",
+            "probability_percent": "Probabilità (%)",
+            "no_data": "Dati precipitazioni non disponibili",
+            "loading": "Caricamento dati precipitazioni..."
         }
     },
     "de": {

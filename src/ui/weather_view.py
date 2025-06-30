@@ -16,7 +16,7 @@ from layout.informationtab.main_information import MainWeatherInfo
 from layout.informationtab.air_condition import AirConditionInfo
 from layout.informationtab.air_pollution import AirPollutionDisplay # CHANGED: Import AirPollutionDisplay
 from layout.informationcharts.temperature_chart import TemperatureChartDisplay # CHANGED: Import TemperatureChartDisplay
-from layout.informationcharts.air_pollution_chart import AirPollutionChartDisplay # CHANGED: Import AirPollutionChartDisplay
+from layout.informationcharts.precipitation_chart import PrecipitationChartDisplay # CHANGED: Import PrecipitationChartDisplay instead of AirPollutionChartDisplay
 
 class WeatherView:
     """
@@ -41,7 +41,7 @@ class WeatherView:
         self.hourly_forecast_instance = None # ADDED
         self.temperature_chart_instance = None # ADDED
         self.air_pollution_display_instance = None # CHANGED: Renamed from air_pollution_instance
-        self.air_pollution_chart_instance = None
+        self.precipitation_chart_instance = None # CHANGED: Renamed from air_pollution_chart_instance
 
         # Register for theme change events
         state_manager = self.page.session.get('state_manager')
@@ -56,7 +56,7 @@ class WeatherView:
         self.weekly_container = ft.Container()
         self.chart_container = ft.Container()
         self.air_pollution_container = ft.Container()
-        self.air_pollution_chart_container = ft.Container()
+        self.precipitation_chart_container = ft.Container() # CHANGED: Renamed from air_pollution_chart_container
         self.loading = False
         # RIMOSSO: self._loading_dialog e ProgressRing modale
 
@@ -94,7 +94,7 @@ class WeatherView:
             self.hourly_forecast_instance,
             self.temperature_chart_instance,
             self.air_pollution_display_instance, # CHANGED: Renamed
-            self.air_pollution_chart_instance
+            self.precipitation_chart_instance # CHANGED: Renamed from air_pollution_chart_instance
         ]
         for child in children_to_cleanup:
             if child and hasattr(child, 'will_unmount'): # Use will_unmount for ft.Control based components
@@ -108,7 +108,7 @@ class WeatherView:
         self.hourly_forecast_instance = None
         self.temperature_chart_instance = None
         self.air_pollution_display_instance = None # CHANGED: Renamed
-        self.air_pollution_chart_instance = None
+        self.precipitation_chart_instance = None # CHANGED: Renamed from air_pollution_chart_instance
 
     def _update_text_color(self):
         """Updates text_color based on the current page theme."""
@@ -262,14 +262,14 @@ class WeatherView:
                 self.current_lat = lat
                 self.current_lon = lon
                 await self._update_air_pollution(lat, lon)
-                await self._update_air_pollution_chart(lat, lon)
+                await self._update_precipitation_chart(self.weather_data) # CHANGED: Use precipitation chart with weather data
             elif "city" in self.weather_data and "coord" in self.weather_data["city"]:
                 lat = self.weather_data["city"]["coord"]["lat"]
                 lon = self.weather_data["city"]["coord"]["lon"]
                 self.current_lat = lat
                 self.current_lon = lon
                 await self._update_air_pollution(lat, lon)
-                await self._update_air_pollution_chart(lat, lon)
+                await self._update_precipitation_chart(self.weather_data) # CHANGED: Use precipitation chart with weather data
             else:
                 print("No coordinates available for air pollution data")
         except (KeyError, IndexError, TypeError) as e:
@@ -316,22 +316,40 @@ class WeatherView:
         self.main_weather_info_instance._temp_min = temp_min
         self.main_weather_info_instance._temp_max = temp_max
 
+        # Get wind direction from API
+        wind_direction = self.api_service.get_wind_direction(self.weather_data)
+        
+        # Get additional air condition data
+        visibility = self.api_service.get_visibility(self.weather_data)
+        uv_index = self.api_service.get_uv_index(self.weather_data)
+        dew_point = self.api_service.get_dew_point(self.weather_data)
+        cloud_coverage = self.api_service.get_cloud_coverage(self.weather_data)
+        
         # Create new AirConditionInfo instance for each update to ensure proper refresh  
         self.air_condition_instance = AirConditionInfo(
             feels_like=feels_like,
             humidity=humidity,
             wind_speed=wind_speed,
+            wind_direction=wind_direction,  # Aggiungiamo la direzione del vento
             pressure=pressure,
+            visibility=visibility,  # Nuovo dato
+            uv_index=uv_index,  # Nuovo dato
+            dew_point=dew_point,  # Nuovo dato
+            cloud_coverage=cloud_coverage,  # Nuovo dato
             page=self.page,
             city=city,
             expand=True # Ensure it expands if needed within the column
         )
         
+        # Get separated air condition components
+        self.air_condition_components = self.air_condition_instance.get_separated_components()
+        
         # Always recreate the Column to ensure proper refresh
         self.info_container.content = ft.Column(
             controls=[
                 self.main_weather_info_instance,
-                self.air_condition_instance
+                # Note: Air condition components are now handled separately by layout manager
+                ft.Container(height=10)  # Spacer where air condition used to be
             ],
             spacing=10, # Add some spacing between the two components
             expand=True
@@ -442,28 +460,31 @@ class WeatherView:
         self.air_pollution_container.content = weather_card.build(self.air_pollution_display_instance)
         # self.air_pollution_container.update() # Covered by page.update() in _update_ui
     
-    async def _update_air_pollution_chart(self, lat: float, lon: float) -> None:
-        """Frontend: Updates air pollution chart UI using AirPollutionChartDisplay."""
-        weather_card = WeatherCard(self.page) # Assuming WeatherCard is still used as a wrapper
-        # self._update_text_color() # AirPollutionChartDisplay manages its own text color
+    async def _update_precipitation_chart(self, forecast_data: dict) -> None:
+        """Frontend: Updates precipitation chart UI using PrecipitationChartDisplay."""
+        print(f"DEBUG: _update_precipitation_chart called with forecast_data keys: {list(forecast_data.keys()) if forecast_data else 'None'}")
 
-        # Instantiate or update the AirPollutionChartDisplay instance
-        if not hasattr(self, 'air_pollution_chart_instance') or not self.air_pollution_chart_instance:
-            self.air_pollution_chart_instance = AirPollutionChartDisplay(
-                page=self.page,
-                lat=lat,
-                lon=lon
-                # expand=True # AirPollutionChartDisplay sets its own expand if needed
-            )
-        else:
-            # If location has changed, update the component
-            if self.air_pollution_chart_instance._lat != lat or self.air_pollution_chart_instance._lon != lon:
-                self.air_pollution_chart_instance.update_location(lat, lon)
-            # Language and theme changes are handled internally by AirPollutionChartDisplay
+        # Always create a new instance to ensure proper updates
+        self.precipitation_chart_instance = PrecipitationChartDisplay(
+            page=self.page
+        )
+        print("DEBUG: Created new PrecipitationChartDisplay instance")
+        
+        # Update the chart with forecast data
+        self.precipitation_chart_instance.update_data(forecast_data)
+        print("DEBUG: Updated precipitation chart with data")
 
-        # The WeatherCard is a generic wrapper, AirPollutionChartDisplay is the actual content.
-        self.air_pollution_chart_container.content = weather_card.build(self.air_pollution_chart_instance)
-        # self.air_pollution_chart_container.update() # Covered by page.update() in _update_ui
+        # Set the chart directly as content (no wrapper needed)
+        self.precipitation_chart_container.content = self.precipitation_chart_instance
+        print("DEBUG: Set precipitation chart container content")
+        
+        # Force container update
+        try:
+            self.precipitation_chart_container.update()
+            print("DEBUG: Updated precipitation chart container")
+        except AssertionError:
+            print("DEBUG: Container not ready for update")
+            pass
 
     def _set_loading(self, value: bool):
         self.loading = value
@@ -474,7 +495,7 @@ class WeatherView:
         self.weekly_container.visible = not value
         self.chart_container.visible = not value
         self.air_pollution_container.visible = not value
-        self.air_pollution_chart_container.visible = not value
+        self.precipitation_chart_container.visible = not value # CHANGED: From air_pollution_chart_container
         self._safe_update()
 
     def get_containers(self) -> tuple:
@@ -485,9 +506,18 @@ class WeatherView:
             self.hourly_container,
             self.chart_container,
             self.air_pollution_container,
-            self.air_pollution_chart_container
+            self.precipitation_chart_container # CHANGED: Return precipitation chart instead of air pollution chart
         )
 
     def cleanup(self):
         """Cleanup method to release resources and child components."""
         self._cleanup_child_components()
+
+    def get_air_condition_components(self):
+        """
+        Returns the separated air condition components.
+        This method allows the layout manager to access individual components.
+        """
+        if hasattr(self, 'air_condition_components') and self.air_condition_components:
+            return self.air_condition_components
+        return {}

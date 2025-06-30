@@ -156,6 +156,20 @@ class WeatherView:
         # First update any text elements that can be updated without rebuilding
         self._update_component_texts(event_type="language_change", data=event_data)
         
+        # Update air condition components immediately for language changes
+        if hasattr(self, 'air_condition_instance') and self.air_condition_instance:
+            self.update_air_condition_components()
+            print("DEBUG: Air condition components updated due to language change")
+            
+            # Also notify main app to update layout with new components
+            if hasattr(self.page, 'session') and self.page.session.get('main_app'):
+                main_app = self.page.session.get('main_app')
+                if hasattr(main_app, 'layout_manager') and main_app.layout_manager:
+                    air_condition_components = self.get_air_condition_components()
+                    if air_condition_components:
+                        main_app.layout_manager.update_air_condition_layout(air_condition_components)
+                        print("DEBUG: Air condition layout updated due to language change")
+        
         # Then handle data re-fetching for a full update if needed
         if self.current_city or (self.current_lat is not None and self.current_lon is not None):
             state_manager = self.page.session.get('state_manager')
@@ -318,6 +332,7 @@ class WeatherView:
 
         # Get wind direction from API
         wind_direction = self.api_service.get_wind_direction(self.weather_data)
+        wind_gust = self.api_service.get_wind_gust(self.weather_data)
         
         # Get additional air condition data
         visibility = self.api_service.get_visibility(self.weather_data)
@@ -331,6 +346,7 @@ class WeatherView:
             humidity=humidity,
             wind_speed=wind_speed,
             wind_direction=wind_direction,  # Aggiungiamo la direzione del vento
+            wind_gust=wind_gust,  # Aggiungiamo le raffiche di vento
             pressure=pressure,
             visibility=visibility,  # Nuovo dato
             uv_index=uv_index,  # Nuovo dato
@@ -517,7 +533,30 @@ class WeatherView:
         """
         Returns the separated air condition components.
         This method allows the layout manager to access individual components.
+        Always refreshes components to ensure units/language are current.
         """
+        # Always update components to ensure current units/language
+        self.update_air_condition_components()
+        
         if hasattr(self, 'air_condition_components') and self.air_condition_components:
             return self.air_condition_components
         return {}
+
+    def update_air_condition_components(self):
+        """
+        Updates air condition components when language or units change.
+        This should be called after the air_condition_instance has been updated.
+        """
+        if hasattr(self, 'air_condition_instance') and self.air_condition_instance:
+            # First trigger UI update on the main air condition instance to update language/unit state
+            self.page.run_task(self.air_condition_instance.update_ui)
+            
+            # First trigger UI updates on existing components
+            if hasattr(self, 'air_condition_components') and self.air_condition_components:
+                for component in self.air_condition_components.values():
+                    if hasattr(component, 'update_ui'):
+                        self.page.run_task(component.update_ui)
+                        
+            # Then recreate components with updated translations
+            self.air_condition_components = self.air_condition_instance.get_separated_components()
+            print("DEBUG: Air condition components updated with new units/language")

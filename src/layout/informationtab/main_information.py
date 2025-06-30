@@ -139,7 +139,20 @@ class MainWeatherInfo(ft.Container):
             # Mostra anche il feels_like se disponibile
             feels_like_str = ""
             if self._feels_like is not None:
-                feels_like_label = TranslationService.translate_from_dict("air_condition_items", "feels_like", self._current_language)
+                # Get translation service from session for dynamic language updates
+                translation_service = None
+                if self.page and hasattr(self.page, 'session'):
+                    translation_service = self.page.session.get('translation_service')
+                
+                feels_like_label = "Feels like"  # Default fallback
+                if translation_service:
+                    feels_like_label = translation_service.translate_from_dict(
+                        "air_condition_items", "feels_like", self._current_language
+                    ) or "Feels like"
+                else:
+                    # Fallback to static method
+                    feels_like_label = TranslationService.translate_from_dict("air_condition_items", "feels_like", self._current_language)
+                
                 feels_like_str = f"{feels_like_label} {self._feels_like}{unit_symbol}"
 
             # Unisce descrizione e feels_like

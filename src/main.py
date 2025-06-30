@@ -113,6 +113,9 @@ class MeteoApp:
         # Salva lo state_manager nella sessione per accedervi da altre parti dell'app
         page.session.set('state_manager', self.state_manager)
         
+        # Store reference to main app for WeatherView to access layout_manager
+        page.session.set('main_app', self)
+        
         # Initialize TranslationService
         self.translation_service = TranslationService()
         page.session.set('translation_service', self.translation_service) # Optionally store in session

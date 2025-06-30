@@ -26,6 +26,8 @@ TRANSLATIONS = {
             "feels_like": "Feels like",
             "humidity": "Humidity",
             "wind": "Wind",
+            "wind_direction": "Direction",
+            "wind_gust": "Wind Gust",
             "pressure": "Pressure",
             "visibility": "Visibility",
             "uv_index": "UV Index",
@@ -140,7 +142,16 @@ TRANSLATIONS = {
             "feels_like": "体感温度",
             "humidity": "湿度",
             "wind": "风速",
-            "pressure": "气压"
+            "pressure": "气压",
+            "visibility": "能见度",
+            "uv_index": "紫外线指数",
+            "dew_point": "露点",
+            "cloud_coverage": "云量",
+            "temperature_group": "温度",
+            "humidity_air_group": "湿度与空气",
+            "wind_group": "风力",
+            "atmospheric_group": "大气",
+            "solar_group": "太阳能"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "设置",
@@ -225,6 +236,13 @@ TRANSLATIONS = {
             "pm10_name": "PM10颗粒",
             "nh3_name": "氨气",
         },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "降水预报",
+            "precipitation_mm": "降水量 (毫米)",
+            "probability_percent": "概率 (%)",
+            "no_data": "无降水数据",
+            "loading": "正在加载降水数据..."
+        },
         "other": {
             "weather_card_title": "天气详情",
             "settings_title": "设置",
@@ -262,7 +280,16 @@ TRANSLATIONS = {
             "feels_like": "अनुभूत तापमान",
             "humidity": "नमी",
             "wind": "हवा",
-            "pressure": "दबाव"
+            "pressure": "दबाव",
+            "visibility": "दृश्यता",
+            "uv_index": "यूवी इंडेक्स",
+            "dew_point": "ओस बिंदु",
+            "cloud_coverage": "बादल कवरेज",
+            "temperature_group": "तापमान",
+            "humidity_air_group": "नमी और हवा",
+            "wind_group": "हवा",
+            "atmospheric_group": "वायुमंडलीय",
+            "solar_group": "सौर"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "सेटिंग्स",
@@ -347,6 +374,13 @@ TRANSLATIONS = {
             "pm2_5_name": "PM2.5 कण",
             "pm10_name": "PM10 कण",
             "nh3_name": "अमोनिया",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "वर्षा पूर्वानुमान",
+            "precipitation_mm": "वर्षा (मिमी)",
+            "probability_percent": "संभावना (%)",
+            "no_data": "वर्षा डेटा उपलब्ध नहीं है",
+            "loading": "वर्षा डेटा लोड हो रहा है..."
         }
     },
     "es": {
@@ -360,7 +394,16 @@ TRANSLATIONS = {
             "feels_like": "Sensación térmica",
             "humidity": "Humedad",
             "wind": "Viento",
-            "pressure": "Presión"
+            "pressure": "Presión",
+            "visibility": "Visibilidad",
+            "uv_index": "Índice UV",
+            "dew_point": "Punto de rocío",
+            "cloud_coverage": "Cobertura de nubes",
+            "temperature_group": "Temperatura",
+            "humidity_air_group": "Humedad y Aire",
+            "wind_group": "Viento",
+            "atmospheric_group": "Atmosférico",
+            "solar_group": "Solar"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Configuración",
@@ -445,6 +488,13 @@ TRANSLATIONS = {
             "pm2_5_name": "Partículas PM2.5",
             "pm10_name": "Partículas PM10",
             "nh3_name": "Amoníaco",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Pronóstico de Precipitaciones",
+            "precipitation_mm": "Precipitaciones (mm)",
+            "probability_percent": "Probabilidad (%)",
+            "no_data": "Datos de precipitaciones no disponibles",
+            "loading": "Cargando datos de precipitaciones..."
         }
     },
     "ar": {
@@ -458,7 +508,18 @@ TRANSLATIONS = {
             "feels_like": "يشعر وكأنه",
             "humidity": "الرطوبة",
             "wind": "الرياح",
-            "pressure": "الضغط"
+            "wind_direction": "الاتجاه",
+            "wind_gust": "هبات الرياح",
+            "pressure": "الضغط",
+            "visibility": "الرؤية",
+            "uv_index": "مؤشر الأشعة فوق البنفسجية",
+            "dew_point": "نقطة الندى",
+            "cloud_coverage": "تغطية السحب",
+            "temperature_group": "درجة الحرارة",
+            "humidity_air_group": "الرطوبة والهواء",
+            "wind_group": "الرياح",
+            "atmospheric_group": "الغلاف الجوي",
+            "solar_group": "الطاقة الشمسية"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "الإعدادات",
@@ -542,6 +603,13 @@ TRANSLATIONS = {
             "pm2_5_name": "جسيمات PM2.5",
             "pm10_name": "جسيمات PM10",
             "nh3_name": "الأمونيا",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "توقعات الهطول",
+            "precipitation_mm": "الهطول (مم)",
+            "probability_percent": "الاحتمال (%)",
+            "no_data": "لا توجد بيانات هطول متاحة",
+            "loading": "جاري تحميل بيانات الهطول..."
         }
     },
     "id": {
@@ -555,7 +623,16 @@ TRANSLATIONS = {
             "feels_like": "Terasa seperti",
             "humidity": "Kelembaban",
             "wind": "Angin",
-            "pressure": "Tekanan"
+            "pressure": "Tekanan",
+            "visibility": "Visibilitas",
+            "uv_index": "Indeks UV",
+            "dew_point": "Titik embun",
+            "cloud_coverage": "Tutupan awan",
+            "temperature_group": "Suhu",
+            "humidity_air_group": "Kelembaban & Udara",
+            "wind_group": "Angin",
+            "atmospheric_group": "Atmosfer",
+            "solar_group": "Matahari"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Pengaturan",
@@ -639,6 +716,13 @@ TRANSLATIONS = {
             "pm2_5_name": "Partikel PM2.5",
             "pm10_name": "Partikel PM10",
             "nh3_name": "Amonia",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Prakiraan Curah Hujan",
+            "precipitation_mm": "Curah Hujan (mm)",
+            "probability_percent": "Probabilitas (%)",
+            "no_data": "Data curah hujan tidak tersedia",
+            "loading": "Memuat data curah hujan..."
         }
     },
     "ja": {
@@ -652,7 +736,16 @@ TRANSLATIONS = {
             "feels_like": "体感温度",
             "humidity": "湿度",
             "wind": "風",
-            "pressure": "気圧"
+            "pressure": "気圧",
+            "visibility": "視界",
+            "uv_index": "UVインデックス",
+            "dew_point": "露点",
+            "cloud_coverage": "雲量",
+            "temperature_group": "気温",
+            "humidity_air_group": "湿度と空気",
+            "wind_group": "風",
+            "atmospheric_group": "大気",
+            "solar_group": "太陽"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "設定",
@@ -736,6 +829,13 @@ TRANSLATIONS = {
             "pm2_5_name": "PM2.5粒子",
             "pm10_name": "PM10粒子",
             "nh3_name": "アンモニア",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "降水量予報",
+            "precipitation_mm": "降水量 (mm)",
+            "probability_percent": "確率 (%)",
+            "no_data": "降水量データがありません",
+            "loading": "降水量データを読み込み中..."
         }
     },
     "it": {
@@ -749,6 +849,8 @@ TRANSLATIONS = {
             "feels_like": "Percepito",
             "humidity": "Umidità",
             "wind": "Vento",
+            "wind_direction": "Angolazione",
+            "wind_gust": "Raffica",
             "pressure": "Pressione",
             "visibility": "Visibilità",
             "uv_index": "Indice UV",
@@ -864,7 +966,16 @@ TRANSLATIONS = {
             "feels_like": "Gefühlt",
             "humidity": "Luftfeuchtigkeit",
             "wind": "Wind",
-            "pressure": "Druck"
+            "pressure": "Druck",
+            "visibility": "Sichtweite",
+            "uv_index": "UV-Index",
+            "dew_point": "Taupunkt",
+            "cloud_coverage": "Bewölkung",
+            "temperature_group": "Temperatur",
+            "humidity_air_group": "Feuchtigkeit & Luft",
+            "wind_group": "Wind",
+            "atmospheric_group": "Atmosphärisch",
+            "solar_group": "Solar"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Einstellungen",
@@ -948,6 +1059,13 @@ TRANSLATIONS = {
             "pm2_5_name": "PM2.5-Partikel",
             "pm10_name": "PM10-Partikel",
             "nh3_name": "Ammoniak",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Niederschlagsvorhersage",
+            "precipitation_mm": "Niederschlag (mm)",
+            "probability_percent": "Wahrscheinlichkeit (%)",
+            "no_data": "Keine Niederschlagsdaten verfügbar",
+            "loading": "Lade Niederschlagsdaten..."
         }
     },
     "fr": {
@@ -961,7 +1079,16 @@ TRANSLATIONS = {
             "feels_like": "Ressenti",
             "humidity": "Humidité",
             "wind": "Vent",
-            "pressure": "Pression"
+            "pressure": "Pression",
+            "visibility": "Visibilité",
+            "uv_index": "Indice UV",
+            "dew_point": "Point de rosée",
+            "cloud_coverage": "Couverture nuageuse",
+            "temperature_group": "Température",
+            "humidity_air_group": "Humidité et Air",
+            "wind_group": "Vent",
+            "atmospheric_group": "Atmosphérique",
+            "solar_group": "Solaire"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Paramètres",
@@ -1045,6 +1172,13 @@ TRANSLATIONS = {
             "pm2_5_name": "Particules PM2.5",
             "pm10_name": "Particules PM10",
             "nh3_name": "Ammoniac",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Prévisions de Précipitations",
+            "precipitation_mm": "Précipitations (mm)",
+            "probability_percent": "Probabilité (%)",
+            "no_data": "Aucune donnée de précipitations disponible",
+            "loading": "Chargement des données de précipitations..."
         }
     },
     "pt": {
@@ -1058,7 +1192,16 @@ TRANSLATIONS = {
             "feels_like": "Sensação térmica",
             "humidity": "Umidade",
             "wind": "Vento",
-            "pressure": "Pressão"
+            "pressure": "Pressão",
+            "visibility": "Visibilidade",
+            "uv_index": "Índice UV",
+            "dew_point": "Ponto de orvalho",
+            "cloud_coverage": "Cobertura de nuvens",
+            "temperature_group": "Temperatura",
+            "humidity_air_group": "Umidade e Ar",
+            "wind_group": "Vento",
+            "atmospheric_group": "Atmosférico",
+            "solar_group": "Solar"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Configurações",
@@ -1142,6 +1285,13 @@ TRANSLATIONS = {
             "pm2_5_name": "Partículas PM2.5",
             "pm10_name": "Partículas PM10",
             "nh3_name": "Amônia",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Previsão de Precipitação",
+            "precipitation_mm": "Precipitação (mm)",
+            "probability_percent": "Probabilidade (%)",
+            "no_data": "Dados de precipitação não disponíveis",
+            "loading": "Carregando dados de precipitação..."
         }
     },
     "ru": {
@@ -1155,7 +1305,16 @@ TRANSLATIONS = {
             "feels_like": "Ощущается как",
             "humidity": "Влажность",
             "wind": "Ветер",
-            "pressure": "Давление"
+            "pressure": "Давление",
+            "visibility": "Видимость",
+            "uv_index": "УФ-индекс",
+            "dew_point": "Точка росы",
+            "cloud_coverage": "Облачность",
+            "temperature_group": "Температура",
+            "humidity_air_group": "Влажность и Воздух",
+            "wind_group": "Ветер",
+            "atmospheric_group": "Атмосферный",
+            "solar_group": "Солнечный"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Настройки",
@@ -1238,6 +1397,13 @@ TRANSLATIONS = {
             "pm2_5_name": "Частицы PM2.5",
             "pm10_name": "Частицы PM10",
             "nh3_name": "Аммиак",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Прогноз Осадков",
+            "precipitation_mm": "Осадки (мм)",
+            "probability_percent": "Вероятность (%)",
+            "no_data": "Данные об осадках недоступны",
+            "loading": "Загрузка данных об осадках..."
         }
     }
 }

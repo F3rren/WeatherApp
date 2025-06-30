@@ -8,7 +8,8 @@ from typing import Dict, List, Any
 import logging
 
 from services.api_service import ApiService
-from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE
+from services.translation_service import TranslationService
+from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 from components.responsive_text_handler import ResponsiveTextHandler
 
 class PrecipitationChartDisplay(ft.Container):
@@ -22,6 +23,7 @@ class PrecipitationChartDisplay(ft.Container):
         self.page = page
         self._api_service = ApiService()
         self._language = DEFAULT_LANGUAGE
+        self._unit_system = DEFAULT_UNIT_SYSTEM
         self._precipitation_data = []
         self._forecast_data = {}
         
@@ -45,6 +47,7 @@ class PrecipitationChartDisplay(ft.Container):
         # Register for events
         if self._state_manager:
             self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self._update_ui, e))
+            self._state_manager.register_observer("unit_event", lambda e=None: self.page.run_task(self._update_ui, e))
             self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self._update_ui, e))
         
         # Set up page resize handler
@@ -79,13 +82,35 @@ class PrecipitationChartDisplay(ft.Container):
         )
 
     def _build_loading_content(self) -> ft.Control:
-        """Build loading state content."""
+        """Build loading state content with translations."""
+        # Get translation service
+        translation_service = None
+        if self.page and hasattr(self.page, 'session'):
+            translation_service = self.page.session.get('translation_service')
+        
+        # Get translated strings
+        title_text = "Precipitation Forecast"
+        loading_text = "Loading precipitation data..."
+        
+        if translation_service:
+            title_text = translation_service.translate_from_dict(
+                "precipitation_chart_items", 
+                "precipitation_chart_title",
+                self._language
+            ) or title_text
+            
+            loading_text = translation_service.translate_from_dict(
+                "precipitation_chart_items", 
+                "loading",
+                self._language
+            ) or loading_text
+        
         return ft.Container(
             content=ft.Column([
                 ft.Row([
                     ft.Icon(ft.Icons.WATER_DROP, size=24, color=ft.Colors.BLUE_400),
                     ft.Text(
-                        "Precipitation Forecast",
+                        title_text,
                         size=self._text_handler.get_size('title'),
                         weight=ft.FontWeight.BOLD
                     )
@@ -94,7 +119,7 @@ class PrecipitationChartDisplay(ft.Container):
                 ft.ProgressRing(width=50, height=50),
                 ft.Container(height=10),
                 ft.Text(
-                    "Loading precipitation data...",
+                    loading_text,
                     size=self._text_handler.get_size('body'),
                     color=ft.Colors.GREY_600
                 )
@@ -125,6 +150,14 @@ class PrecipitationChartDisplay(ft.Container):
                 self._language
             ) or title_text
 
+        # Get translated labels
+        precipitation_unit = "mm"  # Precipitation is typically always in mm
+        time_label = "Time"
+        
+        if translation_service:
+            # We could add translations for "Time" if needed
+            pass
+        
         if not self._precipitation_data:
             return self._build_no_data_content()
 
@@ -159,12 +192,12 @@ class PrecipitationChartDisplay(ft.Container):
                 dash_pattern=[5, 5]
             ),
             left_axis=ft.ChartAxis(
-                title=ft.Text("mm", size=10, color=ft.Colors.with_opacity(0.7, text_color)),
+                title=ft.Text(precipitation_unit, size=10, color=ft.Colors.with_opacity(0.7, text_color)),
                 title_size=40,
                 labels_size=40,
             ),
             bottom_axis=ft.ChartAxis(
-                title=ft.Text("Time", size=10, color=ft.Colors.with_opacity(0.7, text_color)),
+                title=ft.Text(time_label, size=10, color=ft.Colors.with_opacity(0.7, text_color)),
                 title_size=40,
                 labels_size=40,
             ),
@@ -176,7 +209,16 @@ class PrecipitationChartDisplay(ft.Container):
             animate=5000,
         )
 
-        # Create legend (only precipitation)
+        # Get translated legend label
+        precipitation_label = "Precipitation (mm)"
+        if translation_service:
+            precipitation_label = translation_service.translate_from_dict(
+                "precipitation_chart_items",
+                "precipitation_mm",
+                self._language
+            ) or precipitation_label
+
+        # Create legend (only precipitation) with translations
         legend = ft.Row([
             ft.Row([
                 ft.Container(
@@ -184,7 +226,7 @@ class PrecipitationChartDisplay(ft.Container):
                     bgcolor=ft.Colors.BLUE_500,
                     border_radius=2
                 ),
-                ft.Text("Precipitation (mm)", size=10, color=ft.Colors.with_opacity(0.8, text_color))
+                ft.Text(precipitation_label, size=10, color=ft.Colors.with_opacity(0.8, text_color))
             ], spacing=8)
         ], spacing=20, alignment=ft.MainAxisAlignment.CENTER)
 
@@ -216,16 +258,30 @@ class PrecipitationChartDisplay(ft.Container):
         ], spacing=5)
 
     def _build_no_data_content(self) -> ft.Control:
-        """Build content when no data is available."""
+        """Build content when no data is available with translations."""
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK if self.page else False
         theme = DARK_THEME if is_dark else LIGHT_THEME
         text_color = theme.get("TEXT", ft.Colors.BLACK)
+        
+        # Get translation service
+        translation_service = None
+        if self.page and hasattr(self.page, 'session'):
+            translation_service = self.page.session.get('translation_service')
+        
+        # Get translated text
+        no_data_text = "No precipitation data available"
+        if translation_service:
+            no_data_text = translation_service.translate_from_dict(
+                "precipitation_chart_items",
+                "no_data",
+                self._language
+            ) or no_data_text
         
         return ft.Container(
             content=ft.Column([
                 ft.Icon(ft.Icons.WATER_DROP_OUTLINED, size=48, color=ft.Colors.GREY_400),
                 ft.Text(
-                    "No precipitation data available",
+                    no_data_text,
                     size=self._text_handler.get_size('body'),
                     color=ft.Colors.with_opacity(0.7, text_color)
                 )
@@ -260,27 +316,43 @@ class PrecipitationChartDisplay(ft.Container):
         }
 
     async def _update_ui(self, event_data=None):
-        """Update UI based on theme/language changes."""
+        """Update UI based on language, unit, or theme changes."""
         if not self.page or not self.visible:
             return
         
         try:
-            if self._state_manager:
-                self._language = self._state_manager.get_state('language') or self._language
+            data_needs_refresh = False
             
+            if self._state_manager:
+                new_language = self._state_manager.get_state('language') or self._language
+                new_unit_system = self._state_manager.get_state('unit') or self._unit_system
+                
+                # Check if data needs to be refreshed
+                if new_unit_system != self._unit_system:
+                    data_needs_refresh = True
+                
+                self._language = new_language
+                self._unit_system = new_unit_system
+            
+            # Apply current theme
             self._apply_theme()
             
-            # Rebuild content with new theme/language
-            if self._precipitation_data:
-                self.content = self._build_chart_content()
+            # Refresh data if units changed
+            if data_needs_refresh and hasattr(self, '_forecast_data') and self._forecast_data:
+                # Re-process existing forecast data with new units
+                self.update_data(self._forecast_data)
             else:
-                self.content = self._build_loading_content()
-            
-            try:
-                self.update()
-            except AssertionError:
-                # Component not yet added to page
-                pass
+                # Just rebuild UI with current data
+                if self._precipitation_data:
+                    self.content = self._build_chart_content()
+                else:
+                    self.content = self._build_loading_content()
+                
+                try:
+                    self.update()
+                except AssertionError:
+                    # Component not yet added to page
+                    pass
         except Exception as e:
             logging.error(f"PrecipitationChartDisplay: Error updating UI: {e}")
 

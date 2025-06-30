@@ -209,6 +209,14 @@ class ApiService:
             logging.error(f"Error extracting wind direction: {e}")
             return None
     
+    def get_wind_gust(self, data: Dict[str, Any]) -> Optional[float]:
+        """Extract wind gust speed from weather data"""
+        try:
+            return data["list"][0]["wind"].get("gust", None)
+        except (KeyError, IndexError, TypeError) as e:
+            logging.error(f"Error extracting wind gust: {e}")
+            return None
+    
     def get_humidity(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract humidity from weather data"""
         try:

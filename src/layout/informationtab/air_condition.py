@@ -260,15 +260,16 @@ class AirConditionInfo(ft.Container):
     """
 
     def __init__(self, city: str, feels_like: int, humidity: int, wind_speed: int,
-                 pressure: int, wind_direction: int = None, visibility: int = None, 
-                 uv_index: float = None, dew_point: int = None, cloud_coverage: int = None, 
-                 page: ft.Page = None, **kwargs):
+                 pressure: int, wind_direction: int = None, wind_gust: float = None, 
+                 visibility: int = None, uv_index: float = None, dew_point: int = None, 
+                 cloud_coverage: int = None, page: ft.Page = None, **kwargs):
         super().__init__(**kwargs)
         self._city = city
         self._feels_like_data = feels_like
         self._humidity_data = humidity
         self._wind_speed_data = wind_speed
         self._wind_direction_data = wind_direction  # Aggiungiamo la direzione del vento
+        self._wind_gust_data = wind_gust  # Aggiungiamo le raffiche di vento
         self._pressure_data = pressure
         self._visibility_data = visibility
         self._uv_index_data = uv_index
@@ -321,13 +322,13 @@ class AirConditionInfo(ft.Container):
                 new_language = self._state_manager.get_state('language') or self._language
                 new_unit_system = self._state_manager.get_state('unit') or self._unit_system
                 
-                language_changed = self._language != new_language
                 unit_changed = self._unit_system != new_unit_system
 
                 self._language = new_language
                 self._unit_system = new_unit_system
 
-                if language_changed or unit_changed:
+                # Only fetch new data if unit system changed (language doesn't affect weather data)
+                if unit_changed:
                     weather_data = await asyncio.to_thread(
                         self._api_service.get_weather_data,
                         city=self._city, language=self._language, unit=self._unit_system
@@ -336,15 +337,25 @@ class AirConditionInfo(ft.Container):
                         self._feels_like_data = self._api_service.get_feels_like_temperature(weather_data)
                         self._humidity_data = self._api_service.get_humidity(weather_data)
                         self._wind_speed_data = self._api_service.get_wind_speed(weather_data)
-                        self._wind_direction_data = self._api_service.get_wind_direction(weather_data)  # Aggiungiamo direzione vento
+                        self._wind_direction_data = self._api_service.get_wind_direction(weather_data)
+                        self._wind_gust_data = self._api_service.get_wind_gust(weather_data)
                         self._pressure_data = self._api_service.get_pressure(weather_data)
+                        self._visibility_data = self._api_service.get_visibility(weather_data)
+                        self._uv_index_data = self._api_service.get_uv_index(weather_data)
+                        self._dew_point_data = self._api_service.get_dew_point(weather_data)
+                        self._cloud_coverage_data = self._api_service.get_cloud_coverage(weather_data)
 
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             theme = DARK_THEME if is_dark else LIGHT_THEME
             self._text_color = theme.get("TEXT", ft.Colors.BLACK)
 
+            # Always rebuild content for translations/theme changes
             self.content = self.build()
-            self.update()
+            try:
+                self.update()
+            except AssertionError:
+                # Component not yet added to page, this is okay
+                pass
         except Exception as e:
             logging.error(f"AirConditionInfo: Error updating UI: {e}\n{traceback.format_exc()}")
 
@@ -384,12 +395,14 @@ class AirConditionInfo(ft.Container):
         if self._feels_like_data is not None:
             temperature_metrics.append({
                 'label': get_translated_label('feels_like'),
+                'label_key': 'feels_like',  # Store the key for re-translation
                 'value': self._feels_like_data,
                 'unit': temp_unit
             })
         if self._dew_point_data is not None:
             temperature_metrics.append({
                 'label': get_translated_label('dew_point'),
+                'label_key': 'dew_point',  # Store the key for re-translation
                 'value': self._dew_point_data,
                 'unit': temp_unit
             })
@@ -406,12 +419,14 @@ class AirConditionInfo(ft.Container):
         if self._humidity_data is not None:
             humidity_air_metrics.append({
                 'label': get_translated_label('humidity'),
+                'label_key': 'humidity',  # Store the key for re-translation
                 'value': self._humidity_data,
                 'unit': '%'
             })
         if self._cloud_coverage_data is not None:
             humidity_air_metrics.append({
                 'label': get_translated_label('cloud_coverage'),
+                'label_key': 'cloud_coverage',  # Store the key for re-translation
                 'value': self._cloud_coverage_data,
                 'unit': '%'
             })
@@ -423,17 +438,37 @@ class AirConditionInfo(ft.Container):
                 page=self.page
             )
         
-        # Wind Group (Wind Speed + Direction)
+        # Wind Group (Wind Speed + Direction + Gust)
         wind_metrics = []
+        
+        # 1. Wind Speed (Vento)
         if self._wind_speed_data is not None:
-            wind_label = get_translated_label('wind')
-            if self._wind_direction_data is not None:
-                wind_icon, wind_desc = get_wind_direction_icon(self._wind_direction_data)
-                wind_label += f" ({wind_desc} {self._wind_direction_data}°)"
-            
             wind_metrics.append({
-                'label': wind_label,
+                'label': get_translated_label('wind'),
+                'label_key': 'wind',  # Store the key for re-translation
                 'value': self._wind_speed_data,
+                'unit': f' {wind_unit}'
+            })
+        
+        # 2. Wind Direction (Angolazione)
+        if self._wind_direction_data is not None:
+            wind_icon, wind_desc = get_wind_direction_icon(self._wind_direction_data)
+            wind_metrics.append({
+                'label': get_translated_label('wind_direction'),
+                'label_key': 'wind_direction',  # Store the key for re-translation
+                'value': f"{wind_desc}",  # Show direction description
+                'unit': f" {self._wind_direction_data}°",  # Show degrees as unit
+                'wind_icon': wind_icon,  # Pass the wind direction icon
+                'wind_desc': wind_desc,  # Pass the wind direction description
+                'wind_direction': self._wind_direction_data  # Pass the wind direction degrees
+            })
+        
+        # 3. Wind Gust (Raffica)
+        if self._wind_gust_data is not None:
+            wind_metrics.append({
+                'label': get_translated_label('wind_gust'),
+                'label_key': 'wind_gust',  # Store the key for re-translation
+                'value': round(self._wind_gust_data, 1),  # Round to 1 decimal place
                 'unit': f' {wind_unit}'
             })
         
@@ -449,14 +484,16 @@ class AirConditionInfo(ft.Container):
         if self._pressure_data is not None:
             atmospheric_metrics.append({
                 'label': get_translated_label('pressure'),
+                'label_key': 'pressure',  # Store the key for re-translation
                 'value': self._pressure_data,
                 'unit': f' {pressure_unit}'
             })
         if self._visibility_data is not None:
             atmospheric_metrics.append({
                 'label': get_translated_label('visibility'),
+                'label_key': 'visibility',  # Store the key for re-translation
                 'value': self._visibility_data,
-                'unit': ' km'
+                'unit': ' m'
             })
         
         if atmospheric_metrics:
@@ -471,6 +508,7 @@ class AirConditionInfo(ft.Container):
         if self._uv_index_data is not None:
             solar_metrics.append({
                 'label': get_translated_label('uv_index'),
+                'label_key': 'uv_index',  # Store the key for re-translation
                 'value': round(self._uv_index_data, 1),
                 'unit': ''
             })
@@ -544,6 +582,14 @@ class AirConditionGroupComponent(ft.Container):
         if self.page and hasattr(self.page, 'session'):
             translation_service = self.page.session.get('translation_service')
         
+        # Helper function to re-translate labels dynamically
+        def get_translated_label(key):
+            if translation_service:
+                return translation_service.translate_from_dict(
+                    "air_condition_items", key, self._language
+                ) or key.replace('_', ' ').title()
+            return key.replace('_', ' ').title()
+        
         # Define group configurations
         group_configs = {
             "temperature": {
@@ -585,24 +631,53 @@ class AirConditionGroupComponent(ft.Container):
         
         config = group_configs.get(self.group_type, group_configs["temperature"])
         
-        # Build metrics list
+        # Build metrics list with dynamic label translation
         metrics_widgets = []
         for metric in self.metrics:
             if metric.get('value') is not None:
-                # Create individual metric row
-                metric_row = ft.Row([
-                    ft.Text(
-                        f"{metric['label']}:",
-                        size=self._text_handler.get_size('label'),
-                        color=ft.Colors.with_opacity(0.7, self._text_color),
-                        weight=ft.FontWeight.W_500,
-                        width=80,
-                    ),
+                # Re-translate label based on current language
+                label_key = metric.get('label_key', metric.get('label', '').lower().replace(' ', '_'))
+                
+                # Get translated label directly using the stored label_key
+                translated_label = get_translated_label(label_key)
+                
+                # Create value text and additional elements
+                value_elements = [
                     ft.Text(
                         f"{metric['value']}{metric.get('unit', '')}",
                         size=self._text_handler.get_size('value'),
                         weight=ft.FontWeight.BOLD,
                         color=self._text_color,
+                    )
+                ]
+                
+                # Add wind direction icon and angle if available
+                if metric.get('wind_icon') and metric.get('wind_desc'):
+                    value_elements.append(
+                        ft.Container(width=8)  # Small spacing
+                    )
+                    value_elements.append(
+                        ft.Icon(
+                            metric['wind_icon'],
+                            size=16,
+                            color=config.get("color", ft.Colors.TEAL_400),
+                        )
+                    )
+                    
+                
+                # Create individual metric row
+                metric_row = ft.Row([
+                    ft.Text(
+                        f"{translated_label}:",
+                        size=self._text_handler.get_size('label'),
+                        color=ft.Colors.with_opacity(0.7, self._text_color),
+                        weight=ft.FontWeight.W_500,
+                        width=80,
+                    ),
+                    ft.Row(
+                        value_elements,
+                        spacing=0,
+                        alignment=ft.MainAxisAlignment.END
                     )
                 ], spacing=8, alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
                 
@@ -618,11 +693,21 @@ class AirConditionGroupComponent(ft.Container):
         # Group title
         title_text = config["title"]
         if translation_service:
-            title_text = translation_service.translate_from_dict(
-                "air_condition_items", 
-                f"{self.group_type}_group",
-                self._language
-            ) or title_text
+            try:
+                translated_title = translation_service.translate_from_dict(
+                    "air_condition_items", 
+                    f"{self.group_type}_group",
+                    self._language
+                )
+                if translated_title:
+                    title_text = translated_title
+                else:
+                    # Debug: log if translation not found
+                    logging.debug(f"Translation not found for {self.group_type}_group in language {self._language}")
+            except Exception as e:
+                logging.error(f"Error translating group title: {e}")
+        else:
+            logging.debug(f"Translation service not available for group {self.group_type}")
         
         return ft.Container(
             content=ft.Column([

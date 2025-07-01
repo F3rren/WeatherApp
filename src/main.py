@@ -15,6 +15,7 @@ from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
 from services.translation_service import TranslationService # Add this import
 from ui.weather_view import WeatherView
+from ui.charts_view import ChartsView # Add import for ChartsView
 
 # Configure logging
 logging.basicConfig(
@@ -32,14 +33,19 @@ class MeteoApp:
         self.sidebar_container = None
         self.info_container_wrapper = None
         self.hourly_container_wrapper = None
-        self.weekly_container_wrapper = None
         self.chart_container_wrapper = None
-        self.air_pollution_chart_container_wrapper = None
+        self.air_pollution_chart_container_wrapper = None # Add air pollution chart container wrapper
+        self.precipitation_chart_container_wrapper = None # For precipitation chart
+        self.air_pollution_chart_container_wrapper = None # For air pollution chart
         self.air_pollution_container_wrapper = None
         self.page = None
         self.layout_manager = None
         self.weather_view_instance = None # Add to store WeatherView instance
+        self.charts_view_instance = None # Add to store ChartsView instance
+        self.current_view_mode = "weather" # Track current view mode: "weather" or "charts"
         self.translation_service = None # Add to store TranslationService instance
+        self.is_chart_view_visible = False # Track if chart view is visible
+        self.is_air_pollution_chart_visible = False # Track if air pollution chart is visible
 
     def _update_container_colors(self, event_data=None):
         """Aggiorna solo i colori dei container principali e dei testi senza ricostruire i container."""
@@ -47,43 +53,54 @@ class MeteoApp:
             return
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         theme = DARK_THEME if is_dark else LIGHT_THEME
-        default_card = theme.get("CARD", "#ffffff" if not is_dark else "#222222")
-        if self.sidebar_container:
-            self.sidebar_container.bgcolor = theme.get("SIDEBAR", default_card)
-            self.sidebar_container.update()
+        
+        # Helper function to safely update container
+        def safe_update_container(container, color_key):
+            if container:
+                try:
+                    container.bgcolor = theme.get(color_key)
+                    container.update()
+                except AssertionError:
+                    # Container not yet properly connected to page
+                    pass
+        
+        # Aggiorna colori specifici per ogni container
+        safe_update_container(self.sidebar_container, "SIDEBAR")
+        
         if self.info_container_wrapper:
-            # Applica gradiente se definito nel tema
-            if "INFO_GRADIENT" in theme:
-                gradient_start = theme["INFO_GRADIENT"]["start"]
-                gradient_end = theme["INFO_GRADIENT"]["end"]
-                self.info_container_wrapper.gradient = ft.LinearGradient(
-                    begin=ft.alignment.top_center,
-                    end=ft.alignment.bottom_center,
-                    colors=[gradient_start, gradient_end]
-                )
-                self.info_container_wrapper.bgcolor = None
-            else:
-                self.info_container_wrapper.bgcolor = theme.get("INFO", default_card)
-                self.info_container_wrapper.gradient = None
-            self.info_container_wrapper.update()
-        if self.hourly_container_wrapper:
-            self.hourly_container_wrapper.bgcolor = theme.get("HOURLY", default_card)
-            self.hourly_container_wrapper.update()
-        if self.weekly_container_wrapper:
-            self.weekly_container_wrapper.bgcolor = theme.get("WEEKLY", default_card)
-            self.weekly_container_wrapper.update()
-        if self.chart_container_wrapper:
-            self.chart_container_wrapper.bgcolor = theme.get("CHART", default_card)
-            self.chart_container_wrapper.update()
-        if self.air_pollution_chart_container_wrapper:
-            self.air_pollution_chart_container_wrapper.bgcolor = theme.get("AIR_POLLUTION_CHART", default_card)
-            self.air_pollution_chart_container_wrapper.update()
-        if self.air_pollution_container_wrapper:
-            self.air_pollution_container_wrapper.bgcolor = theme.get("AIR_POLLUTION", default_card)
-            self.air_pollution_container_wrapper.update()
+            try:
+                # Applica gradiente se definito nel tema
+                if "INFO_GRADIENT" in theme:
+                    gradient_start = theme["INFO_GRADIENT"]["start"]
+                    gradient_end = theme["INFO_GRADIENT"]["end"]
+                    self.info_container_wrapper.gradient = ft.LinearGradient(
+                        begin=ft.alignment.top_center,
+                        end=ft.alignment.bottom_center,
+                        colors=[gradient_start, gradient_end]
+                    )
+                    self.info_container_wrapper.bgcolor = None
+                else:
+                    self.info_container_wrapper.bgcolor = theme.get("CARD_BACKGROUND")
+                    self.info_container_wrapper.gradient = None
+                self.info_container_wrapper.update()
+            except AssertionError:
+                # Container not yet properly connected to page
+                pass
+        
+        safe_update_container(self.hourly_container_wrapper, "HOURLY")
+        safe_update_container(self.chart_container_wrapper, "CHART")
+        safe_update_container(self.precipitation_chart_container_wrapper, "CHART") # For precipitation chart
+        safe_update_container(self.air_pollution_chart_container_wrapper, "CHART") # For air pollution chart
+        safe_update_container(self.air_pollution_container_wrapper, "CARD_BACKGROUND")
+        safe_update_container(self.air_condition_container_wrapper, "CARD_BACKGROUND")
+        
         # Aggiorna il colore di sfondo della pagina
-        self.page.bgcolor = theme.get("BACKGROUND", "#f5f5f5" if not is_dark else "#1a1a1a")
-        self.page.update()
+        self.page.bgcolor = theme.get("BACKGROUND")
+        try:
+            self.page.update()
+        except Exception:
+            # Page not ready for update
+            pass
 
     async def main(self, page: ft.Page) -> None: # MODIFIED: ft.Page
         """
@@ -104,17 +121,29 @@ class MeteoApp:
         # Salva lo state_manager nella sessione per accedervi da altre parti dell'app
         page.session.set('state_manager', self.state_manager)
         
+        # Store reference to main app for WeatherView to access layout_manager
+        page.session.set('main_app', self)
+        
         # Initialize TranslationService
         self.translation_service = TranslationService()
         page.session.set('translation_service', self.translation_service) # Optionally store in session
 
         # Register theme update handler for containers
         self.state_manager.register_observer("theme_event", self._update_container_colors)
+        
+        # Register day selection handler
+        self.state_manager.register_observer("day_selected_event", self._handle_day_selection)
 
         self.weather_view_instance = WeatherView(page) # Store instance
-        self.weather_view_instance.start_background_updater()  # Avvia il task persistente
         
-        info_container, hourly_container, weekly_container, chart_container, air_pollution_container, air_pollution_chart_container = self.weather_view_instance.get_containers()
+        info_container, hourly_container, chart_container, air_pollution_container, air_pollution_chart_container, precipitation_chart_container = self.weather_view_instance.get_containers() # Get all containers including both charts
+        
+        # Create a method to get air condition components once weather data is loaded
+        def get_air_condition_components():
+            return self.weather_view_instance.get_air_condition_components()
+        
+        # Store the getter function for later use
+        self.get_air_condition_components = get_air_condition_components
         
         # Inizializza il servizio di location toggle
         self.location_toggle_service = LocationToggleService(
@@ -134,13 +163,16 @@ class MeteoApp:
             state_manager=self.state_manager,
             location_toggle_service=self.location_toggle_service,
             theme_toggle_service=self.theme_toggle_service,
-            update_weather_callback=self.weather_view_instance.update_by_city # Use instance
+            update_weather_callback=self.update_weather_with_sidebar # Use unified callback
         )
         
         # Ottieni l'istanza della sidebar dal gestore
         # sidebar = self.sidebar_manager.initialize_sidebar() # Vecchio modo
         # Ora SidebarManager è esso stesso il componente sidebar da aggiungere al layout
         sidebar_control = self.sidebar_manager # SidebarManager è ora un ft.Container
+        
+        # Set the switch view callback
+        self.sidebar_manager.set_switch_view_callback(self.switch_view_mode)
         
         # Le funzioni di gestione della posizione e del cambio città sono state spostate nei rispettivi servizi
           # Inizializza il layout manager
@@ -151,9 +183,9 @@ class MeteoApp:
             sidebar_content=sidebar_control, # Usa l'istanza di SidebarManager
             info_content=info_container,
             hourly_content=hourly_container,
-            weekly_content=weekly_container,
             chart_content=chart_container,
-            air_pollution_chart_content=air_pollution_chart_container,
+            precipitation_chart_content=precipitation_chart_container, # For precipitation chart
+            air_pollution_chart_content=air_pollution_chart_container, # For air pollution chart
             air_pollution_content=air_pollution_container
         )
         
@@ -162,22 +194,28 @@ class MeteoApp:
         self.sidebar_container = containers['sidebar']
         self.info_container_wrapper = containers['info']
         self.hourly_container_wrapper = containers['hourly']
-        self.weekly_container_wrapper = containers['weekly']
         self.chart_container_wrapper = containers['chart']
-        self.air_pollution_chart_container_wrapper = containers['air_pollution_chart']
+        self.precipitation_chart_container_wrapper = containers['precipitation_chart'] # For precipitation chart
+        self.air_pollution_chart_container_wrapper = containers['air_pollution_chart'] # For air pollution chart
         self.air_pollution_container_wrapper = containers['air_pollution']
+        self.air_condition_container_wrapper = containers.get('air_condition')  # New air condition container
         
         # Costruisce e aggiunge il layout alla pagina
         page.add(self.layout_manager.build_layout())
         
-        # Initial update of container colors
-        self._update_container_colors()
+        # Assicuriamoci che lo StateManager sia correttamente inizializzato
+        await self.state_manager.set_state("language", DEFAULT_LANGUAGE)
+        await self.state_manager.set_state("unit", DEFAULT_UNIT_SYSTEM)
+        await self.state_manager.set_state("city", DEFAULT_CITY)
 
-        await self.weather_view_instance.update_by_city( # Use instance
+        await self.update_weather_with_sidebar( # Use unified method
             city=DEFAULT_CITY,
             language=DEFAULT_LANGUAGE,
             unit=DEFAULT_UNIT_SYSTEM
         )
+
+        # Initial update of container colors (after everything is loaded)
+        self._update_container_colors()
 
         # Inizializza il tracking della posizione
         await self.location_toggle_service.initialize_tracking()
@@ -203,6 +241,105 @@ class MeteoApp:
                     await on_disconnect_or_close(e)
             page.on_window_event = window_event_handler
 
+    def _handle_day_selection(self, event_data=None):
+        """Gestisce la selezione di un giorno dalla sidebar."""
+        if not event_data:
+            return
+            
+        print(f"UI Update triggered for day: {event_data.get('day', 'Unknown')}")
+        
+        # Qui puoi implementare la logica per aggiornare l'UI basata sul giorno selezionato
+        # Ad esempio, potresti:
+        # 1. Aggiornare le previsioni orarie per quel giorno
+        # 2. Modificare le informazioni principali
+        # 3. Aggiornare i grafici
+        
+        # Per ora, forza un refresh dell'UI
+        if self.weather_view_instance:
+            # Potremmo implementare un metodo specifico per aggiornare in base al giorno
+            print(f"Refreshing UI for selected day: {event_data}")
+            # self.weather_view_instance.update_for_selected_day(event_data)
+            
+        # Aggiorna anche i container se necessario
+        self._update_container_colors()
+
+    def switch_view_mode(self, mode: str):
+        """Switch between weather and charts view modes"""
+        if mode not in ["weather", "charts"]:
+            return
+            
+        if mode == self.current_view_mode:
+            return # Already in this mode
+            
+        self.current_view_mode = mode
+        
+        if mode == "charts":
+            # Switch to charts view
+            if not self.charts_view_instance:
+                self.charts_view_instance = ChartsView(self.page)
+            
+            # Update charts with current weather data
+            if self.weather_view_instance and hasattr(self.weather_view_instance, 'current_city'):
+                city = getattr(self.weather_view_instance, 'current_city', None)
+                language = getattr(self.weather_view_instance, 'current_language', DEFAULT_LANGUAGE)
+                unit = getattr(self.weather_view_instance, 'current_unit', DEFAULT_UNIT_SYSTEM)
+                
+                if city:
+                    self.page.run_task(lambda: self.charts_view_instance.update_by_city(city, language, unit))
+            
+            # Replace main content with charts view
+            charts_container = self.charts_view_instance.get_container()
+            if self.layout_manager:
+                self.layout_manager.switch_main_content(charts_container)
+                
+        else:  # mode == "weather"
+            # Switch back to weather view
+            if self.layout_manager:
+                # Get current weather containers
+                info_container, hourly_container, chart_container, air_pollution_container, air_pollution_chart_container, precipitation_chart_container = self.weather_view_instance.get_containers()
+                self.layout_manager.switch_to_weather_content(
+                    info_container, hourly_container, chart_container, 
+                    air_pollution_container, air_pollution_chart_container, precipitation_chart_container
+                )
+        
+        print(f"Switched to {mode} view mode")
+
+    async def update_weather_with_sidebar(self, city: str, language: str, unit: str):
+        """Update both main weather view and sidebar weekly forecast."""
+        print(f"DEBUG: update_weather_with_sidebar called with city: {city}, language: {language}, unit: {unit}")
+        
+        # Update main weather view
+        result = await self.weather_view_instance.update_by_city(city, language, unit)
+        print(f"DEBUG: Main weather view updated for city: {city}")
+        
+        # Update charts view if it exists
+        if self.charts_view_instance:
+            await self.charts_view_instance.update_by_city(city, language, unit)
+            print(f"DEBUG: Charts view updated for city: {city}")
+        
+        # Update layout with separated air condition components after weather data is updated
+        air_condition_components = self.get_air_condition_components()
+        if air_condition_components and self.layout_manager:
+            self.layout_manager.update_air_condition_layout(air_condition_components)
+            print("DEBUG: Air condition layout updated with separated components")
+        else:
+            # Schedule an update for after the first render
+            def delayed_update():
+                air_condition_components = self.get_air_condition_components()
+                if air_condition_components and self.layout_manager:
+                    self.layout_manager.update_air_condition_layout(air_condition_components)
+                    print("DEBUG: Air condition layout updated with separated components (delayed)")
+            
+            # Schedule the delayed update
+            if self.page:
+                self.page.run_task(lambda: delayed_update())
+        
+        # Update sidebar weekly forecast
+        if self.sidebar_manager:
+            self.sidebar_manager.update_weekly_forecast(city)
+            print(f"DEBUG: Sidebar weekly forecast updated for city: {city}")
+        
+        return result
 
 def main():
     """Entry point for the application"""

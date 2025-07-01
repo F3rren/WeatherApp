@@ -82,19 +82,33 @@ class AirPollutionChartDisplay(ft.Container):
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
             self.content = self.build()
-            if self.page:
-                self.update()
+            # Only update if this control is already in the page
+            try:
+                if self.page and hasattr(self, 'page') and self.page is not None:
+                    self.update()
+            except Exception:
+                # Control not yet added to page, update will happen when added
+                pass
         except Exception as e:
             logging.error(f"AirPollutionChartDisplay: Error updating UI: {e}")
 
     def build(self):
         """Constructs the UI for the air pollution chart."""
         if not self._pollution_data or "co" not in self._pollution_data:
-            return ft.Text(
-                TranslationService.translate_from_dict("air_pollution_chart_items", "no_air_pollution_data", self._current_language),
-                color=self._current_text_color,
-                size=self._text_handler.get_size('label')
-            )
+            return ft.Column([
+                self._build_header(),
+                ft.Container(
+                    content=ft.Text(
+                        TranslationService.translate_from_dict("air_pollution_chart_items", "no_air_pollution_data", self._current_language),
+                        color=self._current_text_color,
+                        size=self._text_handler.get_size('label'),
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                    alignment=ft.alignment.center,
+                    padding=ft.padding.all(20),
+                    expand=True,
+                )
+            ], spacing=0, expand=True)
 
         components_data = {
             "co": float(self._pollution_data.get("co", 0.0)),
@@ -132,40 +146,41 @@ class AirPollutionChartDisplay(ft.Container):
 
         bar_groups = []
         component_keys = ["co", "no", "no2", "o3", "so2", "pm2_5", "pm10", "nh3"]
+        # Colori moderni e vivaci per le barre, con gradiente e opacità
         component_colors = [
-            ft.Colors.with_opacity(0.8, ft.Colors.RED_ACCENT_700),
-            ft.Colors.with_opacity(0.8, ft.Colors.ORANGE_ACCENT_700),
-            ft.Colors.with_opacity(0.8, ft.Colors.AMBER_ACCENT_700),
-            ft.Colors.with_opacity(0.8, ft.Colors.LIME_ACCENT_700),
-            ft.Colors.with_opacity(0.8, ft.Colors.LIGHT_BLUE_ACCENT_700),
-            ft.Colors.with_opacity(0.8, ft.Colors.INDIGO_ACCENT_700),
-            ft.Colors.with_opacity(0.8, ft.Colors.PURPLE_ACCENT_700),
-            ft.Colors.with_opacity(0.8, ft.Colors.BLUE_GREY_700)
+            ft.Colors.with_opacity(0.85, "#FF5252"),  # CO - Rosso vivace
+            ft.Colors.with_opacity(0.85, "#FF9800"),  # NO - Arancione vibrante
+            ft.Colors.with_opacity(0.85, "#FFC107"),  # NO2 - Ambra brillante
+            ft.Colors.with_opacity(0.85, "#8BC34A"),  # O3 - Verde lime
+            ft.Colors.with_opacity(0.85, "#03A9F4"),  # SO2 - Blu cielo
+            ft.Colors.with_opacity(0.85, "#9C27B0"),  # PM2.5 - Viola
+            ft.Colors.with_opacity(0.85, "#673AB7"),  # PM10 - Indaco
+            ft.Colors.with_opacity(0.85, "#607D8B"),  # NH3 - Blu grigio
         ]
 
+        # Creo le barre con tooltips tradotti
         for i, key in enumerate(component_keys):
             value = components_data[key]
+            # Ottieni il nome tradotto dell'inquinante
+            pollutant_name = TranslationService.translate_from_dict(
+                "air_pollution_chart_items", f"{key}_name", self._current_language
+            )
+            
             bar_groups.append(
                 ft.BarChartGroup(
                     x=i,
                     bar_rods=[
                         ft.BarChartRod(
-                            from_y=0, to_y=value, width=30,
+                            from_y=0, to_y=value, width=32,
                             color=component_colors[i],
-                            tooltip=f"{key.upper()}: {round(value)} {unit_text}",
-                            border_radius=0,
+                            tooltip=f"{pollutant_name}: {round(value, 1)} {unit_text}",
+                            border_radius=6,  # Angoli arrotondati moderni
+                            border_side=ft.BorderSide(width=0),  # Rimuovi bordo
                         )
                     ]
                 )
             )
         
-        y_axis_title_text = TranslationService.translate_from_dict("air_pollution_chart_items", "air_pollution_chart_y_axis_title", self._current_language)
-        y_axis_title_control = ft.Text(
-            y_axis_title_text,
-            color=self._current_text_color,
-            size=self._text_handler.get_size('axis_title')
-        )
-
         bottom_axis_labels_text = {
             "co": "CO", "no": "NO", "no2": "NO₂", "o3": "O₃", 
             "so2": "SO₂", "pm2_5": "PM₂.₅", "pm10": "PM₁₀", "nh3": "NH₃"
@@ -184,25 +199,69 @@ class AirPollutionChartDisplay(ft.Container):
                 )
             )
 
-        return ft.BarChart(
+        # Determina il tema e i colori del background
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        
+        # Background moderno simile al temperature chart
+        if is_dark:
+            chart_bg_color = "#2A3441"  # Blu-grigio scuro moderno
+            grid_color = ft.Colors.with_opacity(0.2, ft.Colors.WHITE)
+            border_color = ft.Colors.with_opacity(0.3, ft.Colors.WHITE)
+        else:
+            chart_bg_color = "#F8FAFC"  # Blu-grigio chiaro moderno
+            grid_color = ft.Colors.with_opacity(0.2, ft.Colors.BLACK)
+            border_color = ft.Colors.with_opacity(0.2, ft.Colors.BLACK)
+
+        # Crea il grafico con stile moderno
+        chart = ft.BarChart(
             bar_groups=bar_groups,
-            border=ft.border.all(1, ft.Colors.with_opacity(0.3, self._current_text_color)),
-            left_axis=ft.ChartAxis(
-                labels_size=self._text_handler.get_size('label') * 2.8, 
-                title=y_axis_title_control,
-                title_size=self._text_handler.get_size('axis_title')
-            ),
+            bgcolor=chart_bg_color,  # Background moderno
+            border=ft.border.all(1, border_color),  # Bordo più delicato
             bottom_axis=ft.ChartAxis(
                 labels=bottom_axis_labels,
-                labels_size=self._text_handler.get_size('label') * 3.5, 
+                labels_size=self._text_handler.get_size('label') * 3.5,
+                labels_interval=1,  # Mostra tutte le etichette
             ),
             horizontal_grid_lines=ft.ChartGridLines(
-                color=ft.Colors.with_opacity(0.15, self._current_text_color), width=1, dash_pattern=[6, 3]
+                color=grid_color, width=1, dash_pattern=[8, 4]  # Griglia più delicata
             ),
-            tooltip_bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.BLACK if self.page.theme_mode == ft.ThemeMode.DARK else ft.Colors.WHITE),
+            vertical_grid_lines=ft.ChartGridLines(
+                color=grid_color, width=0.5, dash_pattern=[8, 4]  # Linee verticali sottili
+            ),
+            tooltip_bgcolor=ft.Colors.with_opacity(0.95, "#1E293B" if is_dark else "#FFFFFF"),
             max_y=final_max_y,
-            interactive=False,
+            interactive=False,  # Abilita interattività per migliore UX
             expand=True,
+        )
+
+        # Ritorna la struttura completa con header + grafico diretto
+        return ft.Column([
+            self._build_header(),
+            chart
+        ], spacing=0, expand=True)
+
+    def _build_header(self):
+        """Builds a modern header for air pollution chart section."""
+        header_text = TranslationService.translate_from_dict("air_pollution_chart_items", "air_pollution_title", self._current_language)
+        
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        
+        return ft.Container(
+            content=ft.Row([
+                ft.Icon(
+                    ft.Icons.AIR_OUTLINED,  # Icona per la qualità dell'aria
+                    color=ft.Colors.RED_400 if not is_dark else ft.Colors.RED_300,
+                    size=24
+                ),
+                ft.Container(width=12),  # Spacer
+                ft.Text(
+                    f"{header_text}" " (μg/m3)",
+                    size=self._text_handler.get_size('axis_title') + 2,
+                    weight=ft.FontWeight.BOLD,
+                    color=self._current_text_color
+                ),
+            ], alignment=ft.MainAxisAlignment.START),
+            padding=ft.padding.only(left=20, top=16, bottom=8)
         )
 
     def update_location(self, lat: float, lon: float):

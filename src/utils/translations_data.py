@@ -26,7 +26,18 @@ TRANSLATIONS = {
             "feels_like": "Feels like",
             "humidity": "Humidity",
             "wind": "Wind",
-            "pressure": "Pressure"
+            "wind_direction": "Direction",
+            "wind_gust": "Wind Gust",
+            "pressure": "Pressure",
+            "visibility": "Visibility",
+            "uv_index": "UV Index",
+            "dew_point": "Dew Point",
+            "cloud_coverage": "Cloud Coverage",
+            "temperature_group": "Temperature",
+            "humidity_air_group": "Humidity & Air",
+            "wind_group": "Wind",
+            "atmospheric_group": "Atmospheric",
+            "solar_group": "Solar"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Settings",
@@ -37,6 +48,8 @@ TRANSLATIONS = {
             "close": "Close" # Used in SettingsAlertDialog
         },
         "weekly_forecast_items": {
+            "header": "5-Day Forecast",
+            "loading": "Loading weekly forecast...",
             "monday": "Monday",
             "tuesday": "Tuesday",
             "wednesday": "Wednesday",
@@ -45,7 +58,8 @@ TRANSLATIONS = {
             "saturday": "Saturday",
             "sunday": "Sunday",
             "no_forecast_data": "Weather forecast data not available.",
-        },        "temperature_chart_items": {
+        },        
+        "temperature_chart_items": {
             "monday": "Mon", # Short day names for charts if needed
             "tuesday": "Tue",
             "wednesday": "Wed",
@@ -78,6 +92,12 @@ TRANSLATIONS = {
         },
         "main_information_items": {
             "current_location": "Current Location",
+            "high": "High",
+            "low": "Low",
+        },
+        "hourly_forecast_items": {
+            "hourly_forecast": "Hourly Forecast",
+            "loading_forecast": "Loading 24-hour forecast...",
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Air Pollution (μg/m³)", # For AirPollutionChart y-axis title
@@ -88,7 +108,26 @@ TRANSLATIONS = {
             "measurement": "Measurement", # Used in settings dialog
         },
         "air_pollution_chart_items": {
-            "air_pollution_chart_y_axis_title": "Concentration (µg/m³)", # Y-axis title for AirPollutionChart
+            "air_pollution_chart_y_axis_title": "µg/m³", # Y-axis title for AirPollutionChart
+            "micrograms_per_cubic_meter_short": "µg/m³",
+            "no_air_pollution_data": "No air pollution data available",
+            "air_pollution_title": "Air Pollution", # Header title
+            # Pollutant names for tooltips
+            "co_name": "Carbon Monoxide",
+            "no_name": "Nitrogen Monoxide", 
+            "no2_name": "Nitrogen Dioxide",
+            "o3_name": "Ozone",
+            "so2_name": "Sulfur Dioxide",
+            "pm2_5_name": "PM2.5 Particles",
+            "pm10_name": "PM10 Particles",
+            "nh3_name": "Ammonia",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Precipitation Forecast",
+            "precipitation_mm": "Precipitation (mm)",
+            "probability_percent": "Probability (%)",
+            "no_data": "No precipitation data available",
+            "loading": "Loading precipitation data..."
         },
     },
     
@@ -103,7 +142,16 @@ TRANSLATIONS = {
             "feels_like": "体感温度",
             "humidity": "湿度",
             "wind": "风速",
-            "pressure": "气压"
+            "pressure": "气压",
+            "visibility": "能见度",
+            "uv_index": "紫外线指数",
+            "dew_point": "露点",
+            "cloud_coverage": "云量",
+            "temperature_group": "温度",
+            "humidity_air_group": "湿度与空气",
+            "wind_group": "风力",
+            "atmospheric_group": "大气",
+            "solar_group": "太阳能"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "设置",
@@ -114,6 +162,8 @@ TRANSLATIONS = {
             "close": "关闭"
         },
         "weekly_forecast_items": {
+            "header": "5天预报",
+            "loading": "加载每周预报...",
             "monday": "星期一",
             "tuesday": "星期二",
             "wednesday": "星期三",
@@ -154,7 +204,13 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "当前位置"
+            "current_location": "当前位置",
+            "high": "最高",
+            "low": "最低",
+        },
+        "hourly_forecast_items": {
+            "hourly_forecast": "每小时预报",
+            "loading_forecast": "正在加载24小时预报...",
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "空气污染 (微克/立方米)"
@@ -165,7 +221,27 @@ TRANSLATIONS = {
             "measurement": "测量单位"
         },
         "air_pollution_chart_items": {
-            "air_pollution_chart_y_axis_title": "浓度 (微克/立方米)"
+            "air_pollution_chart_y_axis_title": "微克/立方米",
+            "micrograms_per_cubic_meter_short": "微克/立方米",
+            "no_air_pollution_data": "无空气污染数据",
+            "air_pollution_title": "空气污染", # Header title
+            "air_pollution": "空气污染", # Header title
+            # Pollutant names for tooltips
+            "co_name": "一氧化碳",
+            "no_name": "一氧化氮", 
+            "no2_name": "二氧化氮",
+            "o3_name": "臭氧",
+            "so2_name": "二氧化硫",
+            "pm2_5_name": "PM2.5颗粒",
+            "pm10_name": "PM10颗粒",
+            "nh3_name": "氨气",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "降水预报",
+            "precipitation_mm": "降水量 (毫米)",
+            "probability_percent": "概率 (%)",
+            "no_data": "无降水数据",
+            "loading": "正在加载降水数据..."
         },
         "other": {
             "weather_card_title": "天气详情",
@@ -204,7 +280,16 @@ TRANSLATIONS = {
             "feels_like": "अनुभूत तापमान",
             "humidity": "नमी",
             "wind": "हवा",
-            "pressure": "दबाव"
+            "pressure": "दबाव",
+            "visibility": "दृश्यता",
+            "uv_index": "यूवी इंडेक्स",
+            "dew_point": "ओस बिंदु",
+            "cloud_coverage": "बादल कवरेज",
+            "temperature_group": "तापमान",
+            "humidity_air_group": "नमी और हवा",
+            "wind_group": "हवा",
+            "atmospheric_group": "वायुमंडलीय",
+            "solar_group": "सौर"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "सेटिंग्स",
@@ -215,6 +300,8 @@ TRANSLATIONS = {
             "close": "बंद करें"
         },
         "weekly_forecast_items": {
+            "header": "5 दिन का पूर्वानुमान",
+            "loading": "साप्ताहिक पूर्वानुमान लोड हो रहा है...",
             "monday": "सोमवार",
             "tuesday": "मंगलवार",
             "wednesday": "बुधवार",
@@ -255,18 +342,45 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "वर्तमान स्थान"
+            "current_location": "वर्तमान स्थान",
+            "high": "उच्च",
+            "low": "निम्न",
+        },
+        "hourly_forecast_items": {
+            "hourly_forecast": "प्रति घंटा पूर्वानुमान",
+            "loading_forecast": "24-घंटे का पूर्वानुमान लोड हो रहा है...",
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "वायु प्रदूषण (माइक्रोग्राम/घन मीटर)"
-        },        "unit_items": {
+        },
+        "unit_items": {
             "unit_metric": "मीट्रिक",
             "unit_imperial": "इंपीरियल",
             "unit_standard": "मानक",
             "measurement": "मापन इकाई"
         },
         "air_pollution_chart_items": {
-            "air_pollution_chart_y_axis_title": "सांद्रता (माइक्रोग्राम/घन मीटर)"
+            "air_pollution_chart_y_axis_title": "माइक्रोग्राम/घन मीटर",
+            "micrograms_per_cubic_meter_short": "माइक्रोग्राम/घन मीटर",
+            "no_air_pollution_data": "वायु प्रदूषण डेटा उपलब्ध नहीं है",
+            "air_pollution_title": "वायु प्रदूषण", # Header title
+            "air_pollution": "वायु प्रदूषण", # Header title
+            # Pollutant names for tooltips
+            "co_name": "कार्बन मोनोऑक्साइड",
+            "no_name": "नाइट्रिक ऑक्साइड", 
+            "no2_name": "नाइट्रोजन डाइऑक्साइड",
+            "o3_name": "ओजोन",
+            "so2_name": "सल्फर डाइऑक्साइड",
+            "pm2_5_name": "PM2.5 कण",
+            "pm10_name": "PM10 कण",
+            "nh3_name": "अमोनिया",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "वर्षा पूर्वानुमान",
+            "precipitation_mm": "वर्षा (मिमी)",
+            "probability_percent": "संभावना (%)",
+            "no_data": "वर्षा डेटा उपलब्ध नहीं है",
+            "loading": "वर्षा डेटा लोड हो रहा है..."
         }
     },
     "es": {
@@ -280,7 +394,16 @@ TRANSLATIONS = {
             "feels_like": "Sensación térmica",
             "humidity": "Humedad",
             "wind": "Viento",
-            "pressure": "Presión"
+            "pressure": "Presión",
+            "visibility": "Visibilidad",
+            "uv_index": "Índice UV",
+            "dew_point": "Punto de rocío",
+            "cloud_coverage": "Cobertura de nubes",
+            "temperature_group": "Temperatura",
+            "humidity_air_group": "Humedad y Aire",
+            "wind_group": "Viento",
+            "atmospheric_group": "Atmosférico",
+            "solar_group": "Solar"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Configuración",
@@ -291,6 +414,8 @@ TRANSLATIONS = {
             "close": "Cerrar"
         },
         "weekly_forecast_items": {
+            "header": "Pronóstico 5 Días",
+            "loading": "Cargando pronóstico semanal...",
             "monday": "Lunes",
             "tuesday": "Martes",
             "wednesday": "Miércoles",
@@ -331,18 +456,45 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Ubicación Actual"
+            "current_location": "Ubicación Actual",
+            "high": "Alta",
+            "low": "Baja",
+        },
+        "hourly_forecast_items": {
+            "hourly_forecast": "Pronóstico por Horas",
+            "loading_forecast": "Cargando pronóstico de 24 horas...",
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Contaminación del Aire (μg/m³)"
-        },        "unit_items": {
+        },
+        "unit_items": {
             "unit_metric": "Métrico",
             "unit_imperial": "Imperial",
             "unit_standard": "Estándar",
             "measurement": "Medición"
         },
         "air_pollution_chart_items": {
-            "air_pollution_chart_y_axis_title": "Concentración (µg/m³)"
+            "air_pollution_chart_y_axis_title": "µg/m³",
+            "micrograms_per_cubic_meter_short": "µg/m³",
+            "no_air_pollution_data": "No hay datos de contaminación del aire disponibles",
+            "air_pollution_title": "Contaminación del Aire", # Header title
+            "air_pollution": "Contaminación del Aire", # Header title
+            # Pollutant names for tooltips
+            "co_name": "Monóxido de Carbono",
+            "no_name": "Óxido Nítrico", 
+            "no2_name": "Dióxido de Nitrógeno",
+            "o3_name": "Ozono",
+            "so2_name": "Dióxido de Azufre",
+            "pm2_5_name": "Partículas PM2.5",
+            "pm10_name": "Partículas PM10",
+            "nh3_name": "Amoníaco",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Pronóstico de Precipitaciones",
+            "precipitation_mm": "Precipitaciones (mm)",
+            "probability_percent": "Probabilidad (%)",
+            "no_data": "Datos de precipitaciones no disponibles",
+            "loading": "Cargando datos de precipitaciones..."
         }
     },
     "ar": {
@@ -356,7 +508,18 @@ TRANSLATIONS = {
             "feels_like": "يشعر وكأنه",
             "humidity": "الرطوبة",
             "wind": "الرياح",
-            "pressure": "الضغط"
+            "wind_direction": "الاتجاه",
+            "wind_gust": "هبات الرياح",
+            "pressure": "الضغط",
+            "visibility": "الرؤية",
+            "uv_index": "مؤشر الأشعة فوق البنفسجية",
+            "dew_point": "نقطة الندى",
+            "cloud_coverage": "تغطية السحب",
+            "temperature_group": "درجة الحرارة",
+            "humidity_air_group": "الرطوبة والهواء",
+            "wind_group": "الرياح",
+            "atmospheric_group": "الغلاف الجوي",
+            "solar_group": "الطاقة الشمسية"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "الإعدادات",
@@ -367,6 +530,8 @@ TRANSLATIONS = {
             "close": "إغلاق"
         },
         "weekly_forecast_items": {
+            "header": "توقعات 5 أيام",
+            "loading": "تحميل التوقعات الأسبوعية...",
             "monday": "الإثنين",
             "tuesday": "الثلاثاء",
             "wednesday": "الأربعاء",
@@ -407,18 +572,44 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "الموقع الحالي"
+            "current_location": "الموقع الحالي",
+            "high": "مرتفع",
+            "low": "منخفض",
+        },
+        "hourly_forecast_items": {
+            "hourly_forecast": "التوقعات بالساعة",
+            "loading_forecast": "جارٍ تحميل توقعات الـ 24 ساعة...",
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "تلوث الهواء (ميكروغرام/م³)"
-        },        "unit_items": {
+        },
+        "unit_items": {
             "unit_metric": "متري",
             "unit_imperial": "إمبراطوري",
             "unit_standard": "قياسي",
             "measurement": "القياس"
         },
         "air_pollution_chart_items": {
-            "air_pollution_chart_y_axis_title": "التركيز (ميكروغرام/م³)"
+            "air_pollution_chart_y_axis_title": "ميكروغرام/م³",
+            "micrograms_per_cubic_meter_short": "ميكروغرام/م³",
+            "no_air_pollution_data": "لا توجد بيانات تلوث الهواء متاحة",
+            "air_pollution": "تلوث الهواء", # Header title
+            # Pollutant names for tooltips
+            "co_name": "أول أكسيد الكربون",
+            "no_name": "أول أكسيد النيتروجين", 
+            "no2_name": "ثاني أكسيد النيتروجين",
+            "o3_name": "الأوزون",
+            "so2_name": "ثاني أكسيد الكبريت",
+            "pm2_5_name": "جسيمات PM2.5",
+            "pm10_name": "جسيمات PM10",
+            "nh3_name": "الأمونيا",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "توقعات الهطول",
+            "precipitation_mm": "الهطول (مم)",
+            "probability_percent": "الاحتمال (%)",
+            "no_data": "لا توجد بيانات هطول متاحة",
+            "loading": "جاري تحميل بيانات الهطول..."
         }
     },
     "id": {
@@ -432,7 +623,16 @@ TRANSLATIONS = {
             "feels_like": "Terasa seperti",
             "humidity": "Kelembaban",
             "wind": "Angin",
-            "pressure": "Tekanan"
+            "pressure": "Tekanan",
+            "visibility": "Visibilitas",
+            "uv_index": "Indeks UV",
+            "dew_point": "Titik embun",
+            "cloud_coverage": "Tutupan awan",
+            "temperature_group": "Suhu",
+            "humidity_air_group": "Kelembaban & Udara",
+            "wind_group": "Angin",
+            "atmospheric_group": "Atmosfer",
+            "solar_group": "Matahari"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Pengaturan",
@@ -443,6 +643,8 @@ TRANSLATIONS = {
             "close": "Tutup"
         },
         "weekly_forecast_items": {
+            "header": "Prakiraan 5 Hari",
+            "loading": "Memuat prakiraan mingguan...",
             "monday": "Senin",
             "tuesday": "Selasa",
             "wednesday": "Rabu",
@@ -483,18 +685,44 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Lokasi Saat Ini"
+            "current_location": "Lokasi Saat Ini",
+            "high": "Tinggi",
+            "low": "Rendah",
+        },
+        "hourly_forecast_items": {
+            "hourly_forecast": "Prakiraan Per Jam",
+            "loading_forecast": "Memuat prakiraan 24 jam...",
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Polusi Udara (μg/m³)"
-        },        "unit_items": {
+        },
+        "unit_items": {
             "unit_metric": "Metrik",
             "unit_imperial": "Imperial",
             "unit_standard": "Standar",
             "measurement": "Pengukuran"
         },
         "air_pollution_chart_items": {
-            "air_pollution_chart_y_axis_title": "Konsentrasi (μg/m³)"
+            "air_pollution_chart_y_axis_title": "μg/m³",
+            "micrograms_per_cubic_meter_short": "μg/m³",
+            "no_air_pollution_data": "Data polusi udara tidak tersedia",
+            "air_pollution": "Polusi Udara", # Header title
+            # Pollutant names for tooltips
+            "co_name": "Karbon Monoksida",
+            "no_name": "Nitrogen Monoksida", 
+            "no2_name": "Nitrogen Dioksida",
+            "o3_name": "Ozon",
+            "so2_name": "Sulfur Dioksida",
+            "pm2_5_name": "Partikel PM2.5",
+            "pm10_name": "Partikel PM10",
+            "nh3_name": "Amonia",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Prakiraan Curah Hujan",
+            "precipitation_mm": "Curah Hujan (mm)",
+            "probability_percent": "Probabilitas (%)",
+            "no_data": "Data curah hujan tidak tersedia",
+            "loading": "Memuat data curah hujan..."
         }
     },
     "ja": {
@@ -508,7 +736,16 @@ TRANSLATIONS = {
             "feels_like": "体感温度",
             "humidity": "湿度",
             "wind": "風",
-            "pressure": "気圧"
+            "pressure": "気圧",
+            "visibility": "視界",
+            "uv_index": "UVインデックス",
+            "dew_point": "露点",
+            "cloud_coverage": "雲量",
+            "temperature_group": "気温",
+            "humidity_air_group": "湿度と空気",
+            "wind_group": "風",
+            "atmospheric_group": "大気",
+            "solar_group": "太陽"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "設定",
@@ -519,6 +756,8 @@ TRANSLATIONS = {
             "close": "閉じる"
         },
         "weekly_forecast_items": {
+            "header": "5日間予報",
+            "loading": "週間予報を読み込み中...",
             "monday": "月曜日",
             "tuesday": "火曜日",
             "wednesday": "水曜日",
@@ -559,18 +798,44 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "現在地"
+            "current_location": "現在地",
+            "high": "最高",
+            "low": "最低",
+        },
+        "hourly_forecast_items": {
+            "hourly_forecast": "時間別予報",
+            "loading_forecast": "24時間予報を読み込んでいます...",
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "大気汚染 (μg/m³)"
-        },        "unit_items": {
+        },
+        "unit_items": {
             "unit_metric": "メートル法",
             "unit_imperial": "ヤード・ポンド法",
             "unit_standard": "標準",
             "measurement": "測定"
         },
         "air_pollution_chart_items": {
-            "air_pollution_chart_y_axis_title": "濃度 (µg/m³)"
+            "air_pollution_chart_y_axis_title": "µg/m³",
+            "micrograms_per_cubic_meter_short": "µg/m³",
+            "no_air_pollution_data": "大気汚染データが利用できません",
+            "air_pollution": "大気汚染", # Header title
+            # Pollutant names for tooltips
+            "co_name": "一酸化炭素",
+            "no_name": "一酸化窒素", 
+            "no2_name": "二酸化窒素",
+            "o3_name": "オゾン",
+            "so2_name": "二酸化硫黄",
+            "pm2_5_name": "PM2.5粒子",
+            "pm10_name": "PM10粒子",
+            "nh3_name": "アンモニア",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "降水量予報",
+            "precipitation_mm": "降水量 (mm)",
+            "probability_percent": "確率 (%)",
+            "no_data": "降水量データがありません",
+            "loading": "降水量データを読み込み中..."
         }
     },
     "it": {
@@ -584,7 +849,18 @@ TRANSLATIONS = {
             "feels_like": "Percepito",
             "humidity": "Umidità",
             "wind": "Vento",
-            "pressure": "Pressione"
+            "wind_direction": "Angolazione",
+            "wind_gust": "Raffica",
+            "pressure": "Pressione",
+            "visibility": "Visibilità",
+            "uv_index": "Indice UV",
+            "dew_point": "Punto di rugiada",
+            "cloud_coverage": "Copertura nuvolosa",
+            "temperature_group": "Temperatura",
+            "humidity_air_group": "Umidità e Aria",
+            "wind_group": "Vento",
+            "atmospheric_group": "Atmosferico",
+            "solar_group": "Solare"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Impostazioni",
@@ -595,6 +871,8 @@ TRANSLATIONS = {
             "close": "Chiudi"
         },
         "weekly_forecast_items": {
+            "header": "Previsioni 5 Giorni",
+            "loading": "Caricamento previsioni settimanali...",
             "monday": "Lunedì",
             "tuesday": "Martedì",
             "wednesday": "Mercoledì",
@@ -636,18 +914,45 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Posizione Corrente"
+            "current_location": "Posizione Corrente",
+            "high": "Massima",
+            "low": "Minima",
+        },
+        "hourly_forecast_items": {
+            "hourly_forecast": "Previsioni Orarie",
+            "loading_forecast": "Caricamento previsioni 24 ore...",
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Inquinamento dell'aria (μg/m³)"
-        },        "unit_items": {
+        },
+        "unit_items": {
             "unit_metric": "Metrico",
             "unit_imperial": "Imperiale",
             "unit_standard": "Standard",
             "measurement": "Misurazione"
         },
         "air_pollution_chart_items": {
-            "air_pollution_chart_y_axis_title": "Concentrazione (µg/m³)"
+            "air_pollution_chart_y_axis_title": "µg/m³",
+            "micrograms_per_cubic_meter_short": "µg/m³",
+            "no_air_pollution_data": "Dati sull'inquinamento atmosferico non disponibili",
+            "air_pollution_title": "Inquinamento dell'Aria", # Header title
+            "air_pollution": "Inquinamento dell'Aria", # Header title
+            # Pollutant names for tooltips
+            "co_name": "Monossido di Carbonio",
+            "no_name": "Monossido di Azoto", 
+            "no2_name": "Biossido di Azoto",
+            "o3_name": "Ozono",
+            "so2_name": "Biossido di Zolfo",
+            "pm2_5_name": "Particelle PM2.5",
+            "pm10_name": "Particelle PM10",
+            "nh3_name": "Ammoniaca",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Previsioni Precipitazioni",
+            "precipitation_mm": "Precipitazioni (mm)",
+            "probability_percent": "Probabilità (%)",
+            "no_data": "Dati precipitazioni non disponibili",
+            "loading": "Caricamento dati precipitazioni..."
         }
     },
     "de": {
@@ -661,7 +966,16 @@ TRANSLATIONS = {
             "feels_like": "Gefühlt",
             "humidity": "Luftfeuchtigkeit",
             "wind": "Wind",
-            "pressure": "Druck"
+            "pressure": "Druck",
+            "visibility": "Sichtweite",
+            "uv_index": "UV-Index",
+            "dew_point": "Taupunkt",
+            "cloud_coverage": "Bewölkung",
+            "temperature_group": "Temperatur",
+            "humidity_air_group": "Feuchtigkeit & Luft",
+            "wind_group": "Wind",
+            "atmospheric_group": "Atmosphärisch",
+            "solar_group": "Solar"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Einstellungen",
@@ -672,6 +986,8 @@ TRANSLATIONS = {
             "close": "Schließen"
         },
         "weekly_forecast_items": {
+            "header": "5-Tage-Prognose",
+            "loading": "Laden der Wochenprognose...",
             "monday": "Montag",
             "tuesday": "Dienstag",
             "wednesday": "Mittwoch",
@@ -712,18 +1028,44 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Aktueller Standort"
+            "current_location": "Aktueller Standort",
+            "high": "Hoch",
+            "low": "Niedrig",
+        },
+        "hourly_forecast_items": {
+            "hourly_forecast": "Stündliche Vorhersage",
+            "loading_forecast": "Lade 24-Stunden-Vorhersage...",
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Luftverschmutzung (μg/m³)"
-        },        "unit_items": {
+        },
+        "unit_items": {
             "unit_metric": "Metrisch",
             "unit_imperial": "Imperial",
             "unit_standard": "Standard",
             "measurement": "Messung"
         },
         "air_pollution_chart_items": {
-            "air_pollution_chart_y_axis_title": "Konzentration (µg/m³)"
+            "air_pollution_chart_y_axis_title": "µg/m³",
+            "micrograms_per_cubic_meter_short": "µg/m³",
+            "no_air_pollution_data": "Keine Luftverschmutzungsdaten verfügbar",
+            "air_pollution": "Luftverschmutzung", # Header title
+            # Pollutant names for tooltips
+            "co_name": "Kohlenmonoxid",
+            "no_name": "Stickstoffmonoxid", 
+            "no2_name": "Stickstoffdioxid",
+            "o3_name": "Ozon",
+            "so2_name": "Schwefeldioxid",
+            "pm2_5_name": "PM2.5-Partikel",
+            "pm10_name": "PM10-Partikel",
+            "nh3_name": "Ammoniak",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Niederschlagsvorhersage",
+            "precipitation_mm": "Niederschlag (mm)",
+            "probability_percent": "Wahrscheinlichkeit (%)",
+            "no_data": "Keine Niederschlagsdaten verfügbar",
+            "loading": "Lade Niederschlagsdaten..."
         }
     },
     "fr": {
@@ -737,7 +1079,16 @@ TRANSLATIONS = {
             "feels_like": "Ressenti",
             "humidity": "Humidité",
             "wind": "Vent",
-            "pressure": "Pression"
+            "pressure": "Pression",
+            "visibility": "Visibilité",
+            "uv_index": "Indice UV",
+            "dew_point": "Point de rosée",
+            "cloud_coverage": "Couverture nuageuse",
+            "temperature_group": "Température",
+            "humidity_air_group": "Humidité et Air",
+            "wind_group": "Vent",
+            "atmospheric_group": "Atmosphérique",
+            "solar_group": "Solaire"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Paramètres",
@@ -748,6 +1099,8 @@ TRANSLATIONS = {
             "close": "Fermer"
         },
         "weekly_forecast_items": {
+            "header": "Prévisions 5 Jours",
+            "loading": "Chargement des prévisions hebdomadaires...",
             "monday": "Lundi",
             "tuesday": "Mardi",
             "wednesday": "Mercredi",
@@ -788,18 +1141,44 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Position actuelle"
+            "current_location": "Position actuelle",
+            "high": "Haute",
+            "low": "Basse",
+        },
+        "hourly_forecast_items": {
+            "hourly_forecast": "Prévisions Horaires",
+            "loading_forecast": "Chargement des prévisions 24h...",
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Pollution de l'air (μg/m³)"
-        },        "unit_items": {
+        },
+        "unit_items": {
             "unit_metric": "Métrique",
             "unit_imperial": "Impérial",
             "unit_standard": "Standard",
             "measurement": "Mesure"
         },
         "air_pollution_chart_items": {
-            "air_pollution_chart_y_axis_title": "Concentration (µg/m³)"
+            "air_pollution_chart_y_axis_title": "µg/m³",
+            "micrograms_per_cubic_meter_short": "µg/m³",
+            "no_air_pollution_data": "Aucune donnée de pollution de l'air disponible",
+            "air_pollution": "Pollution de l'Air", # Header title
+            # Pollutant names for tooltips
+            "co_name": "Monoxyde de Carbone",
+            "no_name": "Monoxyde d'Azote", 
+            "no2_name": "Dioxyde d'Azote",
+            "o3_name": "Ozone",
+            "so2_name": "Dioxyde de Soufre",
+            "pm2_5_name": "Particules PM2.5",
+            "pm10_name": "Particules PM10",
+            "nh3_name": "Ammoniac",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Prévisions de Précipitations",
+            "precipitation_mm": "Précipitations (mm)",
+            "probability_percent": "Probabilité (%)",
+            "no_data": "Aucune donnée de précipitations disponible",
+            "loading": "Chargement des données de précipitations..."
         }
     },
     "pt": {
@@ -813,7 +1192,16 @@ TRANSLATIONS = {
             "feels_like": "Sensação térmica",
             "humidity": "Umidade",
             "wind": "Vento",
-            "pressure": "Pressão"
+            "pressure": "Pressão",
+            "visibility": "Visibilidade",
+            "uv_index": "Índice UV",
+            "dew_point": "Ponto de orvalho",
+            "cloud_coverage": "Cobertura de nuvens",
+            "temperature_group": "Temperatura",
+            "humidity_air_group": "Umidade e Ar",
+            "wind_group": "Vento",
+            "atmospheric_group": "Atmosférico",
+            "solar_group": "Solar"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Configurações",
@@ -824,6 +1212,8 @@ TRANSLATIONS = {
             "close": "Fechar"
         },
         "weekly_forecast_items": {
+            "header": "Previsão 5 Dias",
+            "loading": "Carregando previsão semanal...",
             "monday": "Segunda-feira",
             "tuesday": "Terça-feira",
             "wednesday": "Quarta-feira",
@@ -864,18 +1254,44 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Localização Atual"
+            "current_location": "Localização Atual",
+            "high": "Alta",
+            "low": "Baixa",
+        },
+        "hourly_forecast_items": {
+            "hourly_forecast": "Previsão Horária",
+            "loading_forecast": "Carregando previsão de 24 horas...",
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Poluição do Ar (μg/m³)"
-        },        "unit_items": {
+        },
+        "unit_items": {
             "unit_metric": "Métrico",
             "unit_imperial": "Imperial",
             "unit_standard": "Padrão",
             "measurement": "Medição"
         },
         "air_pollution_chart_items": {
-            "air_pollution_chart_y_axis_title": "Concentração (µg/m³)"
+            "air_pollution_chart_y_axis_title": "µg/m³",
+            "micrograms_per_cubic_meter_short": "µg/m³",
+            "no_air_pollution_data": "Nenhum dado de poluição do ar disponível",
+            "air_pollution": "Poluição do Ar", # Header title
+            # Pollutant names for tooltips
+            "co_name": "Monóxido de Carbono",
+            "no_name": "Monóxido de Nitrogênio", 
+            "no2_name": "Dióxido de Nitrogênio",
+            "o3_name": "Ozônio",
+            "so2_name": "Dióxido de Enxofre",
+            "pm2_5_name": "Partículas PM2.5",
+            "pm10_name": "Partículas PM10",
+            "nh3_name": "Amônia",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Previsão de Precipitação",
+            "precipitation_mm": "Precipitação (mm)",
+            "probability_percent": "Probabilidade (%)",
+            "no_data": "Dados de precipitação não disponíveis",
+            "loading": "Carregando dados de precipitação..."
         }
     },
     "ru": {
@@ -889,7 +1305,16 @@ TRANSLATIONS = {
             "feels_like": "Ощущается как",
             "humidity": "Влажность",
             "wind": "Ветер",
-            "pressure": "Давление"
+            "pressure": "Давление",
+            "visibility": "Видимость",
+            "uv_index": "УФ-индекс",
+            "dew_point": "Точка росы",
+            "cloud_coverage": "Облачность",
+            "temperature_group": "Температура",
+            "humidity_air_group": "Влажность и Воздух",
+            "wind_group": "Ветер",
+            "atmospheric_group": "Атмосферный",
+            "solar_group": "Солнечный"
         },
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Настройки",
@@ -900,6 +1325,8 @@ TRANSLATIONS = {
             "close": "Закрыть"
         },
         "weekly_forecast_items": {
+            "header": "Прогноз на 5 дней",
+            "loading": "Загрузка недельного прогноза...",
             "monday": "Понедельник",
             "tuesday": "Вторник",
             "wednesday": "Среда",
@@ -940,7 +1367,13 @@ TRANSLATIONS = {
             ]
         },
         "main_information_items": {
-            "current_location": "Текущее местоположение"
+            "current_location": "Текущее местоположение",
+            "high": "Высокая",
+            "low": "Низкая",
+        },
+        "hourly_forecast_items": {
+            "hourly_forecast": "Почасовой прогноз",
+            "loading_forecast": "Загрузка 24-часового прогноза...",
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Загрязнение воздуха (μг/м³)"
@@ -951,7 +1384,26 @@ TRANSLATIONS = {
             "measurement": "Измерение"
         },
         "air_pollution_chart_items": {
-            "air_pollution_chart_y_axis_title": "Концентрация (мкг/м³)"
+            "air_pollution_chart_y_axis_title": "мкг/м³",
+            "micrograms_per_cubic_meter_short": "мкг/м³",
+            "no_air_pollution_data": "Данные о загрязнении воздуха недоступны",
+            "air_pollution": "Загрязнение Воздуха", # Header title
+            # Pollutant names for tooltips
+            "co_name": "Монооксид Углерода",
+            "no_name": "Монооксид Азота", 
+            "no2_name": "Диоксид Азота",
+            "o3_name": "Озон",
+            "so2_name": "Диоксид Серы",
+            "pm2_5_name": "Частицы PM2.5",
+            "pm10_name": "Частицы PM10",
+            "nh3_name": "Аммиак",
+        },
+        "precipitation_chart_items": {
+            "precipitation_chart_title": "Прогноз Осадков",
+            "precipitation_mm": "Осадки (мм)",
+            "probability_percent": "Вероятность (%)",
+            "no_data": "Данные об осадках недоступны",
+            "loading": "Загрузка данных об осадках..."
         }
     }
 }

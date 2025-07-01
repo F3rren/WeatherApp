@@ -29,7 +29,7 @@ class AirPollutionDisplay(ft.Container):
             page=self.page,
             base_sizes={
                 'title': 20, 'label': 15, 'value': 15, 
-                'subtitle': 15, 'aqi_value': 16
+                'subtitle': 15, 'aqi_value': 16, 'axis_title': 14
             },
             breakpoints=[600, 900, 1200, 1600]
         )
@@ -51,6 +51,7 @@ class AirPollutionDisplay(ft.Container):
                     original_on_resize(e)
                 if self._text_handler:
                     self._text_handler._handle_resize(e)
+                # Trigger UI rebuild on resize for responsive grid
                 if self.page:
                     self.page.run_task(self.update_ui)
             self.page.on_resize = resize_handler
@@ -83,32 +84,93 @@ class AirPollutionDisplay(ft.Container):
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
             self.content = self.build()
-            if self.page:
-                self.update()
+            # Only update if this control is already in the page
+            try:
+                if self.page and hasattr(self, 'page') and self.page is not None:
+                    self.update()
+            except Exception:
+                # Control not yet added to page, update will happen when added
+                pass
         except Exception as e:
             logging.error(f"AirPollutionDisplay: Error updating UI: {e}\n{traceback.format_exc()}")
 
     def build(self):
-        """Constructs the UI for air pollution data."""
+        """Constructs modern, card-based UI for air pollution data."""
         if not self._pollution_data or "aqi" not in self._pollution_data:
+            loading_text = TranslationService.translate_from_dict("air_pollution_items", "no_air_pollution_data", self._current_language)
             return ft.Column([
-                ft.Text(
-                    TranslationService.translate_from_dict("air_pollution_items", "no_air_pollution_data", self._current_language),
-                    color=self._current_text_color,
-                    size=self._text_handler.get_size('label')
+                self._build_header(),
+                ft.Container(
+                    content=ft.Text(
+                        loading_text,
+                        color=self._current_text_color,
+                        size=self._text_handler.get_size('label')
+                    ),
+                    alignment=ft.alignment.center,
+                    padding=ft.padding.all(20)
                 )
             ])
 
         aqi = self._pollution_data.get("aqi", 0)
         components = {k: v for k, v in self._pollution_data.items() if k != "aqi"}
 
-        aqi_title_control = ft.Text(
-            TranslationService.translate_from_dict("air_pollution_items", "air_quality_index", self._current_language),
-            weight=ft.FontWeight.BOLD, 
-            color=self._current_text_color,
-            size=self._text_handler.get_size('title')
+        # Build header with AQI badge
+        header = self._build_header_with_aqi(aqi)
+        
+        # Build pollutant cards
+        cards = self._build_pollutant_cards(components)
+        
+        # Cards container with responsive grid layout (2x4 vertical)
+        cards_container = self._build_responsive_grid(cards)
+        
+        return ft.Column([
+            header,
+            cards_container
+        ], spacing=8)
+
+    async def refresh(self):
+        """Forces a data refetch and UI update."""
+        self._pollution_data = {}  # By clearing the data, we ensure update_ui will fetch new data.
+        if self.page:
+            await self.update_ui()
+
+    def update_location(self, lat: float, lon: float):
+        """Updates the coordinates and clears cached data to force refresh."""
+        self._lat = lat
+        self._lon = lon
+        self._pollution_data = {}  # Clear cached data to force refresh
+        if self.page:
+            self.page.run_task(self.update_ui)
+
+    def _build_header(self):
+        """Builds a modern header for air pollution section."""
+        header_text = TranslationService.translate_from_dict("air_pollution_items", "air_quality_index", self._current_language)
+        
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        
+        return ft.Container(
+            content=ft.Row([
+                ft.Icon(
+                    ft.Icons.AIR_OUTLINED,
+                    color=ft.Colors.GREEN_400 if not is_dark else ft.Colors.GREEN_300,
+                    size=24
+                ),
+                ft.Container(width=12),  # Spacer
+                ft.Text(
+                    header_text,
+                    size=self._text_handler.get_size('axis_title') + 2,
+                    weight=ft.FontWeight.BOLD,
+                    color=self._current_text_color
+                ),
+            ], alignment=ft.MainAxisAlignment.START),
+            padding=ft.padding.only(left=20, top=20, bottom=10)
         )
-          # Get AQI description and color inline
+    
+    def _build_header_with_aqi(self, aqi):
+        """Builds header with AQI badge."""
+        header_text = TranslationService.translate_from_dict("air_pollution_items", "air_quality_index", self._current_language)
+        
+        # Get AQI description and color
         from utils.translations_data import TRANSLATIONS
         lang_code = TranslationService.normalize_lang_code(self._current_language)
         aqi_descriptions = TRANSLATIONS.get(lang_code, {}).get("air_pollution_items", {}).get("aqi_descriptions")
@@ -122,104 +184,280 @@ class AirPollutionDisplay(ft.Container):
         aqi_color_idx = max(0, min(aqi, len(aqi_colors) - 1))
         aqi_color = aqi_colors[aqi_color_idx]
         
-        aqi_value_control = ft.Text(
-            aqi_desc, 
-            weight=ft.FontWeight.BOLD, 
-            color="#ffffff" if aqi > 2 else self._current_text_color,
-            size=self._text_handler.get_size('aqi_value')
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        
+        return ft.Container(
+            content=ft.Row([
+                ft.Icon(
+                    ft.Icons.AIR_OUTLINED,
+                    color=ft.Colors.GREEN_400 if not is_dark else ft.Colors.GREEN_300,
+                    size=24
+                ),
+                ft.Container(width=12),  # Spacer
+                ft.Text(
+                    header_text,
+                    size=self._text_handler.get_size('axis_title') + 2,
+                    weight=ft.FontWeight.BOLD,
+                    color=self._current_text_color
+                ),
+                ft.Container(
+                    content=ft.Text(
+                        aqi_desc,
+                        size=12,
+                        weight=ft.FontWeight.W_600,
+                        color=ft.Colors.WHITE if aqi > 2 else ft.Colors.BLACK
+                    ),
+                    bgcolor=aqi_color,
+                    border_radius=12,
+                    padding=ft.padding.symmetric(horizontal=12, vertical=6),
+                    shadow=ft.BoxShadow(
+                        spread_radius=0,
+                        blur_radius=4,
+                        color=ft.Colors.with_opacity(0.2, ft.Colors.BLACK),
+                        offset=ft.Offset(0, 2)
+                    )
+                )
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            padding=ft.padding.only(left=20, right=20, top=20, bottom=10)
         )
+    
+    def _build_pollutant_cards(self, components):
+        """Builds modern cards for each pollutant."""
+        pollutant_configs = [
+            {"key": "co", "icon": ft.Icons.SMOKING_ROOMS_OUTLINED, "color": "red"},
+            {"key": "so2", "icon": ft.Icons.CLOUD_OUTLINED, "color": "orange"},
+            {"key": "no", "icon": ft.Icons.FACTORY_OUTLINED, "color": "purple"},
+            {"key": "no2", "icon": ft.Icons.LOCAL_GAS_STATION_OUTLINED, "color": "purple"},
+            {"key": "pm2_5", "icon": ft.Icons.GRAIN_OUTLINED, "color": "brown"},
+            {"key": "pm10", "icon": ft.Icons.SCATTER_PLOT_OUTLINED, "color": "brown"},
+            {"key": "o3", "icon": ft.Icons.WB_SUNNY_OUTLINED, "color": "blue"},
+            {"key": "nh3", "icon": ft.Icons.AGRICULTURE_OUTLINED, "color": "green"},
+        ]
         
-        aqi_row = ft.Row([
-            aqi_title_control,
-            ft.Container(
-                content=aqi_value_control,
-                bgcolor=aqi_color,
-                border_radius=10, padding=10, alignment=ft.alignment.center, expand=True
+        cards = []
+        
+        for config in pollutant_configs:
+            key = config["key"]
+            # Always show all pollutants, even if data is missing (show 0)
+            value = components.get(key, 0)
+            name = TranslationService.translate_from_dict("air_pollution_items", key.upper().replace("_", "."), self._current_language)
+            
+            card = self._create_pollutant_card(
+                icon=config["icon"],
+                name=name,
+                symbol=key.upper().replace("_", "."),
+                value=value,
+                color_scheme=config["color"]
             )
-        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+            cards.append(card)
         
-        pollutant_details_map = {
-            "co": {"name": TranslationService.translate_from_dict("air_pollution_items", "CO", self._current_language), "value": components.get("co", 0)},
-            "no": {"name": TranslationService.translate_from_dict("air_pollution_items", "NO", self._current_language), "value": components.get("no", 0)},
-            "no2": {"name": TranslationService.translate_from_dict("air_pollution_items", "NO2", self._current_language), "value": components.get("no2", 0)},
-            "o3": {"name": TranslationService.translate_from_dict("air_pollution_items", "O3", self._current_language), "value": components.get("o3", 0)},
-            "so2": {"name": TranslationService.translate_from_dict("air_pollution_items", "SO2", self._current_language), "value": components.get("so2", 0)},
-            "pm2_5": {"name": TranslationService.translate_from_dict("air_pollution_items", "PM2.5", self._current_language), "value": components.get("pm2_5", 0)},
-            "pm10": {"name": TranslationService.translate_from_dict("air_pollution_items", "PM10", self._current_language), "value": components.get("pm10", 0)},            "nh3": {"name": TranslationService.translate_from_dict("air_pollution_items", "NH3", self._current_language), "value": components.get("nh3", 0)},
+        return cards
+    
+    def _create_pollutant_card(self, icon, name, symbol, value, color_scheme="blue"):
+        """Creates a modern card for a single pollutant."""
+        # Color schemes
+        color_schemes = {
+            "red": {"bg": ft.Colors.RED_400, "light": ft.Colors.RED_100},
+            "orange": {"bg": ft.Colors.ORANGE_400, "light": ft.Colors.ORANGE_100},
+            "purple": {"bg": ft.Colors.PURPLE_400, "light": ft.Colors.PURPLE_100},
+            "brown": {"bg": ft.Colors.BROWN_400, "light": ft.Colors.BROWN_100},
+            "blue": {"bg": ft.Colors.BLUE_400, "light": ft.Colors.BLUE_100},
+            "green": {"bg": ft.Colors.GREEN_400, "light": ft.Colors.GREEN_100},
         }
-
-        column1_controls = []
-        column2_controls = []
         
-        ordered_keys = ["co", "no", "no2", "o3", "so2", "pm2_5", "pm10", "nh3"]
-        mid_point = (len(ordered_keys) + 1) // 2
+        scheme = color_schemes.get(color_scheme, color_schemes["blue"])
         
-        for i, key in enumerate(ordered_keys):
-            detail = pollutant_details_map.get(key)
-            if not detail:
-                continue
-
-            value_str = f"{detail['value']:.2f} μg/m³"
-            
-            desc_text_control = ft.Text(
-                detail['name'], 
-                color=self._current_text_color,
-                size=self._text_handler.get_size('label')
+        # Icon container
+        icon_container = ft.Container(
+            content=ft.Icon(
+                icon,
+                color=ft.Colors.WHITE,
+                size=20
+            ),
+            width=40,
+            height=40,
+            bgcolor=scheme["bg"],
+            border_radius=20,
+            alignment=ft.alignment.center,
+            shadow=ft.BoxShadow(
+                spread_radius=0,
+                blur_radius=6,
+                color=ft.Colors.with_opacity(0.25, scheme["bg"]),
+                offset=ft.Offset(0, 2)
             )
-            
-            symbol_text_control = ft.Text(
-                f"{key.upper().replace('_', '.')}:",
-                weight=ft.FontWeight.BOLD, 
-                color=self._current_text_color,
-                size=self._text_handler.get_size('value')
-            )
-            
-            value_text_control = ft.Text(
-                value_str, 
-                color=self._current_text_color,
-                size=self._text_handler.get_size('value')
-            )
-
-            pollutant_item_column = ft.Column(
-                controls=[
-                    desc_text_control,
-                    ft.Row([symbol_text_control, value_text_control], spacing=5)
-                ],
-                spacing=2,
-                alignment=ft.MainAxisAlignment.START,
-                horizontal_alignment=ft.CrossAxisAlignment.START
-            )
-            item_container = ft.Container(
-                content=pollutant_item_column,
-                padding=ft.padding.symmetric(vertical=5)
-            )
-            
-            if i < mid_point:
-                column1_controls.append(item_container)
+        )
+        
+        # Quality indicator based on value ranges (simplified)
+        def get_quality_indicator(val, pollutant_key):
+            if pollutant_key in ["pm2_5", "pm10"]:
+                if val < 12:
+                    return ("Good", ft.Colors.GREEN_400)
+                elif val < 35:
+                    return ("Moderate", ft.Colors.ORANGE_400)
+                else:
+                    return ("Poor", ft.Colors.RED_400)
+            elif pollutant_key == "o3":
+                if val < 100:
+                    return ("Good", ft.Colors.GREEN_400)
+                elif val < 160:
+                    return ("Moderate", ft.Colors.ORANGE_400)
+                else:
+                    return ("Poor", ft.Colors.RED_400)
             else:
-                column2_controls.append(item_container)
+                # Generic ranges for other pollutants
+                if val < 50:
+                    return ("Good", ft.Colors.GREEN_400)
+                elif val < 100:
+                    return ("Moderate", ft.Colors.ORANGE_400)
+                else:
+                    return ("Poor", ft.Colors.RED_400)
         
-        pollutants_row = ft.Row(
-            controls=[
-                ft.Column(column1_controls, spacing=10, expand=True, alignment=ft.MainAxisAlignment.START),
-                ft.Column(column2_controls, spacing=10, expand=True, alignment=ft.MainAxisAlignment.START)
-            ],
-            spacing=20,
-            vertical_alignment=ft.CrossAxisAlignment.START
+        quality_text, quality_color = get_quality_indicator(value, symbol.lower().replace(".", "_"))
+        
+        quality_badge = ft.Container(
+            content=ft.Text(
+                quality_text,
+                size=10,
+                color=ft.Colors.WHITE,
+                weight=ft.FontWeight.W_600
+            ),
+            bgcolor=quality_color,
+            padding=ft.padding.symmetric(horizontal=6, vertical=2),
+            border_radius=8
         )
         
-        divider_color = DARK_THEME.get("BORDER", ft.Colors.WHITE38) if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME.get("BORDER", ft.Colors.BLACK26)
+        # Card content
+        card_content = ft.Column([
+            ft.Row([
+                icon_container,
+                ft.Container(width=8),
+                ft.Column([
+                    ft.Text(
+                        f"{value:.1f}",
+                        size=16,
+                        weight=ft.FontWeight.BOLD,
+                        color=self._current_text_color
+                    ),
+                    ft.Text(
+                        "μg/m³",
+                        size=10,
+                        color=ft.Colors.with_opacity(0.7, self._current_text_color)
+                    )
+                ], spacing=0, alignment=ft.MainAxisAlignment.CENTER)
+            ], alignment=ft.MainAxisAlignment.START),
+            ft.Container(height=4),  # Spacer
+            ft.Row([
+                ft.Text(
+                    f"{symbol}:",
+                    size=12,
+                    weight=ft.FontWeight.W_600,
+                    color=self._current_text_color
+                ),
+                ft.Container(expand=True),
+                quality_badge
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            ft.Text(
+                name,
+                size=10,
+                color=ft.Colors.with_opacity(0.8, self._current_text_color),
+                max_lines=2,
+                overflow=ft.TextOverflow.ELLIPSIS
+            )
+        ], spacing=4)
         
-        return ft.Column(
-            controls=[aqi_row, ft.Divider(height=1, color=divider_color), pollutants_row],
-            spacing=15,
-            expand=True
+        # Card container
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        
+        return ft.Container(
+            content=card_content,
+            width=None,  # Let container expand based on available space
+            height=110,   # Slightly reduced height for better grid layout
+            padding=ft.padding.all(14),
+            border_radius=14,
+            bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.WHITE if not is_dark else ft.Colors.BLACK),
+            border=ft.border.all(
+                1, 
+                ft.Colors.with_opacity(0.1, ft.Colors.GREY_400 if not is_dark else ft.Colors.GREY_600)
+            ),
+            shadow=ft.BoxShadow(
+                spread_radius=0,
+                blur_radius=8,
+                color=ft.Colors.with_opacity(0.08, ft.Colors.BLACK),
+                offset=ft.Offset(0, 2)
+            ),
+            animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
+            expand=True  # Allow card to expand within its container
         )
-
-    async def refresh(self):
-        """Forces a data refetch and UI update."""
-        self._pollution_data = {}  # By clearing the data, we ensure update_ui will fetch new data.
-        if self.page:
-            await self.update_ui()
+    
+    def _build_responsive_grid(self, cards):
+        """Builds a responsive grid layout for pollutant cards (2x4 vertical)."""
+        if not cards:
+            return ft.Container()
+        
+        # Ensure we always have 8 cards (add empty ones if needed)
+        while len(cards) < 8:
+            cards.append(ft.Container())  # Empty placeholder
+        
+        # Take only first 8 cards to ensure 2x4 grid
+        cards = cards[:8]
+        
+        # Determine grid layout based on screen size
+        grid_rows = []
+        
+        # Check if small screen (less than 600px)
+        is_small_screen = (self.page.window.width < 600) if (self.page.window.width and self.page.window.width > 0) else False
+        
+        if is_small_screen:
+            # Single column layout for small screens (8 rows x 1 column)
+            for card in cards:
+                row = ft.Row(
+                    controls=[
+                        ft.Container(
+                            content=card,
+                            expand=True,
+                            alignment=ft.alignment.center
+                        )
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER
+                )
+                grid_rows.append(row)
+        else:
+            # Two-column layout for larger screens (4 rows x 2 columns)
+            for i in range(0, len(cards), 2):
+                row_cards = cards[i:i+2]
+                
+                # Create containers with equal width
+                row_controls = []
+                for card in row_cards:
+                    row_controls.append(
+                        ft.Container(
+                            content=card,
+                            expand=True,
+                            alignment=ft.alignment.center
+                        )
+                    )
+                
+                # Ensure we always have 2 cards per row (add empty container if needed)
+                while len(row_controls) < 2:
+                    row_controls.append(ft.Container(expand=True))
+                
+                row = ft.Row(
+                    controls=row_controls,
+                    alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                    spacing=16 if (self.page.window.width and self.page.window.width > 900) else 12
+                )
+                grid_rows.append(row)
+        
+        return ft.Container(
+            content=ft.Column(
+                controls=grid_rows,
+                spacing=14,
+                alignment=ft.MainAxisAlignment.START
+            ),
+            padding=ft.padding.symmetric(
+                horizontal=20 if (self.page.window.width and self.page.window.width > 600) else 15,
+                vertical=10
+            )
+        )
 
 

@@ -34,18 +34,18 @@ class SearchBar:
         
         def on_submit(e):
             value = e.control.value.strip()
+            print(f"DEBUG: SearchBar on_submit called with value: '{value}'")
             if value:
                 if self.on_city_selected:
-                    res = self.on_city_selected(value)
-                    if hasattr(res, '__await__'):
-                        import asyncio
-                        async def run_and_update():
-                            await res
-                        try:
-                            asyncio.get_running_loop()
-                            asyncio.ensure_future(run_and_update())
-                        except RuntimeError:
-                            asyncio.run(run_and_update())
+                    print(f"DEBUG: Calling on_city_selected callback for city: {value}")
+                    # Use page.run_task for proper async handling in Flet
+                    if self.page:
+                        self.page.run_task(self.on_city_selected, value)
+                    else:
+                        # Fallback for sync callbacks
+                        self.on_city_selected(value)
+                else:
+                    print("DEBUG: No on_city_selected callback defined")
 
         def clear_text(e):
             self.search_field.value = ""

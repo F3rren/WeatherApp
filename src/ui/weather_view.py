@@ -6,8 +6,6 @@ Handles the display of weather information.
 import flet as ft
 import logging # Add logging import
 from utils.config import LIGHT_THEME, DARK_THEME
-import asyncio
-
 from services.api_service import ApiService
 from services.translation_service import TranslationService # Import TranslationService
 
@@ -18,7 +16,8 @@ from layout.informationtab.main_information import MainWeatherInfo
 from layout.informationtab.air_condition import AirConditionInfo
 from layout.informationtab.air_pollution import AirPollutionDisplay # CHANGED: Import AirPollutionDisplay
 from layout.informationcharts.temperature_chart import TemperatureChartDisplay # CHANGED: Import TemperatureChartDisplay
-from layout.informationcharts.air_pollution_chart import AirPollutionChartDisplay # CHANGED: Import AirPollutionChartDisplay
+from layout.informationtab.air_pollution import AirPollutionDisplay # Add air pollution chart import
+from layout.informationcharts.precipitation_chart import PrecipitationChartDisplay # CHANGED: Import PrecipitationChartDisplay instead of AirPollutionChartDisplay
 
 class WeatherView:
     """
@@ -43,7 +42,8 @@ class WeatherView:
         self.hourly_forecast_instance = None # ADDED
         self.temperature_chart_instance = None # ADDED
         self.air_pollution_display_instance = None # CHANGED: Renamed from air_pollution_instance
-        self.air_pollution_chart_instance = None
+        self.air_pollution_chart_instance = None # Add air pollution chart instance
+        self.precipitation_chart_instance = None # CHANGED: Renamed from air_pollution_chart_instance
 
         # Register for theme change events
         state_manager = self.page.session.get('state_manager')
@@ -58,7 +58,8 @@ class WeatherView:
         self.weekly_container = ft.Container()
         self.chart_container = ft.Container()
         self.air_pollution_container = ft.Container()
-        self.air_pollution_chart_container = ft.Container()
+        self.air_pollution_chart_container = ft.Container() # Add air pollution chart container
+        self.precipitation_chart_container = ft.Container() # CHANGED: Renamed from air_pollution_chart_container
         self.loading = False
         # RIMOSSO: self._loading_dialog e ProgressRing modale
 
@@ -70,9 +71,6 @@ class WeatherView:
             # with their own combined handler.
             self._original_page_resize_handler = self.page.on_resized # Corrected: store page.on_resize not on_resized
             self.page.on_resize = self._handle_page_resize
-
-        self._update_event = asyncio.Event()
-        self._background_task = None
 
     def _handle_page_resize(self, e=None):
         """Handles page resize events for WeatherView and propagates to children."""
@@ -99,7 +97,8 @@ class WeatherView:
             self.hourly_forecast_instance,
             self.temperature_chart_instance,
             self.air_pollution_display_instance, # CHANGED: Renamed
-            self.air_pollution_chart_instance
+            self.air_pollution_chart_instance, # Add air pollution chart instance
+            self.precipitation_chart_instance # CHANGED: Renamed from air_pollution_chart_instance
         ]
         for child in children_to_cleanup:
             if child and hasattr(child, 'will_unmount'): # Use will_unmount for ft.Control based components
@@ -113,7 +112,8 @@ class WeatherView:
         self.hourly_forecast_instance = None
         self.temperature_chart_instance = None
         self.air_pollution_display_instance = None # CHANGED: Renamed
-        self.air_pollution_chart_instance = None
+        self.air_pollution_chart_instance = None # Add air pollution chart instance
+        self.precipitation_chart_instance = None # CHANGED: Renamed from air_pollution_chart_instance
 
     def _update_text_color(self):
         """Updates text_color based on the current page theme."""
@@ -161,6 +161,20 @@ class WeatherView:
         # First update any text elements that can be updated without rebuilding
         self._update_component_texts(event_type="language_change", data=event_data)
         
+        # Update air condition components immediately for language changes
+        if hasattr(self, 'air_condition_instance') and self.air_condition_instance:
+            self.update_air_condition_components()
+            print("DEBUG: Air condition components updated due to language change")
+            
+            # Also notify main app to update layout with new components
+            if hasattr(self.page, 'session') and self.page.session.get('main_app'):
+                main_app = self.page.session.get('main_app')
+                if hasattr(main_app, 'layout_manager') and main_app.layout_manager:
+                    air_condition_components = self.get_air_condition_components()
+                    if air_condition_components:
+                        main_app.layout_manager.update_air_condition_layout(air_condition_components)
+                        print("DEBUG: Air condition layout updated due to language change")
+        
         # Then handle data re-fetching for a full update if needed
         if self.current_city or (self.current_lat is not None and self.current_lon is not None):
             state_manager = self.page.session.get('state_manager')
@@ -186,34 +200,52 @@ class WeatherView:
 
         # import asyncio # No longer needed here
         if using_location and current_lat_from_state is not None and current_lon_from_state is not None:
-            self.page.run_task(self.update_by_coordinates, current_lat_from_state, current_lon_from_state, language, new_unit_system)
+            await self.update_by_coordinates(current_lat_from_state, current_lon_from_state, language, new_unit_system)
         elif current_city_from_state:
-            self.page.run_task(self.update_by_city, current_city_from_state, language, new_unit_system)
+            await self.update_by_city(current_city_from_state, language, new_unit_system)
         # Fallback to WeatherView's internally stored context if state manager doesn't have fresh info
         elif self.current_city:
-            self.page.run_task(self.update_by_city, self.current_city, language, new_unit_system)
+            await self.update_by_city(self.current_city, language, new_unit_system)
         elif self.current_lat is not None and self.current_lon is not None:
-            self.page.run_task(self.update_by_coordinates, self.current_lat, self.current_lon, language, new_unit_system)
+            await self.update_by_coordinates(self.current_lat, self.current_lon, language, new_unit_system)
         else:
             # If no location context at all, we might not be able to update.
             # This could happen if unit is changed before any location is set.
             # Consider fetching with a default city if this case is problematic.
             logging.warning("Unit system changed, but no location context (city/coords) available in WeatherView or StateManager to refresh data.")
 
+        # Update air condition components immediately for unit changes
+        if hasattr(self, 'air_condition_instance') and self.air_condition_instance:
+            self.update_air_condition_components()
+            print("DEBUG: Air condition components updated due to unit change")
+            
+            # Also notify main app to update layout with new components
+            if hasattr(self.page, 'session') and self.page.session.get('main_app'):
+                main_app = self.page.session.get('main_app')
+                if hasattr(main_app, 'layout_manager') and main_app.layout_manager:
+                    air_condition_components = self.get_air_condition_components()
+                    if air_condition_components:
+                        main_app.layout_manager.update_air_condition_layout(air_condition_components)
+                        print("DEBUG: Layout manager updated with new air condition components due to unit change")
+
 
     async def update_by_city(self, city: str, language: str, unit: str) -> None:
+        logging.info(f"update_by_city called with: city='{city}', language='{language}', unit='{unit}'")
         self._set_loading(True)
         import asyncio
         try:
             try:
                 # Recupera i dati in thread separato
                 weather_data, city_info = await asyncio.gather(
-                    asyncio.to_thread(self.api_service.get_weather_data, city, None, language, unit),
+                    asyncio.to_thread(self.api_service.get_weather_data, city=city, lat=None, lon=None, language=language, unit=unit),
                     asyncio.to_thread(self.api_service.get_city_info, city)
                 )
                 self.weather_data = weather_data
                 self.city_info = city_info
+                logging.info(f"Weather data keys: {list(weather_data.keys()) if weather_data else 'None'}")
+                logging.info(f"City info: {city_info}")
             except Exception as e:
+                logging.error(f"Errore durante il recupero dati: {e}")
                 print(f"Errore durante il recupero dati: {e}")
                 return
 
@@ -263,14 +295,16 @@ class WeatherView:
                 self.current_lat = lat
                 self.current_lon = lon
                 await self._update_air_pollution(lat, lon)
-                await self._update_air_pollution_chart(lat, lon)
+                await self._update_air_pollution_chart(lat, lon) # Add air pollution chart update
+                await self._update_precipitation_chart(self.weather_data) # CHANGED: Use precipitation chart with weather data
             elif "city" in self.weather_data and "coord" in self.weather_data["city"]:
                 lat = self.weather_data["city"]["coord"]["lat"]
                 lon = self.weather_data["city"]["coord"]["lon"]
                 self.current_lat = lat
                 self.current_lon = lon
                 await self._update_air_pollution(lat, lon)
-                await self._update_air_pollution_chart(lat, lon)
+                await self._update_air_pollution_chart(lat, lon) # Add air pollution chart update
+                await self._update_precipitation_chart(self.weather_data) # CHANGED: Use precipitation chart with weather data
             else:
                 print("No coordinates available for air pollution data")
         except (KeyError, IndexError, TypeError) as e:
@@ -286,6 +320,10 @@ class WeatherView:
         wind_speed = self.api_service.get_wind_speed(self.weather_data)
         pressure = self.api_service.get_pressure(self.weather_data)
         icon_code = self.api_service.get_weather_icon_code(self.weather_data)
+        weather_description = self.api_service.get_weather_description(self.weather_data)
+        temp_min, temp_max = self.api_service.get_min_max_temperature(self.weather_data)
+
+        logging.info(f"Extracted weather data: temp={temperature}, temp_min={temp_min}, temp_max={temp_max}, description='{weather_description}'")
 
         # Determina la posizione da mostrare
         location_data = self.weather_data.get('location_data', {})
@@ -297,7 +335,7 @@ class WeatherView:
         else:
             location = ", ".join(filter(None, [location_data.get('city', 'Unknown'), location_data.get('region', 'Unknown'), location_data.get('country', 'Unknown')]))
         
-        # Create and store the MainWeatherInfo instance
+        # Create new MainWeatherInfo instance for each update to ensure proper refresh
         self.main_weather_info_instance = MainWeatherInfo(
             city=city,
             location=location,
@@ -307,22 +345,48 @@ class WeatherView:
             expand=True # Ensure it expands if needed within the column
         )
 
-        # Create and store the AirConditionInfo instance
+        # Immediately set the additional weather data
+        self.main_weather_info_instance._weather_description = weather_description
+        self.main_weather_info_instance._feels_like = feels_like
+        self.main_weather_info_instance._temp_min = temp_min
+        self.main_weather_info_instance._temp_max = temp_max
+
+        # Get wind direction from API
+        wind_direction = self.api_service.get_wind_direction(self.weather_data)
+        wind_gust = self.api_service.get_wind_gust(self.weather_data)
+        
+        # Get additional air condition data
+        visibility = self.api_service.get_visibility(self.weather_data)
+        uv_index = self.api_service.get_uv_index(self.weather_data)
+        dew_point = self.api_service.get_dew_point(self.weather_data)
+        cloud_coverage = self.api_service.get_cloud_coverage(self.weather_data)
+        
+        # Create new AirConditionInfo instance for each update to ensure proper refresh  
         self.air_condition_instance = AirConditionInfo(
             feels_like=feels_like,
             humidity=humidity,
             wind_speed=wind_speed,
+            wind_direction=wind_direction,  # Aggiungiamo la direzione del vento
+            wind_gust=wind_gust,  # Aggiungiamo le raffiche di vento
             pressure=pressure,
+            visibility=visibility,  # Nuovo dato
+            uv_index=uv_index,  # Nuovo dato
+            dew_point=dew_point,  # Nuovo dato
+            cloud_coverage=cloud_coverage,  # Nuovo dato
             page=self.page,
             city=city,
             expand=True # Ensure it expands if needed within the column
         )
         
-        # Combine MainWeatherInfo and AirConditionInfo in a Column
+        # Get separated air condition components
+        self.air_condition_components = self.air_condition_instance.get_separated_components()
+        
+        # Always recreate the Column to ensure proper refresh
         self.info_container.content = ft.Column(
             controls=[
                 self.main_weather_info_instance,
-                self.air_condition_instance
+                # Note: Air condition components are now handled separately by layout manager
+                ft.Container(height=10)  # Spacer where air condition used to be
             ],
             spacing=10, # Add some spacing between the two components
             expand=True
@@ -433,28 +497,55 @@ class WeatherView:
         self.air_pollution_container.content = weather_card.build(self.air_pollution_display_instance)
         # self.air_pollution_container.update() # Covered by page.update() in _update_ui
     
+    async def _update_precipitation_chart(self, forecast_data: dict) -> None:
+        """Frontend: Updates precipitation chart UI using PrecipitationChartDisplay."""
+        print(f"DEBUG: _update_precipitation_chart called with forecast_data keys: {list(forecast_data.keys()) if forecast_data else 'None'}")
+
+        # Always create a new instance to ensure proper updates
+        self.precipitation_chart_instance = PrecipitationChartDisplay(
+            page=self.page
+        )
+        print("DEBUG: Created new PrecipitationChartDisplay instance")
+        
+        # Update the chart with forecast data
+        self.precipitation_chart_instance.update_data(forecast_data)
+        print("DEBUG: Updated precipitation chart with data")
+
+        # Set the chart directly as content (no wrapper needed)
+        self.precipitation_chart_container.content = self.precipitation_chart_instance
+        print("DEBUG: Set precipitation chart container content")
+        
+        # Force container update
+        try:
+            self.precipitation_chart_container.update()
+            print("DEBUG: Updated precipitation chart container")
+        except AssertionError:
+            print("DEBUG: Container not ready for update")
+            pass
+
     async def _update_air_pollution_chart(self, lat: float, lon: float) -> None:
         """Frontend: Updates air pollution chart UI using AirPollutionChartDisplay."""
-        weather_card = WeatherCard(self.page) # Assuming WeatherCard is still used as a wrapper
-        # self._update_text_color() # AirPollutionChartDisplay manages its own text color
+        print(f"DEBUG: _update_air_pollution_chart called with lat: {lat}, lon: {lon}")
 
-        # Instantiate or update the AirPollutionChartDisplay instance
-        if not hasattr(self, 'air_pollution_chart_instance') or not self.air_pollution_chart_instance:
-            self.air_pollution_chart_instance = AirPollutionChartDisplay(
-                page=self.page,
-                lat=lat,
-                lon=lon
-                # expand=True # AirPollutionChartDisplay sets its own expand if needed
-            )
-        else:
-            # If location has changed, update the component
-            if self.air_pollution_chart_instance._lat != lat or self.air_pollution_chart_instance._lon != lon:
-                self.air_pollution_chart_instance.update_location(lat, lon)
-            # Language and theme changes are handled internally by AirPollutionChartDisplay
+        # Always create a new instance to ensure proper updates
+        self.air_pollution_chart_instance = AirPollutionDisplay(
+            page=self.page,
+            lat=lat,
+            lon=lon
+        )
+        print("DEBUG: Created new AirPollutionChartDisplay instance")
 
-        # The WeatherCard is a generic wrapper, AirPollutionChartDisplay is the actual content.
-        self.air_pollution_chart_container.content = weather_card.build(self.air_pollution_chart_instance)
-        # self.air_pollution_chart_container.update() # Covered by page.update() in _update_ui
+        # Set the chart directly as content (no wrapper needed)
+        self.air_pollution_chart_container.content = self.air_pollution_chart_instance
+        print("DEBUG: Set air pollution chart container content")
+        
+        # Force container update
+        try:
+            self.air_pollution_chart_container.update()
+            print("DEBUG: Updated air pollution chart container")
+        except AssertionError:
+            print("DEBUG: Container not ready for update")
+            pass
 
     def _set_loading(self, value: bool):
         self.loading = value
@@ -465,52 +556,54 @@ class WeatherView:
         self.weekly_container.visible = not value
         self.chart_container.visible = not value
         self.air_pollution_container.visible = not value
-        self.air_pollution_chart_container.visible = not value
+        self.air_pollution_chart_container.visible = not value # Add air pollution chart visibility
+        self.precipitation_chart_container.visible = not value # CHANGED: From air_pollution_chart_container
         self._safe_update()
 
     def get_containers(self) -> tuple:
         """Frontend: Returns UI containers for display"""
-        # Non restituire più loading_container
+        # Non restituire più loading_container e weekly_container (ora nella sidebar)
         return (
             self.info_container,
             self.hourly_container,
-            self.weekly_container,
             self.chart_container,
             self.air_pollution_container,
-            self.air_pollution_chart_container
+            self.air_pollution_chart_container, # Add air pollution chart container
+            self.precipitation_chart_container # CHANGED: Return precipitation chart instead of air pollution chart
         )
-
-    async def background_updater(self):
-        """Task persistente che aggiorna la UI quando trigger_update viene chiamato."""
-        while True:
-            await self._update_event.wait()
-            self._update_event.clear()
-            # Recupera parametri correnti
-            state_manager = self.page.session.get('state_manager')
-            language = state_manager.get_state('language') if state_manager else 'en'
-            unit = state_manager.get_state('unit') if state_manager else 'metric'
-            if self.current_city:
-                await self.update_by_city(self.current_city, language, unit)
-            elif self.current_lat is not None and self.current_lon is not None:
-                await self.update_by_coordinates(self.current_lat, self.current_lon, language, unit)
-            # else: non aggiorna se non ci sono dati
-
-    def trigger_update(self):
-        """Richiama un aggiornamento asincrono della UI."""
-        self._update_event.set()
-
-    def start_background_updater(self):
-        """Avvia il task di background updater se non già avviato."""
-        if not self._background_task:
-            self._background_task = asyncio.create_task(self.background_updater())
-
-    def stop_background_updater(self):
-        """(Opzionale) Cancella il task di background updater."""
-        if self._background_task:
-            self._background_task.cancel()
-            self._background_task = None
 
     def cleanup(self):
         """Cleanup method to release resources and child components."""
         self._cleanup_child_components()
-        self.stop_background_updater()
+
+    def get_air_condition_components(self):
+        """
+        Returns the separated air condition components.
+        This method allows the layout manager to access individual components.
+        Always refreshes components to ensure units/language are current.
+        """
+        # Always update components to ensure current units/language
+        self.update_air_condition_components()
+        
+        if hasattr(self, 'air_condition_components') and self.air_condition_components:
+            return self.air_condition_components
+        return {}
+
+    def update_air_condition_components(self):
+        """
+        Updates air condition components when language or units change.
+        This should be called after the air_condition_instance has been updated.
+        """
+        if hasattr(self, 'air_condition_instance') and self.air_condition_instance:
+            # First trigger UI update on the main air condition instance to update language/unit state
+            self.page.run_task(self.air_condition_instance.update_ui)
+            
+            # First trigger UI updates on existing components
+            if hasattr(self, 'air_condition_components') and self.air_condition_components:
+                for component in self.air_condition_components.values():
+                    if hasattr(component, 'update_ui'):
+                        self.page.run_task(component.update_ui)
+                        
+            # Then recreate components with updated translations
+            self.air_condition_components = self.air_condition_instance.get_separated_components()
+            print("DEBUG: Air condition components updated with new units/language")

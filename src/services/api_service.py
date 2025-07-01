@@ -50,6 +50,7 @@ class ApiService:
         Attempts first with coordinates, then with city name if coordinates are not available.
         """
         try:
+            #logging.info(f"get_weather_data called with: city='{city}', lat={lat}, lon={lon}, language='{language}', unit='{unit}'")
             url = f"{API_BASE_URL}{API_WEATHER_ENDPOINT}"
             # First attempt with coordinates
             if lat is not None and lon is not None:
@@ -60,6 +61,7 @@ class ApiService:
                     "lang": language,
                     "appid": self._api_key
                 }
+                #logging.info(f"Making API call with coordinates. URL: {url}, params: {params}")
                 response = requests.get(url, params=params)
                 response.raise_for_status() # Added for consistent error handling
                 # if response.status_code == 200: # No longer needed due to raise_for_status
@@ -76,9 +78,12 @@ class ApiService:
                     "units": unit,
                     "lang": language
                 }
+                #logging.info(f"Making API call with city. URL: {url}, params: {params}")
                 response = requests.get(url, params=params)
                 response.raise_for_status()
-                return response.json()
+                result = response.json()
+                #logging.info(f"API call successful. Response contains {len(result.get('list', []))} forecast items")
+                return result
             else:
                 # This case should ideally not be reached if called from WeatherView,
                 # as WeatherView ensures either city or lat/lon.
@@ -194,6 +199,22 @@ class ApiService:
             return round(data["list"][0]["wind"]["speed"])
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting wind speed: {e}")
+            return None
+    
+    def get_wind_direction(self, data: Dict[str, Any]) -> Optional[int]:
+        """Extract wind direction from weather data"""
+        try:
+            return data["list"][0]["wind"].get("deg", None)
+        except (KeyError, IndexError, TypeError) as e:
+            logging.error(f"Error extracting wind direction: {e}")
+            return None
+    
+    def get_wind_gust(self, data: Dict[str, Any]) -> Optional[float]:
+        """Extract wind gust speed from weather data"""
+        try:
+            return data["list"][0]["wind"].get("gust", None)
+        except (KeyError, IndexError, TypeError) as e:
+            logging.error(f"Error extracting wind gust: {e}")
             return None
     
     def get_humidity(self, data: Dict[str, Any]) -> Optional[int]:
@@ -324,6 +345,12 @@ class ApiService:
                 icon = icon_item["weather"][0]["icon"]
                 description = icon_item["weather"][0]["description"]
                 
+                # Calculate additional daily statistics
+                avg_humidity = round(sum(x["main"]["humidity"] for x in items_in_day) / len(items_in_day))
+                avg_rain_probability = round(sum(x.get("pop", 0) for x in items_in_day) / len(items_in_day) * 100)
+                avg_wind_speed = round(sum(x["wind"]["speed"] for x in items_in_day) / len(items_in_day), 1)
+                avg_pressure = round(sum(x["main"]["pressure"] for x in items_in_day) / len(items_in_day))
+                
                 result.append({
                     "date": date_obj,
                     # Use lowercase English full day name as key for TranslationService
@@ -331,7 +358,11 @@ class ApiService:
                     "temp_min": round(temp_min),
                     "temp_max": round(temp_max),
                     "icon": icon,
-                    "description": description
+                    "description": description,
+                    "humidity": avg_humidity,
+                    "rain_probability": avg_rain_probability,
+                    "wind_speed": avg_wind_speed,
+                    "pressure": avg_pressure
                 })
             
             return result
@@ -442,4 +473,70 @@ class ApiService:
             return forecast_row
         except Exception as e:
             logging.error(f"Error in getDailyForecast: {e}")
-            return ft.Text(f"Error loading forecast")
+            return ft.Text("Error loading forecast")
+
+    def get_visibility(self, data: Dict[str, Any]) -> Optional[int]:
+        """Extract visibility data from weather data (in meters)."""
+        try:
+            if "list" in data and len(data["list"]) > 0:
+                return data["list"][0].get("visibility", None)
+            return None
+        except (KeyError, IndexError, TypeError):
+            return None
+
+    def get_dew_point(self, data: Dict[str, Any]) -> Optional[int]:
+        """Calculate dew point from temperature and humidity."""
+        try:
+            if "list" in data and len(data["list"]) > 0:
+                main_data = data["list"][0].get("main", {})
+                temp = main_data.get("temp")
+                humidity = main_data.get("humidity")
+                
+                if temp is not None and humidity is not None:
+                    # Magnus formula for dew point calculation
+                    import math
+                    a = 17.27
+                    b = 237.7
+                    alpha = ((a * temp) / (b + temp)) + math.log(humidity / 100.0)
+                    dew_point = (b * alpha) / (a - alpha)
+                    return round(dew_point)
+            return None
+        except (KeyError, IndexError, TypeError, ValueError):
+            return None
+
+    def get_uv_index(self, data: Dict[str, Any]) -> Optional[float]:
+        """Extract UV index from weather data (if available)."""
+        try:
+            # UV Index is not available in 5-day forecast API, but we can simulate based on weather conditions
+            if "list" in data and len(data["list"]) > 0:
+                weather_data = data["list"][0].get("weather", [])
+                if weather_data:
+                    weather_id = weather_data[0].get("id", 800)
+                    # Estimate UV based on weather conditions (this is a simulation)
+                    if weather_id < 300:  # Thunderstorm
+                        return 2.0
+                    elif weather_id < 400:  # Drizzle
+                        return 3.0
+                    elif weather_id < 600:  # Rain
+                        return 3.0
+                    elif weather_id < 700:  # Snow
+                        return 2.0
+                    elif weather_id < 800:  # Atmosphere (fog, etc.)
+                        return 4.0
+                    elif weather_id == 800:  # Clear sky
+                        return 8.0
+                    else:  # Cloudy
+                        return 6.0
+            return None
+        except (KeyError, IndexError, TypeError):
+            return None
+
+    def get_cloud_coverage(self, data: Dict[str, Any]) -> Optional[int]:
+        """Extract cloud coverage percentage from weather data."""
+        try:
+            if "list" in data and len(data["list"]) > 0:
+                clouds_data = data["list"][0].get("clouds", {})
+                return clouds_data.get("all", None)
+            return None
+        except (KeyError, IndexError, TypeError):
+            return None

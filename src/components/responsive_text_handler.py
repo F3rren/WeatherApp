@@ -35,7 +35,7 @@ class ResponsiveTextHandler:
             'value': 16,       # Valori (temperature, percentuali - moderato)
             'sidebar_icon': 30,        # Icone (molto ridotto, più proporzionato)
             'legend': 13,      # Per legende dei grafici
-            'axis_title': 15,  # Per titoli degli assi dei grafici
+            'axis_title': 25,  # Per titoli degli assi dei grafici
         }
         
         # Breakpoint predefiniti se non specificati (in pixel)

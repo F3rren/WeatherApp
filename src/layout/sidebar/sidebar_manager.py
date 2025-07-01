@@ -185,3 +185,12 @@ class SidebarManager(ft.Container):
                 'day_selected_event', 
                 day_data
             )
+
+    def set_switch_view_callback(self, callback: Callable):
+        """
+        Set the callback function for switching view modes.
+        
+        Args:
+            callback: Function to call when switching between weather and charts views
+        """
+        self.switch_view_callback = callback

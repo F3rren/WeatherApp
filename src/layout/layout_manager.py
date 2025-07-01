@@ -248,4 +248,81 @@ class LayoutManager:
             except AssertionError:
                 # Container not yet added to page, this is okay
                 pass
+    
+    def switch_main_content(self, new_content):
+        """
+        Switch the main content area to display new content (e.g., charts view).
+        
+        Args:
+            new_content: The new content to display in the main area
+        """
+        if not self.layout:
+            logging.warning("Layout not initialized, cannot switch content")
+            return
+            
+        try:
+            # Find the main content area in the layout and replace it
+            # Assuming the layout is a Row with sidebar and main content
+            if hasattr(self.layout, 'controls') and len(self.layout.controls) > 1:
+                # Replace the main content (assuming it's the second control)
+                self.layout.controls[1] = new_content
+                self.layout.update()
+                logging.info("Successfully switched to new main content")
+            else:
+                logging.warning("Cannot find main content area to switch")
+        except Exception as e:
+            logging.error(f"Error switching main content: {e}")
+    
+    def switch_to_weather_content(self, info_container, hourly_container, chart_container, 
+                                 air_pollution_container, air_pollution_chart_container, 
+                                 precipitation_chart_container):
+        """
+        Switch back to the original weather view layout.
+        
+        Args:
+            info_container: Weather info container
+            hourly_container: Hourly forecast container
+            chart_container: Chart container
+            air_pollution_container: Air pollution container
+            air_pollution_chart_container: Air pollution chart container
+            precipitation_chart_container: Precipitation chart container
+        """
+        if not self.layout:
+            logging.warning("Layout not initialized, cannot switch to weather content")
+            return
+            
+        try:
+            # Rebuild the original weather layout using the main layout structure
+            # Get the sidebar from the current layout
+            sidebar_container = None
+            if hasattr(self.layout, 'controls') and len(self.layout.controls) > 0:
+                # Extract sidebar from the first row
+                first_row = self.layout.controls[0]
+                if hasattr(first_row, 'controls') and len(first_row.controls) > 0:
+                    sidebar_container = first_row.controls[0].content
+            
+            if sidebar_container:
+                # Rebuild the complete weather layout
+                weather_layout = LayoutBuilder.build_main_layout(
+                    sidebar=sidebar_container,
+                    info=info_container,
+                    hourly=hourly_container,
+                    air_pollution=air_pollution_container,
+                    chart=chart_container,
+                    precipitation_chart=precipitation_chart_container,
+                    air_pollution_chart=air_pollution_chart_container
+                )
+                
+                # Replace the entire layout
+                if hasattr(self.page, 'controls') and len(self.page.controls) > 0:
+                    self.page.controls[0] = weather_layout
+                    self.layout = weather_layout
+                    self.page.update()
+                    logging.info("Successfully switched back to weather content")
+                else:
+                    logging.warning("Cannot find page controls to update")
+            else:
+                logging.warning("Cannot find sidebar to rebuild weather layout")
+        except Exception as e:
+            logging.error(f"Error switching to weather content: {e}")
 

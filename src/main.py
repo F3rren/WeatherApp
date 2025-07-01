@@ -15,6 +15,7 @@ from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
 from services.translation_service import TranslationService # Add this import
 from ui.weather_view import WeatherView
+from ui.charts_view import ChartsView # Add import for ChartsView
 
 # Configure logging
 logging.basicConfig(
@@ -40,7 +41,11 @@ class MeteoApp:
         self.page = None
         self.layout_manager = None
         self.weather_view_instance = None # Add to store WeatherView instance
+        self.charts_view_instance = None # Add to store ChartsView instance
+        self.current_view_mode = "weather" # Track current view mode: "weather" or "charts"
         self.translation_service = None # Add to store TranslationService instance
+        self.is_chart_view_visible = False # Track if chart view is visible
+        self.is_air_pollution_chart_visible = False # Track if air pollution chart is visible
 
     def _update_container_colors(self, event_data=None):
         """Aggiorna solo i colori dei container principali e dei testi senza ricostruire i container."""
@@ -166,6 +171,9 @@ class MeteoApp:
         # Ora SidebarManager è esso stesso il componente sidebar da aggiungere al layout
         sidebar_control = self.sidebar_manager # SidebarManager è ora un ft.Container
         
+        # Set the switch view callback
+        self.sidebar_manager.set_switch_view_callback(self.switch_view_mode)
+        
         # Le funzioni di gestione della posizione e del cambio città sono state spostate nei rispettivi servizi
           # Inizializza il layout manager
         self.layout_manager = LayoutManager(page)
@@ -255,6 +263,47 @@ class MeteoApp:
         # Aggiorna anche i container se necessario
         self._update_container_colors()
 
+    def switch_view_mode(self, mode: str):
+        """Switch between weather and charts view modes"""
+        if mode not in ["weather", "charts"]:
+            return
+            
+        if mode == self.current_view_mode:
+            return # Already in this mode
+            
+        self.current_view_mode = mode
+        
+        if mode == "charts":
+            # Switch to charts view
+            if not self.charts_view_instance:
+                self.charts_view_instance = ChartsView(self.page)
+            
+            # Update charts with current weather data
+            if self.weather_view_instance and hasattr(self.weather_view_instance, 'current_city'):
+                city = getattr(self.weather_view_instance, 'current_city', None)
+                language = getattr(self.weather_view_instance, 'current_language', DEFAULT_LANGUAGE)
+                unit = getattr(self.weather_view_instance, 'current_unit', DEFAULT_UNIT_SYSTEM)
+                
+                if city:
+                    self.page.run_task(lambda: self.charts_view_instance.update_by_city(city, language, unit))
+            
+            # Replace main content with charts view
+            charts_container = self.charts_view_instance.get_container()
+            if self.layout_manager:
+                self.layout_manager.switch_main_content(charts_container)
+                
+        else:  # mode == "weather"
+            # Switch back to weather view
+            if self.layout_manager:
+                # Get current weather containers
+                info_container, hourly_container, chart_container, air_pollution_container, air_pollution_chart_container, precipitation_chart_container = self.weather_view_instance.get_containers()
+                self.layout_manager.switch_to_weather_content(
+                    info_container, hourly_container, chart_container, 
+                    air_pollution_container, air_pollution_chart_container, precipitation_chart_container
+                )
+        
+        print(f"Switched to {mode} view mode")
+
     async def update_weather_with_sidebar(self, city: str, language: str, unit: str):
         """Update both main weather view and sidebar weekly forecast."""
         print(f"DEBUG: update_weather_with_sidebar called with city: {city}, language: {language}, unit: {unit}")
@@ -262,6 +311,11 @@ class MeteoApp:
         # Update main weather view
         result = await self.weather_view_instance.update_by_city(city, language, unit)
         print(f"DEBUG: Main weather view updated for city: {city}")
+        
+        # Update charts view if it exists
+        if self.charts_view_instance:
+            await self.charts_view_instance.update_by_city(city, language, unit)
+            print(f"DEBUG: Charts view updated for city: {city}")
         
         # Update layout with separated air condition components after weather data is updated
         air_condition_components = self.get_air_condition_components()

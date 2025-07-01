@@ -9,6 +9,7 @@ import logging
 from utils.config import (DARK_THEME, DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, DEFAULT_THEME_MODE, LIGHT_THEME)
 from layout.layout_manager import LayoutManager
 from layout.sidebar.sidebar_manager import SidebarManager
+from services.api_service import ApiService
 from state_manager import StateManager
 from services.geolocation_service import GeolocationService
 from services.location_toggle_service import LocationToggleService
@@ -26,6 +27,8 @@ logging.basicConfig(
 class MeteoApp:
 
     def __init__(self):
+        self.page = None
+        self.api_service = ApiService()
         self.geolocation_service = GeolocationService()
         self.state_manager = None
         self.location_toggle_service = None
@@ -36,16 +39,11 @@ class MeteoApp:
         self.chart_container_wrapper = None
         self.air_pollution_chart_container_wrapper = None # Add air pollution chart container wrapper
         self.precipitation_chart_container_wrapper = None # For precipitation chart
-        self.air_pollution_chart_container_wrapper = None # For air pollution chart
         self.air_pollution_container_wrapper = None
-        self.page = None
         self.layout_manager = None
         self.weather_view_instance = None # Add to store WeatherView instance
         self.charts_view_instance = None # Add to store ChartsView instance
-        self.current_view_mode = "weather" # Track current view mode: "weather" or "charts"
         self.translation_service = None # Add to store TranslationService instance
-        self.is_chart_view_visible = False # Track if chart view is visible
-        self.is_air_pollution_chart_visible = False # Track if air pollution chart is visible
 
     def _update_container_colors(self, event_data=None):
         """Aggiorna solo i colori dei container principali e dei testi senza ricostruire i container."""
@@ -121,20 +119,14 @@ class MeteoApp:
         # Salva lo state_manager nella sessione per accedervi da altre parti dell'app
         page.session.set('state_manager', self.state_manager)
         
-        # Store reference to main app for WeatherView to access layout_manager
-        page.session.set('main_app', self)
-        
         # Initialize TranslationService
         self.translation_service = TranslationService()
         page.session.set('translation_service', self.translation_service) # Optionally store in session
 
         # Register theme update handler for containers
         self.state_manager.register_observer("theme_event", self._update_container_colors)
-        
-        # Register day selection handler
-        self.state_manager.register_observer("day_selected_event", self._handle_day_selection)
 
-        self.weather_view_instance = WeatherView(page) # Store instance
+        self.weather_view_instance = WeatherView(page, self.api_service) # Store instance
         
         info_container, hourly_container, chart_container, air_pollution_container, air_pollution_chart_container, precipitation_chart_container = self.weather_view_instance.get_containers() # Get all containers including both charts
         
@@ -160,6 +152,7 @@ class MeteoApp:
         # Inizializzazione del gestore della sidebar
         self.sidebar_manager = SidebarManager(
             page=page,
+            api_service=self.api_service,
             state_manager=self.state_manager,
             location_toggle_service=self.location_toggle_service,
             theme_toggle_service=self.theme_toggle_service,
@@ -170,9 +163,7 @@ class MeteoApp:
         # sidebar = self.sidebar_manager.initialize_sidebar() # Vecchio modo
         # Ora SidebarManager è esso stesso il componente sidebar da aggiungere al layout
         sidebar_control = self.sidebar_manager # SidebarManager è ora un ft.Container
-        
-        # Set the switch view callback
-        self.sidebar_manager.set_switch_view_callback(self.switch_view_mode)
+
         
         # Le funzioni di gestione della posizione e del cambio città sono state spostate nei rispettivi servizi
           # Inizializza il layout manager
@@ -208,10 +199,11 @@ class MeteoApp:
         await self.state_manager.set_state("unit", DEFAULT_UNIT_SYSTEM)
         await self.state_manager.set_state("city", DEFAULT_CITY)
 
+
         await self.update_weather_with_sidebar( # Use unified method
-            city=DEFAULT_CITY,
-            language=DEFAULT_LANGUAGE,
-            unit=DEFAULT_UNIT_SYSTEM
+            city=self.state_manager.get_state("city") or DEFAULT_CITY,
+            language= self.state_manager.get_state("language") or DEFAULT_LANGUAGE,
+            unit= self.state_manager.get_state("unit") or DEFAULT_UNIT_SYSTEM
         )
 
         # Initial update of container colors (after everything is loaded)
@@ -241,68 +233,6 @@ class MeteoApp:
                     await on_disconnect_or_close(e)
             page.on_window_event = window_event_handler
 
-    def _handle_day_selection(self, event_data=None):
-        """Gestisce la selezione di un giorno dalla sidebar."""
-        if not event_data:
-            return
-            
-        print(f"UI Update triggered for day: {event_data.get('day', 'Unknown')}")
-        
-        # Qui puoi implementare la logica per aggiornare l'UI basata sul giorno selezionato
-        # Ad esempio, potresti:
-        # 1. Aggiornare le previsioni orarie per quel giorno
-        # 2. Modificare le informazioni principali
-        # 3. Aggiornare i grafici
-        
-        # Per ora, forza un refresh dell'UI
-        if self.weather_view_instance:
-            # Potremmo implementare un metodo specifico per aggiornare in base al giorno
-            print(f"Refreshing UI for selected day: {event_data}")
-            # self.weather_view_instance.update_for_selected_day(event_data)
-            
-        # Aggiorna anche i container se necessario
-        self._update_container_colors()
-
-    def switch_view_mode(self, mode: str):
-        """Switch between weather and charts view modes"""
-        if mode not in ["weather", "charts"]:
-            return
-            
-        if mode == self.current_view_mode:
-            return # Already in this mode
-            
-        self.current_view_mode = mode
-        
-        if mode == "charts":
-            # Switch to charts view
-            if not self.charts_view_instance:
-                self.charts_view_instance = ChartsView(self.page)
-            
-            # Update charts with current weather data
-            if self.weather_view_instance and hasattr(self.weather_view_instance, 'current_city'):
-                city = getattr(self.weather_view_instance, 'current_city', None)
-                language = getattr(self.weather_view_instance, 'current_language', DEFAULT_LANGUAGE)
-                unit = getattr(self.weather_view_instance, 'current_unit', DEFAULT_UNIT_SYSTEM)
-                
-                if city:
-                    self.page.run_task(lambda: self.charts_view_instance.update_by_city(city, language, unit))
-            
-            # Replace main content with charts view
-            charts_container = self.charts_view_instance.get_container()
-            if self.layout_manager:
-                self.layout_manager.switch_main_content(charts_container)
-                
-        else:  # mode == "weather"
-            # Switch back to weather view
-            if self.layout_manager:
-                # Get current weather containers
-                info_container, hourly_container, chart_container, air_pollution_container, air_pollution_chart_container, precipitation_chart_container = self.weather_view_instance.get_containers()
-                self.layout_manager.switch_to_weather_content(
-                    info_container, hourly_container, chart_container, 
-                    air_pollution_container, air_pollution_chart_container, precipitation_chart_container
-                )
-        
-        print(f"Switched to {mode} view mode")
 
     async def update_weather_with_sidebar(self, city: str, language: str, unit: str):
         """Update both main weather view and sidebar weekly forecast."""

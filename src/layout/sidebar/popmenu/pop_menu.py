@@ -50,7 +50,7 @@ class PopMenu(ft.Container):
 
         # Update child dialogs
         self.weather_alert = WeatherAlertDialog(page=self.page, state_manager=self.state_manager, text_color=self._current_text_color, language=self.language)
-        self.map_alert = MapsAlertDialog(page=self.page, state_manager=self.state_manager, language=self.language)
+        self.map_alert = MapsAlertDialog(page=self.page, state_manager=self.state_manager)
         self.setting_alert = SettingsAlertDialog(page=self.page, state_manager=self.state_manager, handle_location_toggle=self.handle_location_toggle, handle_theme_toggle=self.handle_theme_toggle, text_color=self._current_text_color, language=self.language)
 
         # Update popup menu items using translation keys from TRANSLATIONS

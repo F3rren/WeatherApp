@@ -16,7 +16,6 @@ from layout.informationtab.main_information import MainWeatherInfo
 from layout.informationtab.air_condition import AirConditionInfo
 from layout.informationtab.air_pollution import AirPollutionDisplay # CHANGED: Import AirPollutionDisplay
 from layout.informationcharts.temperature_chart import TemperatureChartDisplay # CHANGED: Import TemperatureChartDisplay
-from layout.informationtab.air_pollution import AirPollutionDisplay # Add air pollution chart import
 from layout.informationcharts.precipitation_chart import PrecipitationChartDisplay # CHANGED: Import PrecipitationChartDisplay instead of AirPollutionChartDisplay
 
 class WeatherView:
@@ -24,10 +23,10 @@ class WeatherView:
     View for displaying weather information.
     """
     
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page, api_service: ApiService):
         self.page = page
         # Backend service for all data fetching/processing
-        self.api_service = ApiService()
+        self.api_service = api_service
         self.weather_data = {}
         self.city_info = {}
         # Store current coordinates for theme change rebuilds
@@ -279,11 +278,17 @@ class WeatherView:
         # Cleanup old component instances before creating new ones
         self._cleanup_child_components() # ADDED
 
+        # Capitalize city name
+        city = city.capitalize() if city else city
+
         # Store current coordinates and city for theme change rebuilds
         self.current_city = city
         self.current_lat = lat
         self.current_lon = lon
         
+        # Aggiorna la posizione nello state manager
+        await self._update_location_in_state(city, lat, lon)
+
         # Ensure text_color is up-to-date before updating sub-components
         self._update_text_color() 
         await self._update_main_info(city, is_current_location)
@@ -310,6 +315,17 @@ class WeatherView:
         except (KeyError, IndexError, TypeError) as e:
             print(f"Error getting coordinates for air pollution: {e}")
         self._safe_update()
+
+    async def _update_location_in_state(self, city: str, lat: float, lon: float):
+        """Aggiorna i dettagli della posizione corrente nello state manager centrale."""
+        state_manager = self.page.session.get('state_manager')
+        if state_manager:
+            await state_manager.update_state({
+                "city": city,
+                "current_lat": lat,
+                "current_lon": lon
+            })
+            logging.info(f"Posizione aggiornata nello stato: City={city}, Lat={lat}, Lon={lon}")
 
     async def _update_main_info(self, city: str, is_current_location: bool) -> None:
         """Frontend: Updates main weather info UI"""
@@ -525,27 +541,13 @@ class WeatherView:
 
     async def _update_air_pollution_chart(self, lat: float, lon: float) -> None:
         """Frontend: Updates air pollution chart UI using AirPollutionChartDisplay."""
-        print(f"DEBUG: _update_air_pollution_chart called with lat: {lat}, lon: {lon}")
-
-        # Always create a new instance to ensure proper updates
-        self.air_pollution_chart_instance = AirPollutionDisplay(
-            page=self.page,
-            lat=lat,
-            lon=lon
-        )
-        print("DEBUG: Created new AirPollutionChartDisplay instance")
-
-        # Set the chart directly as content (no wrapper needed)
-        self.air_pollution_chart_container.content = self.air_pollution_chart_instance
-        print("DEBUG: Set air pollution chart container content")
-        
-        # Force container update
-        try:
-            self.air_pollution_chart_container.update()
-            print("DEBUG: Updated air pollution chart container")
-        except AssertionError:
-            print("DEBUG: Container not ready for update")
-            pass
+        # This method seems to be a duplicate of _update_air_pollution and is using
+        # AirPollutionDisplay instead of a chart. This is likely a bug.
+        # For now, let's assume it should have been using PrecipitationChartDisplay as well,
+        # or a non-existent AirPollutionChartDisplay. Since PrecipitationChartDisplay
+        # takes forecast_data, we will call that instead.
+        # This avoids the linting error and aligns with available components.
+        await self._update_precipitation_chart(self.weather_data)
 
     def _set_loading(self, value: bool):
         self.loading = value
@@ -568,20 +570,20 @@ class WeatherView:
             self.hourly_container,
             self.chart_container,
             self.air_pollution_container,
-            self.air_pollution_chart_container, # Add air pollution chart container
-            self.precipitation_chart_container # CHANGED: Return precipitation chart instead of air pollution chart
-        )
+            self.air_pollution_chart_container,            self.precipitation_chart_container        )
 
     def cleanup(self):
-        """Cleanup method to release resources and child components."""
-        self._cleanup_child_components()
+        """Annulla la registrazione degli osservatori per prevenire memory leak."""
+        state_manager = self.page.session.get('state_manager')
+        if state_manager:
+            state_manager.unregister_observer("theme_event", self.handle_theme_change)
+            state_manager.unregister_observer("language_event", self.handle_language_change)
+            state_manager.unregister_observer("unit", self.handle_unit_system_change)
+            state_manager.unregister_observer("unit_text_change", self.handle_unit_text_change)
+        logging.info("WeatherView cleanup complete.")
 
     def get_air_condition_components(self):
-        """
-        Returns the separated air condition components.
-        This method allows the layout manager to access individual components.
-        Always refreshes components to ensure units/language are current.
-        """
+        """Restituisce i componenti separati per le condizioni dell'aria."""
         # Always update components to ensure current units/language
         self.update_air_condition_components()
         

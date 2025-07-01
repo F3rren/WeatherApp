@@ -7,7 +7,6 @@ Now a Flet component itself.
 import flet as ft
 from typing import Callable, Optional
 
-from layout.sidebar.filter.filter import Filter
 from layout.sidebar.popmenu.pop_menu import PopMenu
 from layout.sidebar.searchbar.search_bar import SearchBar
 from layout.weeklyweather.weekly_weather import WeeklyForecastDisplay  # Import WeeklyForecastDisplay
@@ -25,6 +24,7 @@ class SidebarManager(ft.Container):
     """
     def __init__(self, 
                  page: ft.Page, 
+                 api_service, # ADDED
                  state_manager: StateManager, 
                  location_toggle_service: LocationToggleService,
                  theme_toggle_service: ThemeToggleService,
@@ -32,6 +32,7 @@ class SidebarManager(ft.Container):
                  **kwargs):
         super().__init__(**kwargs)
         self.page = page
+        self.api_service = api_service # ADDED
         self.state_manager = state_manager
         self.location_toggle_service = location_toggle_service
         self.theme_toggle_service = theme_toggle_service
@@ -89,17 +90,7 @@ class SidebarManager(ft.Container):
             language=language,
             text_handler_get_size=self.text_handler.get_size,
         )
-        self.filter = Filter(
-            page=self.page,
-            state_manager=self.state_manager,
-            handle_location_toggle=self.location_toggle_service.handle_location_toggle,
-            handle_theme_toggle=self.theme_toggle_service.handle_theme_toggle,
-            theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
-            location_toggle_value=self.state_manager.get_state("using_location") or False,
-            text_color=text_color,
-            language=language,
-            text_handler_get_size=self.text_handler.get_size
-        )
+
         self.border_radius = 22
         self.shadow = ft.BoxShadow(blur_radius=18, color="#00000033")
         self.content = self.build()

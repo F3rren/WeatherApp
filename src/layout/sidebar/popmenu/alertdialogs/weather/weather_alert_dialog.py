@@ -4,6 +4,7 @@ from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService
 
 class WeatherAlertDialog:
+
     def __init__(self, page: ft.Page, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None, 
                  text_color: dict = None, language: str = "en"):
         self.page = page
@@ -132,6 +133,3 @@ class WeatherAlertDialog:
             self.dialog.open = False
             if self.page:
                  self.page.update()
-
-    def cleanup(self):
-        pass

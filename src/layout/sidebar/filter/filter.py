@@ -30,7 +30,7 @@ class Filter:
         self.map_alert = MapsAlertDialog(
             page=self.page,
             state_manager=state_manager,
-            text_color=self.text_color,
+            #text_color=self.text_color,
             language=self.language,
         )
         self.setting_alert = SettingsAlertDialog(

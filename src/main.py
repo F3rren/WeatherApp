@@ -187,7 +187,7 @@ class MeteoApp:
         self.hourly_container_wrapper = containers['hourly']
         self.chart_container_wrapper = containers['chart']
         self.precipitation_chart_container_wrapper = containers['precipitation_chart'] # For precipitation chart
-        self.air_pollution_chart_container_wrapper = containers['air_pollution_chart'] # For air pollution chart
+        #self.air_pollution_chart_container_wrapper = containers['air_pollution_chart'] # For air pollution chart
         self.air_pollution_container_wrapper = containers['air_pollution']
         self.air_condition_container_wrapper = containers.get('air_condition')  # New air condition container
         

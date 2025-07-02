@@ -89,23 +89,7 @@ class LayoutManager:
             animation_curve,
             "main_info"
         )
-        
-        # Previsioni orarie - stile elegante
-        self.containers['hourly'] = LayoutBuilder.build_content_container(
-            hourly_content, 
-            {"xs": 12}, 
-            animation_duration,
-            animation_curve
-        )
-        
-        # Informazioni inquinamento (temporaneamente vuoto per ora)
-        self.containers['air_pollution'] = LayoutBuilder.build_content_container(
-            air_pollution_content,
-            {"xs": 12},
-            animation_duration,
-            animation_curve
-        )
-        
+
         # Air condition components (initially empty, will be populated after weather data loads)
         self.containers['air_condition'] = LayoutBuilder.build_content_container(
             ft.Container(
@@ -121,7 +105,16 @@ class LayoutManager:
             animation_duration,
             animation_curve
         )
-
+        
+        # Previsioni orarie - stile elegante
+        self.containers['hourly'] = LayoutBuilder.build_content_container(
+            hourly_content, 
+            {"xs": 12}, 
+            animation_duration,
+            animation_curve
+        )
+        
+    
         # Grafico temperature
         self.containers['chart'] = LayoutBuilder.build_content_container(
             chart_content,
@@ -138,13 +131,13 @@ class LayoutManager:
             animation_curve
         )
 
-        # Grafico inquinamento aria
-        self.containers['air_pollution_chart'] = LayoutBuilder.build_content_container(
-            air_pollution_chart_content,
+        # Informazioni inquinamento (temporaneamente vuoto per ora)
+        self.containers['air_pollution'] = LayoutBuilder.build_content_container(
+            air_pollution_content,
             {"xs": 12},
             animation_duration,
             animation_curve
-        )        
+        )
     def build_layout(self) -> ft.Control:
         """
         Costruisce il layout principale dell'applicazione.
@@ -159,7 +152,7 @@ class LayoutManager:
             self.containers.get('air_condition', ft.Container()),  # Use air_condition instead of air_pollution
             self.containers['chart'],
             self.containers['precipitation_chart'],
-            self.containers['air_pollution_chart']
+            self.containers['air_pollution']
         )
         return self.layout
     

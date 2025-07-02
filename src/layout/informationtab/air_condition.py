@@ -379,12 +379,13 @@ class AirConditionInfo(ft.Container):
             controls=[
                 ft.Icon(
                     ft.Icons.AIR, 
-                    size=self._text_handler.get_size('title'),
-                    color=self._text_color
+                    color=ft.Colors.YELLOW_400 if not is_dark else ft.Colors.YELLOW_300,
+                    size=24
                 ),
+                ft.Container(width=12),  # Spacer
                 ft.Text(
                     title_text, 
-                    size=self._text_handler.get_size('title'), 
+                    size=self._text_handler.get_size('axis_title') + 2,
                     weight=ft.FontWeight.BOLD,
                     color=self._text_color
                 ),

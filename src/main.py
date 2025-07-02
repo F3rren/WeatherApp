@@ -258,7 +258,7 @@ def main():
     ft.app( # MODIFIED: ft.app
         target=app.main,
         assets_dir="assets",
-        view=ft.AppView.FLET_APP # MODIFIED: ft.AppView
+        view=ft.AppView.WEB_BROWSER # MODIFIED: ft.AppView
     )
 
 

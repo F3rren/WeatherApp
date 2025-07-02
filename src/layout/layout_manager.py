@@ -57,7 +57,7 @@ class LayoutManager:
             self.page.update()
     
     def create_containers(self, sidebar_content, info_content, hourly_content, chart_content,
-        precipitation_chart_content, air_pollution_chart_content, air_pollution_content, animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
+        precipitation_chart_content, air_condition_content, air_pollution_content, animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
         """
         Crea tutti i contenitori per il layout dell'applicazione con design moderno.
         
@@ -67,7 +67,7 @@ class LayoutManager:
             hourly_content: Contenuto del container previsioni orarie
             chart_content: Contenuto del container grafico temperature
             precipitation_chart_content: Contenuto del container grafico precipitazioni
-            air_pollution_chart_content: Contenuto del container grafico inquinamento
+            air_condition_content: Contenuto del container condizioni dell'aria
             air_pollution_content: Contenuto del container informazioni inquinamento
             animation_duration: Durata delle animazioni in millisecondi
             animation_curve: Curva di animazione
@@ -75,7 +75,6 @@ class LayoutManager:
         # Sidebar con stile moderno e larghezza aumentata
         self.containers['sidebar'] = LayoutBuilder.build_content_container(
             sidebar_content, 
-            {"sm": 12, "md": 5, "lg": 4, "xl": 4}, # Aumentata da 3 a 4 per più spazio
             animation_duration,
             animation_curve,
             "sidebar"
@@ -84,24 +83,14 @@ class LayoutManager:
         # Container principale info meteo - stile hero section
         self.containers['info'] = LayoutBuilder.build_content_container(
             info_content,
-            {"xs": 12},
             animation_duration,
             animation_curve,
             "main_info"
         )
 
-        # Air condition components (initially empty, will be populated after weather data loads)
+        # Air condition components
         self.containers['air_condition'] = LayoutBuilder.build_content_container(
-            ft.Container(
-                content=ft.Text(
-                    "Loading air conditions...", 
-                    size=14,
-                    color=ft.Colors.GREY_600
-                ),
-                height=150,
-                alignment=ft.alignment.center
-            ),
-            {"xs": 12},
+            air_condition_content,
             animation_duration,
             animation_curve
         )
@@ -109,7 +98,7 @@ class LayoutManager:
         # Previsioni orarie - stile elegante
         self.containers['hourly'] = LayoutBuilder.build_content_container(
             hourly_content, 
-            {"xs": 12}, 
+            #{"xs": 12}, 
             animation_duration,
             animation_curve
         )
@@ -118,7 +107,7 @@ class LayoutManager:
         # Grafico temperature
         self.containers['chart'] = LayoutBuilder.build_content_container(
             chart_content,
-            {"xs": 12},
+            #{"xs": 12},
             animation_duration,
             animation_curve
         )
@@ -126,7 +115,7 @@ class LayoutManager:
         # Grafico precipitazioni
         self.containers['precipitation_chart'] = LayoutBuilder.build_content_container(
             precipitation_chart_content,
-            {"xs": 12},
+            #{"xs": 12},
             animation_duration,
             animation_curve
         )
@@ -134,7 +123,7 @@ class LayoutManager:
         # Informazioni inquinamento (temporaneamente vuoto per ora)
         self.containers['air_pollution'] = LayoutBuilder.build_content_container(
             air_pollution_content,
-            {"xs": 12},
+            #{"xs": 12},
             animation_duration,
             animation_curve
         )
@@ -149,7 +138,7 @@ class LayoutManager:
             self.containers['sidebar'],
             self.containers['info'],
             self.containers['hourly'], 
-            self.containers.get('air_condition', ft.Container()),  # Use air_condition instead of air_pollution
+            self.containers['air_condition'],
             self.containers['chart'],
             self.containers['precipitation_chart'],
             self.containers['air_pollution']
@@ -217,31 +206,6 @@ class LayoutManager:
             if getattr(self.page, 'update', None):
                 self.page.update()
     
-    def update_air_condition_layout(self, air_condition_components) -> None:
-        """
-        Updates the layout to use separated air condition components.
-        
-        Args:
-            air_condition_components: Dictionary with individual air condition components
-        """
-        if not air_condition_components:
-            return
-            
-        # Create air condition grid layout
-        air_condition_grid = LayoutBuilder.build_air_condition_grid(
-            air_condition_components, 
-            self.page
-        )
-        
-        # Update the existing air_condition container content instead of recreating everything
-        if 'air_condition' in self.containers and self.containers['air_condition']:
-            self.containers['air_condition'].content = air_condition_grid
-            try:
-                self.containers['air_condition'].update()
-            except AssertionError:
-                # Container not yet added to page, this is okay
-                pass
-    
     def switch_main_content(self, new_content):
         """
         Switch the main content area to display new content (e.g., charts view).
@@ -300,7 +264,6 @@ class LayoutManager:
                     sidebar=sidebar_container,
                     info=info_container,
                     hourly=hourly_container,
-                    air_pollution=air_pollution_container,
                     chart=chart_container,
                     precipitation_chart=precipitation_chart_container,
                     air_pollution_chart=air_pollution_chart_container

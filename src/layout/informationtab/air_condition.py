@@ -361,10 +361,50 @@ class AirConditionInfo(ft.Container):
             logging.error(f"AirConditionInfo: Error updating UI: {e}\n{traceback.format_exc()}")
 
     def build(self):
-        """Create individual air condition components for separated display."""
-        # This method now returns None as we'll use get_separated_components()
-        # to get individual components for the layout
-        return ft.Container(visible=False)
+        """Create the air condition display with grouped components."""
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK if self.page else False
+        
+        # Get translation service
+        translation_service = None
+        if self.page and hasattr(self.page, 'session'):
+            translation_service = self.page.session.get('translation_service')
+        
+        # Get title
+        title_text = "Air Conditions"  # Default fallback
+        if translation_service:
+            title_text = translation_service.translate_from_dict("air_condition_items", "air_condition_title", self._language) or title_text
+        
+        # Create title row
+        air_condition_title = ft.Row(
+            controls=[
+                ft.Icon(
+                    ft.Icons.AIR, 
+                    size=self._text_handler.get_size('title'),
+                    color=self._text_color
+                ),
+                ft.Text(
+                    title_text, 
+                    size=self._text_handler.get_size('title'), 
+                    weight=ft.FontWeight.BOLD,
+                    color=self._text_color
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            spacing=10,
+        )
+        
+        # Get grouped components
+        air_condition_grid = self._build_air_condition_grid()
+        
+        return ft.Column(
+            controls=[
+                air_condition_title,
+                ft.Container(height=12),
+                air_condition_grid
+            ],
+            spacing=0,
+            alignment=ft.MainAxisAlignment.START
+        )
     
     def get_separated_components(self):
         """
@@ -522,6 +562,37 @@ class AirConditionInfo(ft.Container):
             )
         
         return components
+
+    def _build_air_condition_grid(self):
+        """Build the grid layout for air condition components."""
+        # Get separated components
+        components = self.get_separated_components()
+        
+        # Create rows for the grid layout
+        grid_controls = []
+        
+        # Temperature group (feels_like, dew_point)
+        if 'temperature' in components:
+            grid_controls.append(components['temperature'])
+        
+        # Wind group (wind_speed, wind_direction, wind_gust)
+        if 'wind' in components:
+            grid_controls.append(components['wind'])
+        
+        # Atmospheric group (humidity, pressure, visibility)
+        if 'atmospheric' in components:
+            grid_controls.append(components['atmospheric'])
+        
+        # Solar group (uv_index, cloud_coverage)
+        if 'solar' in components:
+            grid_controls.append(components['solar'])
+        
+        # Return column with all groups
+        return ft.Column(
+            controls=grid_controls,
+            spacing=16,
+            expand=True
+        )
 
 class AirConditionGroupComponent(ft.Container):
     """
@@ -748,4 +819,157 @@ class AirConditionGroupComponent(ft.Container):
             padding=16,
             margin=2,
             animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
+        )
+
+class AirConditionDisplay():
+    """
+    Main display for air condition information, combining multiple components.
+    """
+    
+    def __init__(self, page: ft.Page = None, **kwargs):
+        super().__init__(**kwargs)
+        self.page = page
+        
+        self._state_manager = None
+        self._language = DEFAULT_LANGUAGE
+        self._unit_system = DEFAULT_UNIT_SYSTEM
+        self._text_color = LIGHT_THEME["TEXT"]
+
+        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+            self._state_manager = self.page.session.get('state_manager')
+            self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
+            self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
+            self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
+        
+        self.content = self.build()
+        # Don't auto-update on init - wait for page to be ready
+    
+    async def update_ui(self, event_data=None):
+        """Update UI based on theme/language changes."""
+        if not self.page or not self.visible:
+            return
+        
+        try:
+            if self._state_manager:
+                self._language = self._state_manager.get_state('language') or self._language
+            
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            theme = DARK_THEME if is_dark else LIGHT_THEME
+            self._text_color = theme.get("TEXT", ft.Colors.BLACK)
+            
+            self.content = self.build()
+            try:
+                self.update()
+            except AssertionError:
+                # Component not yet added to page, this is okay
+                pass
+        except Exception as e:
+            logging.error(f"AirConditionDisplay: Error updating UI: {e}")
+    
+    def build(self):
+        """Build the main display content."""
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK if self.page else False
+        
+        # Air Condition Grid
+        air_condition_grid = self._build_air_condition_grid()
+
+        translation_service = self.page.session.get('translation_service')
+        title_text = "Air Conditions"  # Default fallback
+        if translation_service:
+            title_text = translation_service.get_translation("air_condition_title", self._language) or title_text
+
+        air_condition_title = ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.AIR, size=24),
+                ft.Text(title_text, size=24, weight=ft.FontWeight.BOLD),
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            spacing=10,
+        )
+
+        return ft.Column(
+            controls=[
+                air_condition_title,
+                ft.Container(height=12),
+                air_condition_grid
+            ],
+            spacing=0,
+            alignment=ft.MainAxisAlignment.START
+        )
+    
+    def _build_air_condition_grid(self):
+        """Build the grid layout for air condition components."""
+        # Recupera lo stato attuale
+        city = None
+        if self._state_manager:
+            city = self._state_manager.get_state('city')
+        city = city or "Milano"  # Fallback
+
+        # Recupera i dati meteo attuali tramite ApiService
+        api_service = ApiService()
+        weather_data = api_service.get_weather_data(city=city, language=self._language, unit=self._unit_system)
+        if not weather_data:
+            return ft.Container(
+                content=ft.Text("Loading air conditions...", size=14, color=ft.Colors.GREY),
+                height=150,
+            )
+
+        # Estrai i dati necessari
+        feels_like = api_service.get_feels_like_temperature(weather_data)
+        humidity = api_service.get_humidity(weather_data)
+        wind_speed = api_service.get_wind_speed(weather_data)
+        wind_direction = api_service.get_wind_direction(weather_data)
+        wind_gust = api_service.get_wind_gust(weather_data)
+        pressure = api_service.get_pressure(weather_data)
+        visibility = api_service.get_visibility(weather_data)
+        uv_index = api_service.get_uv_index(weather_data)
+        dew_point = api_service.get_dew_point(weather_data)
+        cloud_coverage = api_service.get_cloud_coverage(weather_data)
+
+        # Usa AirConditionInfo per ottenere i gruppi già pronti
+        info = AirConditionInfo(
+            city=city,
+            feels_like=feels_like,
+            humidity=humidity,
+            wind_speed=wind_speed,
+            wind_direction=wind_direction,
+            wind_gust=wind_gust,
+            pressure=pressure,
+            visibility=visibility,
+            uv_index=uv_index,
+            dew_point=dew_point,
+            cloud_coverage=cloud_coverage,
+            page=self.page
+        )
+        groups = info.get_separated_components()
+        # Ordine preferito
+        order = ["temperature", "humidity_air", "wind", "atmospheric", "solar"]
+        group_widgets = [groups[k] for k in order if k in groups]
+        return ft.ResponsiveRow(group_widgets, spacing=12)
+
+    def _build_air_condition_grid(self):
+        """Build the grid layout for air condition components using grouped components."""
+        # Get grouped components
+        groups = self.get_separated_components()
+        
+        if not groups:
+            return ft.Container(
+                content=ft.Text(
+                    "No air condition data available", 
+                    size=14, 
+                    color=ft.Colors.GREY
+                ),
+                height=150,
+                alignment=ft.alignment.center
+            )
+        
+        # Order preferred groups
+        order = ["temperature", "humidity_air", "wind", "atmospheric", "solar"]
+        group_widgets = [groups[k] for k in order if k in groups]
+        
+        # Create responsive grid
+        return ft.ResponsiveRow(
+            group_widgets,
+            spacing=12,
+            run_spacing=12
         )

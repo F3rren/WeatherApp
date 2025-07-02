@@ -361,10 +361,100 @@ class AirConditionInfo(ft.Container):
             logging.error(f"AirConditionInfo: Error updating UI: {e}\n{traceback.format_exc()}")
 
     def build(self):
-        """Create individual air condition components for separated display."""
-        # This method now returns None as we'll use get_separated_components()
-        # to get individual components for the layout
-        return ft.Container(visible=False)
+        """Create the air condition display with grouped components."""
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK if self.page else False
+        
+        # Get translation service
+        translation_service = None
+        if self.page and hasattr(self.page, 'session'):
+            translation_service = self.page.session.get('translation_service')
+        
+        # Get title
+        title_text = "Air Conditions"  # Default fallback
+        if translation_service:
+            title_text = translation_service.translate_from_dict("air_condition_items", "air_condition_title", self._language) or title_text
+        
+        # Create title row
+        air_condition_title = ft.Row(
+            controls=[
+                ft.Icon(
+                    ft.Icons.AIR, 
+                    color=ft.Colors.YELLOW_400 if not is_dark else ft.Colors.YELLOW_300,
+                    size=24
+                ),
+                ft.Container(width=12),  # Spacer
+                ft.Text(
+                    title_text, 
+                    size=self._text_handler.get_size('axis_title') + 2,
+                    weight=ft.FontWeight.BOLD,
+                    color=self._text_color
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            spacing=10,
+        )
+        
+        # Get grouped components
+        air_condition_grid = self._build_air_condition_grid()
+        
+        return ft.Column(
+            controls=[
+                air_condition_title,
+                ft.Container(height=12),
+                air_condition_grid
+            ],
+            spacing=0,
+            alignment=ft.MainAxisAlignment.START
+        )
+    
+    def _build_air_condition_grid(self):
+        """Build the grid layout for air condition components."""
+        # Get separated components
+        components = self.get_separated_components()
+        
+        if not components:
+            return ft.Container(
+                content=ft.Text(
+                    "No air condition data available", 
+                    size=14, 
+                    color=ft.Colors.GREY
+                ),
+                height=150,
+                alignment=ft.alignment.center
+            )
+        
+        # Create rows for the grid layout with improved spacing
+        grid_controls = []
+        
+        # Temperature group (feels_like, dew_point)
+        if 'temperature' in components:
+            grid_controls.append(components['temperature'])
+        
+        # Wind group (wind_speed, wind_direction, wind_gust)
+        if 'wind' in components:
+            grid_controls.append(components['wind'])
+        
+        # Atmospheric group (humidity, pressure, visibility)
+        if 'atmospheric' in components:
+            grid_controls.append(components['atmospheric'])
+        
+        # Solar group (uv_index, cloud_coverage)
+        if 'solar' in components:
+            grid_controls.append(components['solar'])
+        
+        # Return responsive row layout that organizes components horizontally
+        # On small screens, components will wrap to new lines
+        return ft.ResponsiveRow(
+            controls=[
+                ft.Container(
+                    content=component,
+                    col={"xs": 12, "sm": 6, "md": 6, "lg": 3, "xl": 3},  # 4 columns on large screens, 2 on medium, 1 on small
+                    padding=ft.padding.symmetric(horizontal=4, vertical=4)
+                ) for component in grid_controls
+            ],
+            spacing=8,
+            run_spacing=8,  # Spacing between wrapped rows
+        )
     
     def get_separated_components(self):
         """

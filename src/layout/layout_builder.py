@@ -10,41 +10,9 @@ class LayoutBuilder:
     """
     Classe utility per costruire elementi di layout per l'applicazione.
     """
-    
-    _text_handler = None
-    _debug_initialized = False
-    
-    @classmethod
-    def init_text_handler(cls, page: ft.Page):
-        """Initialize ResponsiveTextHandler if not already initialized"""
-        if cls._text_handler is None and page is not None:
-            cls._text_handler = ResponsiveTextHandler(
-                page=page,
-                base_sizes={
-                    'title': 22,        # Titoli principali
-                    'subtitle': 18,     # Sottotitoli
-                    'body': 14,         # Testo normale
-                    'small': 12,        # Testo piccolo
-                },
-                breakpoints=[600, 900, 1200, 1600]
-            )
-            if not cls._debug_initialized:
-                print("DEBUG: LayoutBuilder initialized with ResponsiveTextHandler")
-                cls._debug_initialized = True
-        return cls._text_handler
-    
-    @classmethod
-    def get_text_size(cls, category, page=None):
-        """Get text size for the given category"""
-        if cls._text_handler is None:
-            cls.init_text_handler(page)
-        
-        if cls._text_handler:
-            return cls._text_handler.get_size(category)
-        return None
-    
+ 
     @staticmethod
-    def build_content_container(content, col_size, animation_duration=500, 
+    def build_content_container(content, animation_duration=500, 
                                animation_curve=ft.AnimationCurve.EASE_IN_OUT, 
                                container_type="default") -> ft.Container:
         """
@@ -79,7 +47,7 @@ class LayoutBuilder:
             margin = ft.margin.symmetric(horizontal=8, vertical=6)
             shadow_blur = 12
             shadow_spread = 0
-        
+
         return ft.Container(
             content=content,
             animate=ft.Animation(animation_duration, animation_curve),
@@ -92,11 +60,9 @@ class LayoutBuilder:
                 color=ft.Colors.with_opacity(0.08, ft.Colors.BLACK),
                 offset=ft.Offset(0, 4),
                 blur_style=ft.ShadowBlurStyle.OUTER,
-            ),
-            col=col_size
+            )
         )
 
-    @staticmethod
     def build_main_layout(sidebar, info, hourly, air_pollution, chart, precipitation_chart, air_pollution_chart) -> ft.Control:
         """
         Costruisce il layout principale responsivo dell'applicazione con design moderno.
@@ -183,100 +149,3 @@ class LayoutBuilder:
                 )
             ])
         ], spacing=0)
-
-    @staticmethod
-    def build_air_condition_grid(air_condition_components, page: ft.Page = None) -> ft.Container:
-        """
-        Build a responsive grid layout for separated air condition components.
-        
-        Args:
-            air_condition_components: Dictionary with component keys and ft.Container values
-            page: Flet page object for theme detection and translation
-            
-        Returns:
-            ft.Container: Grid container with air condition components and title
-        """
-        if not air_condition_components:
-            return ft.Container(
-                content=ft.Text("Loading air conditions...", size=14),
-                height=200,
-                alignment=ft.alignment.center
-            )
-
-        # Get translation service for title
-        translation_service = None
-        if page and hasattr(page, 'session'):
-            translation_service = page.session.get('translation_service')
-        
-        # Get current language from state manager
-        current_language = "en"  # Default fallback
-        if page and hasattr(page, 'session') and page.session.get('state_manager'):
-            state_manager = page.session.get('state_manager')
-            current_language = state_manager.get_state('language') or current_language
-        
-        # Get translated title
-        title_text = "Air Conditions"  # Default fallback
-        if translation_service:
-            title_text = translation_service.translate_from_dict(
-                "air_condition_items", 
-                "air_condition_title", 
-                current_language
-            ) or title_text
-
-        # Initialize text handler for title sizing
-        text_handler = LayoutBuilder.init_text_handler(page)
-        title_size = 22  # Default size (axis_title + 2)
-        if text_handler:
-            title_size = text_handler.get_size('axis_title') + 2 or 22
-
-        # Get theme colors
-        is_dark = page.theme_mode == ft.ThemeMode.DARK if page else False
-        
-        # Get correct text color from theme (same as other components)
-        from utils.config import LIGHT_THEME, DARK_THEME
-        theme = DARK_THEME if is_dark else LIGHT_THEME
-        title_color = theme.get("TEXT", ft.Colors.BLACK)
-
-        # Get components in preferred order (now grouped)
-        components_order = [
-            "temperature", "humidity_air", "wind", "atmospheric", "solar"  # Group names
-        ]
-        
-        responsive_components = []
-        
-        for comp_key in components_order:
-            if comp_key in air_condition_components:
-                responsive_components.append(ft.Container(
-                    content=air_condition_components[comp_key],
-                    col={"sm": 12, "md": 6, "lg": 4, "xl": 3},  # Mobile: 1 col, Tablet: 2 cols, Desktop: 3 cols, Large: 4 cols
-                    padding=4,
-                ))
-        
-        # Create the main title with icon (same style as other components)
-        title_container = ft.Container(
-            content=ft.Row([
-                ft.Icon(
-                    ft.Icons.AIR_OUTLINED,
-                    color=ft.Colors.BLUE_400 if not is_dark else ft.Colors.BLUE_300,
-                    size=24
-                ),
-                ft.Container(width=12),  # Spacer
-                ft.Text(
-                    title_text,
-                    size=title_size,
-                    weight=ft.FontWeight.BOLD,
-                    color=title_color,
-                    font_family="system-ui",
-                ),
-            ], alignment=ft.MainAxisAlignment.START),
-            padding=ft.padding.only(left=20, top=16, bottom=12)
-        )
-
-        # Create responsive grid layout with title
-        return ft.Container(
-            content=ft.Column([
-                title_container,
-                ft.ResponsiveRow(responsive_components, spacing=8)
-            ], spacing=0),
-            padding=8,
-        )

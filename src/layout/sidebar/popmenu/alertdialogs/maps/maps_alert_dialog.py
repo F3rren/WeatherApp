@@ -1,30 +1,21 @@
 import flet as ft
 import webbrowser
+
+from components.state_manager import StateManager
 from .map_view import MapView
 
 class MapsAlertDialog:
-    def __init__(self, page: ft.Page, state_manager=None, language: str = "en"):
+    def __init__(self, page: ft.Page, state_manager: StateManager):
         self.page = page
         self.state_manager = state_manager
         self.dialog = None
         self.map_view_instance = None
-
-        # Proprietà della mappa
-        self.current_city = "Roma"
-        self.current_lat = 41.9028
-        self.current_lon = 12.4964
-        
-        # Costruisce il dialogo inizialmente
-        self.update_ui()
-
-    def update_ui(self, event_data=None):
-        """Aggiorna e ricostruisce il dialogo."""
-        self.dialog = self.build()
+        self.current_city = None
+        self.current_lat = None
+        self.current_lon = None
 
     def build(self):
         """Costruisce l'interfaccia dell'AlertDialog."""
-        self._update_location()  # Assicura che la posizione sia aggiornata
-        
         self.map_view_instance = MapView(self.page, lat=self.current_lat, lon=self.current_lon)
 
         dialog = ft.AlertDialog(
@@ -40,26 +31,25 @@ class MapsAlertDialog:
                 ft.TextButton("Chiudi", on_click=self.close_dialog),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
+            on_dismiss=lambda e: self.close_dialog(e), # Add this line to close on outside click
         )
         return dialog
 
-    def _update_location(self):
-        """Aggiorna la posizione corrente dall'istanza principale dell'app."""
-        try:
-            main_app = self.page.session.get('main_app')
-            if main_app and hasattr(main_app, 'weather_view_instance'):
-                weather_view = main_app.weather_view_instance
-                if hasattr(weather_view, 'current_coordinates') and weather_view.current_coordinates:
-                    self.current_lat = float(weather_view.current_coordinates[0])
-                    self.current_lon = float(weather_view.current_coordinates[1])
-                if hasattr(weather_view, 'current_city') and weather_view.current_city:
-                    self.current_city = weather_view.current_city
-        except Exception as e:
-            print(f"Mappe: Impossibile aggiornare la posizione: {e}")
-
     def open_dialog(self):
-        if not self.dialog:
-            self.dialog = self.build()
+        """Apre il dialogo dopo aver aggiornato la posizione dallo StateManager."""
+        self.current_city = self.state_manager.get_state('city')
+        self.current_lat = self.state_manager.get_state('current_lat')
+        self.current_lon = self.state_manager.get_state('current_lon')
+
+        # Fallback to default if values are None
+        if self.current_city is None:
+            self.current_city = "N/A"
+        if self.current_lat is None or self.current_lon is None:
+            self.current_lat = None  # Default to Rome
+            self.current_lon = None
+
+        self.dialog = self.build()
+        
         if self.page and self.dialog:
             if self.dialog not in self.page.controls:
                 self.page.controls.append(self.dialog)

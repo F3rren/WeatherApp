@@ -12,7 +12,7 @@ class MapView:
         self.longitude = lon
 
     def build(self):
-        windy_url = f"https://embed.windy.com/embed2.html?lat={self.latitude}&lon={self.longitude}&zoom=8&overlay=temp"
+        windy_url = f"https://embed.windy.com/embed2.html?lat={self.latitude}&lon={self.longitude}&zoom=16&overlay=temp"
         return ft.WebView(
                 url=windy_url,
                 on_page_started=lambda _: print("Page started"),

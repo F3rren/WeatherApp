@@ -63,7 +63,7 @@ class LayoutBuilder:
             )
         )
 
-    def build_main_layout(sidebar, info, hourly, air_pollution, chart, precipitation_chart, air_pollution_chart) -> ft.Control:
+    def build_main_layout(sidebar, info, hourly, air_condition, chart, precipitation_chart, air_pollution) -> ft.Control:
         """
         Costruisce il layout principale responsivo dell'applicazione con design moderno.
         Layout: sidebar + info + air condition in alto, previsioni orarie full-width sotto, grafici in basso.
@@ -97,7 +97,7 @@ class LayoutBuilder:
                         ft.ResponsiveRow([
                             ft.Container(
                                 content=info,
-                                col={"xs": 12},
+                                #col={"sm": 12, "md": 7, "lg": 8, "xl": 8},
                                 padding=ft.padding.symmetric(vertical=4),
                             )
                         ]),
@@ -105,8 +105,8 @@ class LayoutBuilder:
                         # Air Condition (ora posizionato dopo le info principali)
                         ft.ResponsiveRow([
                             ft.Container(
-                                content=air_pollution,  # Questo è il container Air Condition
-                                col={"xs": 12},
+                                content=air_condition,  # Questo è il container Air Condition
+                                #col={"sm": 12, "md": 7, "lg": 8, "xl": 8},
                                 padding=ft.padding.symmetric(vertical=4),
                             )
                         ]),
@@ -121,7 +121,7 @@ class LayoutBuilder:
                 ft.Container(
                     content=hourly,
                     col={"xs": 12},  # Sempre 100% della larghezza
-                    padding=ft.padding.symmetric(horizontal=16, vertical=8),
+                    padding=ft.padding.symmetric(vertical=4),
                 )
             ]),
             
@@ -131,21 +131,21 @@ class LayoutBuilder:
                 ft.Container(
                     content=chart,
                     col={"sm": 12, "md": 12, "lg": 4, "xl": 4},
-                    padding=ft.padding.only(left=16, right=8, top=4, bottom=16),
+                    padding=ft.padding.symmetric(vertical=4),
                 ),
                 
                 # Grafico precipitazioni
                 ft.Container(
                     content=precipitation_chart,
                     col={"sm": 12, "md": 12, "lg": 4, "xl": 4},
-                    padding=ft.padding.only(left=8, right=8, top=4, bottom=16),
+                    padding=ft.padding.symmetric(vertical=4),
                 ),
                 
                 # Grafico inquinamento aria
                 ft.Container(
-                    content=air_pollution_chart,
-                    col={"sm": 12, "md": 12, "lg": 4, "xl": 4},
-                    padding=ft.padding.only(left=8, right=16, top=4, bottom=16),
+                    content=air_pollution,
+                    col={"sm": 12, "md": 12, "lg": 12, "xl": 4},
+                    padding=ft.padding.symmetric(vertical=4),
                 )
             ])
         ], spacing=0)

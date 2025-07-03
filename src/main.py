@@ -133,7 +133,7 @@ class MeteoApp:
             page=page,
             geolocation_service=self.geolocation_service,
             state_manager=self.state_manager,
-            update_weather_callback=None # verrà impostato in build_layout
+            update_weather_callback=self.update_weather_with_sidebar # Imposta il callback
         )
         self.theme_toggle_service = ThemeToggleService(
             page=page, 
@@ -145,7 +145,7 @@ class MeteoApp:
             state_manager=self.state_manager,
             location_toggle_service=self.location_toggle_service,
             theme_toggle_service=self.theme_toggle_service,
-            update_weather_callback=None # verrà impostato in build_layout
+            update_weather_callback=self.update_weather_with_sidebar # Imposta il callback
         )
         
         self.layout_manager = LayoutManager(page)
@@ -230,6 +230,11 @@ class MeteoApp:
         """Update both main weather view and sidebar weekly forecast."""
         print(f"DEBUG: update_weather_with_sidebar called with city: {city}, language: {language}, unit: {unit}")
         
+        # Aggiorna lo stato con la nuova città
+        await self.state_manager.set_state("city", city)
+        await self.state_manager.set_state("language", language)
+        await self.state_manager.set_state("unit", unit)
+        
         # Update main weather view
         result = await self.weather_view_instance.update_by_city(city, language, unit)
         print(f"DEBUG: Main weather view updated for city: {city}")
@@ -243,6 +248,81 @@ class MeteoApp:
         if self.sidebar_manager:
             self.sidebar_manager.update_weekly_forecast(city)
             print(f"DEBUG: Sidebar weekly forecast updated for city: {city}")
+
+        # AGGIORNAMENTO UI: I container del WeatherView si aggiornano automaticamente
+        # Ora basta aggiornare i riferimenti nei wrapper del layout manager
+        if hasattr(self, 'layout_manager') and self.layout_manager:
+            try:
+                # Recupera i container aggiornati dal WeatherView
+                info_container, air_condition_container, hourly_container, chart_container, precipitation_chart_container, air_pollution_container = self.weather_view_instance.get_containers()
+                
+                # Aggiorna i riferimenti nei wrapper del layout manager
+                if hasattr(self.layout_manager, 'update_containers'):
+                    self.layout_manager.update_containers(
+                        info_content=info_container,
+                        air_condition_content=air_condition_container,
+                        hourly_content=hourly_container,
+                        chart_content=chart_container,
+                        precipitation_chart_content=precipitation_chart_container,
+                        air_pollution_content=air_pollution_container
+                    )
+                    print("DEBUG: Layout manager containers updated")
+                
+                # IMPORTANTE: Forza l'aggiornamento dei wrapper container
+                if self.info_container_wrapper:
+                    self.info_container_wrapper.content = info_container.content
+                    try:
+                        self.info_container_wrapper.update()
+                        print("DEBUG: Info wrapper updated")
+                    except (AssertionError, AttributeError):
+                        pass
+                
+                if self.air_condition_container_wrapper:
+                    self.air_condition_container_wrapper.content = air_condition_container.content
+                    try:
+                        self.air_condition_container_wrapper.update()
+                        print("DEBUG: Air condition wrapper updated")
+                    except (AssertionError, AttributeError):
+                        pass
+                
+                if self.hourly_container_wrapper:
+                    self.hourly_container_wrapper.content = hourly_container.content
+                    try:
+                        self.hourly_container_wrapper.update()
+                        print("DEBUG: Hourly wrapper updated")
+                    except (AssertionError, AttributeError):
+                        pass
+                
+                if self.chart_container_wrapper:
+                    self.chart_container_wrapper.content = chart_container.content
+                    try:
+                        self.chart_container_wrapper.update()
+                        print("DEBUG: Chart wrapper updated")
+                    except (AssertionError, AttributeError):
+                        pass
+                
+                if self.precipitation_chart_container_wrapper:
+                    self.precipitation_chart_container_wrapper.content = precipitation_chart_container.content
+                    try:
+                        self.precipitation_chart_container_wrapper.update()
+                        print("DEBUG: Precipitation chart wrapper updated")
+                    except (AssertionError, AttributeError):
+                        pass
+                
+                if self.air_pollution_container_wrapper:
+                    self.air_pollution_container_wrapper.content = air_pollution_container.content
+                    try:
+                        self.air_pollution_container_wrapper.update()
+                        print("DEBUG: Air pollution wrapper updated")
+                    except (AssertionError, AttributeError):
+                        pass
+                
+                print(f"DEBUG: UI containers updated successfully for city: {city}")
+                
+            except Exception as e:
+                print(f"DEBUG: Error updating UI containers: {e}")
+                import traceback
+                traceback.print_exc()
 
         # Debug: Verifica che i container siano ora popolati
         if hasattr(self, 'weather_view_instance'):

@@ -68,9 +68,15 @@ class SidebarManager(ft.Container):
             print(f"DEBUG: handle_city_selected called with city: {city}")
             language = self.state_manager.get_state("language") or "en"
             unit = self.state_manager.get_state("unit") or "metric"
-            result = await self.update_weather_callback(city, language, unit)
-            print(f"DEBUG: Weather update completed for city: {city}")
-            return result
+            
+            # Check if callback exists before calling it
+            if self.update_weather_callback is not None:
+                result = await self.update_weather_callback(city, language, unit)
+                print(f"DEBUG: Weather update completed for city: {city}")
+                return result
+            else:
+                print("DEBUG: No weather update callback available")
+                return None
         self.pop_menu = PopMenu(
             page=self.page,
             state_manager=self.state_manager,

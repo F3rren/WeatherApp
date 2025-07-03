@@ -57,8 +57,10 @@ class AirPollutionDisplay(ft.Container):
             self.page.on_resize = resize_handler
         
         self.content = self.build()
-        if self.page:
-            self.page.run_task(self.update_ui)
+        # NOTA: Rimuovo l'initial update automatico
+        # L'aggiornamento sarà fatto manualmente dal WeatherView
+        # if self.page:
+        #     self.page.run_task(self.update_ui)
 
     async def update_ui(self, event_data=None):
         """Updates the UI based on state changes, fetching new data if necessary."""
@@ -134,13 +136,13 @@ class AirPollutionDisplay(ft.Container):
         if self.page:
             await self.update_ui()
 
-    def update_location(self, lat: float, lon: float):
+    async def update_location(self, lat: float, lon: float):
         """Updates the coordinates and clears cached data to force refresh."""
         self._lat = lat
         self._lon = lon
         self._pollution_data = {}  # Clear cached data to force refresh
         if self.page:
-            self.page.run_task(self.update_ui)
+            await self.update_ui()
 
     def _build_header(self):
         """Builds a modern header for air pollution section."""

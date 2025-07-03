@@ -4,7 +4,6 @@ import logging
 from services.translation_service import TranslationService
 from components.responsive_text_handler import ResponsiveTextHandler
 import traceback
-import asyncio
 
 class MainWeatherInfo(ft.Container):
     """
@@ -67,11 +66,12 @@ class MainWeatherInfo(ft.Container):
                     self.page.run_task(self.update_ui)
             self.page.on_resize = resize_handler
 
-            # Initial update
-            self.page.run_task(self.update_ui)
+            # NOTA: Rimuovo l'initial update automatico
+            # L'aggiornamento sarà fatto manualmente dal WeatherView
+            # self.page.run_task(self.update_ui)
 
     async def update_ui(self, event_data=None):
-        """Fetches data, updates state, and rebuilds the UI."""
+        """Updates state and rebuilds the UI without fetching new data."""
         if not self.page or not self.visible:
             return
 
@@ -81,31 +81,8 @@ class MainWeatherInfo(ft.Container):
                 new_language = self._state_manager.get_state('language') or self._current_language
                 new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
                 
-                language_changed = self._current_language != new_language
-                unit_changed = self._current_unit_system != new_unit_system
-
                 self._current_language = new_language
                 self._current_unit_system = new_unit_system
-
-                # Fetch data if language or unit changed
-                if language_changed or unit_changed:
-                    from services.api_service import ApiService
-                    api = ApiService()
-                    weather_data = await asyncio.to_thread(
-                        api.get_weather_data,
-                        city=self._city_data,
-                        language=self._current_language,
-                        unit=self._current_unit_system
-                    )
-                    temp = api.get_current_temperature(weather_data)
-                    if temp is not None:
-                        self._temperature_data = temp
-                    # Aggiorna anche descrizione, feels_like, min/max
-                    self._weather_description = api.get_weather_description(weather_data)
-                    self._feels_like = api.get_feels_like_temperature(weather_data)
-                    tmin, tmax = api.get_min_max_temperature(weather_data)
-                    self._temp_min = tmin
-                    self._temp_max = tmax
 
             # Update theme color
             if self.page and self.page.theme_mode:
@@ -117,8 +94,20 @@ class MainWeatherInfo(ft.Container):
 
             # Rebuild and update UI
             self.content = self.build()
+            
+            # IMPORTANTE: Aggiorna il componente stesso
+            try:
+                self.update()
+            except (AssertionError, AttributeError):
+                # Component not yet added to page, skip update
+                pass
+            
+            # Aggiorna anche la pagina se necessario
             if self.page:
-                self.page.update()
+                try:
+                    self.page.update()
+                except (AssertionError, AttributeError):
+                    pass
 
         except Exception as e:
             logging.error(f"MainWeatherInfo: Error updating UI: {e}\n{traceback.format_exc()}")

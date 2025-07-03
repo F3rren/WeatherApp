@@ -49,8 +49,10 @@ class HourlyForecastDisplay(ft.Container):
             self.page.on_resize = resize_handler
 
         self.content = self.build()
-        if self.page:
-            self.page.run_task(self.update_ui)
+        # NOTA: Rimuovo l'initial update automatico
+        # L'aggiornamento sarà fatto manualmente dal WeatherView
+        # if self.page:
+        #     self.page.run_task(self.update_ui)
 
     async def update_ui(self, event_data=None):
         """Updates the UI based on state changes, fetching new data if necessary."""
@@ -414,11 +416,11 @@ class HourlyForecastDisplay(ft.Container):
             ),
         )
     
-    def update_city(self, new_city: str):
+    async def update_city(self, new_city: str):
         """Allows updating the city and refreshing the forecast."""
         if self._city != new_city:
             self._city = new_city
             self._hourly_data_list = []
             if self.page:
-                self.page.run_task(self.update_ui)
+                await self.update_ui()
 

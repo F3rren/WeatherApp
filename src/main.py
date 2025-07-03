@@ -5,7 +5,6 @@ Main application file for the MeteoApp.
 import flet as ft # MODIFIED: Use standard alias 'ft'
 import logging
 
-
 from utils.config import (DARK_THEME, DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, DEFAULT_THEME_MODE, LIGHT_THEME)
 from layout.layout_manager import LayoutManager
 from layout.sidebar.sidebar_manager import SidebarManager
@@ -17,11 +16,6 @@ from services.theme_toggle_service import ThemeToggleService
 from services.translation_service import TranslationService # Add this import
 from ui.weather_view import WeatherView
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 
 class MeteoApp:
 
@@ -40,9 +34,9 @@ class MeteoApp:
         self.air_pollution_container_wrapper = None
         self.air_condition_container_wrapper = None
         self.layout_manager = None
-        self.weather_view_instance = None # Add to store WeatherView instance
-        self.charts_view_instance = None # Add to store ChartsView instance
-        self.translation_service = None # Add to store TranslationService instance
+        self.weather_view_instance = None 
+        self.charts_view_instance = None 
+        self.translation_service = None 
 
     def _update_container_colors(self, event_data=None):
         """Aggiorna solo i colori dei container principali e dei testi senza ricostruire i container."""
@@ -58,7 +52,6 @@ class MeteoApp:
                     container.bgcolor = theme.get(color_key)
                     container.update()
                 except AssertionError:
-                    # Container not yet properly connected to page
                     pass
         
         # Aggiorna colori specifici per ogni container
@@ -87,7 +80,6 @@ class MeteoApp:
         safe_update_container(self.hourly_container_wrapper, "HOURLY")
         safe_update_container(self.chart_container_wrapper, "CHART")
         safe_update_container(self.precipitation_chart_container_wrapper, "CHART") # For precipitation chart
-        # safe_update_container(self.air_pollution_chart_container_wrapper, "CHART") # Rimosso: non usato
         safe_update_container(self.air_pollution_container_wrapper, "CARD_BACKGROUND")
         safe_update_container(self.air_condition_container_wrapper, "CARD_BACKGROUND")
         
@@ -96,7 +88,7 @@ class MeteoApp:
         try:
             self.page.update()
         except Exception:
-            # Page not ready for update
+
             pass
 
     async def main(self, page: ft.Page) -> None: # MODIFIED: ft.Page
@@ -159,22 +151,22 @@ class MeteoApp:
         await self.state_manager.set_state("unit", DEFAULT_UNIT_SYSTEM)
         await self.state_manager.set_state("city", DEFAULT_CITY)
         
-        print("DEBUG: [build_layout] Caricamento dati meteo PRIMA della costruzione del layout...")
+        logging.info("DEBUG: [build_layout] Caricamento dati meteo PRIMA della costruzione del layout...")
         await self.update_weather_with_sidebar(
             city=self.state_manager.get_state("city") or DEFAULT_CITY,
             language=self.state_manager.get_state("language") or DEFAULT_LANGUAGE,
             unit=self.state_manager.get_state("unit") or DEFAULT_UNIT_SYSTEM
         )
-        print("DEBUG: [build_layout] Dati meteo caricati, ora costruisco il layout con container popolati...")
+        logging.info("DEBUG: [build_layout] Dati meteo caricati, ora costruisco il layout con container popolati...")
 
         # FASE 2: Ora recupera i container popolati dal WeatherView
         info_container, air_condition_container, hourly_container, chart_container, precipitation_chart_container, air_pollution_container = self.weather_view_instance.get_containers()
         sidebar_control = self.sidebar_manager
 
         # Debug: Verifica che i container siano popolati
-        print(f"DEBUG: [build_layout] Container info popolato: {info_container.content is not None}")
-        print(f"DEBUG: [build_layout] Container air_condition popolato: {air_condition_container.content is not None}")
-        print(f"DEBUG: [build_layout] Container hourly popolato: {hourly_container.content is not None}")
+        logging.info(f"DEBUG: [build_layout] Container info popolato: {info_container.content is not None}")
+        logging.info(f"DEBUG: [build_layout] Container air_condition popolato: {air_condition_container.content is not None}")
+        logging.info(f"DEBUG: [build_layout] Container hourly popolato: {hourly_container.content is not None}")
 
         # FASE 3: Crea i container nel layout manager con i container già popolati
         self.layout_manager.create_containers(
@@ -208,7 +200,7 @@ class MeteoApp:
         await self.theme_toggle_service.initialize_theme()
 
         # Debug finale: Verifica che il layout finale contenga dati
-        print("DEBUG: [build_layout] Layout costruito e aggiunto alla pagina")
+        logging.info("DEBUG: [build_layout] Layout costruito e aggiunto alla pagina")
 
         # Gestione eventi di chiusura/disconnessione
         async def on_disconnect_or_close(e):
@@ -228,7 +220,7 @@ class MeteoApp:
 
     async def update_weather_with_sidebar(self, city: str, language: str, unit: str):
         """Update both main weather view and sidebar weekly forecast."""
-        print(f"DEBUG: update_weather_with_sidebar called with city: {city}, language: {language}, unit: {unit}")
+        logging.info(f"DEBUG: update_weather_with_sidebar called with city: {city}, language: {language}, unit: {unit}")
         
         # Aggiorna lo stato con la nuova città
         await self.state_manager.set_state("city", city)
@@ -237,17 +229,17 @@ class MeteoApp:
         
         # Update main weather view
         result = await self.weather_view_instance.update_by_city(city, language, unit)
-        print(f"DEBUG: Main weather view updated for city: {city}")
+        logging.info(f"DEBUG: Main weather view updated for city: {city}")
         
         # Update charts view if it exists
         if self.charts_view_instance:
             await self.charts_view_instance.update_by_city(city, language, unit)
-            print(f"DEBUG: Charts view updated for city: {city}")
+            logging.info(f"DEBUG: Charts view updated for city: {city}")
 
         # Update sidebar weekly forecast
         if self.sidebar_manager:
             self.sidebar_manager.update_weekly_forecast(city)
-            print(f"DEBUG: Sidebar weekly forecast updated for city: {city}")
+            logging.info(f"DEBUG: Sidebar weekly forecast updated for city: {city}")
 
         # AGGIORNAMENTO UI: I container del WeatherView si aggiornano automaticamente
         # Ora basta aggiornare i riferimenti nei wrapper del layout manager
@@ -266,14 +258,14 @@ class MeteoApp:
                         precipitation_chart_content=precipitation_chart_container,
                         air_pollution_content=air_pollution_container
                     )
-                    print("DEBUG: Layout manager containers updated")
+                    logging.info("DEBUG: Layout manager containers updated")
                 
                 # IMPORTANTE: Forza l'aggiornamento dei wrapper container
                 if self.info_container_wrapper:
                     self.info_container_wrapper.content = info_container.content
                     try:
                         self.info_container_wrapper.update()
-                        print("DEBUG: Info wrapper updated")
+                        logging.info("DEBUG: Info wrapper updated")
                     except (AssertionError, AttributeError):
                         pass
                 
@@ -281,7 +273,7 @@ class MeteoApp:
                     self.air_condition_container_wrapper.content = air_condition_container.content
                     try:
                         self.air_condition_container_wrapper.update()
-                        print("DEBUG: Air condition wrapper updated")
+                        logging.info("DEBUG: Air condition wrapper updated")
                     except (AssertionError, AttributeError):
                         pass
                 
@@ -289,7 +281,7 @@ class MeteoApp:
                     self.hourly_container_wrapper.content = hourly_container.content
                     try:
                         self.hourly_container_wrapper.update()
-                        print("DEBUG: Hourly wrapper updated")
+                        logging.info("DEBUG: Hourly wrapper updated")
                     except (AssertionError, AttributeError):
                         pass
                 
@@ -297,7 +289,7 @@ class MeteoApp:
                     self.chart_container_wrapper.content = chart_container.content
                     try:
                         self.chart_container_wrapper.update()
-                        print("DEBUG: Chart wrapper updated")
+                        logging.info("DEBUG: Chart wrapper updated")
                     except (AssertionError, AttributeError):
                         pass
                 
@@ -305,7 +297,7 @@ class MeteoApp:
                     self.precipitation_chart_container_wrapper.content = precipitation_chart_container.content
                     try:
                         self.precipitation_chart_container_wrapper.update()
-                        print("DEBUG: Precipitation chart wrapper updated")
+                        logging.info("DEBUG: Precipitation chart wrapper updated")
                     except (AssertionError, AttributeError):
                         pass
                 
@@ -313,26 +305,26 @@ class MeteoApp:
                     self.air_pollution_container_wrapper.content = air_pollution_container.content
                     try:
                         self.air_pollution_container_wrapper.update()
-                        print("DEBUG: Air pollution wrapper updated")
+                        logging.info("DEBUG: Air pollution wrapper updated")
                     except (AssertionError, AttributeError):
                         pass
                 
-                print(f"DEBUG: UI containers updated successfully for city: {city}")
+                logging.info(f"DEBUG: UI containers updated successfully for city: {city}")
                 
             except Exception as e:
-                print(f"DEBUG: Error updating UI containers: {e}")
+                logging.info(f"DEBUG: Error updating UI containers: {e}")
                 import traceback
-                traceback.print_exc()
+                traceback.logging.info_exc()
 
         # Debug: Verifica che i container siano ora popolati
         if hasattr(self, 'weather_view_instance'):
             info_container, air_condition_container, hourly_container, _, _, _ = self.weather_view_instance.get_containers()
-            print(f"DEBUG: [update_weather_with_sidebar] Dopo aggiornamento - Container info popolato: {info_container.content is not None}")
-            print(f"DEBUG: [update_weather_with_sidebar] Dopo aggiornamento - Container air_condition popolato: {air_condition_container.content is not None}")
+            logging.info(f"DEBUG: [update_weather_with_sidebar] Dopo aggiornamento - Container info popolato: {info_container.content is not None}")
+            logging.info(f"DEBUG: [update_weather_with_sidebar] Dopo aggiornamento - Container air_condition popolato: {air_condition_container.content is not None}")
         
         return result
 
-def main():
+def run():
     """Entry point for the application"""
     app = MeteoApp()
     ft.app( # MODIFIED: ft.app
@@ -343,4 +335,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run()

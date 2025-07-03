@@ -47,30 +47,13 @@ class MainWeatherInfo(ft.Container):
         if self.page:
             if self._text_handler and not self._text_handler.page:
                 self._text_handler.page = self.page
-            
-            if hasattr(self.page, 'session') and self.page.session.get('state_manager'):
-                self._state_manager = self.page.session.get('state_manager')
-                # NOTE: Without a dedicated cleanup method (like will_unmount),
-                # these observers are never unregistered.
-                self._state_manager.register_observer("language_event", self.update_ui)
-                self._state_manager.register_observer("unit", self.update_ui)
-                self._state_manager.register_observer("theme_event", self.update_ui)
-            
-            original_on_resize = self.page.on_resize
-            def resize_handler(e):
-                if original_on_resize:
-                    original_on_resize(e)
-                if self._text_handler:
-                    self._text_handler._handle_resize(e)
-                if self.page:
-                    self.page.run_task(self.update_ui)
-            self.page.on_resize = resize_handler
+        # Setup state manager
+        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+            self._state_manager = self.page.session.get('state_manager')
+        
+        self.content = self.build()
 
-            # NOTA: Rimuovo l'initial update automatico
-            # L'aggiornamento sarà fatto manualmente dal WeatherView
-            # self.page.run_task(self.update_ui)
-
-    async def update_ui(self, event_data=None):
+    def update(self):
         """Updates state and rebuilds the UI without fetching new data."""
         if not self.page or not self.visible:
             return
@@ -95,22 +78,22 @@ class MainWeatherInfo(ft.Container):
             # Rebuild and update UI
             self.content = self.build()
             
-            # IMPORTANTE: Aggiorna il componente stesso
+            # Update the component itself
             try:
-                self.update()
+                super().update()
             except (AssertionError, AttributeError):
                 # Component not yet added to page, skip update
                 pass
             
-            # Aggiorna anche la pagina se necessario
-            if self.page:
+            # Also try to update the parent container if possible
+            if hasattr(self, 'parent') and self.parent:
                 try:
-                    self.page.update()
+                    self.parent.update()
                 except (AssertionError, AttributeError):
                     pass
 
         except Exception as e:
-            logging.error(f"MainWeatherInfo: Error updating UI: {e}\n{traceback.format_exc()}")
+            logging.error(f"MainWeatherInfo: Error updating: {e}\n{traceback.format_exc()}")
 
     def build(self):
         """Costruisce la UI principale con testo tradotto e dati API."""

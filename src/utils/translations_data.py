@@ -865,7 +865,7 @@ TRANSLATIONS = {
             "visibility": "Visibilità",
             "uv_index": "Indice UV",
             "dew_point": "Punto di rugiada",
-            "cloud_coverage": "Cobertura nuvolosa",
+            "cloud_coverage": "Copertura nuvolosa",
             "temperature_group": "Temperatura",
             "humidity_air_group": "Umidità e Aria",
             "wind_group": "Vento",

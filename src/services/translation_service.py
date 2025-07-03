@@ -1,3 +1,4 @@
+import logging
 from utils.translations_data import TRANSLATIONS
 from utils.config import DEFAULT_LANGUAGE, UNIT_SYSTEMS # Added UNIT_SYSTEMS
 
@@ -42,7 +43,7 @@ class TranslationService:
             # Corrected access to UNIT_SYSTEMS
             return UNIT_SYSTEMS[unit_system][quantity]
         except KeyError:
-            print(f"[TranslationService] Unit symbol not found for unit_system='{unit_system}', quantity='{quantity}'")
+            logging.error(f"[TranslationService] Unit symbol not found for unit_system='{unit_system}', quantity='{quantity}'")
             # Fallback to a default or handle error as appropriate
             # For example, returning the quantity name or a placeholder
             if unit_system == "standard" and quantity == "temperature":
@@ -90,7 +91,7 @@ class TranslationService:
                 if min_aqi <= aqi_value <= max_aqi:
                     return description
         except Exception as e:
-            print(f"[TranslationService] Error getting AQI description: {e}")
+            logging.error(f"[TranslationService] Error getting AQI description: {e}")
         
         # Fallback to English if no suitable description is found
         try:
@@ -99,7 +100,7 @@ class TranslationService:
                 if min_aqi <= aqi_value <= max_aqi:
                     return description
         except Exception as e:
-            print(f"[TranslationService] Error in English AQI description fallback: {e}")
+            logging.error(f"[TranslationService] Error in English AQI description fallback: {e}")
         
         return TRANSLATIONS[DEFAULT_LANGUAGE]["aqi_descriptions"].get("default", "")
 

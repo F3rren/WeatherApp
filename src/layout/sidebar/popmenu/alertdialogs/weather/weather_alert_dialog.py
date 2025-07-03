@@ -1,3 +1,4 @@
+import logging
 import flet as ft
 from utils.config import LIGHT_THEME, DARK_THEME
 from components.responsive_text_handler import ResponsiveTextHandler
@@ -110,7 +111,7 @@ class WeatherAlertDialog:
                     on_click=lambda e: self.close_dialog()
                 ),
             ],
-            on_dismiss=lambda e: print("Weather Dialog dismissed"),
+            on_dismiss=lambda e: logging.info("Weather Dialog dismissed"),
             modal=True
         )
         return dialog

@@ -4,6 +4,7 @@ Handles the initialization and management of the sidebar.
 Now a Flet component itself.
 """
 
+import logging
 import flet as ft
 from typing import Callable, Optional
 
@@ -65,17 +66,17 @@ class SidebarManager(ft.Container):
         text_color = (DARK_THEME if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME)
         language = self.state_manager.get_state("language") or "en"
         async def handle_city_selected(city):
-            print(f"DEBUG: handle_city_selected called with city: {city}")
+            logging.info(f"DEBUG: handle_city_selected called with city: {city}")
             language = self.state_manager.get_state("language") or "en"
             unit = self.state_manager.get_state("unit") or "metric"
             
             # Check if callback exists before calling it
             if self.update_weather_callback is not None:
                 result = await self.update_weather_callback(city, language, unit)
-                print(f"DEBUG: Weather update completed for city: {city}")
+                logging.info(f"DEBUG: Weather update completed for city: {city}")
                 return result
             else:
-                print("DEBUG: No weather update callback available")
+                logging.error("DEBUG: No weather update callback available")
                 return None
         self.pop_menu = PopMenu(
             page=self.page,
@@ -169,7 +170,7 @@ class SidebarManager(ft.Container):
 
     def _on_day_selected(self, day_data):
         """Gestisce la selezione di un giorno specifico."""
-        print(f"Selected day: {day_data['day']}")
+        logging.info(f"Selected day: {day_data['day']}")
         
         # Notifica il cambio di giorno attraverso lo state manager
         if self.state_manager:

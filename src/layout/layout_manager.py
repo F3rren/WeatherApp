@@ -97,7 +97,6 @@ class LayoutManager:
             animation_curve
         )
         
-    
         # Grafico temperature
         self.containers['chart'] = LayoutBuilder.build_content_container(
             chart_content,
@@ -132,7 +131,6 @@ class LayoutManager:
             self.containers['sidebar'],
             self.containers['info'],
             self.containers['hourly'], 
-           # self.containers['air_condition'],
             self.containers['chart'],
             self.containers['precipitation_chart'],
             self.containers['air_pollution']

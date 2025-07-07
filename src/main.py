@@ -81,7 +81,7 @@ class MeteoApp:
         safe_update_container(self.chart_container_wrapper, "CHART")
         safe_update_container(self.precipitation_chart_container_wrapper, "CHART") # For precipitation chart
         safe_update_container(self.air_pollution_container_wrapper, "CARD_BACKGROUND")
-        safe_update_container(self.air_condition_container_wrapper, "CARD_BACKGROUND")
+        # Rimosso air_condition_container_wrapper perché ora è incluso nel info_container
         
         # Aggiorna il colore di sfondo della pagina
         self.page.bgcolor = theme.get("BACKGROUND")
@@ -160,6 +160,7 @@ class MeteoApp:
         logging.info("DEBUG: [build_layout] Dati meteo caricati, ora costruisco il layout con container popolati...")
 
         # FASE 2: Ora recupera i container popolati dal WeatherView
+        # Nota: air_condition è ora incluso nel info_container, quindi air_condition_container sarà vuoto
         info_container, air_condition_container, hourly_container, chart_container, precipitation_chart_container, air_pollution_container = self.weather_view_instance.get_containers()
         sidebar_control = self.sidebar_manager
 
@@ -172,7 +173,7 @@ class MeteoApp:
         self.layout_manager.create_containers(
             sidebar_content=sidebar_control,
             info_content=info_container,
-            air_condition_content=air_condition_container,
+            #air_condition_content=air_condition_container,
             hourly_content=hourly_container,
             chart_content=chart_container,
             precipitation_chart_content=precipitation_chart_container,
@@ -183,7 +184,7 @@ class MeteoApp:
         containers = self.layout_manager.get_all_containers()
         self.sidebar_container = containers.get('sidebar')
         self.info_container_wrapper = containers.get('info')
-        self.air_condition_container_wrapper = containers.get('air_condition')
+        # Rimosso air_condition_container_wrapper perché ora è incluso nel info_container
         self.hourly_container_wrapper = containers.get('hourly')
         self.chart_container_wrapper = containers.get('chart')
         self.precipitation_chart_container_wrapper = containers.get('precipitation_chart')

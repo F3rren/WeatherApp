@@ -5,7 +5,7 @@ Gestisce la funzionalità di attivazione/disattivazione della geolocalizzazione.
 
 import logging
 import flet as ft
-from typing import Callable, Optional, Any, Awaitable
+from typing import Callable, Awaitable
 
 from services.geolocation_service import GeolocationService
 from state_manager import StateManager
@@ -23,7 +23,7 @@ class LocationToggleService:
         page: ft.Page, 
         geolocation_service: GeolocationService,
         state_manager: StateManager,
-        update_weather_callback: Callable[[float, float, str, str], Awaitable[None]]
+        update_weather_callback: Callable[..., Awaitable[None]]
     ):
         """
         Inizializza il servizio di location toggle.

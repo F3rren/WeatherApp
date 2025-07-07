@@ -57,7 +57,7 @@ class LayoutManager:
             self.page.update()
     
     def create_containers(self, sidebar_content, info_content, hourly_content, chart_content,
-        precipitation_chart_content, air_condition_content, air_pollution_content, animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
+        precipitation_chart_content, air_pollution_content, animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
         """
         Crea tutti i contenitori per il layout dell'applicazione con design moderno.
         
@@ -88,13 +88,7 @@ class LayoutManager:
             "main_info"
         )
 
-        # Air condition components
-        self.containers['air_condition'] = LayoutBuilder.build_content_container(
-            air_condition_content,
-            animation_duration,
-            animation_curve
-        )
-        
+
         # Previsioni orarie - stile elegante
         self.containers['hourly'] = LayoutBuilder.build_content_container(
             hourly_content, 
@@ -103,7 +97,6 @@ class LayoutManager:
             animation_curve
         )
         
-    
         # Grafico temperature
         self.containers['chart'] = LayoutBuilder.build_content_container(
             chart_content,
@@ -121,7 +114,7 @@ class LayoutManager:
         )
 
         # Informazioni inquinamento (temporaneamente vuoto per ora)
-        self.containers['air_pollution'] = LayoutBuilder.build_content_container(
+        self.containers['air_pollution_chart'] = LayoutBuilder.build_content_container(
             air_pollution_content,
             #{"xs": 12},
             animation_duration,
@@ -194,11 +187,10 @@ class LayoutManager:
         self.layout = LayoutBuilder.build_main_layout(
             self.containers['sidebar'],
             self.containers['info'],
-            self.containers['hourly'], 
-            self.containers['air_condition'],
+            self.containers['hourly'],
             self.containers['chart'],
             self.containers['precipitation_chart'],
-            self.containers['air_pollution']
+            self.containers['air_pollution_chart']
         )
         return self.layout
     

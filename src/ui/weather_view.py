@@ -207,7 +207,8 @@ class WeatherView:
     def _update_component_texts(self, event_type=None, data=None):
         """Update text elements in child components that support selective updates"""
         # Check for components with _update_text_elements method
-        for container in [self.info_container, self.air_condition_container, self.hourly_container, self.weekly_container, self.chart_container,
+        # Rimosso air_condition_container perché ora è incluso nel info_container
+        for container in [self.info_container, self.hourly_container, self.weekly_container, self.chart_container,
                          self.air_pollution_chart_container, self.air_pollution_container]:
             if container and container.content:
                 # If the component itself has the method
@@ -267,7 +268,13 @@ class WeatherView:
             logging.warning("Unit system changed, but no location context (city/coords) available in WeatherView or StateManager to refresh data.")
 
 
-    async def update_by_city(self, city: str, language: str, unit: str) -> None:
+    async def update_by_city(self, city: str, language: str, unit: str) -> bool:
+        """
+        Update weather data by city name.
+        
+        Returns:
+            bool: True if successful, False if city not found or error occurred
+        """
         logging.info(f"update_by_city called with: city='{city}', language='{language}', unit='{unit}'")
         self._set_loading(True)
         import asyncio
@@ -278,6 +285,13 @@ class WeatherView:
                     asyncio.to_thread(self.api_service.get_weather_data, city=city, lat=None, lon=None, language=language, unit=unit),
                     asyncio.to_thread(self.api_service.get_city_info, city)
                 )
+                
+                # Verifica se la città è stata trovata
+                if not weather_data or not city_info:
+                    logging.warning(f"City '{city}' not found or no weather data available")
+                    self._show_city_not_found_error(city)
+                    return False
+                    
                 self.weather_data = weather_data
                 self.city_info = city_info
                 logging.info(f"Weather data keys: {list(weather_data.keys()) if weather_data else 'None'}")
@@ -294,6 +308,7 @@ class WeatherView:
             # Aggiorna la UI dopo aver cambiato i dati
             if hasattr(self, 'page') and self.page:
                 self.page.update()
+            return True
         finally:
             self._set_loading(False)
 
@@ -329,8 +344,12 @@ class WeatherView:
 
         # Ensure text_color is up-to-date before updating sub-components
         self._update_text_color() 
-        await self._update_main_info(city, is_current_location)
+        
+        # Aggiorna prima air condition per averlo disponibile nel main info
         await self._update_air_condition()
+        
+        # Ora aggiorna main info che includerà air condition
+        await self._update_main_info(city, is_current_location)
         await self._update_weekly_forecast()
         await self._update_hourly_container()
         await self._update_temperature_chart()
@@ -387,6 +406,7 @@ class WeatherView:
         else:
             location = ", ".join(filter(None, [location_data.get('city', 'Unknown'), location_data.get('region', 'Unknown'), location_data.get('country', 'Unknown')]))
         
+        print(city)
         # Create new MainWeatherInfo instance for each update to ensure proper refresh
         self.main_weather_info_instance = MainWeatherInfo(
             city=city,
@@ -406,13 +426,24 @@ class WeatherView:
         # Aggiorna lo stato del componente per assicurarsi che rifletta il tema/lingua correnti
         self.main_weather_info_instance.update()
         
-        # Popola il container info (main info)
+        # Prepara i controlli per il container info (main info)
+        info_controls = [
+            self.main_weather_info_instance,
+            ft.Container(height=5)  # Spacer ridotto
+        ]
+        
+        # Aggiungi air condition sotto le informazioni principali se disponibile
+        if hasattr(self, 'air_condition_instance') and self.air_condition_instance:
+            info_controls.extend([
+                #ft.Container(height=2),  # Spacer molto piccolo
+                self.air_condition_instance,
+                #ft.Container(height=5)  # Spacer ridotto
+            ])
+        
+        # Popola il container info (main info) con air condition incluso
         self.info_container.content = ft.Column(
-            controls=[
-                self.main_weather_info_instance,
-                ft.Container(height=10)  # Spacer
-            ],
-            spacing=10,
+            controls=info_controls,
+            spacing=5,
             expand=True
         )
 
@@ -655,7 +686,7 @@ class WeatherView:
     def _set_loading(self, value: bool):
         self.loading = value
         self.info_container.visible = not value
-        self.air_condition_container.visible = not value
+        # Rimosso air_condition_container perché ora è incluso nel info_container
         self.hourly_container.visible = not value
         self.weekly_container.visible = not value
         self.chart_container.visible = not value
@@ -667,9 +698,10 @@ class WeatherView:
     def get_containers(self) -> tuple:
         """Frontend: Returns UI containers for display"""
         # Non restituire più loading_container e weekly_container (ora nella sidebar)
+        # Non restituire più air_condition_container perché ora è incluso nel info_container
         return (
             self.info_container,
-            self.air_condition_container,
+            ft.Container(),  # Container vuoto al posto di air_condition_container
             self.hourly_container,
             self.chart_container,
             self.precipitation_chart_container,

@@ -63,7 +63,7 @@ class LayoutBuilder:
             )
         )
 
-    def build_main_layout(sidebar, info, hourly, air_condition, chart, precipitation_chart, air_pollution) -> ft.Control:
+    def build_main_layout(sidebar, info, hourly, chart, precipitation_chart, air_pollution_chart) -> ft.Control:
         """
         Costruisce il layout principale responsivo dell'applicazione con design moderno.
         Layout: sidebar + info + air condition in alto, previsioni orarie full-width sotto, grafici in basso.
@@ -75,7 +75,6 @@ class LayoutBuilder:
             air_pollution: Container delle informazioni sull'inquinamento (air condition)
             chart: Container del grafico temperature
             precipitation_chart: Container del grafico precipitazioni
-            air_pollution_chart: Container del grafico inquinamento aria
             
         Returns:
             ft.Column: Layout principale con previsioni orarie full-width
@@ -102,14 +101,7 @@ class LayoutBuilder:
                             )
                         ]),
                         
-                        # Air Condition (ora posizionato dopo le info principali)
-                        ft.ResponsiveRow([
-                            ft.Container(
-                                content=air_condition,  # Questo è il container Air Condition
-                                #col={"sm": 12, "md": 7, "lg": 8, "xl": 8},
-                                padding=ft.padding.symmetric(vertical=4),
-                            )
-                        ]),
+                        
                     ], spacing=16),
                     col={"sm": 12, "md": 7, "lg": 8, "xl": 8},
                     padding=ft.padding.only(left=12, top=16, bottom=16, right=16),
@@ -143,9 +135,9 @@ class LayoutBuilder:
                 
                 # Grafico inquinamento aria
                 ft.Container(
-                    content=air_pollution,
-                    col={"sm": 12, "md": 12, "lg": 12, "xl": 4},
-                    padding=ft.padding.symmetric(vertical=4),
+                    content=air_pollution_chart,
+                    col={"sm": 12, "md": 12, "lg": 4, "xl": 4},
+                    padding=ft.padding.only(left=8, right=16, top=4, bottom=16),
                 )
             ])
         ], spacing=0)

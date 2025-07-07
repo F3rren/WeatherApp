@@ -170,9 +170,10 @@ class MainWeatherInfo(ft.Container):
             location_header = ft.Container(
                 content=ft.Row([
                     ft.Icon(
-                        ft.Icons.LOCATION_ON_OUTLINED, 
+                        ft.Icons.MY_LOCATION,
                         size=18, 
-                        color=ft.Colors.with_opacity(0.8, self._current_text_color)
+                        #color=ft.Colors.with_opacity(0.8, self._current_text_color)
+                        color=ft.Colors.RED
                     ),
                     ft.Text(
                         f"{self._city_data.split(', ')[0]}",

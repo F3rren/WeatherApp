@@ -34,7 +34,7 @@ class PrecipitationChartDisplay(ft.Container):
         
         # State management
         self._state_manager = None
-        if self.page and hasattr(self.page, 'session'):
+        if self.page and hasattr(self.page, 'session') and self.page.session:
             self._state_manager = self.page.session.get('state_manager')
         
         # Initialize responsive text handler
@@ -60,6 +60,7 @@ class PrecipitationChartDisplay(ft.Container):
         if self._state_manager:
             self._state_manager.register_observer("language_event", self._safe_language_update)
             self._state_manager.register_observer("unit", self._safe_unit_update)
+            self._state_manager.register_observer("unit_text_change", self._safe_unit_update)  # Also listen for unit text changes
             self._state_manager.register_observer("theme_event", self._safe_theme_update)
         
         # Set up page resize handler
@@ -112,8 +113,10 @@ class PrecipitationChartDisplay(ft.Container):
                 # print("DEBUG: PrecipitationChart - no state_manager available")
                 pass
             
-            # Update theme colors
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK if hasattr(self.page, 'theme_mode') else False
+            # Update theme colors with robust checking
+            is_dark = False
+            if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             theme = DARK_THEME if is_dark else LIGHT_THEME
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
             
@@ -133,13 +136,15 @@ class PrecipitationChartDisplay(ft.Container):
             # Rebuild content
             self.content = self.build()
             
-            # Only update if this control is already in the page
+            # Only update if this control is already in the page and properly connected
             try:
-                if self.page and hasattr(self, 'page') and self.page is not None:
+                if self.page and hasattr(self, 'page') and self.page is not None and hasattr(self, 'parent') and self.parent is not None:
                     self.update()
-            except Exception:
-                # Control not yet added to page, update will happen when added
-                pass
+            except (AssertionError, AttributeError) as e:
+                # Control not yet added to page or not properly connected, update will happen when added
+                logging.debug(f"PrecipitationChart: Container not ready for update: {e}")
+            except Exception as e:
+                logging.error(f"PrecipitationChart: Unexpected error during update: {e}")
                 
         except Exception as e:
             logging.error(f"PrecipitationChartDisplay: Error updating UI: {e}")
@@ -159,13 +164,15 @@ class PrecipitationChartDisplay(ft.Container):
                 alignment=ft.alignment.center,
                 padding=20
             )
-            # Only update if this control is already in the page
+            # Only update if this control is already in the page and properly connected
             try:
-                if self.page and hasattr(self, 'page') and self.page is not None:
+                if self.page and hasattr(self, 'page') and self.page is not None and hasattr(self, 'parent') and self.parent is not None:
                     self.update()
-            except Exception:
-                # Control not yet added to page, update will happen when added
-                pass
+            except (AssertionError, AttributeError) as e:
+                # Control not yet added to page or not properly connected
+                logging.debug(f"PrecipitationChart: Reset state - Container not ready for update: {e}")
+            except Exception as e:
+                logging.error(f"PrecipitationChart: Reset state - Unexpected error during update: {e}")
         except Exception as e:
             logging.error(f"Failed to reset to safe state: {str(e)}")
 
@@ -190,7 +197,7 @@ class PrecipitationChartDisplay(ft.Container):
             header,
             chart_container,
             legend
-        ], spacing=12)
+        ], spacing=8)
 
     def _build_header(self):
         """Builds a modern header for precipitation chart section with caching."""
@@ -203,7 +210,9 @@ class PrecipitationChartDisplay(ft.Container):
         header_text = TranslationService.translate_from_dict("precipitation_chart_items", "precipitation_chart_title", self._current_language)
         # print(f"DEBUG: header_text result: {header_text}")  # Debugging line to check header text
 
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK if hasattr(self.page, 'theme_mode') else False
+        is_dark = False
+        if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         
         header = ft.Container(
             content=ft.Row([
@@ -255,8 +264,10 @@ class PrecipitationChartDisplay(ft.Container):
         )
 
     def _build_chart_content(self) -> ft.Control:
-        """Build the actual precipitation chart."""
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK if hasattr(self.page, 'theme_mode') else False
+        """Build the actual precipitation chart with modern design."""
+        is_dark = False
+        if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         theme = DARK_THEME if is_dark else LIGHT_THEME
         text_color = theme.get("TEXT", ft.Colors.BLACK)
         
@@ -266,60 +277,211 @@ class PrecipitationChartDisplay(ft.Container):
         # Prepare chart data
         chart_data = self._prepare_chart_data()
         
-        # Create chart series (only precipitation, no probability)
+        # Create chart series with modern styling
         precipitation_series = ft.LineChartData(
             data_points=chart_data["precipitation_points"],
-            stroke_width=3,
-            color=ft.Colors.BLUE_500,
+            stroke_width=2.5,
+            color=ft.Colors.BLUE_600,
             curved=True,
             stroke_cap_round=True
         )
 
-        # Create chart with only precipitation data
+        # Calculate dynamic Y-axis max with better scaling
+        max_precip = chart_data["max_precipitation"]
+        if max_precip <= 1:
+            y_max = 2
+            y_interval = 0.5
+        elif max_precip <= 5:
+            y_max = 5
+            y_interval = 1
+        elif max_precip <= 10:
+            y_max = 10
+            y_interval = 2
+        elif max_precip <= 25:
+            y_max = 25
+            y_interval = 5
+        elif max_precip <= 50:
+            y_max = 50
+            y_interval = 10
+        else:
+            y_max = max_precip + (max_precip * 0.1)  # Add 10% padding
+            y_interval = max(1, int(y_max / 5))
+
+        # Calculate X-axis labels (show every 4 hours or so)
+        data_length = len(self._precipitation_data)
+        x_interval = max(1, data_length // 6)  # Show ~6 labels max
+
+        # Create chart with modern design
         chart = ft.LineChart(
-            interactive=False,
-            data_series=[precipitation_series],  # Only precipitation series
+            interactive=True,
+            data_series=[precipitation_series],
             border=ft.Border(
-                bottom=ft.BorderSide(2, ft.Colors.with_opacity(0.2, text_color)),
-                left=ft.BorderSide(2, ft.Colors.with_opacity(0.2, text_color))
+                bottom=ft.BorderSide(1, ft.Colors.with_opacity(0.2, text_color)),
+                left=ft.BorderSide(1, ft.Colors.with_opacity(0.2, text_color))
             ),
             horizontal_grid_lines=ft.ChartGridLines(
-                color=ft.Colors.with_opacity(0.1, text_color),
-                width=1,
-                dash_pattern=[5, 5]
+                color=ft.Colors.with_opacity(0.06, text_color),
+                width=0.8,
+                dash_pattern=[3, 6]
             ),
             vertical_grid_lines=ft.ChartGridLines(
-                color=ft.Colors.with_opacity(0.1, text_color),
-                width=1,
-                dash_pattern=[5, 5]
+                color=ft.Colors.with_opacity(0.06, text_color),
+                width=0.8,
+                dash_pattern=[3, 6]
             ),
             left_axis=ft.ChartAxis(
-                title=ft.Text("mm", size=10, color=ft.Colors.with_opacity(0.7, text_color)),
-                title_size=40,
-                labels_size=40,
+                title=ft.Text(
+                    "mm", 
+                    size=10, 
+                    color=ft.Colors.with_opacity(0.6, text_color), 
+                    weight=ft.FontWeight.W_400
+                ),
+                title_size=35,
+                labels_size=32,
+                labels_interval=y_interval,
+                show_labels=True,
             ),
             bottom_axis=ft.ChartAxis(
-                title=ft.Text("Time", size=10, color=ft.Colors.with_opacity(0.7, text_color)),
-                title_size=40,
-                labels_size=40,
+                title=ft.Text(
+                    TranslationService.translate_from_dict("precipitation_chart_items", "time_hours", self._current_language) or "Tempo (Ore)",
+                    size=10, 
+                    color=ft.Colors.with_opacity(0.6, text_color),
+                    weight=ft.FontWeight.W_400
+                ),
+                title_size=35,
+                labels_size=32,
+                labels_interval=x_interval,
+                show_labels=True,
             ),
-            tooltip_bgcolor=theme.get("CARD_BACKGROUND", ft.Colors.WHITE),
+            tooltip_bgcolor=ft.Colors.with_opacity(0.95, theme.get("CARD_BACKGROUND", ft.Colors.WHITE)),
             min_y=0,
-            max_y=max(chart_data["max_precipitation"], 10),
+            max_y=y_max,
             min_x=0,
-            max_x=len(self._precipitation_data) - 1,
-            animate=5000,
+            max_x=max(1, len(self._precipitation_data) - 1),
+            animate=1500,
         )
 
-        return ft.Container(
+        # Create a modern container for the chart
+        chart_container = ft.Container(
             content=chart,
             height=200,
-            padding=ft.padding.all(10)
+            padding=ft.padding.symmetric(horizontal=12, vertical=10),
+            bgcolor=ft.Colors.with_opacity(0.01, text_color) if not is_dark else ft.Colors.with_opacity(0.03, ft.Colors.WHITE),
+            border_radius=10,
+            border=ft.border.all(1, ft.Colors.with_opacity(0.08, text_color))
+        )
+
+        return ft.Column([
+            chart_container,
+            ft.Container(height=8),  # Spacing
+            self._build_precipitation_summary()  # Add summary stats
+        ], spacing=0)
+
+    def _build_precipitation_summary(self) -> ft.Control:
+        """Build a compact and modern summary of precipitation statistics."""
+        if not self._precipitation_data:
+            return ft.Container()
+        
+        # Calculate statistics
+        total_precipitation = sum(data.get('precipitation', 0) for data in self._precipitation_data)
+        max_intensity = max(data.get('precipitation', 0) for data in self._precipitation_data)
+        hours_with_rain = sum(1 for data in self._precipitation_data if data.get('precipitation', 0) > 0.1)
+        
+        is_dark = False
+        if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        text_color = DARK_THEME.get("TEXT", ft.Colors.WHITE) if is_dark else LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+        
+        # Get translations
+        total_label = TranslationService.translate_from_dict("precipitation_chart_items", "total_precipitation", self._current_language) or "Totale"
+        max_label = TranslationService.translate_from_dict("precipitation_chart_items", "max_intensity", self._current_language) or "Picco"
+        hours_label = TranslationService.translate_from_dict("precipitation_chart_items", "rainy_hours", self._current_language) or "Ore di pioggia"
+        
+        # Create compact statistics cards
+        stats_cards = []
+        
+        # Total precipitation card
+        stats_cards.append(
+            ft.Container(
+                content=ft.Column([
+                    ft.Row([
+                        ft.Icon(ft.Icons.WATER_DROP, size=14, color=ft.Colors.BLUE_600),
+                        ft.Text(f"{total_precipitation:.1f} mm", 
+                               size=13, 
+                               weight=ft.FontWeight.W_600, 
+                               color=text_color)
+                    ], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
+                    ft.Text(total_label, 
+                           size=9, 
+                           color=ft.Colors.with_opacity(0.65, text_color),
+                           text_align=ft.TextAlign.CENTER)
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=3),
+                padding=ft.padding.symmetric(horizontal=10, vertical=7),
+                bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.BLUE_600),
+                border_radius=7,
+                expand=True
+            )
+        )
+        
+        # Max intensity card
+        stats_cards.append(
+            ft.Container(
+                content=ft.Column([
+                    ft.Row([
+                        ft.Icon(ft.Icons.TRENDING_UP, size=14, color=ft.Colors.ORANGE_600),
+                        ft.Text(f"{max_intensity:.1f} mm/h", 
+                               size=13, 
+                               weight=ft.FontWeight.W_600, 
+                               color=text_color)
+                    ], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
+                    ft.Text(max_label, 
+                           size=9, 
+                           color=ft.Colors.with_opacity(0.65, text_color),
+                           text_align=ft.TextAlign.CENTER)
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=3),
+                padding=ft.padding.symmetric(horizontal=10, vertical=7),
+                bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.ORANGE_600),
+                border_radius=7,
+                expand=True
+            )
+        )
+        
+        # Hours with rain card
+        stats_cards.append(
+            ft.Container(
+                content=ft.Column([
+                    ft.Row([
+                        ft.Icon(ft.Icons.ACCESS_TIME, size=14, color=ft.Colors.GREEN_600),
+                        ft.Text(f"{hours_with_rain}h", 
+                               size=13, 
+                               weight=ft.FontWeight.W_600, 
+                               color=text_color)
+                    ], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
+                    ft.Text(hours_label, 
+                           size=9, 
+                           color=ft.Colors.with_opacity(0.65, text_color),
+                           text_align=ft.TextAlign.CENTER)
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=3),
+                padding=ft.padding.symmetric(horizontal=10, vertical=7),
+                bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.GREEN_600),
+                border_radius=7,
+                expand=True
+            )
+        )
+        
+        # Main statistics row
+        main_stats = ft.Row(stats_cards, spacing=8)
+        
+        return ft.Container(
+            content=main_stats,
+            padding=ft.padding.symmetric(horizontal=12, vertical=0)
         )
 
     def _build_legend(self) -> ft.Control:
         """Build legend for the chart."""
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK if hasattr(self.page, 'theme_mode') else False
+        is_dark = False
+        if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         theme = DARK_THEME if is_dark else LIGHT_THEME
         text_color = theme.get("TEXT", ft.Colors.BLACK)
         
@@ -331,16 +493,22 @@ class PrecipitationChartDisplay(ft.Container):
         ) or "Precipitation (mm)"
 
         # Create legend with translations
-        return ft.Row([
-            ft.Row([
-                ft.Container(
-                    width=16, height=3,
-                    bgcolor=ft.Colors.BLUE_500,
-                    border_radius=2
-                ),
-                ft.Text(precipitation_label, size=10, color=ft.Colors.with_opacity(0.8, text_color))
-            ], spacing=8)
-        ], spacing=20, alignment=ft.MainAxisAlignment.CENTER)
+        return ft.Container(
+            content=ft.Row([
+                ft.Row([
+                    ft.Container(
+                        width=14, height=2.5,
+                        bgcolor=ft.Colors.BLUE_600,
+                        border_radius=1.5
+                    ),
+                    ft.Text(precipitation_label, 
+                           size=9, 
+                           color=ft.Colors.with_opacity(0.75, text_color),
+                           weight=ft.FontWeight.W_400)
+                ], spacing=6)
+            ], spacing=16, alignment=ft.MainAxisAlignment.CENTER),
+            padding=ft.padding.symmetric(vertical=4)
+        )
 
     def _build_no_data_content(self) -> ft.Control:
         """Build content when no data is available with translations."""
@@ -367,7 +535,7 @@ class PrecipitationChartDisplay(ft.Container):
         )
 
     def _prepare_chart_data(self) -> Dict[str, Any]:
-        """Prepare data for the chart display."""
+        """Prepare data for the chart display with improved time handling."""
         precipitation_points = []
         max_precipitation = 0
         
@@ -377,10 +545,12 @@ class PrecipitationChartDisplay(ft.Container):
             if precipitation > max_precipitation:
                 max_precipitation = precipitation
             
-            # Create new instances to force re-rendering
-            precipitation_points.append(
-                ft.LineChartDataPoint(x=float(i), y=float(precipitation))
+            # Create data points  
+            point = ft.LineChartDataPoint(
+                x=float(i), 
+                y=float(precipitation)
             )
+            precipitation_points.append(point)
         
         return {
             "precipitation_points": precipitation_points,
@@ -401,14 +571,16 @@ class PrecipitationChartDisplay(ft.Container):
             # Rebuild content
             self.content = self.build()
             
-            # Force update with page refresh
+            # Force update with page refresh - with better error handling
             try:
-                if self.page:
+                if self.page and hasattr(self, 'parent') and self.parent is not None:
                     self.update()
                     self.page.update()  # Force page update too
-            except AssertionError:
-                # Component not yet added to page
-                pass
+            except (AssertionError, AttributeError) as e:
+                # Component not yet added to page or not properly connected
+                logging.debug(f"PrecipitationChart: Update data - Container not ready for update: {e}")
+            except Exception as e:
+                logging.error(f"PrecipitationChart: Update data - Unexpected error during update: {e}")
                 
         except Exception as e:
             logging.error(f"PrecipitationChartDisplay: Error updating data: {e}")
@@ -416,9 +588,12 @@ class PrecipitationChartDisplay(ft.Container):
             self._precipitation_data = []
             self.content = self.build()
             try:
-                self.update()
-            except AssertionError:
-                pass
+                if self.page and hasattr(self, 'parent') and self.parent is not None:
+                    self.update()
+            except (AssertionError, AttributeError) as e:
+                logging.debug(f"PrecipitationChart: Error recovery - Container not ready for update: {e}")
+            except Exception as e:
+                logging.error(f"PrecipitationChart: Error recovery - Unexpected error during update: {e}")
 
     def _extract_precipitation_data(self, forecast_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
@@ -503,15 +678,83 @@ class PrecipitationChartDisplay(ft.Container):
 
     def _safe_language_update(self, e=None):
         """Safely handle language change event."""
-        if self.page and hasattr(self.page, 'run_task'):
-            self.page.run_task(self.update_ui, e)
+        try:
+            if self.page and hasattr(self.page, 'run_task') and callable(getattr(self.page, 'run_task', None)):
+                self.page.run_task(self.update_ui, e)
+        except Exception as ex:
+            logging.error(f"PrecipitationChart: Error in safe language update: {ex}")
     
     def _safe_unit_update(self, e=None):
         """Safely handle unit change event."""
-        if self.page and hasattr(self.page, 'run_task'):
-            self.page.run_task(self.update_ui, e)
+        try:
+            if self.page and hasattr(self.page, 'run_task') and callable(getattr(self.page, 'run_task', None)):
+                self.page.run_task(self.update_ui, e)
+        except Exception as ex:
+            logging.error(f"PrecipitationChart: Error in safe unit update: {ex}")
     
     def _safe_theme_update(self, e=None):
         """Safely handle theme change event."""
-        if self.page and hasattr(self.page, 'run_task'):
-            self.page.run_task(self.update_ui, e)
+        try:
+            if self.page and hasattr(self.page, 'run_task') and callable(getattr(self.page, 'run_task', None)):
+                self.page.run_task(self.update_ui, e)
+        except Exception as ex:
+            logging.error(f"PrecipitationChart: Error in safe theme update: {ex}")
+
+    def cleanup(self):
+        """Clean up observers and resources."""
+        if self._state_manager:
+            try:
+                self._state_manager.unregister_observer("language_event", self._safe_language_update)
+                self._state_manager.unregister_observer("unit", self._safe_unit_update)
+                self._state_manager.unregister_observer("unit_text_change", self._safe_unit_update)
+                self._state_manager.unregister_observer("theme_event", self._safe_theme_update)
+            except Exception as e:
+                logging.error(f"PrecipitationChartDisplay: Error during cleanup: {e}")
+
+    def _get_precipitation_intensity(self, precipitation: float) -> str:
+        """Get precipitation intensity description based on amount."""
+        if precipitation <= 0.1:
+            return TranslationService.translate_from_dict("precipitation_chart_items", "intensity_light", self._current_language) or "Light"
+        elif precipitation <= 2.5:
+            return TranslationService.translate_from_dict("precipitation_chart_items", "intensity_moderate", self._current_language) or "Moderate"
+        elif precipitation <= 10:
+            return TranslationService.translate_from_dict("precipitation_chart_items", "intensity_heavy", self._current_language) or "Heavy"
+        else:
+            return TranslationService.translate_from_dict("precipitation_chart_items", "intensity_very_heavy", self._current_language) or "Very heavy"
+
+    def _get_precipitation_type_from_data(self) -> str:
+        """Determine precipitation type from forecast data."""
+        if not self._precipitation_data:
+            return TranslationService.translate_from_dict("precipitation_chart_items", "rain", self._current_language) or "Rain"
+        
+        # Check if we have snow in the data
+        has_snow = any(data.get('snow', 0) > 0 for data in self._precipitation_data if isinstance(data, dict))
+        has_rain = any(data.get('rain', 0) > 0 for data in self._precipitation_data if isinstance(data, dict))
+        
+        if has_snow and has_rain:
+            return TranslationService.translate_from_dict("precipitation_chart_items", "mixed", self._current_language) or "Mixed"
+        elif has_snow:
+            return TranslationService.translate_from_dict("precipitation_chart_items", "snow", self._current_language) or "Snow"
+        else:
+            return TranslationService.translate_from_dict("precipitation_chart_items", "rain", self._current_language) or "Rain"
+
+    def _find_peak_precipitation_time(self) -> str:
+        """Find when peak precipitation is expected."""
+        if not self._precipitation_data:
+            return ""
+        
+        max_precip = 0
+        peak_time = ""
+        
+        for data in self._precipitation_data:
+            precip = data.get('precipitation', 0)
+            if precip > max_precip:
+                max_precip = precip
+                # Format time - assuming we have timestamp
+                timestamp = data.get('time', 0)
+                if timestamp:
+                    import datetime
+                    dt = datetime.datetime.fromtimestamp(timestamp)
+                    peak_time = dt.strftime("%H:%M")
+        
+        return peak_time

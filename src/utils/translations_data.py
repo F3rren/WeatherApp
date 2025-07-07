@@ -127,7 +127,26 @@ TRANSLATIONS = {
             "precipitation_mm": "Precipitation (mm)",
             "probability_percent": "Probability (%)",
             "no_data": "No precipitation data available",
-            "loading": "Loading precipitation data..."
+            "loading": "Loading precipitation data...",
+            "time_hours": "Time (Hours)",
+            "total_precipitation": "Total",
+            "max_intensity": "Peak",
+            "rainy_hours": "Rainy hours",
+            # Precipitation intensity descriptions
+            "intensity_light": "Light",
+            "intensity_moderate": "Moderate", 
+            "intensity_heavy": "Heavy",
+            "intensity_very_heavy": "Very heavy",
+            # Additional labels
+            "next_24h": "Next 24 hours",
+            "precipitation_type": "Type",
+            "rain": "Rain",
+            "snow": "Snow",
+            "mixed": "Mixed",
+            "probability": "Probability",
+            "when_expected": "Expected at",
+            "duration": "Duration",
+            "peak_time": "Peak expected"
         },
     },
     
@@ -243,7 +262,26 @@ TRANSLATIONS = {
             "precipitation_mm": "降水量 (毫米)",
             "probability_percent": "概率 (%)",
             "no_data": "无降水数据",
-            "loading": "正在加载降水数据..."
+            "loading": "正在加载降水数据...",
+            "time_hours": "时间 (小时)",
+            "total_precipitation": "总计",
+            "max_intensity": "峰值",
+            "rainy_hours": "降雨小时",
+            # 降水强度描述
+            "intensity_light": "小雨",
+            "intensity_moderate": "中雨", 
+            "intensity_heavy": "大雨",
+            "intensity_very_heavy": "暴雨",
+            # 额外标签
+            "next_24h": "未来24小时",
+            "precipitation_type": "类型",
+            "rain": "雨",
+            "snow": "雪",
+            "mixed": "混合",
+            "probability": "概率",
+            "when_expected": "预期时间",
+            "duration": "持续时间",
+            "peak_time": "峰值预期"
         },
         "other": {
             "weather_card_title": "天气详情",
@@ -384,7 +422,26 @@ TRANSLATIONS = {
             "precipitation_mm": "वर्षा (मिमी)",
             "probability_percent": "संभावना (%)",
             "no_data": "वर्षा डेटा उपलब्ध नहीं है",
-            "loading": "वर्षा डेटा लोड हो रहा है..."
+            "loading": "वर्षा डेटा लोड हो रहा है...",
+            "time_hours": "समय (घंटे)",
+            "total_precipitation": "कुल",
+            "max_intensity": "चरम",
+            "rainy_hours": "बारिश के घंटे",
+            # वर्षा की तीव्रता का विवरण
+            "intensity_light": "हल्की",
+            "intensity_moderate": "मध्यम", 
+            "intensity_heavy": "भारी",
+            "intensity_very_heavy": "बहुत भारी",
+            # अतिरिक्त लेबल
+            "next_24h": "अगले 24 घंटे",
+            "precipitation_type": "प्रकार",
+            "rain": "बारिश",
+            "snow": "बर्फ",
+            "mixed": "मिश्रित",
+            "probability": "संभावना",
+            "when_expected": "अपेक्षित समय",
+            "duration": "अवधि",
+            "peak_time": "चरम अपेक्षित"
         }
     },
     "es": {
@@ -500,7 +557,26 @@ TRANSLATIONS = {
             "precipitation_mm": "Precipitaciones (mm)",
             "probability_percent": "Probabilidad (%)",
             "no_data": "Datos de precipitaciones no disponibles",
-            "loading": "Cargando datos de precipitaciones..."
+            "loading": "Cargando datos de precipitaciones...",
+            "time_hours": "Tiempo (Horas)",
+            "total_precipitation": "Total",
+            "max_intensity": "Pico",
+            "rainy_hours": "Horas de lluvia",
+            # Descripciones de intensidad de precipitación
+            "intensity_light": "Ligera",
+            "intensity_moderate": "Moderada", 
+            "intensity_heavy": "Fuerte",
+            "intensity_very_heavy": "Muy fuerte",
+            # Etiquetas adicionales
+            "next_24h": "Próximas 24 horas",
+            "precipitation_type": "Tipo",
+            "rain": "Lluvia",
+            "snow": "Nieve",
+            "mixed": "Mixta",
+            "probability": "Probabilidad",
+            "when_expected": "Esperado a las",
+            "duration": "Duración",
+            "peak_time": "Pico esperado"
         }
     },
     "ar": {
@@ -615,7 +691,26 @@ TRANSLATIONS = {
             "precipitation_mm": "الهطول (مم)",
             "probability_percent": "الاحتمال (%)",
             "no_data": "لا توجد بيانات هطول متاحة",
-            "loading": "جاري تحميل بيانات الهطول..."
+            "loading": "جاري تحميل بيانات الهطول...",
+            "time_hours": "الوقت (ساعات)",
+            "total_precipitation": "المجموع",
+            "max_intensity": "الذروة",
+            "rainy_hours": "ساعات المطر",
+            # وصف شدة الهطول
+            "intensity_light": "خفيف",
+            "intensity_moderate": "معتدل", 
+            "intensity_heavy": "كثيف",
+            "intensity_very_heavy": "كثيف جداً",
+            # تسميات إضافية
+            "next_24h": "الـ 24 ساعة القادمة",
+            "precipitation_type": "النوع",
+            "rain": "مطر",
+            "snow": "ثلج",
+            "mixed": "مختلط",
+            "probability": "الاحتمال",
+            "when_expected": "متوقع في",
+            "duration": "المدة",
+            "peak_time": "الذروة متوقعة"
         }
     },
     "id": {
@@ -730,7 +825,26 @@ TRANSLATIONS = {
             "precipitation_mm": "Curah Hujan (mm)",
             "probability_percent": "Probabilitas (%)",
             "no_data": "Data curah hujan tidak tersedia",
-            "loading": "Memuat data curah hujan..."
+            "loading": "Memuat data curah hujan...",
+            "time_hours": "Waktu (Jam)",
+            "total_precipitation": "Total",
+            "max_intensity": "Puncak",
+            "rainy_hours": "Jam hujan",
+            # Deskripsi intensitas curah hujan
+            "intensity_light": "Ringan",
+            "intensity_moderate": "Sedang", 
+            "intensity_heavy": "Lebat",
+            "intensity_very_heavy": "Sangat lebat",
+            # Label tambahan
+            "next_24h": "24 jam ke depan",
+            "precipitation_type": "Jenis",
+            "rain": "Hujan",
+            "snow": "Salju",
+            "mixed": "Campuran",
+            "probability": "Probabilitas",
+            "when_expected": "Diperkirakan pada",
+            "duration": "Durasi",
+            "peak_time": "Puncak diperkirakan"
         }
     },
     "ja": {
@@ -845,7 +959,26 @@ TRANSLATIONS = {
             "precipitation_mm": "降水量 (mm)",
             "probability_percent": "確率 (%)",
             "no_data": "降水量データがありません",
-            "loading": "降水量データを読み込み中..."
+            "loading": "降水量データを読み込み中...",
+            "time_hours": "時間 (時)",
+            "total_precipitation": "合計",
+            "max_intensity": "ピーク",
+            "rainy_hours": "雨の時間",
+            # 降水強度の説明
+            "intensity_light": "弱い",
+            "intensity_moderate": "中程度", 
+            "intensity_heavy": "強い",
+            "intensity_very_heavy": "非常に強い",
+            # 追加ラベル
+            "next_24h": "今後24時間",
+            "precipitation_type": "種類",
+            "rain": "雨",
+            "snow": "雪",
+            "mixed": "混合",
+            "probability": "確率",
+            "when_expected": "予想時刻",
+            "duration": "継続時間",
+            "peak_time": "ピーク予想"
         }
     },
     "it": {
@@ -962,7 +1095,26 @@ TRANSLATIONS = {
             "precipitation_mm": "Precipitazioni (mm)",
             "probability_percent": "Probabilità (%)",
             "no_data": "Dati precipitazioni non disponibili",
-            "loading": "Caricamento dati precipitazioni..."
+            "loading": "Caricamento dati precipitazioni...",
+            "time_hours": "Tempo (Ore)",
+            "total_precipitation": "Totale",
+            "max_intensity": "Picco",
+            "rainy_hours": "Ore di pioggia",
+            # Descrizioni intensità precipitazioni
+            "intensity_light": "Leggera",
+            "intensity_moderate": "Moderata", 
+            "intensity_heavy": "Intensa",
+            "intensity_very_heavy": "Molto intensa",
+            # Etichette aggiuntive
+            "next_24h": "Prossime 24 ore",
+            "precipitation_type": "Tipo",
+            "rain": "Pioggia",
+            "snow": "Neve",
+            "mixed": "Mista",
+            "probability": "Probabilità",
+            "when_expected": "Prevista alle",
+            "duration": "Durata",
+            "peak_time": "Picco previsto"
         }
     },
     "de": {
@@ -1077,7 +1229,26 @@ TRANSLATIONS = {
             "precipitation_mm": "Niederschlag (mm)",
             "probability_percent": "Wahrscheinlichkeit (%)",
             "no_data": "Keine Niederschlagsdaten verfügbar",
-            "loading": "Lade Niederschlagsdaten..."
+            "loading": "Lade Niederschlagsdaten...",
+            "time_hours": "Zeit (Stunden)",
+            "total_precipitation": "Gesamt",
+            "max_intensity": "Spitze",
+            "rainy_hours": "Regenstunden",
+            # Niederschlagsintensität Beschreibungen
+            "intensity_light": "Leicht",
+            "intensity_moderate": "Mäßig", 
+            "intensity_heavy": "Stark",
+            "intensity_very_heavy": "Sehr stark",
+            # Zusätzliche Etiketten
+            "next_24h": "Nächste 24 Stunden",
+            "precipitation_type": "Typ",
+            "rain": "Regen",
+            "snow": "Schnee",
+            "mixed": "Gemischt",
+            "probability": "Wahrscheinlichkeit",
+            "when_expected": "Erwartet um",
+            "duration": "Dauer",
+            "peak_time": "Spitze erwartet"
         }
     },
     "fr": {
@@ -1192,7 +1363,26 @@ TRANSLATIONS = {
             "precipitation_mm": "Précipitations (mm)",
             "probability_percent": "Probabilité (%)",
             "no_data": "Aucune donnée de précipitations disponible",
-            "loading": "Chargement des données de précipitations..."
+            "loading": "Chargement des données de précipitations...",
+            "time_hours": "Temps (Heures)",
+            "total_precipitation": "Total",
+            "max_intensity": "Pic",
+            "rainy_hours": "Heures pluvieuses",
+            # Descriptions d'intensité des précipitations
+            "intensity_light": "Légère",
+            "intensity_moderate": "Modérée", 
+            "intensity_heavy": "Forte",
+            "intensity_very_heavy": "Très forte",
+            # Étiquettes supplémentaires
+            "next_24h": "Prochaines 24 heures",
+            "precipitation_type": "Type",
+            "rain": "Pluie",
+            "snow": "Neige",
+            "mixed": "Mixte",
+            "probability": "Probabilité",
+            "when_expected": "Attendu à",
+            "duration": "Durée",
+            "peak_time": "Pic attendu"
         }
     },
     "pt": {
@@ -1307,7 +1497,26 @@ TRANSLATIONS = {
             "precipitation_mm": "Precipitação (mm)",
             "probability_percent": "Probabilidade (%)",
             "no_data": "Dados de precipitação não disponíveis",
-            "loading": "Carregando dados de precipitação..."
+            "loading": "Carregando dados de precipitação...",
+            "time_hours": "Tempo (Horas)",
+            "total_precipitation": "Total",
+            "max_intensity": "Pico",
+            "rainy_hours": "Horas chuvosas",
+            # Descrições de intensidade de precipitação
+            "intensity_light": "Leve",
+            "intensity_moderate": "Moderada", 
+            "intensity_heavy": "Pesada",
+            "intensity_very_heavy": "Muito pesada",
+            # Etiquetas adicionais
+            "next_24h": "Próximas 24 horas",
+            "precipitation_type": "Tipo",
+            "rain": "Chuva",
+            "snow": "Neve",
+            "mixed": "Mista",
+            "probability": "Probabilidade",
+            "when_expected": "Esperado às",
+            "duration": "Duração",
+            "peak_time": "Pico esperado"
         }
     },
     "ru": {
@@ -1421,7 +1630,26 @@ TRANSLATIONS = {
             "precipitation_mm": "Осадки (мм)",
             "probability_percent": "Вероятность (%)",
             "no_data": "Данные об осадках недоступны",
-            "loading": "Загрузка данных об осадках..."
+            "loading": "Загрузка данных об осадках...",
+            "time_hours": "Время (Часы)",
+            "total_precipitation": "Всего",
+            "max_intensity": "Пик",
+            "rainy_hours": "Дождливые часы",
+            # Описания интенсивности осадков
+            "intensity_light": "Легкие",
+            "intensity_moderate": "Умеренные", 
+            "intensity_heavy": "Сильные",
+            "intensity_very_heavy": "Очень сильные",
+            # Дополнительные метки
+            "next_24h": "Следующие 24 часа",
+            "precipitation_type": "Тип",
+            "rain": "Дождь",
+            "snow": "Снег",
+            "mixed": "Смешанные",
+            "probability": "Вероятность",
+            "when_expected": "Ожидается в",
+            "duration": "Продолжительность",
+            "peak_time": "Пик ожидается"
         }
     }
 }

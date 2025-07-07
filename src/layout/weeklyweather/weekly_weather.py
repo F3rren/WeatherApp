@@ -93,11 +93,10 @@ class WeeklyForecastDisplay(ft.Container):
                 else:
                     self._forecast_data = []
 
-            # Safe theme detection
-            if self.page and hasattr(self.page, 'theme_mode'):
+            # Safe theme detection with robust checking
+            is_dark = False
+            if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
                 is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            else:
-                is_dark = False
             theme = DARK_THEME if is_dark else LIGHT_THEME
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
@@ -114,11 +113,10 @@ class WeeklyForecastDisplay(ft.Container):
 
     def build(self):
         """Constructs the modern UI for the weekly forecast with header and styled cards."""
-        # Safe theme detection
-        if self.page and hasattr(self.page, 'theme_mode'):
+        # Safe theme detection with robust checking
+        is_dark = False
+        if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        else:
-            is_dark = False
         theme = DARK_THEME if is_dark else LIGHT_THEME
         
         # Header section
@@ -170,11 +168,12 @@ class WeeklyForecastDisplay(ft.Container):
                 
                 # Add divider between days (except for the last one)
                 if i < len(self._forecast_data) - 1:
+                    divider_color = "#404040" if is_dark else "#e0e0e0"  # Use previously calculated is_dark
                     divider = ft.Container(
                         content=ft.Divider(
                             height=1,
                             thickness=1,
-                            color=theme.get("BORDER", "#e0e0e0" if self.page.theme_mode == ft.ThemeMode.LIGHT else "#404040")
+                            color=theme.get("BORDER", divider_color)
                         ),
                         padding=ft.padding.symmetric(horizontal=20)
                     )

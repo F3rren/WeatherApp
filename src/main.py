@@ -42,54 +42,72 @@ class MeteoApp:
         """Aggiorna solo i colori dei container principali e dei testi senza ricostruire i container."""
         if not self.page:
             return
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        theme = DARK_THEME if is_dark else LIGHT_THEME
         
-        # Helper function to safely update container
-        def safe_update_container(container, color_key):
-            if container:
-                try:
-                    container.bgcolor = theme.get(color_key)
-                    container.update()
-                except AssertionError:
-                    pass
-        
-        # Aggiorna colori specifici per ogni container
-        safe_update_container(self.sidebar_container, "SIDEBAR")
-        
-        if self.info_container_wrapper:
-            try:
-                # Applica gradiente se definito nel tema
-                if "INFO_GRADIENT" in theme:
-                    gradient_start = theme["INFO_GRADIENT"]["start"]
-                    gradient_end = theme["INFO_GRADIENT"]["end"]
-                    self.info_container_wrapper.gradient = ft.LinearGradient(
-                        begin=ft.alignment.top_center,
-                        end=ft.alignment.bottom_center,
-                        colors=[gradient_start, gradient_end]
-                    )
-                    self.info_container_wrapper.bgcolor = None
-                else:
-                    self.info_container_wrapper.bgcolor = theme.get("CARD_BACKGROUND")
-                    self.info_container_wrapper.gradient = None
-                self.info_container_wrapper.update()
-            except AssertionError:
-                # Container not yet properly connected to page
-                pass
-        
-        safe_update_container(self.hourly_container_wrapper, "HOURLY")
-        safe_update_container(self.chart_container_wrapper, "CHART")
-        safe_update_container(self.precipitation_chart_container_wrapper, "CHART") # For precipitation chart
-        safe_update_container(self.air_pollution_container_wrapper, "CARD_BACKGROUND")
-        # Rimosso air_condition_container_wrapper perché ora è incluso nel info_container
-        
-        # Aggiorna il colore di sfondo della pagina
-        self.page.bgcolor = theme.get("BACKGROUND")
         try:
-            self.page.update()
-        except Exception:
-
-            pass
+            is_dark = False
+            if hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            theme = DARK_THEME if is_dark else LIGHT_THEME
+            
+            # Helper function to safely update container
+            def safe_update_container(container, color_key):
+                if container and hasattr(container, 'bgcolor'):
+                    try:
+                        # Check if container is properly connected to page
+                        if hasattr(container, 'page') and container.page is not None:
+                            container.bgcolor = theme.get(color_key)
+                            container.update()
+                    except (AssertionError, AttributeError) as e:
+                        # Reduce log noise - only log once every 10 attempts
+                        if not hasattr(safe_update_container, '_error_count'):
+                            safe_update_container._error_count = {}
+                        safe_update_container._error_count[color_key] = safe_update_container._error_count.get(color_key, 0) + 1
+                        if safe_update_container._error_count[color_key] % 10 == 1:  # Log first error and every 10th
+                            logging.debug(f"Container ({color_key}) not ready for color update: {e}")
+                    except Exception as e:
+                        logging.error(f"Error updating container color: {e}")
+            
+            # Aggiorna colori specifici per ogni container
+            safe_update_container(self.sidebar_container, "SIDEBAR")
+            
+            if self.info_container_wrapper:
+                try:
+                    if hasattr(self.info_container_wrapper, 'page') and self.info_container_wrapper.page is not None:
+                        # Applica gradiente se definito nel tema
+                        if "INFO_GRADIENT" in theme:
+                            gradient_start = theme["INFO_GRADIENT"]["start"]
+                            gradient_end = theme["INFO_GRADIENT"]["end"]
+                            self.info_container_wrapper.gradient = ft.LinearGradient(
+                                begin=ft.alignment.top_center,
+                                end=ft.alignment.bottom_center,
+                                colors=[gradient_start, gradient_end]
+                            )
+                            self.info_container_wrapper.bgcolor = None
+                        else:
+                            self.info_container_wrapper.bgcolor = theme.get("CARD_BACKGROUND")
+                            self.info_container_wrapper.gradient = None
+                        self.info_container_wrapper.update()
+                except (AssertionError, AttributeError) as e:
+                    logging.debug(f"Info container not ready for update: {e}")
+                except Exception as e:
+                    logging.error(f"Error updating info container: {e}")
+            
+            safe_update_container(self.hourly_container_wrapper, "HOURLY")
+            safe_update_container(self.chart_container_wrapper, "CHART")
+            safe_update_container(self.precipitation_chart_container_wrapper, "CHART") # For precipitation chart
+            safe_update_container(self.air_pollution_container_wrapper, "CARD_BACKGROUND")
+            
+            # Aggiorna il colore di sfondo della pagina
+            try:
+                self.page.bgcolor = theme.get("BACKGROUND")
+                self.page.update()
+            except (AssertionError, AttributeError) as e:
+                logging.debug(f"Page not ready for background update: {e}")
+            except Exception as e:
+                logging.error(f"Error updating page background: {e}")
+                
+        except Exception as e:
+            logging.error(f"Error in _update_container_colors: {e}")
 
     async def main(self, page: ft.Page) -> None: # MODIFIED: ft.Page
         """
@@ -200,8 +218,20 @@ class MeteoApp:
 
         # FASE 6: Applica tema e inizializza servizi
         self._update_container_colors()
-        await self.location_toggle_service.initialize_tracking()
-        await self.theme_toggle_service.initialize_theme()
+        
+        # Initialize location service with timeout handling
+        try:
+            await self.location_toggle_service.initialize_tracking()
+        except Exception as e:
+            logging.warning(f"Failed to initialize location tracking: {e}")
+            # Continue without location tracking if it fails
+        
+        # Initialize theme service
+        try:
+            await self.theme_toggle_service.initialize_theme()
+        except Exception as e:
+            logging.warning(f"Failed to initialize theme service: {e}")
+            # Continue with default theme if it fails
 
         # Debug finale: Verifica che il layout finale contenga dati
         logging.info("DEBUG: [build_layout] Layout costruito e aggiunto alla pagina")
@@ -266,61 +296,46 @@ class MeteoApp:
                     )
                     logging.info("DEBUG: Layout manager containers updated")
                 
-                # IMPORTANTE: Forza l'aggiornamento dei wrapper container
-                if self.info_container_wrapper:
-                    self.info_container_wrapper.content = info_container.content
-                    try:
-                        self.info_container_wrapper.update()
-                        logging.info("DEBUG: Info wrapper updated")
-                    except (AssertionError, AttributeError):
-                        pass
+                # Helper function to safely update wrapper containers
+                def safe_update_wrapper(wrapper, content, wrapper_name):
+                    if wrapper and content:
+                        try:
+                            # Check if wrapper is properly connected to page
+                            if hasattr(wrapper, 'page') and wrapper.page is not None:
+                                wrapper.content = content.content
+                                wrapper.update()
+                                logging.info(f"DEBUG: {wrapper_name} wrapper updated")
+                            else:
+                                # Reduce log noise - only log occasionally
+                                if not hasattr(safe_update_wrapper, '_not_ready_count'):
+                                    safe_update_wrapper._not_ready_count = {}
+                                safe_update_wrapper._not_ready_count[wrapper_name] = safe_update_wrapper._not_ready_count.get(wrapper_name, 0) + 1
+                                if safe_update_wrapper._not_ready_count[wrapper_name] % 5 == 1:  # Log every 5th occurrence
+                                    logging.debug(f"DEBUG: {wrapper_name} wrapper not ready for update")
+                        except (AssertionError, AttributeError) as e:
+                            # Reduce log noise
+                            if not hasattr(safe_update_wrapper, '_error_count'):
+                                safe_update_wrapper._error_count = {}
+                            safe_update_wrapper._error_count[wrapper_name] = safe_update_wrapper._error_count.get(wrapper_name, 0) + 1
+                            if safe_update_wrapper._error_count[wrapper_name] % 10 == 1:  # Log every 10th error
+                                logging.debug(f"DEBUG: {wrapper_name} wrapper not ready for update: {e}")
+                        except Exception as e:
+                            logging.error(f"DEBUG: Error updating {wrapper_name} wrapper: {e}")
                 
-                if self.air_condition_container_wrapper:
-                    self.air_condition_container_wrapper.content = air_condition_container.content
-                    try:
-                        self.air_condition_container_wrapper.update()
-                        logging.info("DEBUG: Air condition wrapper updated")
-                    except (AssertionError, AttributeError):
-                        pass
-                
-                if self.hourly_container_wrapper:
-                    self.hourly_container_wrapper.content = hourly_container.content
-                    try:
-                        self.hourly_container_wrapper.update()
-                        logging.info("DEBUG: Hourly wrapper updated")
-                    except (AssertionError, AttributeError):
-                        pass
-                
-                if self.chart_container_wrapper:
-                    self.chart_container_wrapper.content = chart_container.content
-                    try:
-                        self.chart_container_wrapper.update()
-                        logging.info("DEBUG: Chart wrapper updated")
-                    except (AssertionError, AttributeError):
-                        pass
-                
-                if self.precipitation_chart_container_wrapper:
-                    self.precipitation_chart_container_wrapper.content = precipitation_chart_container.content
-                    try:
-                        self.precipitation_chart_container_wrapper.update()
-                        logging.info("DEBUG: Precipitation chart wrapper updated")
-                    except (AssertionError, AttributeError):
-                        pass
-                
-                if self.air_pollution_container_wrapper:
-                    self.air_pollution_container_wrapper.content = air_pollution_container.content
-                    try:
-                        self.air_pollution_container_wrapper.update()
-                        logging.info("DEBUG: Air pollution wrapper updated")
-                    except (AssertionError, AttributeError):
-                        pass
+                # IMPORTANTE: Forza l'aggiornamento dei wrapper container con controlli robusti
+                safe_update_wrapper(self.info_container_wrapper, info_container, "Info")
+                safe_update_wrapper(self.air_condition_container_wrapper, air_condition_container, "Air condition")
+                safe_update_wrapper(self.hourly_container_wrapper, hourly_container, "Hourly")
+                safe_update_wrapper(self.chart_container_wrapper, chart_container, "Chart")
+                safe_update_wrapper(self.precipitation_chart_container_wrapper, precipitation_chart_container, "Precipitation chart")
+                safe_update_wrapper(self.air_pollution_container_wrapper, air_pollution_container, "Air pollution")
                 
                 logging.info(f"DEBUG: UI containers updated successfully for city: {city}")
                 
             except Exception as e:
-                logging.info(f"DEBUG: Error updating UI containers: {e}")
+                logging.error(f"DEBUG: Error updating UI containers: {e}")
                 import traceback
-                traceback.logging.info_exc()
+                traceback.print_exc()
 
         # Debug: Verifica che i container siano ora popolati
         if hasattr(self, 'weather_view_instance'):
@@ -332,32 +347,39 @@ class MeteoApp:
 
     def _handle_language_change(self, event_data=None):
         """Handle language change events at the main app level."""
-        logging.info(f"Main app: handling language change event with data: {event_data}")
-        
-        # Get current state
-        state_manager = self.state_manager
-        if not state_manager:
-            return
+        try:
+            logging.info(f"Main app: handling language change event with data: {event_data}")
             
-        # Get current location context
-        language = state_manager.get_state('language') or DEFAULT_LANGUAGE
-        unit = state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
-        using_location = state_manager.get_state('using_location')
-        current_lat = state_manager.get_state('current_lat')
-        current_lon = state_manager.get_state('current_lon')
-        city = state_manager.get_state('city')
-        
-        # Trigger weather update with new language
-        if using_location and current_lat is not None and current_lon is not None:
-            # Use coordinates to get location name in new language
-            logging.info("Language change: updating weather by coordinates")
-            self.page.run_task(self.update_weather_with_coordinates, current_lat, current_lon, language, unit)
-        elif city:
-            # Use city name to get translated data
-            logging.info(f"Language change: updating weather by city ({city})")
-            self.page.run_task(self.update_weather_with_sidebar, city, language, unit)
-        else:
-            logging.warning("Language change: no location context available for update")
+            # Get current state
+            state_manager = self.state_manager
+            if not state_manager:
+                logging.warning("No state manager available for language change")
+                return
+                
+            # Get current location context
+            language = state_manager.get_state('language') or DEFAULT_LANGUAGE
+            unit = state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
+            using_location = state_manager.get_state('using_location')
+            current_lat = state_manager.get_state('current_lat')
+            current_lon = state_manager.get_state('current_lon')
+            city = state_manager.get_state('city')
+            
+            # Trigger weather update with new language
+            if using_location and current_lat is not None and current_lon is not None:
+                # Use coordinates to get location name in new language
+                logging.info("Language change: updating weather by coordinates")
+                if self.page and hasattr(self.page, 'run_task'):
+                    self.page.run_task(self.update_weather_with_coordinates, current_lat, current_lon, language, unit)
+            elif city:
+                # Use city name to get translated data
+                logging.info(f"Language change: updating weather by city ({city})")
+                if self.page and hasattr(self.page, 'run_task'):
+                    self.page.run_task(self.update_weather_with_sidebar, city, language, unit)
+            else:
+                logging.warning("Language change: no location context available for update")
+                
+        except Exception as e:
+            logging.error(f"Error handling language change: {e}")
     
     async def update_weather_with_coordinates(self, lat: float, lon: float, language: str, unit: str):
         """Update weather data using coordinates."""

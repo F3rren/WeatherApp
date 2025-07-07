@@ -65,7 +65,9 @@ class HourlyForecastDisplay(ft.Container):
                     all_hourly_data = self._api_service.get_hourly_forecast_data(weather_data, hours=40)  # Get more data
                     self._hourly_data_list = all_hourly_data[:24]  # But use only first 24 hours
 
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            is_dark = False
+            if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             theme = DARK_THEME if is_dark else LIGHT_THEME
             self._text_color = theme.get("TEXT", ft.Colors.BLACK)
 
@@ -116,7 +118,9 @@ class HourlyForecastDisplay(ft.Container):
             ) or header_text
 
         # Professional header with enhanced typography and subtle accent
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        is_dark = False
+        if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         header = ft.Container(
             content=ft.Row([
                 ft.Icon(
@@ -345,7 +349,9 @@ class HourlyForecastDisplay(ft.Container):
                 )
                 
                 # Optimized compact container to fit more hours without scrolling
-                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+                is_dark = False
+                if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+                    is_dark = self.page.theme_mode == ft.ThemeMode.DARK
                 
                 # Determine if this is current hour for special styling
                 current_hour = datetime.now().strftime("%H")

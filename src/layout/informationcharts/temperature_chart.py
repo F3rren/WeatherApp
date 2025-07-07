@@ -533,12 +533,7 @@ class TemperatureChartDisplay(ft.Container):
                     ) for y in range(int(min_y_val), int(max_y_val) + 1, step)
                 ],
                 labels_size=45, 
-                title=ft.Text(
-                    unit_symbol,
-                    size=self._text_handler.get_size('axis_title'),
-                    color=self._current_text_color,
-                    weight=ft.FontWeight.W_500
-                ),
+                
                 title_size=self._text_handler.get_size('axis_title') 
             ),
             bottom_axis=ft.ChartAxis(

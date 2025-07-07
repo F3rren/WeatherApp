@@ -4,6 +4,7 @@ Gestisce il ridimensionamento dinamico del testo in base alla dimensione della f
 """
 
 import asyncio
+import logging
 import flet as ft
 
 class ResponsiveTextHandler:
@@ -122,7 +123,7 @@ class ResponsiveTextHandler:
             try:
                 callback()
             except Exception as e:
-                print(f"Errore nella notifica observer: {e}")
+                logging.error(f"Errore nella notifica observer: {e}")
     
     def get_size(self, text_type: str) -> int:
         """

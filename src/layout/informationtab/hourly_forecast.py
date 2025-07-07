@@ -31,29 +31,13 @@ class HourlyForecastDisplay(ft.Container):
             breakpoints=[600, 900, 1200, 1600]
         )
 
-        if self.page:
-            if hasattr(self.page, 'session') and self.page.session.get('state_manager'):
-                self._state_manager = self.page.session.get('state_manager')
-                self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-                self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
-                self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
-
-            original_on_resize = self.page.on_resize
-            def resize_handler(e):
-                if original_on_resize:
-                    original_on_resize(e)
-                if self.text_handler:
-                    self.text_handler._handle_resize(e)
-                if self.page:
-                    self.page.run_task(self.update_ui)
-            self.page.on_resize = resize_handler
+        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+            self._state_manager = self.page.session.get('state_manager')
 
         self.content = self.build()
-        if self.page:
-            self.page.run_task(self.update_ui)
 
-    async def update_ui(self, event_data=None):
-        """Updates the UI based on state changes, fetching new data if necessary."""
+    async def update(self):
+        """Update language, unit, theme and rebuild content."""
         if not self.page or not self.visible:
             return
 
@@ -86,9 +70,12 @@ class HourlyForecastDisplay(ft.Container):
             self._text_color = theme.get("TEXT", ft.Colors.BLACK)
 
             self.content = self.build()
-            self.update()
+            try:
+                super().update()
+            except AssertionError:
+                pass
         except Exception as e:
-            logging.error(f"HourlyForecastDisplay: Error updating UI: {e}\n{traceback.format_exc()}")
+            logging.error(f"HourlyForecastDisplay: Error updating: {e}\n{traceback.format_exc()}")
 
     def build(self):
         """Constructs a clean, minimal UI for the hourly forecast exactly like the design shown."""
@@ -414,11 +401,11 @@ class HourlyForecastDisplay(ft.Container):
             ),
         )
     
-    def update_city(self, new_city: str):
+    async def update_city(self, new_city: str):
         """Allows updating the city and refreshing the forecast."""
         if self._city != new_city:
             self._city = new_city
             self._hourly_data_list = []
             if self.page:
-                self.page.run_task(self.update_ui)
+                await self.update()
 

@@ -120,6 +120,63 @@ class LayoutManager:
             animation_duration,
             animation_curve
         )
+    
+    def update_containers(self, info_content=None, air_condition_content=None, 
+                         hourly_content=None, chart_content=None, 
+                         precipitation_chart_content=None, air_pollution_content=None):
+        """
+        Aggiorna i contenuti dei container esistenti.
+        
+        Args:
+            info_content: Nuovo contenuto del container info meteo
+            air_condition_content: Nuovo contenuto del container condizioni dell'aria
+            hourly_content: Nuovo contenuto del container previsioni orarie
+            chart_content: Nuovo contenuto del container grafico temperature
+            precipitation_chart_content: Nuovo contenuto del container grafico precipitazioni
+            air_pollution_content: Nuovo contenuto del container informazioni inquinamento
+        """
+        if info_content and 'info' in self.containers:
+            self.containers['info'].content = info_content.content
+            try:
+                self.containers['info'].update()
+            except Exception as e:
+                logging.error(f"DEBUG: Error updating info container: {e}")
+        
+        if air_condition_content and 'air_condition' in self.containers:
+            self.containers['air_condition'].content = air_condition_content.content
+            try:
+                self.containers['air_condition'].update()
+            except Exception as e:
+                logging.error(f"DEBUG: Error updating air_condition container: {e}")
+        
+        if hourly_content and 'hourly' in self.containers:
+            self.containers['hourly'].content = hourly_content.content
+            try:
+                self.containers['hourly'].update()
+            except Exception as e:
+                logging.error(f"DEBUG: Error updating hourly container: {e}")
+        
+        if chart_content and 'chart' in self.containers:
+            self.containers['chart'].content = chart_content.content
+            try:
+                self.containers['chart'].update()
+            except Exception as e:
+                logging.error(f"DEBUG: Error updating chart container: {e}")
+        
+        if precipitation_chart_content and 'precipitation_chart' in self.containers:
+            self.containers['precipitation_chart'].content = precipitation_chart_content.content
+            try:
+                self.containers['precipitation_chart'].update()
+            except Exception as e:
+                logging.error(f"DEBUG: Error updating precipitation_chart container: {e}")
+        
+        if air_pollution_content and 'air_pollution' in self.containers:
+            self.containers['air_pollution'].content = air_pollution_content.content
+            try:
+                self.containers['air_pollution'].update()
+            except Exception as e:
+                logging.error(f"DEBUG: Error updating air_pollution container: {e}")
+    
     def build_layout(self) -> ft.Control:
         """
         Costruisce il layout principale dell'applicazione.

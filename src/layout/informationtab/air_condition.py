@@ -44,220 +44,9 @@ def get_wind_direction_icon(wind_direction_deg):
     else:
         return ft.Icons.QUESTION_MARK, "N/A"
 
-class AirConditionComponent(ft.Container):
-    """
-    Individual air condition component for separated display.
-    """
-    
-    def __init__(self, metric_type: str, value, unit: str = "", wind_direction: int = None, 
-                 page: ft.Page = None, **kwargs):
-        super().__init__(**kwargs)
-        self.metric_type = metric_type
-        self.value = value
-        self.unit = unit
-        self.wind_direction = wind_direction
-        self.page = page
-        
-        self._state_manager = None
-        self._language = DEFAULT_LANGUAGE
-        self._text_color = LIGHT_THEME["TEXT"]
-        
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={'title': 14, 'label': 10, 'value': 12, 'icon': 18},
-            breakpoints=[600, 900, 1200, 1600]
-        )
-        
-        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
-            self._state_manager = self.page.session.get('state_manager')
-            self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
-        
-        self.content = self.build()
-        # Don't auto-update on init - wait for page to be ready
-    
-    async def update_ui(self, event_data=None):
-        """Update UI based on theme/language changes."""
-        if not self.page or not self.visible:
-            return
-        
-        try:
-            if self._state_manager:
-                self._language = self._state_manager.get_state('language') or self._language
-            
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            theme = DARK_THEME if is_dark else LIGHT_THEME
-            self._text_color = theme.get("TEXT", ft.Colors.BLACK)
-            
-            self.content = self.build()
-            try:
-                self.update()
-            except AssertionError:
-                # Component not yet added to page, this is okay
-                pass
-        except Exception as e:
-            logging.error(f"AirConditionComponent: Error updating UI: {e}")
-    
-    def build(self):
-        """Build individual component based on metric type."""
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK if self.page else False
-        
-        # Get translation service
-        translation_service = None
-        if self.page and hasattr(self.page, 'session'):
-            translation_service = self.page.session.get('translation_service')
-        
-        # Define component configurations
-        components_config = {
-            "feels_like": {
-                "icon": ft.Icons.THERMOSTAT_OUTLINED,
-                "color": ft.Colors.ORANGE_400,
-                "light_bg": ft.Colors.ORANGE_50,
-                "dark_bg": ft.Colors.ORANGE_900,
-                "label_key": "feels_like"
-            },
-            "humidity": {
-                "icon": ft.Icons.WATER_DROP_OUTLINED,
-                "color": ft.Colors.BLUE_400,
-                "light_bg": ft.Colors.BLUE_50,
-                "dark_bg": ft.Colors.BLUE_900,
-                "label_key": "humidity"
-            },
-            "wind": {
-                "icon": ft.Icons.AIR,
-                "color": ft.Colors.TEAL_400,
-                "light_bg": ft.Colors.TEAL_50,
-                "dark_bg": ft.Colors.TEAL_900,
-                "label_key": "wind"
-            },
-            "pressure": {
-                "icon": ft.Icons.COMPRESS_OUTLINED,
-                "color": ft.Colors.PURPLE_400,
-                "light_bg": ft.Colors.PURPLE_50,
-                "dark_bg": ft.Colors.PURPLE_900,
-                "label_key": "pressure"
-            },
-            "visibility": {
-                "icon": ft.Icons.VISIBILITY_OUTLINED,
-                "color": ft.Colors.CYAN_400,
-                "light_bg": ft.Colors.CYAN_50,
-                "dark_bg": ft.Colors.CYAN_900,
-                "label_key": "visibility"
-            },
-            "uv_index": {
-                "icon": ft.Icons.WB_SUNNY_OUTLINED,
-                "color": ft.Colors.YELLOW_600,
-                "light_bg": ft.Colors.YELLOW_50,
-                "dark_bg": ft.Colors.YELLOW_900,
-                "label_key": "uv_index"
-            },
-            "dew_point": {
-                "icon": ft.Icons.WATER_OUTLINED,
-                "color": ft.Colors.INDIGO_400,
-                "light_bg": ft.Colors.INDIGO_50,
-                "dark_bg": ft.Colors.INDIGO_900,
-                "label_key": "dew_point"
-            },
-            "cloud_coverage": {
-                "icon": ft.Icons.CLOUD_OUTLINED,
-                "color": ft.Colors.GREY_600,
-                "light_bg": ft.Colors.GREY_50,
-                "dark_bg": ft.Colors.GREY_800,
-                "label_key": "cloud_coverage"
-            }
-        }
-        
-        config = components_config.get(self.metric_type, components_config["feels_like"])
-        
-        # Get translated label
-        label_text = self.metric_type
-        if translation_service:
-            label_text = translation_service.translate_from_dict(
-                "air_condition_items", 
-                config["label_key"],
-                self._language
-            ) or self.metric_type
-        
-        # Icon with background
-        icon_container = ft.Container(
-            content=ft.Icon(
-                config["icon"],
-                size=20,
-                color=config["color"]
-            ),
-            bgcolor=config["light_bg"] if not is_dark else config["dark_bg"],
-            padding=10,
-            border_radius=10,
-        )
-        
-        # Value and unit
-        value_text = ft.Text(
-            f"{self.value}{self.unit}",
-            size=self._text_handler.get_size('value'),
-            weight=ft.FontWeight.BOLD,
-            color=self._text_color,
-        )
-        
-        # Label
-        label_text_widget = ft.Text(
-            label_text.title(),
-            size=self._text_handler.get_size('label'),
-            color=ft.Colors.with_opacity(0.7, self._text_color),
-            weight=ft.FontWeight.W_500,
-        )
-        
-        # Special handling for wind direction
-        additional_info = None
-        if self.metric_type == "wind" and self.wind_direction is not None:
-            wind_icon, wind_desc = get_wind_direction_icon(self.wind_direction)
-            additional_info = ft.Row([
-                ft.Icon(
-                    wind_icon,
-                    size=12,
-                    color=config["color"]
-                ),
-                ft.Text(
-                    f"{wind_desc} ({self.wind_direction}°)",
-                    size=8,
-                    color=ft.Colors.with_opacity(0.8, self._text_color),
-                )
-            ], spacing=2, alignment=ft.MainAxisAlignment.CENTER)
-        
-        # Build content based on layout
-        content_items = [
-            ft.Row([
-                icon_container,
-                ft.Container(width=8),
-                ft.Column([
-                    value_text,
-                    label_text_widget,
-                ], spacing=1, alignment=ft.MainAxisAlignment.CENTER)
-            ], alignment=ft.MainAxisAlignment.START)
-        ]
-        
-        if additional_info:
-            content_items.append(ft.Container(height=4))
-            content_items.append(additional_info)
-        
-        return ft.Container(
-            content=ft.Column(content_items, spacing=4),
-            bgcolor=ft.Colors.with_opacity(0.03, ft.Colors.WHITE if not is_dark else ft.Colors.BLACK),
-            border=ft.border.all(
-                1,
-                ft.Colors.with_opacity(0.1, ft.Colors.GREY_400 if not is_dark else ft.Colors.GREY_600)
-            ),
-            border_radius=12,
-            padding=12,
-            margin=2,
-            animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
-            ink=True,
-        )
-
-
 class AirConditionInfo(ft.Container):
     """
-    Air condition information display with separated components.
+    Air condition information display - simplified elementary approach.
     """
 
     def __init__(self, city: str, feels_like: int, humidity: int, wind_speed: int,
@@ -269,8 +58,8 @@ class AirConditionInfo(ft.Container):
         self._feels_like_data = feels_like
         self._humidity_data = humidity
         self._wind_speed_data = wind_speed
-        self._wind_direction_data = wind_direction  # Aggiungiamo la direzione del vento
-        self._wind_gust_data = wind_gust  # Aggiungiamo le raffiche di vento
+        self._wind_direction_data = wind_direction
+        self._wind_gust_data = wind_gust
         self._pressure_data = pressure
         self._visibility_data = visibility
         self._uv_index_data = uv_index
@@ -279,60 +68,42 @@ class AirConditionInfo(ft.Container):
         self.page = page
         
         self._state_manager = None
-        self._language = DEFAULT_LANGUAGE
-        self._unit_system = DEFAULT_UNIT_SYSTEM
-        self._text_color = LIGHT_THEME["TEXT"]
-        self.padding = 20
+        self._current_language = DEFAULT_LANGUAGE
+        self._current_unit_system = DEFAULT_UNIT_SYSTEM
+        self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+        self.padding = 16
         self._api_service = ApiService()
 
         self._text_handler = ResponsiveTextHandler(
             page=self.page,
-            base_sizes={
-                'title': 24, 'label': 16, 'value': 16, 'icon': 20,
-            },
+            base_sizes={'title': 24, 'label': 16, 'value': 16, 'icon': 20},
             breakpoints=[600, 900, 1200, 1600]
         )
 
-        if self.page:
-            if hasattr(self.page, 'session') and self.page.session.get('state_manager'):
-                self._state_manager = self.page.session.get('state_manager')
-                self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-                self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
-                self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
-
-            original_on_resize = self.page.on_resize
-            def resize_handler(e):
-                if original_on_resize:
-                    original_on_resize(e)
-                if self._text_handler:
-                    self._text_handler._handle_resize(e)
-                if self.page:
-                    self.page.run_task(self.update_ui)
-            self.page.on_resize = resize_handler
+        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+            self._state_manager = self.page.session.get('state_manager')
 
         self.content = self.build()
-        # Don't auto-update on init - wait for page to be ready
 
-    async def update_ui(self, event_data=None):
-        """Updates the UI based on state changes, fetching new data if necessary."""
-        if not self.page or not self.visible:
+    async def update(self):
+        """Update language, unit, theme and rebuild content."""
+        if not self.page:
             return
 
         try:
             if self._state_manager:
-                new_language = self._state_manager.get_state('language') or self._language
-                new_unit_system = self._state_manager.get_state('unit') or self._unit_system
+                new_language = self._state_manager.get_state('language') or self._current_language
+                new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
                 
-                unit_changed = self._unit_system != new_unit_system
+                unit_changed = self._current_unit_system != new_unit_system
+                self._current_language = new_language
+                self._current_unit_system = new_unit_system
 
-                self._language = new_language
-                self._unit_system = new_unit_system
-
-                # Only fetch new data if unit system changed (language doesn't affect weather data)
+                # Only fetch new data if unit system changed
                 if unit_changed:
                     weather_data = await asyncio.to_thread(
                         self._api_service.get_weather_data,
-                        city=self._city, language=self._language, unit=self._unit_system
+                        city=self._city, language=self._current_language, unit=self._current_unit_system
                     )
                     if weather_data:
                         self._feels_like_data = self._api_service.get_feels_like_temperature(weather_data)
@@ -348,494 +119,324 @@ class AirConditionInfo(ft.Container):
 
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             theme = DARK_THEME if is_dark else LIGHT_THEME
-            self._text_color = theme.get("TEXT", ft.Colors.BLACK)
+            self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
-            # Always rebuild content for translations/theme changes
             self.content = self.build()
             try:
-                self.update()
+                super().update()
             except AssertionError:
-                # Component not yet added to page, this is okay
                 pass
         except Exception as e:
-            logging.error(f"AirConditionInfo: Error updating UI: {e}\n{traceback.format_exc()}")
+            logging.error(f"AirConditionInfo: Error updating: {e}\n{traceback.format_exc()}")
 
     def build(self):
-        """Create the air condition display with grouped components."""
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK if self.page else False
+        """Create the air condition display following AirPollution's modern design."""
+        if not self._feels_like_data and not self._humidity_data:
+            loading_text = "Loading air conditions..."
+            return ft.Column([
+                self._build_header(),
+                ft.Container(
+                    content=ft.Text(
+                        loading_text,
+                        color=self._current_text_color,
+                        size=16
+                    ),
+                    alignment=ft.alignment.center,
+                    padding=ft.padding.all(20)
+                )
+            ])
+
+        # Build header
+        header = self._build_header()
         
+        # Build metric cards
+        cards = self._build_metric_cards()
+        
+        # Cards container with responsive grid layout
+        cards_container = self._build_responsive_grid(cards)
+        
+        return ft.Column([
+            header,
+            cards_container
+        ], spacing=8)
+    
+    def _build_header(self):
+        """Builds a modern header for air condition section."""
         # Get translation service
         translation_service = None
         if self.page and hasattr(self.page, 'session'):
             translation_service = self.page.session.get('translation_service')
         
-        # Get title
-        title_text = "Air Conditions"  # Default fallback
+        header_text = "Condizioni dell'aria"
         if translation_service:
-            title_text = translation_service.translate_from_dict("air_condition_items", "air_condition_title", self._language) or title_text
+            header_text = translation_service.translate_from_dict("air_condition_items", "air_condition_title", self._current_language) or header_text
         
-        # Create title row
-        air_condition_title = ft.Row(
-            controls=[
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        
+        return ft.Container(
+            content=ft.Row([
                 ft.Icon(
-                    ft.Icons.AIR, 
-                    color=ft.Colors.YELLOW_400 if not is_dark else ft.Colors.YELLOW_300,
+                    ft.Icons.AIR_OUTLINED,
+                    color=ft.Colors.BLUE_400 if not is_dark else ft.Colors.BLUE_300,
                     size=24
                 ),
                 ft.Container(width=12),  # Spacer
                 ft.Text(
-                    title_text, 
-                    size=self._text_handler.get_size('axis_title') + 2,
+                    header_text,
+                    size=20,
                     weight=ft.FontWeight.BOLD,
-                    color=self._text_color
+                    color=self._current_text_color
                 ),
-            ],
-            alignment=ft.MainAxisAlignment.START,
-            spacing=10,
-        )
-        
-        # Get grouped components
-        air_condition_grid = self._build_air_condition_grid()
-        
-        return ft.Column(
-            controls=[
-                air_condition_title,
-                ft.Container(height=12),
-                air_condition_grid
-            ],
-            spacing=0,
-            alignment=ft.MainAxisAlignment.START
+            ], alignment=ft.MainAxisAlignment.START),
+            padding=ft.padding.only(left=20, top=20, bottom=10)
         )
     
-    def _build_air_condition_grid(self):
-        """Build the grid layout for air condition components."""
-        # Get separated components
-        components = self.get_separated_components()
+    def _build_metric_cards(self):
+        """Builds modern cards for each air condition metric."""
+        # Get translation service
+        translation_service = None
+        if self.page and hasattr(self.page, 'session'):
+            translation_service = self.page.session.get('translation_service')
         
-        if not components:
-            return ft.Container(
-                content=ft.Text(
-                    "No air condition data available", 
-                    size=14, 
-                    color=ft.Colors.GREY
-                ),
-                height=150,
-                alignment=ft.alignment.center
-            )
-        
-        # Create rows for the grid layout with improved spacing
-        grid_controls = []
-        
-        # Temperature group (feels_like, dew_point)
-        if 'temperature' in components:
-            grid_controls.append(components['temperature'])
-        
-        # Wind group (wind_speed, wind_direction, wind_gust)
-        if 'wind' in components:
-            grid_controls.append(components['wind'])
-        
-        # Atmospheric group (humidity, pressure, visibility)
-        if 'atmospheric' in components:
-            grid_controls.append(components['atmospheric'])
-        
-        # Solar group (uv_index, cloud_coverage)
-        if 'solar' in components:
-            grid_controls.append(components['solar'])
-        
-        # Return responsive row layout that organizes components horizontally
-        # On small screens, components will wrap to new lines
-        return ft.ResponsiveRow(
-            controls=[
-                ft.Container(
-                    content=component,
-                    col={"xs": 12, "sm": 6, "md": 6, "lg": 3, "xl": 3},  # 4 columns on large screens, 2 on medium, 1 on small
-                    padding=ft.padding.symmetric(horizontal=4, vertical=4)
-                ) for component in grid_controls
-            ],
-            spacing=8,
-            run_spacing=8,  # Spacing between wrapped rows
-        )
-    
-    def get_separated_components(self):
-        """
-        Returns grouped air condition components as separate containers.
-        Groups related metrics together for better organization.
-        """
         # Get unit symbols
-        temp_unit = TranslationService.get_unit_symbol("temperature", self._unit_system)
-        wind_unit = TranslationService.get_unit_symbol("wind", self._unit_system)
-        pressure_unit = TranslationService.get_unit_symbol("pressure", self._unit_system)
+        temp_unit = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
+        wind_unit = TranslationService.get_unit_symbol("wind", self._current_unit_system)
+        pressure_unit = TranslationService.get_unit_symbol("pressure", self._current_unit_system)
         
-        # Get translation service
-        translation_service = None
-        if self.page and hasattr(self.page, 'session'):
-            translation_service = self.page.session.get('translation_service')
-        
-        def get_translated_label(key):
+        # Helper to get translations
+        def get_label(key):
             if translation_service:
-                return translation_service.translate_from_dict(
-                    "air_condition_items", key, self._language
-                ) or key.replace('_', ' ').title()
+                return translation_service.translate_from_dict("air_condition_items", key, self._current_language) or key.replace('_', ' ').title()
             return key.replace('_', ' ').title()
         
-        # Create grouped components
-        components = {}
+        metric_configs = [
+            {"key": "feels_like", "data": self._feels_like_data, "unit": temp_unit, "icon": ft.Icons.THERMOSTAT_OUTLINED, "color": "orange"},
+            {"key": "humidity", "data": self._humidity_data, "unit": "%", "icon": ft.Icons.WATER_DROP_OUTLINED, "color": "blue"},
+            {"key": "wind", "data": self._wind_speed_data, "unit": wind_unit, "icon": ft.Icons.AIR, "color": "teal"},
+            {"key": "pressure", "data": self._pressure_data, "unit": pressure_unit, "icon": ft.Icons.SPEED, "color": "purple"},
+            {"key": "visibility", "data": self._visibility_data, "unit": "m", "icon": ft.Icons.VISIBILITY_OUTLINED, "color": "cyan"},
+            {"key": "uv_index", "data": self._uv_index_data, "unit": "", "icon": ft.Icons.WB_SUNNY_OUTLINED, "color": "yellow"},
+            {"key": "dew_point", "data": self._dew_point_data, "unit": temp_unit, "icon": ft.Icons.WATER_OUTLINED, "color": "indigo"},
+            {"key": "cloud_coverage", "data": self._cloud_coverage_data, "unit": "%", "icon": ft.Icons.CLOUD_OUTLINED, "color": "grey"},
+        ]
         
-        # Temperature Group (Feels Like + Dew Point)
-        temperature_metrics = []
-        if self._feels_like_data is not None:
-            temperature_metrics.append({
-                'label': get_translated_label('feels_like'),
-                'label_key': 'feels_like',  # Store the key for re-translation
-                'value': self._feels_like_data,
-                'unit': temp_unit
-            })
-        if self._dew_point_data is not None:
-            temperature_metrics.append({
-                'label': get_translated_label('dew_point'),
-                'label_key': 'dew_point',  # Store the key for re-translation
-                'value': self._dew_point_data,
-                'unit': temp_unit
-            })
+        cards = []
         
-        if temperature_metrics:
-            components["temperature"] = AirConditionGroupComponent(
-                group_type="temperature",
-                metrics=temperature_metrics,
-                page=self.page
-            )
+        for config in metric_configs:
+            if config["data"] is not None:
+                value = config["data"]
+                
+                # Special formatting for wind (add direction)
+                if config["key"] == "wind" and self._wind_direction_data is not None:
+                    wind_icon, wind_desc = get_wind_direction_icon(self._wind_direction_data)
+                    value_text = f"{value} {config['unit']} {wind_desc}"
+                else:
+                    value_text = f"{value}{config['unit']}"
+                
+                # Special formatting for visibility (convert to km)
+                if config["key"] == "visibility":
+                    value_text = f"{value/1000:.1f} km"
+                
+                # Special formatting for UV index
+                if config["key"] == "uv_index":
+                    value_text = f"{round(value, 1)}"
+                
+                name = get_label(config["key"])
+                
+                card = self._create_metric_card(
+                    icon=config["icon"],
+                    name=name,
+                    value_text=value_text,
+                    raw_value=value,
+                    metric_key=config["key"],
+                    color_scheme=config["color"]
+                )
+                cards.append(card)
         
-        # Humidity & Air Group (Humidity + Cloud Coverage)
-        humidity_air_metrics = []
-        if self._humidity_data is not None:
-            humidity_air_metrics.append({
-                'label': get_translated_label('humidity'),
-                'label_key': 'humidity',  # Store the key for re-translation
-                'value': self._humidity_data,
-                'unit': '%'
-            })
-        if self._cloud_coverage_data is not None:
-            humidity_air_metrics.append({
-                'label': get_translated_label('cloud_coverage'),
-                'label_key': 'cloud_coverage',  # Store the key for re-translation
-                'value': self._cloud_coverage_data,
-                'unit': '%'
-            })
-        
-        if humidity_air_metrics:
-            components["humidity_air"] = AirConditionGroupComponent(
-                group_type="humidity_air",
-                metrics=humidity_air_metrics,
-                page=self.page
-            )
-        
-        # Wind Group (Wind Speed + Direction + Gust)
-        wind_metrics = []
-        
-        # 1. Wind Speed (Vento)
-        if self._wind_speed_data is not None:
-            wind_metrics.append({
-                'label': get_translated_label('wind'),
-                'label_key': 'wind',  # Store the key for re-translation
-                'value': self._wind_speed_data,
-                'unit': f' {wind_unit}'
-            })
-        
-        # 2. Wind Direction (Angolazione)
-        if self._wind_direction_data is not None:
-            wind_icon, wind_desc = get_wind_direction_icon(self._wind_direction_data)
-            wind_metrics.append({
-                'label': get_translated_label('wind_direction'),
-                'label_key': 'wind_direction',  # Store the key for re-translation
-                'value': f"{wind_desc}",  # Show direction description
-                'unit': f" {self._wind_direction_data}°",  # Show degrees as unit
-                'wind_icon': wind_icon,  # Pass the wind direction icon
-                'wind_desc': wind_desc,  # Pass the wind direction description
-                'wind_direction': self._wind_direction_data  # Pass the wind direction degrees
-            })
-        
-        # 3. Wind Gust (Raffica)
-        if self._wind_gust_data is not None:
-            wind_metrics.append({
-                'label': get_translated_label('wind_gust'),
-                'label_key': 'wind_gust',  # Store the key for re-translation
-                'value': round(self._wind_gust_data, 1),  # Round to 1 decimal place
-                'unit': f' {wind_unit}'
-            })
-        
-        if wind_metrics:
-            components["wind"] = AirConditionGroupComponent(
-                group_type="wind",
-                metrics=wind_metrics,
-                page=self.page
-            )
-        
-        # Atmospheric Group (Pressure + Visibility)
-        atmospheric_metrics = []
-        if self._pressure_data is not None:
-            atmospheric_metrics.append({
-                'label': get_translated_label('pressure'),
-                'label_key': 'pressure',  # Store the key for re-translation
-                'value': self._pressure_data,
-                'unit': f' {pressure_unit}'
-            })
-        if self._visibility_data is not None:
-            atmospheric_metrics.append({
-                'label': get_translated_label('visibility'),
-                'label_key': 'visibility',  # Store the key for re-translation
-                'value': self._visibility_data,
-                'unit': ' m'
-            })
-        
-        if atmospheric_metrics:
-            components["atmospheric"] = AirConditionGroupComponent(
-                group_type="atmospheric",
-                metrics=atmospheric_metrics,
-                page=self.page
-            )
-        
-        # Solar Group (UV Index)
-        solar_metrics = []
-        if self._uv_index_data is not None:
-            solar_metrics.append({
-                'label': get_translated_label('uv_index'),
-                'label_key': 'uv_index',  # Store the key for re-translation
-                'value': round(self._uv_index_data, 1),
-                'unit': ''
-            })
-        
-        if solar_metrics:
-            components["solar"] = AirConditionGroupComponent(
-                group_type="solar",
-                metrics=solar_metrics,
-                page=self.page
-            )
-        
-        return components
-
-class AirConditionGroupComponent(ft.Container):
-    """
-    Group component that contains multiple related air condition metrics.
-    """
+        return cards
     
-    def __init__(self, group_type: str, metrics: list, page: ft.Page = None, **kwargs):
-        super().__init__(**kwargs)
-        self.group_type = group_type
-        self.metrics = metrics  # List of dictionaries with metric data
-        self.page = page
-        
-        self._state_manager = None
-        self._language = DEFAULT_LANGUAGE
-        self._text_color = LIGHT_THEME["TEXT"]
-        
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={'title': 14, 'label': 10, 'value': 12, 'icon': 18},
-            breakpoints=[600, 900, 1200, 1600]
-        )
-        
-        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
-            self._state_manager = self.page.session.get('state_manager')
-            self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
-        
-        self.content = self.build()
-        # Don't auto-update on init - wait for page to be ready
-    
-    async def update_ui(self, event_data=None):
-        """Update UI based on theme/language changes."""
-        if not self.page or not self.visible:
-            return
-        
-        try:
-            if self._state_manager:
-                self._language = self._state_manager.get_state('language') or self._language
-            
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            theme = DARK_THEME if is_dark else LIGHT_THEME
-            self._text_color = theme.get("TEXT", ft.Colors.BLACK)
-            
-            self.content = self.build()
-            try:
-                self.update()
-            except AssertionError:
-                # Component not yet added to page, this is okay
-                pass
-        except Exception as e:
-            logging.error(f"AirConditionGroupComponent: Error updating UI: {e}")
-    
-    def build(self):
-        """Build group component with multiple metrics."""
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK if self.page else False
-        
-        # Get translation service
-        translation_service = None
-        if self.page and hasattr(self.page, 'session'):
-            translation_service = self.page.session.get('translation_service')
-        
-        # Helper function to re-translate labels dynamically
-        def get_translated_label(key):
-            if translation_service:
-                return translation_service.translate_from_dict(
-                    "air_condition_items", key, self._language
-                ) or key.replace('_', ' ').title()
-            return key.replace('_', ' ').title()
-        
-        # Define group configurations
-        group_configs = {
-            "temperature": {
-                "title": "Temperature",
-                "icon": ft.Icons.THERMOSTAT_OUTLINED,
-                "color": ft.Colors.ORANGE_400,
-                "light_bg": ft.Colors.ORANGE_50,
-                "dark_bg": ft.Colors.ORANGE_900,
-            },
-            "humidity_air": {
-                "title": "Humidity & Air",
-                "icon": ft.Icons.WATER_DROP_OUTLINED,
-                "color": ft.Colors.BLUE_400,
-                "light_bg": ft.Colors.BLUE_50,
-                "dark_bg": ft.Colors.BLUE_900,
-            },
-            "wind": {
-                "title": "Wind",
-                "icon": ft.Icons.AIR,
-                "color": ft.Colors.TEAL_400,
-                "light_bg": ft.Colors.TEAL_50,
-                "dark_bg": ft.Colors.TEAL_900,
-            },
-            "atmospheric": {
-                "title": "Atmospheric",
-                "icon": ft.Icons.COMPRESS_OUTLINED,
-                "color": ft.Colors.PURPLE_400,
-                "light_bg": ft.Colors.PURPLE_50,
-                "dark_bg": ft.Colors.PURPLE_900,
-            },
-            "solar": {
-                "title": "Solar",
-                "icon": ft.Icons.WB_SUNNY_OUTLINED,
-                "color": ft.Colors.YELLOW_600,
-                "light_bg": ft.Colors.YELLOW_50,
-                "dark_bg": ft.Colors.YELLOW_900,
-            }
+    def _create_metric_card(self, icon, name, value_text, raw_value, metric_key, color_scheme="blue"):
+        """Creates a modern card for a single air condition metric."""
+        # Color schemes
+        color_schemes = {
+            "orange": {"bg": ft.Colors.ORANGE_400, "light": ft.Colors.ORANGE_100},
+            "blue": {"bg": ft.Colors.BLUE_400, "light": ft.Colors.BLUE_100},
+            "teal": {"bg": ft.Colors.TEAL_400, "light": ft.Colors.TEAL_100},
+            "purple": {"bg": ft.Colors.PURPLE_400, "light": ft.Colors.PURPLE_100},
+            "cyan": {"bg": ft.Colors.CYAN_400, "light": ft.Colors.CYAN_100},
+            "yellow": {"bg": ft.Colors.YELLOW_600, "light": ft.Colors.YELLOW_100},
+            "indigo": {"bg": ft.Colors.INDIGO_400, "light": ft.Colors.INDIGO_100},
+            "grey": {"bg": ft.Colors.GREY_600, "light": ft.Colors.GREY_100},
         }
         
-        config = group_configs.get(self.group_type, group_configs["temperature"])
+        scheme = color_schemes.get(color_scheme, color_schemes["blue"])
         
-        # Build metrics list with dynamic label translation
-        metrics_widgets = []
-        for metric in self.metrics:
-            if metric.get('value') is not None:
-                # Re-translate label based on current language
-                label_key = metric.get('label_key', metric.get('label', '').lower().replace(' ', '_'))
-                
-                # Get translated label directly using the stored label_key
-                translated_label = get_translated_label(label_key)
-                
-                # Create value text and additional elements
-                value_elements = [
-                    ft.Text(
-                        f"{metric['value']}{metric.get('unit', '')}",
-                        size=self._text_handler.get_size('value'),
-                        weight=ft.FontWeight.BOLD,
-                        color=self._text_color,
-                    )
-                ]
-                
-                # Add wind direction icon and angle if available
-                if metric.get('wind_icon') and metric.get('wind_desc'):
-                    value_elements.append(
-                        ft.Container(width=8)  # Small spacing
-                    )
-                    value_elements.append(
-                        ft.Icon(
-                            metric['wind_icon'],
-                            size=16,
-                            color=config.get("color", ft.Colors.TEAL_400),
-                        )
-                    )
-                    
-                
-                # Create individual metric row
-                metric_row = ft.Row([
-                    ft.Text(
-                        f"{translated_label}:",
-                        size=self._text_handler.get_size('label'),
-                        color=ft.Colors.with_opacity(0.7, self._text_color),
-                        weight=ft.FontWeight.W_500,
-                        width=80,
-                    ),
-                    ft.Row(
-                        value_elements,
-                        spacing=0,
-                        alignment=ft.MainAxisAlignment.END
-                    )
-                ], spacing=8, alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
-                
-                metrics_widgets.append(metric_row)
-        
-        if not metrics_widgets:
-            return ft.Container(
-                content=ft.Text("No data available", size=12),
-                height=80,
-                alignment=ft.alignment.center
+        # Icon container
+        icon_container = ft.Container(
+            content=ft.Icon(
+                icon,
+                color=ft.Colors.WHITE,
+                size=20
+            ),
+            width=40,
+            height=40,
+            bgcolor=scheme["bg"],
+            border_radius=20,
+            alignment=ft.alignment.center,
+            shadow=ft.BoxShadow(
+                spread_radius=0,
+                blur_radius=6,
+                color=ft.Colors.with_opacity(0.25, scheme["bg"]),
+                offset=ft.Offset(0, 2)
             )
+        )
         
-        # Group title - ensure it's always translated
-        title_text = config["title"]  # Fallback
-        if translation_service:
-            try:
-                # Try to get translated title using group_type + "_group" pattern
-                translated_title = translation_service.translate_from_dict(
-                    "air_condition_items", 
-                    f"{self.group_type}_group",
-                    self._language
-                )
-                if translated_title:
-                    title_text = translated_title
-                    logging.debug(f"Successfully translated {self.group_type}_group to '{translated_title}' for language {self._language}")
+        # Quality indicator based on metric type
+        def get_quality_indicator(value, key):
+            if key == "humidity":
+                if 30 <= value <= 50:
+                    return ("Ideale", ft.Colors.GREEN_400)
+                elif 20 <= value <= 70:
+                    return ("Buona", ft.Colors.BLUE_400)
                 else:
-                    # Debug: log if translation not found
-                    logging.debug(f"Translation not found for {self.group_type}_group in language {self._language}, using fallback: {title_text}")
-            except Exception as e:
-                logging.error(f"Error translating group title: {e}")
-        else:
-            logging.debug(f"Translation service not available for group {self.group_type}, using fallback: {title_text}")
+                    return ("Non ideale", ft.Colors.ORANGE_400)
+            elif key == "uv_index":
+                if value <= 2:
+                    return ("Basso", ft.Colors.GREEN_400)
+                elif value <= 5:
+                    return ("Moderato", ft.Colors.YELLOW_600)
+                elif value <= 7:
+                    return ("Alto", ft.Colors.ORANGE_400)
+                else:
+                    return ("Molto alto", ft.Colors.RED_400)
+            elif key == "pressure":
+                if 1013 <= value <= 1023:
+                    return ("Normale", ft.Colors.GREEN_400)
+                elif value < 1013:
+                    return ("Bassa", ft.Colors.BLUE_400)
+                else:
+                    return ("Alta", ft.Colors.ORANGE_400)
+            elif key == "visibility":
+                if value >= 10000:
+                    return ("Ottima", ft.Colors.GREEN_400)
+                elif value >= 5000:
+                    return ("Buona", ft.Colors.BLUE_400)
+                else:
+                    return ("Limitata", ft.Colors.ORANGE_400)
+            else:
+                return ("", ft.Colors.TRANSPARENT)
+        
+        quality_text, quality_color = get_quality_indicator(raw_value, metric_key)
+        
+        quality_badge = ft.Container(
+            content=ft.Text(
+                quality_text,
+                size=10,
+                color=ft.Colors.WHITE,
+                weight=ft.FontWeight.W_600
+            ),
+            bgcolor=quality_color,
+            padding=ft.padding.symmetric(horizontal=6, vertical=2),
+            border_radius=8,
+            visible=bool(quality_text)
+        )
+        
+        # Card content
+        card_content = ft.Column([
+            ft.Row([
+                icon_container,
+                ft.Container(width=8),
+                ft.Column([
+                    ft.Text(
+                        value_text,
+                        size=14,
+                        weight=ft.FontWeight.BOLD,
+                        color=self._current_text_color,
+                        max_lines=1,
+                        overflow=ft.TextOverflow.ELLIPSIS
+                    ),
+                    ft.Text(
+                        name,
+                        size=11,
+                        color=ft.Colors.with_opacity(0.7, self._current_text_color),
+                        max_lines=1,
+                        overflow=ft.TextOverflow.ELLIPSIS
+                    )
+                ], spacing=2, alignment=ft.MainAxisAlignment.CENTER, expand=True)
+            ], alignment=ft.MainAxisAlignment.START),
+            ft.Container(height=4),  # Spacer
+            ft.Row([
+                ft.Container(expand=True),
+                quality_badge
+            ], alignment=ft.MainAxisAlignment.END) if quality_text else ft.Container(height=18)
+        ], spacing=4)
+        
+        # Card container
+        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         
         return ft.Container(
-            content=ft.Column([
-                # Group header with icon
-                ft.Container(
-                    content=ft.Row([
-                        ft.Icon(
-                            config["icon"],
-                            size=18,
-                            color=config["color"]
-                        ),
-                        ft.Container(width=6),  # Small spacing
-                        ft.Text(
-                            title_text,
-                            size=self._text_handler.get_size('axis_title') + 2,
-                            weight=ft.FontWeight.BOLD,
-                            color=config["color"],
-                        )
-                    ], alignment=ft.MainAxisAlignment.START),
-                    padding=ft.padding.only(bottom=8),
-                ),
-                # Metrics
-                ft.Column(
-                    metrics_widgets,
-                    spacing=6,
-                )
-            ], spacing=4),
-            bgcolor=ft.Colors.with_opacity(0.03, ft.Colors.WHITE if not is_dark else ft.Colors.BLACK),
+            content=card_content,
+            width=None,  # Let container expand based on available space
+            height=100,   # Slightly smaller than air pollution cards
+            padding=ft.padding.all(14),
+            border_radius=14,
+            bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.WHITE if not is_dark else ft.Colors.BLACK),
             border=ft.border.all(
-                1,
-                ft.Colors.with_opacity(0.1, config["color"])
+                1, 
+                ft.Colors.with_opacity(0.1, ft.Colors.GREY_400 if not is_dark else ft.Colors.GREY_600)
             ),
-            border_radius=12,
-            padding=16,
-            margin=2,
+            shadow=ft.BoxShadow(
+                spread_radius=0,
+                blur_radius=8,
+                color=ft.Colors.with_opacity(0.08, ft.Colors.BLACK),
+                offset=ft.Offset(0, 2)
+            ),
             animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
+            expand=True  # Allow card to expand within its container
+        )
+    
+    def _build_responsive_grid(self, cards):
+        """Creates a responsive grid layout for cards."""
+        if not cards:
+            return ft.Container()
+        
+        # Calculate cards per row based on screen size
+        if self.page and hasattr(self.page, 'window') and self.page.window:
+            screen_width = self.page.window.width or 1200
+        else:
+            screen_width = 1200
+        
+        # Determine optimal card count per row
+        if screen_width < 600:
+            cards_per_row = 1
+        elif screen_width < 900:
+            cards_per_row = 2
+        elif screen_width < 1200:
+            cards_per_row = 3
+        else:
+            cards_per_row = 4
+        
+        # Split cards into rows
+        rows = []
+        for i in range(0, len(cards), cards_per_row):
+            row_cards = cards[i:i + cards_per_row]
+            # Pad the last row if needed
+            while len(row_cards) < cards_per_row:
+                row_cards.append(ft.Container(expand=True))
+            
+            row = ft.Row(
+                controls=row_cards,
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=12,
+                tight=False
+            )
+            rows.append(row)
+        
+        return ft.Container(
+            content=ft.Column(
+                controls=rows,
+                spacing=12,
+                alignment=ft.MainAxisAlignment.START
+            ),
+            padding=ft.padding.symmetric(horizontal=20, vertical=10)
         )

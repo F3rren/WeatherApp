@@ -191,6 +191,13 @@ class WeatherView:
             logging.warning(f"Error updating containers after theme change: {e}")
         
         self._safe_update()
+        
+        # Force update info container specifically for MainWeatherInfo
+        if self.info_container:
+            try:
+                self.info_container.update()
+            except (AssertionError, AttributeError):
+                pass
 
     def handle_unit_text_change(self, event_data=None):
         """Handles unit text change events by updating relevant UI text parts without a full rebuild."""
@@ -362,9 +369,9 @@ class WeatherView:
                 await self._update_air_pollution_chart(lat, lon) # Add air pollution chart update
                 await self._update_precipitation_chart(self.weather_data) # CHANGED: Use precipitation chart with weather data
             else:
-                print("No coordinates available for air pollution data")
+                logging.error("No coordinates available for air pollution data")
         except (KeyError, IndexError, TypeError) as e:
-            print(f"Error getting coordinates for air pollution: {e}")
+            logging.error(f"Error getting coordinates for air pollution: {e}")
         self._safe_update()
 
     async def _update_location_in_state(self, city: str, lat: float, lon: float):
@@ -410,11 +417,14 @@ class WeatherView:
             expand=True # Ensure it expands if needed within the column
         )
 
-        # Immediately set the additional weather data
+        # IMPORTANTE: Imposta i dati aggiuntivi PRIMA di inizializzare il contenuto
         self.main_weather_info_instance._weather_description = weather_description
         self.main_weather_info_instance._feels_like = feels_like
         self.main_weather_info_instance._temp_min = temp_min
         self.main_weather_info_instance._temp_max = temp_max
+        
+        # Aggiorna lo stato del componente per assicurarsi che rifletta il tema/lingua correnti
+        self.main_weather_info_instance.update()
         
         # Prepara i controlli per il container info (main info)
         info_controls = [
@@ -436,6 +446,13 @@ class WeatherView:
             spacing=5,
             expand=True
         )
+
+        # IMPORTANTE: Aggiorna il container dopo aver cambiato il contenuto
+        try:
+            self.info_container.update()
+        except (AssertionError, AttributeError):
+            # Container not yet added to page, skip update
+            pass
 
         # IMPORTANTE: Aggiorna anche i container wrapper nel layout manager
         # Questo assicura che i wrapper facciano riferimento ai container popolati
@@ -503,7 +520,13 @@ class WeatherView:
 
         # The WeatherCard is a generic wrapper, TemperatureChartDisplay is the actual content.
         self.chart_container.content = weather_card.build(self.temperature_chart_instance)
-        # self.chart_container.update() # Covered by page.update() in _update_ui
+        
+        # IMPORTANTE: Aggiorna il container dopo aver cambiato il contenuto
+        try:
+            self.chart_container.update()
+        except (AssertionError, AttributeError):
+            # Container not yet added to page, skip update
+            pass
 
     async def _update_hourly_container(self) -> None:
         """Frontend: Updates hourly forecast UI"""
@@ -511,14 +534,29 @@ class WeatherView:
         self._update_text_color() # Ensure text_color is current for components not self-managing it
 
         # Instantiate the refactored HourlyForecastDisplay
-        self.hourly_forecast_instance = HourlyForecastDisplay(
-            page=self.page,
-            city=self.current_city,
-            # expand=True # HourlyForecastDisplay sets its own expand property if needed
-        )
+        if not hasattr(self, 'hourly_forecast_instance') or not self.hourly_forecast_instance:
+            self.hourly_forecast_instance = HourlyForecastDisplay(
+                page=self.page,
+                city=self.current_city,
+                # expand=True # HourlyForecastDisplay sets its own expand property if needed
+            )
+        else:
+            # Update city if changed
+            if self.hourly_forecast_instance._city != self.current_city:
+                await self.hourly_forecast_instance.update_city(self.current_city)
+        
+        # IMPORTANTE: Aspetta che i dati siano caricati prima di ricostruire il contenuto
+        await self.hourly_forecast_instance.update()
+        
         # The WeatherCard is a generic wrapper, the HourlyForecastDisplay is the actual content.
         self.hourly_container.content = weather_card.build(self.hourly_forecast_instance)
-        # self.hourly_container.update() # Covered by page.update() in _update_ui
+        
+        # IMPORTANTE: Aggiorna il container dopo aver cambiato il contenuto
+        try:
+            self.hourly_container.update()
+        except (AssertionError, AttributeError):
+            # Container not yet added to page, skip update
+            pass
     
     async def _update_air_pollution(self, lat: float, lon: float) -> None:
         """Frontend: Updates air pollution UI using AirPollutionDisplay."""
@@ -532,7 +570,7 @@ class WeatherView:
             )
         else:
             if self.air_pollution_display_instance._lat != lat or self.air_pollution_display_instance._lon != lon:
-                self.air_pollution_display_instance.update_location(lat, lon)
+                await self.air_pollution_display_instance.update_location(lat, lon)
             # Language and theme changes are handled internally by AirPollutionDisplay
 
         # --- FIX: Aggiorna sempre la lingua e l'unità prima del refresh ---
@@ -541,34 +579,42 @@ class WeatherView:
             self.air_pollution_display_instance._current_language = state_manager.get_state('language') or self.air_pollution_display_instance._current_language
             self.air_pollution_display_instance._current_unit = state_manager.get_state('unit') or getattr(self.air_pollution_display_instance, '_current_unit', 'metric')
 
+        # IMPORTANTE: Aspetta che i dati siano caricati prima di ricostruire il contenuto
+        await self.air_pollution_display_instance.update()
 
         self.air_pollution_container.content = weather_card.build(self.air_pollution_display_instance)
-        # self.air_pollution_container.update() # Covered by page.update() in _update_ui
+        
+        # IMPORTANTE: Aggiorna il container dopo aver cambiato il contenuto
+        try:
+            self.air_pollution_container.update()
+        except (AssertionError, AttributeError):
+            # Container not yet added to page, skip update
+            pass
     
     async def _update_precipitation_chart(self, forecast_data: dict) -> None:
         """Frontend: Updates precipitation chart UI using PrecipitationChartDisplay."""
-        print(f"DEBUG: _update_precipitation_chart called with forecast_data keys: {list(forecast_data.keys()) if forecast_data else 'None'}")
+        logging.info(f"DEBUG: _update_precipitation_chart called with forecast_data keys: {list(forecast_data.keys()) if forecast_data else 'None'}")
 
         # Always create a new instance to ensure proper updates
         self.precipitation_chart_instance = PrecipitationChartDisplay(
             page=self.page
         )
-        print("DEBUG: Created new PrecipitationChartDisplay instance")
+        logging.info("DEBUG: Created new PrecipitationChartDisplay instance")
         
         # Update the chart with forecast data
         self.precipitation_chart_instance.update_data(forecast_data)
-        print("DEBUG: Updated precipitation chart with data")
+        logging.info("DEBUG: Updated precipitation chart with data")
 
         # Set the chart directly as content (no wrapper needed)
         self.precipitation_chart_container.content = self.precipitation_chart_instance
-        print("DEBUG: Set precipitation chart container content")
+        logging.info("DEBUG: Set precipitation chart container content")
         
         # Force container update
         try:
             self.precipitation_chart_container.update()
-            print("DEBUG: Updated precipitation chart container")
+            logging.info("DEBUG: Updated precipitation chart container")
         except AssertionError:
-            print("DEBUG: Container not ready for update")
+            logging.error("DEBUG: Container not ready for update")
             pass
 
     async def _update_air_pollution_chart(self, lat: float, lon: float) -> None:
@@ -614,6 +660,9 @@ class WeatherView:
             page=self.page
         )
 
+        # Update component with current state
+        await self.air_condition_instance.update()
+
         # Populate the air condition container
         self.air_condition_container.content = ft.Column(
             controls=[
@@ -636,8 +685,6 @@ class WeatherView:
 
     def _set_loading(self, value: bool):
         self.loading = value
-        # RIMOSSO: logica AlertDialog e print di debug
-        # Nascondi/mostra i container principali
         self.info_container.visible = not value
         # Rimosso air_condition_container perché ora è incluso nel info_container
         self.hourly_container.visible = not value
@@ -692,31 +739,31 @@ class WeatherView:
             
             # Se non troviamo l'istanza, non possiamo aggiornare
             if not main_app or not hasattr(main_app, 'layout_manager'):
-                print("DEBUG: Non è possibile ottenere il riferimento al layout manager per aggiornare i container")
+                logging.error("DEBUG: Non è possibile ottenere il riferimento al layout manager per aggiornare i container")
                 return
             
             # Aggiorna il contenuto dei container wrapper nel layout manager
             # Il wrapper 'info' dovrebbe già puntare al container corretto
             if hasattr(main_app, 'info_container_wrapper') and main_app.info_container_wrapper:
                 main_app.info_container_wrapper.content = self.info_container
-                print("DEBUG: Container wrapper 'info' aggiornato")
+                logging.info("DEBUG: Container wrapper 'info' aggiornato")
                 
             # Aggiorna anche gli altri container se necessario
             if hasattr(main_app, 'hourly_container_wrapper') and main_app.hourly_container_wrapper:
                 main_app.hourly_container_wrapper.content = self.hourly_container
-                print("DEBUG: Container wrapper 'hourly' aggiornato")
+                logging.info("DEBUG: Container wrapper 'hourly' aggiornato")
                 
             if hasattr(main_app, 'chart_container_wrapper') and main_app.chart_container_wrapper:
                 main_app.chart_container_wrapper.content = self.chart_container
-                print("DEBUG: Container wrapper 'chart' aggiornato")
+                logging.info("DEBUG: Container wrapper 'chart' aggiornato")
                 
             if hasattr(main_app, 'precipitation_chart_container_wrapper') and main_app.precipitation_chart_container_wrapper:
                 main_app.precipitation_chart_container_wrapper.content = self.precipitation_chart_container
-                print("DEBUG: Container wrapper 'precipitation_chart' aggiornato")
+                logging.info("DEBUG: Container wrapper 'precipitation_chart' aggiornato")
                 
             if hasattr(main_app, 'air_pollution_container_wrapper') and main_app.air_pollution_container_wrapper:
                 main_app.air_pollution_container_wrapper.content = self.air_pollution_container
-                print("DEBUG: Container wrapper 'air_pollution' aggiornato")
+                logging.info("DEBUG: Container wrapper 'air_pollution' aggiornato")
                 
         except Exception as e:
             logging.error(f"DEBUG: Errore durante l'aggiornamento dei container wrapper: {e}")

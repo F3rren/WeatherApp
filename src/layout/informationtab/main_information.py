@@ -4,7 +4,6 @@ import logging
 from services.translation_service import TranslationService
 from components.responsive_text_handler import ResponsiveTextHandler
 import traceback
-import asyncio
 
 class MainWeatherInfo(ft.Container):
     """
@@ -48,30 +47,14 @@ class MainWeatherInfo(ft.Container):
         if self.page:
             if self._text_handler and not self._text_handler.page:
                 self._text_handler.page = self.page
-            
-            if hasattr(self.page, 'session') and self.page.session.get('state_manager'):
-                self._state_manager = self.page.session.get('state_manager')
-                # NOTE: Without a dedicated cleanup method (like will_unmount),
-                # these observers are never unregistered.
-                self._state_manager.register_observer("language_event", self.update_ui)
-                self._state_manager.register_observer("unit", self.update_ui)
-                self._state_manager.register_observer("theme_event", self.update_ui)
-            
-            original_on_resize = self.page.on_resize
-            def resize_handler(e):
-                if original_on_resize:
-                    original_on_resize(e)
-                if self._text_handler:
-                    self._text_handler._handle_resize(e)
-                if self.page:
-                    self.page.run_task(self.update_ui)
-            self.page.on_resize = resize_handler
+        # Setup state manager
+        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
+            self._state_manager = self.page.session.get('state_manager')
+        
+        self.content = self.build()
 
-            # Initial update
-            self.page.run_task(self.update_ui)
-
-    async def update_ui(self, event_data=None):
-        """Fetches data, updates state, and rebuilds the UI."""
+    def update(self):
+        """Updates state and rebuilds the UI without fetching new data."""
         if not self.page or not self.visible:
             return
 
@@ -81,31 +64,8 @@ class MainWeatherInfo(ft.Container):
                 new_language = self._state_manager.get_state('language') or self._current_language
                 new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
                 
-                language_changed = self._current_language != new_language
-                unit_changed = self._current_unit_system != new_unit_system
-
                 self._current_language = new_language
                 self._current_unit_system = new_unit_system
-
-                # Fetch data if language or unit changed
-                if language_changed or unit_changed:
-                    from services.api_service import ApiService
-                    api = ApiService()
-                    weather_data = await asyncio.to_thread(
-                        api.get_weather_data,
-                        city=self._city_data,
-                        language=self._current_language,
-                        unit=self._current_unit_system
-                    )
-                    temp = api.get_current_temperature(weather_data)
-                    if temp is not None:
-                        self._temperature_data = temp
-                    # Aggiorna anche descrizione, feels_like, min/max
-                    self._weather_description = api.get_weather_description(weather_data)
-                    self._feels_like = api.get_feels_like_temperature(weather_data)
-                    tmin, tmax = api.get_min_max_temperature(weather_data)
-                    self._temp_min = tmin
-                    self._temp_max = tmax
 
             # Update theme color
             if self.page and self.page.theme_mode:
@@ -117,11 +77,23 @@ class MainWeatherInfo(ft.Container):
 
             # Rebuild and update UI
             self.content = self.build()
-            if self.page:
-                self.page.update()
+            
+            # Update the component itself
+            try:
+                super().update()
+            except (AssertionError, AttributeError):
+                # Component not yet added to page, skip update
+                pass
+            
+            # Also try to update the parent container if possible
+            if hasattr(self, 'parent') and self.parent:
+                try:
+                    self.parent.update()
+                except (AssertionError, AttributeError):
+                    pass
 
         except Exception as e:
-            logging.error(f"MainWeatherInfo: Error updating UI: {e}\n{traceback.format_exc()}")
+            logging.error(f"MainWeatherInfo: Error updating: {e}\n{traceback.format_exc()}")
 
     def build(self):
         """Costruisce la UI principale con testo tradotto e dati API."""

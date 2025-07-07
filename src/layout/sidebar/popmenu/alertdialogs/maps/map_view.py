@@ -1,3 +1,4 @@
+import logging
 import flet as ft
 import webbrowser
 
@@ -15,28 +16,10 @@ class MapView:
         windy_url = f"https://embed.windy.com/embed2.html?lat={self.latitude}&lon={self.longitude}&zoom=16&overlay=temp"
         return ft.WebView(
                 url=windy_url,
-                on_page_started=lambda _: print("Page started"),
-                on_page_ended=lambda _: print("Page ended"),
-                on_web_resource_error=lambda e: print("Page error:", e.data),
+                on_page_started=lambda _: logging.info("Page started"),
+                on_page_ended=lambda _: logging.info("Page ended"),
+                on_web_resource_error=lambda e: logging.error("Page error:", e.data),
                 expand=True,
-            )
-
-        try:
-            # Prova a creare il componente WebView
-            pass
-        except Exception:
-            # Fallback se WebView non è disponibile
-            return ft.Column([
-                ft.Text("Il componente mappa (WebView) non è supportato su questa piattaforma.", text_align=ft.TextAlign.CENTER),
-                ft.ElevatedButton(
-                    text="Apri Mappa nel Browser",
-                    on_click=self._open_fullscreen_map_fallback,
-                )
-            ], 
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=20,
-            expand=True,
-            alignment=ft.MainAxisAlignment.CENTER,
             )
 
     def _open_fullscreen_map_fallback(self, e=None):

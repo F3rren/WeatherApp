@@ -5,7 +5,6 @@ Main application file for the MeteoApp.
 import flet as ft # MODIFIED: Use standard alias 'ft'
 import logging
 
-
 from utils.config import (DARK_THEME, DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, DEFAULT_THEME_MODE, LIGHT_THEME)
 from layout.layout_manager import LayoutManager
 from layout.sidebar.sidebar_manager import SidebarManager
@@ -17,11 +16,6 @@ from services.theme_toggle_service import ThemeToggleService
 from services.translation_service import TranslationService # Add this import
 from ui.weather_view import WeatherView
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 
 class MeteoApp:
 
@@ -40,9 +34,9 @@ class MeteoApp:
         self.air_pollution_container_wrapper = None
         self.air_condition_container_wrapper = None
         self.layout_manager = None
-        self.weather_view_instance = None # Add to store WeatherView instance
-        self.charts_view_instance = None # Add to store ChartsView instance
-        self.translation_service = None # Add to store TranslationService instance
+        self.weather_view_instance = None 
+        self.charts_view_instance = None 
+        self.translation_service = None 
 
     def _update_container_colors(self, event_data=None):
         """Aggiorna solo i colori dei container principali e dei testi senza ricostruire i container."""
@@ -58,7 +52,6 @@ class MeteoApp:
                     container.bgcolor = theme.get(color_key)
                     container.update()
                 except AssertionError:
-                    # Container not yet properly connected to page
                     pass
         
         # Aggiorna colori specifici per ogni container
@@ -87,7 +80,6 @@ class MeteoApp:
         safe_update_container(self.hourly_container_wrapper, "HOURLY")
         safe_update_container(self.chart_container_wrapper, "CHART")
         safe_update_container(self.precipitation_chart_container_wrapper, "CHART") # For precipitation chart
-        # safe_update_container(self.air_pollution_chart_container_wrapper, "CHART") # Rimosso: non usato
         safe_update_container(self.air_pollution_container_wrapper, "CARD_BACKGROUND")
         # Rimosso air_condition_container_wrapper perché ora è incluso nel info_container
         
@@ -96,7 +88,7 @@ class MeteoApp:
         try:
             self.page.update()
         except Exception:
-            # Page not ready for update
+
             pass
 
     async def main(self, page: ft.Page) -> None: # MODIFIED: ft.Page
@@ -133,7 +125,7 @@ class MeteoApp:
             page=page,
             geolocation_service=self.geolocation_service,
             state_manager=self.state_manager,
-            update_weather_callback=None # verrà impostato in build_layout
+            update_weather_callback=self.update_weather_with_sidebar # Imposta il callback
         )
         self.theme_toggle_service = ThemeToggleService(
             page=page, 
@@ -145,7 +137,7 @@ class MeteoApp:
             state_manager=self.state_manager,
             location_toggle_service=self.location_toggle_service,
             theme_toggle_service=self.theme_toggle_service,
-            update_weather_callback=None # verrà impostato in build_layout
+            update_weather_callback=self.update_weather_with_sidebar # Imposta il callback
         )
         
         self.layout_manager = LayoutManager(page)
@@ -159,13 +151,13 @@ class MeteoApp:
         await self.state_manager.set_state("unit", DEFAULT_UNIT_SYSTEM)
         await self.state_manager.set_state("city", DEFAULT_CITY)
         
-        print("DEBUG: [build_layout] Caricamento dati meteo PRIMA della costruzione del layout...")
+        logging.info("DEBUG: [build_layout] Caricamento dati meteo PRIMA della costruzione del layout...")
         await self.update_weather_with_sidebar(
             city=self.state_manager.get_state("city") or DEFAULT_CITY,
             language=self.state_manager.get_state("language") or DEFAULT_LANGUAGE,
             unit=self.state_manager.get_state("unit") or DEFAULT_UNIT_SYSTEM
         )
-        print("DEBUG: [build_layout] Dati meteo caricati, ora costruisco il layout con container popolati...")
+        logging.info("DEBUG: [build_layout] Dati meteo caricati, ora costruisco il layout con container popolati...")
 
         # FASE 2: Ora recupera i container popolati dal WeatherView
         # Nota: air_condition è ora incluso nel info_container, quindi air_condition_container sarà vuoto
@@ -209,7 +201,7 @@ class MeteoApp:
         await self.theme_toggle_service.initialize_theme()
 
         # Debug finale: Verifica che il layout finale contenga dati
-        print("DEBUG: [build_layout] Layout costruito e aggiunto alla pagina")
+        logging.info("DEBUG: [build_layout] Layout costruito e aggiunto alla pagina")
 
         # Gestione eventi di chiusura/disconnessione
         async def on_disconnect_or_close(e):
@@ -333,7 +325,7 @@ class MeteoApp:
         
         return result
 
-def main():
+def run():
     """Entry point for the application"""
     app = MeteoApp()
     ft.app( # MODIFIED: ft.app
@@ -344,4 +336,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run()

@@ -41,27 +41,11 @@ class AirPollutionDisplay(ft.Container):
         
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
-            self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
-        
-        if self.page:
-            original_on_resize = self.page.on_resize
-            def resize_handler(e):
-                if original_on_resize:
-                    original_on_resize(e)
-                if self._text_handler:
-                    self._text_handler._handle_resize(e)
-                # Trigger UI rebuild on resize for responsive grid
-                if self.page:
-                    self.page.run_task(self.update_ui)
-            self.page.on_resize = resize_handler
         
         self.content = self.build()
-        if self.page:
-            self.page.run_task(self.update_ui)
 
-    async def update_ui(self, event_data=None):
-        """Updates the UI based on state changes, fetching new data if necessary."""
+    async def update(self):
+        """Updates state and rebuilds the UI, fetching new data if needed."""
         if not self.page or not self.visible:
             return
 
@@ -86,13 +70,12 @@ class AirPollutionDisplay(ft.Container):
             self.content = self.build()
             # Only update if this control is already in the page
             try:
-                if self.page and hasattr(self, 'page') and self.page is not None:
-                    self.update()
+                super().update()
             except Exception:
                 # Control not yet added to page, update will happen when added
                 pass
         except Exception as e:
-            logging.error(f"AirPollutionDisplay: Error updating UI: {e}\n{traceback.format_exc()}")
+            logging.error(f"AirPollutionDisplay: Error updating: {e}\n{traceback.format_exc()}")
 
     def build(self):
         """Constructs modern, card-based UI for air pollution data."""
@@ -134,13 +117,13 @@ class AirPollutionDisplay(ft.Container):
         if self.page:
             await self.update_ui()
 
-    def update_location(self, lat: float, lon: float):
+    async def update_location(self, lat: float, lon: float):
         """Updates the coordinates and clears cached data to force refresh."""
         self._lat = lat
         self._lon = lon
         self._pollution_data = {}  # Clear cached data to force refresh
         if self.page:
-            self.page.run_task(self.update_ui)
+            await self.update_ui()
 
     def _build_header(self):
         """Builds a modern header for air pollution section."""

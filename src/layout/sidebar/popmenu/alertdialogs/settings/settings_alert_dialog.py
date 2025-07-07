@@ -1,3 +1,4 @@
+import logging
 import flet as ft
 from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService
@@ -215,7 +216,7 @@ class SettingsAlertDialog:
     def open_dialog(self):
         """Creates (if necessary) and opens the alert dialog in the correct Flet sequence."""
         if not self.page:
-            print("Error: Page context not available for SettingsAlertDialog.")
+            logging.error("Error: Page context not available for SettingsAlertDialog.")
             return
         if self.dialog is None:
             self.createAlertDialog(self.page)

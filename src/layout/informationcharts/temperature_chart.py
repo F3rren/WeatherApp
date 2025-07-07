@@ -42,27 +42,11 @@ class TemperatureChartDisplay(ft.Container):
         
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
-            self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
-        
-        if self.page:
-            original_on_resize = self.page.on_resize
-            def resize_handler(e):
-                if original_on_resize:
-                    original_on_resize(e)
-                if self._text_handler:
-                    self._text_handler._handle_resize(e)
-                if self.page:
-                    self.page.run_task(self.update_ui)
-            self.page.on_resize = resize_handler
         
         self.content = self.build()
-        if self.page:
-            self.page.run_task(self.update_ui)
 
-    async def update_ui(self, event_data=None):
-        """Updates the UI based on state changes."""
+    def update(self):
+        """Updates state and rebuilds the UI."""
         if not self.page or not self.visible:
             return
 
@@ -98,8 +82,7 @@ class TemperatureChartDisplay(ft.Container):
                 self.content = self.build()
                 # Only update if this control is already in the page
                 try:
-                    if self.page and hasattr(self, 'page') and self.page is not None:
-                        self.update()
+                    super().update()
                 except Exception:
                     # Control not yet added to page, update will happen when added
                     pass
@@ -107,7 +90,7 @@ class TemperatureChartDisplay(ft.Container):
                 logging.warning("Dati non validi per l'aggiornamento del grafico")
                 
         except Exception as e:
-            logging.error(f"TemperatureChartDisplay: Error updating UI: {str(e)}", exc_info=True)
+            logging.error(f"TemperatureChartDisplay: Error updating: {str(e)}", exc_info=True)
             # Prova a ripristinare uno stato stabile
             self._reset_to_safe_state()
 

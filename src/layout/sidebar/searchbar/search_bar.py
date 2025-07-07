@@ -1,3 +1,4 @@
+import logging
 import flet as ft
 from typing import Callable, Optional, List
 from utils.config import DEFAULT_LANGUAGE
@@ -34,10 +35,10 @@ class SearchBar:
         
         def on_submit(e):
             value = e.control.value.strip()
-            print(f"DEBUG: SearchBar on_submit called with value: '{value}'")
+            logging.info(f"DEBUG: SearchBar on_submit called with value: '{value}'")
             if value:
                 if self.on_city_selected:
-                    print(f"DEBUG: Calling on_city_selected callback for city: {value}")
+                    logging.info(f"DEBUG: Calling on_city_selected callback for city: {value}")
                     # Use page.run_task for proper async handling in Flet
                     if self.page:
                         self.page.run_task(self.on_city_selected, value)
@@ -45,7 +46,7 @@ class SearchBar:
                         # Fallback for sync callbacks
                         self.on_city_selected(value)
                 else:
-                    print("DEBUG: No on_city_selected callback defined")
+                    logging.error("DEBUG: No on_city_selected callback defined")
 
         def clear_text(e):
             self.search_field.value = ""

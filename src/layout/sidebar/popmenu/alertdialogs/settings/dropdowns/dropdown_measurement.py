@@ -100,7 +100,7 @@ class DropdownMeasurement:
         
         def dropdown_changed(e):
             unit_code = e.control.value
-            print(f"Selected unit: {unit_code}")
+            logging.info(f"Selected unit: {unit_code}")
             self.set_unit(unit_code)
             if hasattr(self, 'parent') and self.parent:
                 self.parent.update()

@@ -54,9 +54,9 @@ class PrecipitationChartDisplay(ft.Container):
         
         # Register for events
         if self._state_manager:
-            self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
+            self._state_manager.register_observer("language_event", self._safe_language_update)
+            self._state_manager.register_observer("unit", self._safe_unit_update)
+            self._state_manager.register_observer("theme_event", self._safe_theme_update)
         
         # Set up page resize handler
         if self.page:
@@ -466,3 +466,18 @@ class PrecipitationChartDisplay(ft.Container):
                 pass
         except Exception as e:
             logging.error(f"PrecipitationChartDisplay: Error during cleanup: {e}")
+
+    def _safe_language_update(self, e=None):
+        """Safely handle language change event."""
+        if self.page and hasattr(self.page, 'run_task'):
+            self.page.run_task(self.update_ui, e)
+    
+    def _safe_unit_update(self, e=None):
+        """Safely handle unit change event."""
+        if self.page and hasattr(self.page, 'run_task'):
+            self.page.run_task(self.update_ui, e)
+    
+    def _safe_theme_update(self, e=None):
+        """Safely handle theme change event."""
+        if self.page and hasattr(self.page, 'run_task'):
+            self.page.run_task(self.update_ui, e)

@@ -40,8 +40,8 @@ class AirPollutionChartDisplay(ft.Container):
         
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
-            self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
+            self._state_manager.register_observer("language_event", self._safe_language_update)
+            self._state_manager.register_observer("theme_event", self._safe_theme_update)
         
         if self.page:
             original_on_resize = self.page.on_resize
@@ -77,7 +77,11 @@ class AirPollutionChartDisplay(ft.Container):
                 else:
                     self._pollution_data = {}
 
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            # Safe theme detection
+            if self.page and hasattr(self.page, 'theme_mode'):
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            else:
+                is_dark = False
             theme = DARK_THEME if is_dark else LIGHT_THEME
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
@@ -200,7 +204,11 @@ class AirPollutionChartDisplay(ft.Container):
             )
 
         # Determina il tema e i colori del background
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         
         # Background moderno simile al temperature chart
         if is_dark:
@@ -244,7 +252,11 @@ class AirPollutionChartDisplay(ft.Container):
         """Builds a modern header for air pollution chart section."""
         header_text = TranslationService.translate_from_dict("air_pollution_chart_items", "air_pollution_title", self._current_language)
         
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         
         return ft.Container(
             content=ft.Row([
@@ -271,3 +283,13 @@ class AirPollutionChartDisplay(ft.Container):
             self._lon = lon
             if self.page:
                 self.page.run_task(self.update_ui)
+    
+    def _safe_language_update(self, e=None):
+        """Safely handle language change event."""
+        if self.page and hasattr(self.page, 'run_task'):
+            self.page.run_task(self.update_ui, e)
+    
+    def _safe_theme_update(self, e=None):
+        """Safely handle theme change event."""
+        if self.page and hasattr(self.page, 'run_task'):
+            self.page.run_task(self.update_ui, e)

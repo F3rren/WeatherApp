@@ -72,7 +72,11 @@ class TemperatureChartDisplay(ft.Container):
                 logging.warning("theme_mode non disponibile nella pagina, uso tema chiaro")
                 is_dark = False
             else:
-                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+                # Safe theme detection
+                if self.page and hasattr(self.page, 'theme_mode'):
+                    is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+                else:
+                    is_dark = False
             
             theme = DARK_THEME if is_dark else LIGHT_THEME
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
@@ -170,13 +174,20 @@ class TemperatureChartDisplay(ft.Container):
         self._temp_max = temp_max if temp_max is not None else []
         
         if self.page and self.visible:
-            self.page.run_task(self.update_ui)
+            try:
+                self.update()
+            except Exception as e:
+                logging.error(f"Error updating temperature chart: {e}")
     
     def _build_header(self):
         """Builds a modern header for temperature chart section."""
         header_text = TranslationService.translate_from_dict("temperature_chart_items", "temperature", self._current_language)
         
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         
         return ft.Container(
             content=ft.Row([
@@ -202,7 +213,11 @@ class TemperatureChartDisplay(ft.Container):
         data_points_min = []
         data_points_max = []
         
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         
         # Enhanced colors for better visibility and modern appeal
         if not is_dark:
@@ -341,7 +356,11 @@ class TemperatureChartDisplay(ft.Container):
         )
         
         # Modern chart container with better background
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         theme = DARK_THEME if is_dark else LIGHT_THEME
         
         # Use theme colors for better integration
@@ -377,7 +396,11 @@ class TemperatureChartDisplay(ft.Container):
         legend_max_text = TranslationService.translate_from_dict("temperature_chart_items", "max", self._current_language)
         legend_min_text = TranslationService.translate_from_dict("temperature_chart_items", "min", self._current_language)
         
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         
         # Use the same modern colors as the chart
         if not is_dark:

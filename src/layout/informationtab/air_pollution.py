@@ -63,7 +63,13 @@ class AirPollutionDisplay(ft.Container):
                 else:
                     self._pollution_data = {}
 
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            # Safe theme detection
+            if self.page and hasattr(self.page, 'theme_mode'):
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            else:
+                # Default to light theme if page is not available
+                is_dark = False
+            
             theme = DARK_THEME if is_dark else LIGHT_THEME
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
@@ -129,7 +135,11 @@ class AirPollutionDisplay(ft.Container):
         """Builds a modern header for air pollution section."""
         header_text = TranslationService.translate_from_dict("air_pollution_items", "air_quality_index", self._current_language)
         
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         
         return ft.Container(
             content=ft.Row([
@@ -167,7 +177,11 @@ class AirPollutionDisplay(ft.Container):
         aqi_color_idx = max(0, min(aqi, len(aqi_colors) - 1))
         aqi_color = aqi_colors[aqi_color_idx]
         
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         
         return ft.Container(
             content=ft.Row([
@@ -349,7 +363,11 @@ class AirPollutionDisplay(ft.Container):
         ], spacing=4)
         
         # Card container
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         
         return ft.Container(
             content=card_content,

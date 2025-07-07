@@ -118,6 +118,9 @@ class MeteoApp:
 
         # Register theme update handler for containers
         self.state_manager.register_observer("theme_event", self._update_container_colors)
+        
+        # Register language change handler for main app
+        self.state_manager.register_observer("language_event", self._handle_language_change)
 
         self.weather_view_instance = WeatherView(page, self.api_service) # Store instance
         
@@ -325,6 +328,60 @@ class MeteoApp:
         
         return result
 
+    def _handle_language_change(self, event_data=None):
+        """Handle language change events at the main app level."""
+        logging.info(f"Main app: handling language change event with data: {event_data}")
+        
+        # Get current state
+        state_manager = self.state_manager
+        if not state_manager:
+            return
+            
+        # Get current location context
+        language = state_manager.get_state('language') or DEFAULT_LANGUAGE
+        unit = state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
+        using_location = state_manager.get_state('using_location')
+        current_lat = state_manager.get_state('current_lat')
+        current_lon = state_manager.get_state('current_lon')
+        city = state_manager.get_state('city')
+        
+        # Trigger weather update with new language
+        if using_location and current_lat is not None and current_lon is not None:
+            # Use coordinates to get location name in new language
+            logging.info("Language change: updating weather by coordinates")
+            self.page.run_task(self.update_weather_with_coordinates, current_lat, current_lon, language, unit)
+        elif city:
+            # Use city name to get translated data
+            logging.info(f"Language change: updating weather by city ({city})")
+            self.page.run_task(self.update_weather_with_sidebar, city, language, unit)
+        else:
+            logging.warning("Language change: no location context available for update")
+    
+    async def update_weather_with_coordinates(self, lat: float, lon: float, language: str, unit: str):
+        """Update weather data using coordinates."""
+        logging.info(f"Updating weather with coordinates: lat={lat}, lon={lon}, language={language}, unit={unit}")
+        
+        # Update state
+        await self.state_manager.set_state("language", language)
+        await self.state_manager.set_state("unit", unit)
+        await self.state_manager.set_state("current_lat", lat)
+        await self.state_manager.set_state("current_lon", lon)
+        await self.state_manager.set_state("using_location", True)
+        
+        # Update weather view
+        await self.weather_view_instance.update_by_coordinates(lat, lon, language, unit)
+        
+        # Update sidebar if needed
+        if self.sidebar_manager:
+            # Get city name from coordinates for sidebar with correct language
+            city = self.api_service.get_city_by_coordinates(lat, lon, language)
+            if city:
+                await self.state_manager.set_state("city", city)
+                self.sidebar_manager.update_weekly_forecast(city)
+        
+        logging.info("Weather updated successfully with coordinates")
+
+    # ...existing code...
 def run():
     """Entry point for the application"""
     app = MeteoApp()

@@ -43,9 +43,9 @@ class WeeklyForecastDisplay(ft.Container):
         
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
-            self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
+            self._state_manager.register_observer("language_event", self._safe_language_update)
+            self._state_manager.register_observer("unit", self._safe_unit_update)
+            self._state_manager.register_observer("theme_event", self._safe_theme_update)
 
         if self.page:
             original_on_resize = self.page.on_resize
@@ -93,7 +93,11 @@ class WeeklyForecastDisplay(ft.Container):
                 else:
                     self._forecast_data = []
 
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            # Safe theme detection
+            if self.page and hasattr(self.page, 'theme_mode'):
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            else:
+                is_dark = False
             theme = DARK_THEME if is_dark else LIGHT_THEME
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
@@ -110,7 +114,11 @@ class WeeklyForecastDisplay(ft.Container):
 
     def build(self):
         """Constructs the modern UI for the weekly forecast with header and styled cards."""
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         theme = DARK_THEME if is_dark else LIGHT_THEME
         
         # Header section
@@ -352,3 +360,18 @@ class WeeklyForecastDisplay(ft.Container):
             self._forecast_data = []  # Clear cached data
             if self.page:
                 self.page.run_task(self.update_ui)
+
+    def _safe_language_update(self, e=None):
+        """Safely handle language change event."""
+        if self.page and hasattr(self.page, 'run_task'):
+            self.page.run_task(self.update_ui, e)
+    
+    def _safe_unit_update(self, e=None):
+        """Safely handle unit change event."""
+        if self.page and hasattr(self.page, 'run_task'):
+            self.page.run_task(self.update_ui, e)
+    
+    def _safe_theme_update(self, e=None):
+        """Safely handle theme change event."""
+        if self.page and hasattr(self.page, 'run_task'):
+            self.page.run_task(self.update_ui, e)

@@ -53,21 +53,40 @@ class DropdownLanguage:
         if self.dropdown:
             translated_hint_text = TranslationService.translate_from_dict("settings_alert_dialog_items", "language", self.current_language_display)
             self.dropdown.hint_text = translated_hint_text
-            self.dropdown.text_size = self.text_color['dropdown_text']
-            self.dropdown.color = self.text_color["TEXT"]
-            self.dropdown.border_color = self.text_color["BORDER"]
-            self.dropdown.focused_border_color = self.text_color["ACCENT"]
-            self.dropdown.bgcolor = self.text_color["CARD_BACKGROUND"]
+            
+            # Safe access to text_color properties
+            if isinstance(self.text_color, dict) and 'dropdown_text' in self.text_color:
+                self.dropdown.text_size = self.text_color['dropdown_text']
+            elif hasattr(self, 'text_handler') and self.text_handler:
+                self.dropdown.text_size = self.text_handler.get_size('dropdown_text')
+            else:
+                self.dropdown.text_size = 14  # Default size
+                
+            if isinstance(self.text_color, dict):
+                self.dropdown.color = self.text_color.get("TEXT", ft.Colors.BLACK)
+                self.dropdown.border_color = self.text_color.get("BORDER", ft.Colors.GREY)
+                self.dropdown.focused_border_color = self.text_color.get("ACCENT", ft.Colors.BLUE)
+                self.dropdown.bgcolor = self.text_color.get("CARD_BACKGROUND", ft.Colors.WHITE)
+            else:
+                # Fallback if text_color is not a dict
+                self.dropdown.color = ft.Colors.BLACK
+                self.dropdown.border_color = ft.Colors.GREY
+                self.dropdown.focused_border_color = ft.Colors.BLUE
+                self.dropdown.bgcolor = ft.Colors.WHITE
 
             if self.dropdown.hint_style:
-                self.dropdown.hint_style.color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color["TEXT"]))
+                secondary_color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color.get("TEXT", ft.Colors.BLACK))) if isinstance(self.text_color, dict) else ft.Colors.GREY
+                self.dropdown.hint_style.color = secondary_color
             else:
-                self.dropdown.hint_style = ft.TextStyle(color=self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color["TEXT"])))
+                secondary_color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color.get("TEXT", ft.Colors.BLACK))) if isinstance(self.text_color, dict) else ft.Colors.GREY
+                self.dropdown.hint_style = ft.TextStyle(color=secondary_color)
             
             if self.dropdown.label_style: # Though label is not used in current createDropdown
-                self.dropdown.label_style.color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color["TEXT"]))
+                secondary_color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color.get("TEXT", ft.Colors.BLACK))) if isinstance(self.text_color, dict) else ft.Colors.GREY
+                self.dropdown.label_style.color = secondary_color
             else: # Though label is not used
-                self.dropdown.label_style = ft.TextStyle(color=self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color["TEXT"])))
+                secondary_color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color.get("TEXT", ft.Colors.BLACK))) if isinstance(self.text_color, dict) else ft.Colors.GREY
+                self.dropdown.label_style = ft.TextStyle(color=secondary_color)
 
             # Options might need re-styling if their text color is static; however, ft.Text defaults to inheriting.
             # If options had complex styling that doesn't inherit, they'd need updating here.
@@ -164,7 +183,7 @@ class DropdownLanguage:
         # Ottieni il valore corrente della lingua dallo state manager, se disponibile
         current_language_code = DEFAULT_LANGUAGE  # Valore predefinito
         if self.state_manager:
-            current_language_code = self.state_manager.get_state('language') or 'en'
+            current_language_code = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
             self.selected_language = current_language_code
             logging.info(f'Lingua corrente dallo state manager: {current_language_code}')
 

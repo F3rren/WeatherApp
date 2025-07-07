@@ -63,7 +63,7 @@ class LayoutBuilder:
             )
         )
 
-    def build_main_layout(sidebar, info, hourly, chart, precipitation_chart, air_pollution_chart) -> ft.Control:
+    def build_main_layout(sidebar, info, hourly, chart, precipitation_chart, air_pollution) -> ft.Control:
         """
         Costruisce il layout principale responsivo dell'applicazione con design moderno.
         Layout: sidebar + info + air condition in alto, previsioni orarie full-width sotto, grafici in basso.
@@ -100,8 +100,6 @@ class LayoutBuilder:
                                 padding=ft.padding.symmetric(vertical=4),
                             )
                         ]),
-                        
-                        
                     ], spacing=16),
                     col={"sm": 12, "md": 7, "lg": 8, "xl": 8},
                     padding=ft.padding.only(left=12, top=16, bottom=16, right=16),
@@ -135,7 +133,7 @@ class LayoutBuilder:
                 
                 # Grafico inquinamento aria
                 ft.Container(
-                    content=air_pollution_chart,
+                    content=air_pollution,
                     col={"sm": 12, "md": 12, "lg": 4, "xl": 4},
                     padding=ft.padding.only(left=8, right=16, top=4, bottom=16),
                 )

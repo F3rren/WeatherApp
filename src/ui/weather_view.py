@@ -5,7 +5,7 @@ Handles the display of weather information.
 
 import flet as ft
 import logging # Add logging import
-from utils.config import LIGHT_THEME, DARK_THEME
+from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, LIGHT_THEME, DARK_THEME
 from services.api_service import ApiService
 from services.translation_service import TranslationService # Import TranslationService
 
@@ -229,14 +229,29 @@ class WeatherView:
         self._update_component_texts(event_type="language_change", data=event_data)
         
         # Then handle data re-fetching for a full update if needed
-        if self.current_city or (self.current_lat is not None and self.current_lon is not None):
-            state_manager = self.page.session.get('state_manager')
-            language = state_manager.get_state('language') if state_manager else 'en'
-            unit = state_manager.get_state('unit') if state_manager else 'metric'
-            if self.current_city:
-                self.page.run_task(self.update_by_city, self.current_city, language, unit)
-            elif self.current_lat is not None and self.current_lon is not None:
+        state_manager = self.page.session.get('state_manager')
+        if state_manager:
+            language = state_manager.get_state('language') or DEFAULT_LANGUAGE
+            unit = state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
+            
+            # Check if we're using current location
+            using_location = state_manager.get_state('using_location')
+            
+            if using_location and self.current_lat is not None and self.current_lon is not None:
+                # If using current location, update by coordinates to get translated location name
                 self.page.run_task(self.update_by_coordinates, self.current_lat, self.current_lon, language, unit)
+                logging.info(f"Language change: updating by coordinates (lat={self.current_lat}, lon={self.current_lon})")
+            if self.current_city:
+                # If using city search, use the original city name to get translated data
+                original_city = state_manager.get_state('city') or self.current_city
+                
+                # Clear city_info to force fresh location data
+                self.city_info = None
+                
+                self.page.run_task(self.update_by_city, original_city, language, unit)
+                logging.info(f"Language change: updating by city ({original_city})")
+            else:
+                logging.warning("Language change: no location data available for update")
 
     async def handle_unit_system_change(self, new_unit_system: str):
         """Handles unit system change events by re-fetching data and updating the UI."""
@@ -244,7 +259,7 @@ class WeatherView:
         if not state_manager:
             return
 
-        language = state_manager.get_state('language') or 'en'
+        language = state_manager.get_state('language') or DEFAULT_LANGUAGE
         # Get current location context from state_manager if possible, otherwise use WeatherView's last known
         using_location = state_manager.get_state('using_location')
         current_lat_from_state = state_manager.get_state('current_lat')
@@ -296,6 +311,14 @@ class WeatherView:
                 self.city_info = city_info
                 logging.info(f"Weather data keys: {list(weather_data.keys()) if weather_data else 'None'}")
                 logging.info(f"City info: {city_info}")
+                
+                # Debug: Log della struttura city nel weather_data
+                if weather_data and "city" in weather_data:
+                    city_data = weather_data["city"]
+                    logging.info(f"Weather data city: {city_data}")
+                    logging.info(f"Weather data city name: {city_data.get('name', 'Not found')}")
+                else:
+                    logging.warning("No 'city' field found in weather_data")
             except Exception as e:
                 logging.error(f"Errore durante il recupero dati: {e}")
                 return
@@ -396,20 +419,37 @@ class WeatherView:
 
         logging.info(f"Extracted weather data: temp={temperature}, temp_min={temp_min}, temp_max={temp_max}, description='{weather_description}'")
 
-        # Determina la posizione da mostrare
-        location_data = self.weather_data.get('location_data', {})
+        # Determina la posizione e il nome della città tradotto da mostrare
+        
+        # Ottieni il nome della città tradotto - priorità al weather_data che supporta la localizzazione
         if is_current_location:
             location = f"📍 {TranslationService.translate_from_dict('main_information_items', 'current_location', self.page.session.get('state_manager').get_state('language'))}"
+            translated_city = TranslationService.translate_from_dict('main_information_items', 'current_location', self.page.session.get('state_manager').get_state('language'))
+        elif self.weather_data.get("city"):
+            # PRIORITÀ: Usa i dati della città dal weather_data che includono il nome localizzato
+            city_data = self.weather_data["city"]
+            city_name = city_data.get("name", city)
+            country = city_data.get("country", "")
+            
+            # Per la location completa, usa solo i dati dal weather_data per consistenza linguistica
+            # Il weather_data non include "state" ma ha country localizzato implicitamente
+            location = f"{city_name}, {country}" if country else city_name
+            translated_city = city_name  # Usa il nome tradotto dall'API weather
         elif self.city_info:
+            # Fallback ai city_info se weather_data non ha la città
             data = self.city_info[0]
             location = ", ".join(filter(None, [data.get("name"), data.get("state"), data.get("country")]))
+            translated_city = data.get("name", city)
         else:
-            location = ", ".join(filter(None, [location_data.get('city', 'Unknown'), location_data.get('region', 'Unknown'), location_data.get('country', 'Unknown')]))
+            # Fallback finale al nome originale
+            location = city
+            translated_city = city
         
-        print(city)
+        logging.info(f"Original city: {city}, Translated city: {translated_city}, Location: {location}")
+        
         # Create new MainWeatherInfo instance for each update to ensure proper refresh
         self.main_weather_info_instance = MainWeatherInfo(
-            city=city,
+            city=translated_city,  # Usa il nome della città tradotto
             location=location,
             temperature=temperature,
             weather_icon=icon_code,
@@ -577,7 +617,7 @@ class WeatherView:
         state_manager = self.page.session.get('state_manager')
         if state_manager:
             self.air_pollution_display_instance._current_language = state_manager.get_state('language') or self.air_pollution_display_instance._current_language
-            self.air_pollution_display_instance._current_unit = state_manager.get_state('unit') or getattr(self.air_pollution_display_instance, '_current_unit', 'metric')
+            self.air_pollution_display_instance._current_unit = state_manager.get_state('unit') or getattr(self.air_pollution_display_instance, '_current_unit', DEFAULT_UNIT_SYSTEM)
 
         # IMPORTANTE: Aspetta che i dati siano caricati prima di ricostruire il contenuto
         await self.air_pollution_display_instance.update()

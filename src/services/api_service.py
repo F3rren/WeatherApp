@@ -141,13 +141,14 @@ class ApiService:
             logging.error(f"Error fetching city information: {e}")
             return []
     
-    def get_city_by_coordinates(self, lat: float, lon: float) -> str:
+    def get_city_by_coordinates(self, lat: float, lon: float, language: str = "en") -> str:
         """
         Get city name from coordinates using reverse geocoding.
         
         Args:
             lat: Latitude
             lon: Longitude
+            language: Language code for localization
             
         Returns:
             City name
@@ -166,6 +167,52 @@ class ApiService:
         except requests.exceptions.RequestException as e:
             logging.error(f"Error in reverse geocoding: {e}")
             return "Current Location"
+    
+    def get_location_by_coordinates(self, lat: float, lon: float, language: str = "en") -> dict:
+        """
+        Get complete location information from coordinates using reverse geocoding.
+        
+        Args:
+            lat: Latitude
+            lon: Longitude
+            language: Language code for localization
+            
+        Returns:
+            Dictionary with location information
+        """
+        try:
+            url = f"{API_BASE_URL}{API_REVERSE_GEO_ENDPOINT}"
+            params = {"lat": lat, "lon": lon, "limit": 1, "appid": self._api_key}
+            
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            if data and len(data) > 0:
+                location_data = data[0]
+                return {
+                    "name": location_data.get("name", "Unknown"),
+                    "state": location_data.get("state", ""),
+                    "country": location_data.get("country", ""),
+                    "lat": location_data.get("lat", lat),
+                    "lon": location_data.get("lon", lon)
+                }
+            return {
+                "name": "Current Location",
+                "state": "",
+                "country": "",
+                "lat": lat,
+                "lon": lon
+            }
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Error in reverse geocoding: {e}")
+            return {
+                "name": "Current Location",
+                "state": "",
+                "country": "",
+                "lat": lat,
+                "lon": lon
+            }
     
     def get_current_temperature(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract current temperature from weather data"""

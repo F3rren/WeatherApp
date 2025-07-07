@@ -114,7 +114,7 @@ class LayoutManager:
         )
 
         # Informazioni inquinamento (temporaneamente vuoto per ora)
-        self.containers['air_pollution'] = LayoutBuilder.build_content_container(
+        self.containers['air_pollution_chart'] = LayoutBuilder.build_content_container(
             air_pollution_content,
             #{"xs": 12},
             animation_duration,
@@ -187,10 +187,10 @@ class LayoutManager:
         self.layout = LayoutBuilder.build_main_layout(
             self.containers['sidebar'],
             self.containers['info'],
-            self.containers['hourly'], 
+            self.containers['hourly'],
             self.containers['chart'],
             self.containers['precipitation_chart'],
-            self.containers['air_pollution']
+            self.containers['air_pollution_chart']
         )
         return self.layout
     

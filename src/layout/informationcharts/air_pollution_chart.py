@@ -24,6 +24,9 @@ class AirPollutionChartDisplay(ft.Container):
         self._current_language = DEFAULT_LANGUAGE
         self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
         self._pollution_data = {}
+        self._cached_header = None  # Cache for header to prevent unnecessary rebuilds
+        self._header_language = None  # Track which language the header was built for
+        self._last_theme_mode = None  # Track theme changes for header cache invalidation
 
         self._text_handler = ResponsiveTextHandler(
             page=self.page, 
@@ -68,6 +71,12 @@ class AirPollutionChartDisplay(ft.Container):
             if self._state_manager:
                 new_language = self._state_manager.get_state('language') or self._current_language
                 language_changed = self._current_language != new_language
+                
+                # Invalidate header cache when language changes
+                if language_changed:
+                    self._cached_header = None
+                    self._header_language = None
+                
                 self._current_language = new_language
                 data_changed = language_changed
 
@@ -82,6 +91,13 @@ class AirPollutionChartDisplay(ft.Container):
                 is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             else:
                 is_dark = False
+            
+            # Also invalidate header cache when theme changes
+            if hasattr(self, '_last_theme_mode') and self._last_theme_mode != is_dark:
+                self._cached_header = None
+                self._header_language = None
+            self._last_theme_mode = is_dark
+            
             theme = DARK_THEME if is_dark else LIGHT_THEME
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
@@ -249,7 +265,11 @@ class AirPollutionChartDisplay(ft.Container):
         ], spacing=0, expand=True)
 
     def _build_header(self):
-        """Builds a modern header for air pollution chart section."""
+        """Builds a modern header for air pollution chart section with caching."""
+        # Check if we need to rebuild the header
+        if self._cached_header is not None and self._header_language == self._current_language:
+            return self._cached_header
+        
         header_text = TranslationService.translate_from_dict("air_pollution_chart_items", "air_pollution_title", self._current_language)
         
         # Safe theme detection
@@ -258,7 +278,7 @@ class AirPollutionChartDisplay(ft.Container):
         else:
             is_dark = False
         
-        return ft.Container(
+        header = ft.Container(
             content=ft.Row([
                 ft.Icon(
                     ft.Icons.AIR_OUTLINED,  # Icona per la qualità dell'aria
@@ -275,6 +295,12 @@ class AirPollutionChartDisplay(ft.Container):
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.only(left=20, top=16, bottom=8)
         )
+        
+        # Cache the header and language
+        self._cached_header = header
+        self._header_language = self._current_language
+        
+        return header
 
     def update_location(self, lat: float, lon: float):
         """Allows updating the location and refreshing the air pollution chart data."""

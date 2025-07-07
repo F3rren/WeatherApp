@@ -63,7 +63,6 @@ class MainWeatherInfo(ft.Container):
             if self._state_manager:
                 new_language = self._state_manager.get_state('language') or self._current_language
                 new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
-                
                 self._current_language = new_language
                 self._current_unit_system = new_unit_system
 
@@ -84,14 +83,12 @@ class MainWeatherInfo(ft.Container):
             except (AssertionError, AttributeError):
                 # Component not yet added to page, skip update
                 pass
-            
             # Also try to update the parent container if possible
             if hasattr(self, 'parent') and self.parent:
                 try:
                     self.parent.update()
                 except (AssertionError, AttributeError):
                     pass
-
         except Exception as e:
             logging.error(f"MainWeatherInfo: Error updating: {e}\n{traceback.format_exc()}")
 
@@ -104,7 +101,6 @@ class MainWeatherInfo(ft.Container):
 
             # Format temperature unit symbol
             unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
-
             # Usa la descrizione già tradotta dalla API
             weather_description = (self._weather_description or "").capitalize()
 

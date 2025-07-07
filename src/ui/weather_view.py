@@ -202,11 +202,69 @@ class WeatherView:
     def handle_unit_text_change(self, event_data=None):
         """Handles unit text change events by updating relevant UI text parts without a full rebuild."""
         logging.debug(f"WeatherView: Handling unit_text_change with data: {event_data}")
-        self._update_component_texts(event_type="unit_text_change", data=event_data)
+        
+        # Get the new unit from event data or state manager
+        new_unit = None
+        if event_data and isinstance(event_data, dict):
+            new_unit = event_data.get('unit')
+        
+        if not new_unit:
+            state_manager = self.page.session.get('state_manager')
+            if state_manager:
+                new_unit = state_manager.get_state('unit')
+        
+        if new_unit:
+            logging.info(f"WeatherView: Unit changed to {new_unit}, triggering full weather update")
+            # Trigger a full update with new unit to ensure data is consistent
+            if self.page:
+                self.page.run_task(self._handle_unit_change_full_update, new_unit)
+        else:
+            # Fallback: just update component texts
+            self._update_component_texts(event_type="unit_text_change", data=event_data)
+
+    async def _handle_unit_change_full_update(self, new_unit: str):
+        """Handle unit change with full data refresh."""
+        try:
+            logging.info(f"WeatherView: Performing full update for unit change to {new_unit}")
+            await self.handle_unit_system_change(new_unit)
+        except Exception as e:
+            logging.error(f"WeatherView: Error in full unit update: {e}")
+            # Fallback to component text updates only
+            self._update_component_texts(event_type="unit_text_change", data={"unit": new_unit})
 
     def _update_component_texts(self, event_type=None, data=None):
         """Update text elements in child components that support selective updates"""
-        # Check for components with _update_text_elements method
+        logging.debug(f"WeatherView: _update_component_texts called with event_type={event_type}, data={data}")
+        
+        # For unit changes, we need to update components directly since they don't have _update_text_elements
+        if event_type == "unit_text_change":
+            components_to_update = [
+                self.main_weather_info_instance,
+                self.temperature_chart_instance,
+                self.air_condition_instance,
+                self.hourly_forecast_instance,
+                self.weekly_forecast_display_instance,
+                self.air_pollution_display_instance,
+                self.air_pollution_chart_instance
+            ]
+            
+            for component in components_to_update:
+                if component and hasattr(component, 'update'):
+                    try:
+                        logging.debug(f"WeatherView: Updating component {type(component).__name__} for unit change")
+                        # Check if the update method is async
+                        if hasattr(component, '__class__') and component.__class__.__name__ in ['AirConditionInfo', 'HourlyForecastDisplay', 'AirPollutionDisplay', 'WeeklyForecastDisplay']:
+                            # Async components
+                            if self.page:
+                                self.page.run_task(component.update)
+                        else:
+                            # Sync components
+                            component.update()
+                    except Exception as e:
+                        logging.error(f"WeatherView: Error updating component {type(component).__name__}: {e}")
+            return
+        
+        # Check for components with _update_text_elements method (for other events)
         # Rimosso air_condition_container perché ora è incluso nel info_container
         for container in [self.info_container, self.hourly_container, self.weekly_container, self.chart_container,
                          self.air_pollution_chart_container, self.air_pollution_container]:
@@ -557,6 +615,12 @@ class WeatherView:
                 temp_max=forecast_data["temp_max"]
             )
             # Language and theme changes are handled internally by TemperatureChartDisplay
+
+        # IMPORTANT: Always call update to ensure the component reflects current state
+        try:
+            self.temperature_chart_instance.update()
+        except Exception as e:
+            logging.error(f"Error updating temperature chart: {e}")
 
         # The WeatherCard is a generic wrapper, TemperatureChartDisplay is the actual content.
         self.chart_container.content = weather_card.build(self.temperature_chart_instance)

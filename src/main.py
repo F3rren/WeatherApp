@@ -226,10 +226,12 @@ class MeteoApp:
         """Update both main weather view and sidebar weekly forecast."""
         logging.info(f"DEBUG: update_weather_with_sidebar called with city: {city}, language: {language}, unit: {unit}")
         
-        # Aggiorna lo stato con la nuova città
-        await self.state_manager.set_state("city", city)
-        await self.state_manager.set_state("language", language)
-        await self.state_manager.set_state("unit", unit)
+        # Aggiorna lo stato con la nuova città - BATCH UPDATE per evitare multiple notifiche
+        await self.state_manager.update_state({
+            "city": city,
+            "language": language,
+            "unit": unit
+        })
         
         # Update main weather view
         result = await self.weather_view_instance.update_by_city(city, language, unit)
@@ -361,12 +363,14 @@ class MeteoApp:
         """Update weather data using coordinates."""
         logging.info(f"Updating weather with coordinates: lat={lat}, lon={lon}, language={language}, unit={unit}")
         
-        # Update state
-        await self.state_manager.set_state("language", language)
-        await self.state_manager.set_state("unit", unit)
-        await self.state_manager.set_state("current_lat", lat)
-        await self.state_manager.set_state("current_lon", lon)
-        await self.state_manager.set_state("using_location", True)
+        # Update state - BATCH UPDATE per evitare multiple notifiche
+        await self.state_manager.update_state({
+            "language": language,
+            "unit": unit,
+            "current_lat": lat,
+            "current_lon": lon,
+            "using_location": True
+        })
         
         # Update weather view
         await self.weather_view_instance.update_by_coordinates(lat, lon, language, unit)

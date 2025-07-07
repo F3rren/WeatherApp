@@ -27,6 +27,10 @@ class PrecipitationChartDisplay(ft.Container):
         self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
         self._precipitation_data = []
         self._forecast_data = {}
+        self._updating = False  # Flag to prevent concurrent updates
+        self._cached_header = None  # Cache for header to prevent unnecessary rebuilds
+        self._header_language = None  # Track which language the header was built for
+        self._last_theme_mode = None  # Track theme changes for header cache invalidation
         
         # State management
         self._state_manager = None
@@ -81,22 +85,43 @@ class PrecipitationChartDisplay(ft.Container):
 
     async def update_ui(self, event_data=None):
         """Update UI based on language, unit, or theme changes."""
-        if not self.page or not self.visible:
+        if not self.page or not self.visible or self._updating:
             return
         
+        self._updating = True
         try:
             if self._state_manager:
                 new_language = self._state_manager.get_state('language')
                 new_unit_system = self._state_manager.get_state('unit')
                 
+                # print(f"DEBUG: PrecipitationChart update_ui - old language: {self._current_language}, new language: {new_language}")
+                
                 # Use default values if new values are None
+                old_language = self._current_language
                 self._current_language = new_language if new_language is not None else self._current_language
                 self._current_unit_system = new_unit_system if new_unit_system is not None else self._current_unit_system
+                
+                # print(f"DEBUG: PrecipitationChart after assignment - current language: {self._current_language}")
+                
+                if old_language != self._current_language:
+                    # print(f"DEBUG: Language changed from {old_language} to {self._current_language}, invalidating header cache")
+                    # Invalidate header cache when language changes
+                    self._cached_header = None
+                    self._header_language = None
+            else:
+                # print("DEBUG: PrecipitationChart - no state_manager available")
+                pass
             
             # Update theme colors
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK if hasattr(self.page, 'theme_mode') else False
             theme = DARK_THEME if is_dark else LIGHT_THEME
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
+            
+            # Also invalidate header cache when theme changes
+            if hasattr(self, '_last_theme_mode') and self._last_theme_mode != is_dark:
+                self._cached_header = None
+                self._header_language = None
+            self._last_theme_mode = is_dark
             
             # Apply theme to container
             self.bgcolor = theme.get("CHART", ft.Colors.WHITE)
@@ -168,16 +193,19 @@ class PrecipitationChartDisplay(ft.Container):
         ], spacing=12)
 
     def _build_header(self):
-        """Builds a modern header for precipitation chart section."""
-        header_text = TranslationService.translate_from_dict(
-            "precipitation_chart_items", 
-            "precipitation_chart_title",
-            self._current_language
-        ) or "Precipitation Forecast"
+        """Builds a modern header for precipitation chart section with caching."""
+        # Check if we need to rebuild the header
+        if self._cached_header is not None and self._header_language == self._current_language:
+            # print(f"DEBUG: Using cached header for language: {self._current_language}")
+            return self._cached_header
         
+        # print(f"DEBUG: Building new header for language: {self._current_language}")
+        header_text = TranslationService.translate_from_dict("precipitation_chart_items", "precipitation_chart_title", self._current_language)
+        # print(f"DEBUG: header_text result: {header_text}")  # Debugging line to check header text
+
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK if hasattr(self.page, 'theme_mode') else False
         
-        return ft.Container(
+        header = ft.Container(
             content=ft.Row([
                 ft.Icon(
                     ft.Icons.WATER_DROP,
@@ -195,6 +223,12 @@ class PrecipitationChartDisplay(ft.Container):
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.only(left=20, top=16, bottom=12)
         )
+        
+        # Cache the header and language
+        self._cached_header = header
+        self._header_language = self._current_language
+        
+        return header
 
     def _build_loading_content(self) -> ft.Control:
         """Build loading state content with translations."""

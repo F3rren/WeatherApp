@@ -313,7 +313,7 @@ class PrecipitationChartDisplay(ft.Container):
 
         # Create chart with modern design
         chart = ft.LineChart(
-            interactive=True,
+            interactive=False,
             data_series=[precipitation_series],
             border=ft.Border(
                 bottom=ft.BorderSide(1, ft.Colors.with_opacity(0.2, text_color)),

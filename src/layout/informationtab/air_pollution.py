@@ -284,30 +284,79 @@ class AirPollutionDisplay(ft.Container):
             )
         )
         
-        # Quality indicator based on value ranges (simplified)
+        # Quality indicator based on value ranges
         def get_quality_indicator(val, pollutant_key):
-            if pollutant_key in ["pm2_5", "pm10"]:
-                if val < 12:
+            #SO2 calculation ranges
+            if pollutant_key == "so2":
+                if val >= 0 and val < 20:
                     return ("Good", ft.Colors.GREEN_400)
-                elif val < 35:
-                    return ("Moderate", ft.Colors.ORANGE_400)
+                elif val >= 20 and val < 80:
+                    return ("Fair", ft.Colors.ORANGE_400)
+                elif val >= 80 and val < 250:
+                    return ("Moderate", ft.Colors.RED_400)
+                if val >= 250 and val < 350:
+                    return ("Poor", ft.Colors.GREEN_400)
                 else:
-                    return ("Poor", ft.Colors.RED_400)
+                    return ("Very Poor", ft.Colors.RED_400)
+            #NO2 calculation ranges
+            elif pollutant_key == "no2":
+                if val >= 0 and val < 40:
+                    return ("Good", ft.Colors.GREEN_400)
+                elif val >= 40 and val < 70:
+                    return ("Fair", ft.Colors.ORANGE_400)
+                elif val >= 70 and val < 150:
+                    return ("Moderate", ft.Colors.RED_400)
+                if val >= 150 and val < 200:
+                    return ("Poor", ft.Colors.GREEN_400)
+                else:
+                    return ("Very Poor", ft.Colors.RED_400)
+            #PM10 calculation ranges
+            if pollutant_key == "pm10":
+                if val >= 0 and val < 20:
+                    return ("Good", ft.Colors.GREEN_400)
+                elif val >= 20 and val < 50:
+                    return ("Fair", ft.Colors.ORANGE_400)
+                elif val >= 50 and val < 100:
+                    return ("Moderate", ft.Colors.RED_400)
+                if val >= 100 and val < 200:
+                    return ("Poor", ft.Colors.GREEN_400)
+                else:
+                    return ("Very Poor", ft.Colors.RED_400)
+            #PM2_5 calculation ranges
+            elif pollutant_key  == "pm2_5":
+                if val >= 0 and val < 10:
+                    return ("Good", ft.Colors.GREEN_400)
+                elif val >= 10 and val < 25:
+                    return ("Fair", ft.Colors.ORANGE_400)
+                elif val >= 25 and val < 50:
+                    return ("Moderate", ft.Colors.RED_400)
+                if val >= 50 and val < 75:
+                    return ("Poor", ft.Colors.GREEN_400)
+                else:
+                    return ("Very Poor", ft.Colors.RED_400)
+            #O3 calculation ranges
             elif pollutant_key == "o3":
-                if val < 100:
+                if val >= 0 and val < 60:
                     return ("Good", ft.Colors.GREEN_400)
-                elif val < 160:
-                    return ("Moderate", ft.Colors.ORANGE_400)
+                elif val >= 60 and val < 100:
+                    return ("Fair", ft.Colors.ORANGE_400)
+                elif val >= 100 and val < 140:
+                    return ("Moderate", ft.Colors.RED_400)
+                if val >= 140 and val < 180:
+                    return ("Poor", ft.Colors.GREEN_400)
                 else:
-                    return ("Poor", ft.Colors.RED_400)
+                    return ("Very Poor", ft.Colors.RED_400)
             else:
-                # Generic ranges for other pollutants
-                if val < 50:
+                if val >= 0 and val < 4400:
                     return ("Good", ft.Colors.GREEN_400)
-                elif val < 100:
-                    return ("Moderate", ft.Colors.ORANGE_400)
+                elif val >= 4400 and val < 9400:
+                    return ("Fair", ft.Colors.ORANGE_400)
+                elif val >= 9400 and val < 12400:
+                    return ("Moderate", ft.Colors.RED_400)
+                if val >= 12400 and val < 15400:
+                    return ("Poor", ft.Colors.GREEN_400)
                 else:
-                    return ("Poor", ft.Colors.RED_400)
+                    return ("Very Poor", ft.Colors.RED_400)
         
         quality_text, quality_color = get_quality_indicator(value, symbol.lower().replace(".", "_"))
         

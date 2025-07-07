@@ -41,11 +41,26 @@ class WeeklyForecastDisplay(ft.Container):
         if 'padding' not in kwargs:
             self.padding = ft.padding.all(0)  # Remove default padding, handled by internal containers
         
-        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
-            self._state_manager = self.page.session.get('state_manager')
-            self._state_manager.register_observer("language_event", self._safe_language_update)
-            self._state_manager.register_observer("unit", self._safe_unit_update)
-            self._state_manager.register_observer("theme_event", self._safe_theme_update)
+        if self.page and hasattr(self.page, 'session') and self.page.session and self.page.session.get('state_manager'):
+            try:
+                self._state_manager = self.page.session.get('state_manager')
+                # Register observers with try-catch protection for each one
+                try:
+                    self._state_manager.register_observer("language_event", self._safe_language_update)
+                except Exception as e:
+                    logging.warning(f"WeeklyForecastDisplay: Failed to register language observer: {e}")
+                try:
+                    self._state_manager.register_observer("unit", self._safe_unit_update)
+                except Exception as e:
+                    logging.warning(f"WeeklyForecastDisplay: Failed to register unit observer: {e}")
+                try:
+                    self._state_manager.register_observer("theme_event", self._safe_theme_update)
+                except Exception as e:
+                    logging.warning(f"WeeklyForecastDisplay: Failed to register theme observer: {e}")
+                logging.debug("WeeklyForecastDisplay: Successfully registered state observers")
+            except Exception as e:
+                logging.error(f"WeeklyForecastDisplay: Error registering observers: {e}")
+                self._state_manager = None
 
         if self.page:
             original_on_resize = self.page.on_resize
@@ -59,8 +74,23 @@ class WeeklyForecastDisplay(ft.Container):
             self.page.on_resize = resize_handler
         
         self.content = self.build()
+        # Schedule async UI update after the component is initialized, but don't block the constructor
         if self.page:
-            self.page.run_task(self.update_ui)
+            # Use a small delay to ensure the component is properly added to the page
+            def delayed_update():
+                try:
+                    if self.page and hasattr(self.page, 'run_task'):
+                        self.page.run_task(self.update_ui)
+                except Exception as e:
+                    logging.debug(f"WeeklyForecastDisplay: Failed to schedule initial update: {e}")
+            
+            # Try to schedule the update, but don't fail if it doesn't work
+            try:
+                import threading
+                timer = threading.Timer(0.1, delayed_update)
+                timer.start()
+            except Exception:
+                pass  # Ignore if threading is not available or fails
 
     async def update_ui(self, event_data=None):
         """Updates the UI based on state changes, fetching new data if necessary."""
@@ -101,15 +131,62 @@ class WeeklyForecastDisplay(ft.Container):
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
             self.content = self.build()
-            # Only update if this control is already in the page - use try/catch for safety
-            if self.page:
+            
+            # Robust update logic - check multiple conditions before updating
+            can_update = False
+            
+            # First check - basic page connection
+            if self.page and hasattr(self, 'page') and self.page is not None:
+                # Second check - check if this control has a parent (is in the widget tree)
+                if hasattr(self, 'parent') and self.parent is not None:
+                    # Third check - verify the parent is also connected to the page
+                    if hasattr(self.parent, 'page') and self.parent.page is not None:
+                        can_update = True
+                    else:
+                        # Alternative check - try to see if we can access page through control hierarchy
+                        try:
+                            current = self
+                            while current and hasattr(current, 'parent') and current.parent:
+                                current = current.parent
+                                if hasattr(current, 'page') and current.page is not None:
+                                    can_update = True
+                                    break
+                        except Exception:
+                            pass
+            
+            if can_update:
                 try:
                     self.update()
+                    logging.debug("WeeklyForecastDisplay: Successfully updated UI")
                 except (AssertionError, AttributeError) as update_error:
-                    # Control not yet added to page, skip update
-                    logging.debug(f"WeeklyForecastDisplay: Skipping update - control not in page yet: {update_error}")
+                    # Control not yet fully added to page, this is expected during initialization
+                    logging.debug(f"WeeklyForecastDisplay: Skipping update - control not fully initialized: {update_error}")
+                except Exception as update_error:
+                    logging.warning(f"WeeklyForecastDisplay: Unexpected error during update: {update_error}")
+            else:
+                logging.debug("WeeklyForecastDisplay: Control not ready for update (not properly connected to page)")
+                
         except Exception as e:
-            logging.error(f"WeeklyForecastDisplay: Error updating UI: {e}\n{traceback.format_exc()}")
+            logging.error(f"Error updating component WeeklyForecastDisplay: {e}")
+            # Set fallback content on error
+            try:
+                self.content = ft.Container(
+                    content=ft.Text(
+                        "Error loading weekly forecast",
+                        color=ft.Colors.RED_400,
+                        size=14
+                    ),
+                    alignment=ft.alignment.center,
+                    padding=20
+                )
+                # Only try to update if we're connected to the page
+                if self.page and hasattr(self, 'parent') and self.parent is not None:
+                    try:
+                        self.update()
+                    except Exception:
+                        pass  # Ignore update errors in fallback
+            except Exception:
+                pass  # Ignore errors in fallback
 
     def build(self):
         """Constructs the modern UI for the weekly forecast with header and styled cards."""
@@ -354,23 +431,79 @@ class WeeklyForecastDisplay(ft.Container):
 
     def update_city(self, new_city: str):
         """Updates the city and triggers a UI refresh."""
-        if self._city != new_city:
-            self._city = new_city
-            self._forecast_data = []  # Clear cached data
-            if self.page:
-                self.page.run_task(self.update_ui)
+        try:
+            if self._city != new_city:
+                self._city = new_city
+                self._forecast_data = []  # Clear cached data
+                if self.page and hasattr(self.page, 'run_task'):
+                    self.page.run_task(self.update_ui)
+        except Exception as e:
+            logging.error(f"WeeklyForecastDisplay: Error updating city: {e}")
 
     def _safe_language_update(self, e=None):
         """Safely handle language change event."""
-        if self.page and hasattr(self.page, 'run_task'):
-            self.page.run_task(self.update_ui, e)
+        try:
+            # Check if component is still valid and connected
+            if not self.page or not hasattr(self, '_city') or not self._city:
+                logging.debug("WeeklyForecastDisplay: Skipping language update - component not ready")
+                return
+                
+            if self.page and hasattr(self.page, 'run_task') and callable(getattr(self.page, 'run_task', None)):
+                self.page.run_task(self.update_ui, e)
+            else:
+                logging.debug("WeeklyForecastDisplay: Cannot schedule language update - page.run_task not available")
+        except Exception as ex:
+            logging.error(f"WeeklyForecastDisplay: Error in safe language update: {ex}")
     
     def _safe_unit_update(self, e=None):
         """Safely handle unit change event."""
-        if self.page and hasattr(self.page, 'run_task'):
-            self.page.run_task(self.update_ui, e)
+        try:
+            # Check if component is still valid and connected
+            if not self.page or not hasattr(self, '_city') or not self._city:
+                logging.debug("WeeklyForecastDisplay: Skipping unit update - component not ready")
+                return
+                
+            if self.page and hasattr(self.page, 'run_task') and callable(getattr(self.page, 'run_task', None)):
+                self.page.run_task(self.update_ui, e)
+            else:
+                logging.debug("WeeklyForecastDisplay: Cannot schedule unit update - page.run_task not available")
+        except Exception as ex:
+            logging.error(f"WeeklyForecastDisplay: Error in safe unit update: {ex}")
     
     def _safe_theme_update(self, e=None):
         """Safely handle theme change event."""
-        if self.page and hasattr(self.page, 'run_task'):
-            self.page.run_task(self.update_ui, e)
+        try:
+            # Check if component is still valid and connected
+            if not self.page or not hasattr(self, '_city') or not self._city:
+                logging.debug("WeeklyForecastDisplay: Skipping theme update - component not ready")
+                return
+                
+            if self.page and hasattr(self.page, 'run_task') and callable(getattr(self.page, 'run_task', None)):
+                self.page.run_task(self.update_ui, e)
+            else:
+                logging.debug("WeeklyForecastDisplay: Cannot schedule theme update - page.run_task not available")
+        except Exception as ex:
+            logging.error(f"WeeklyForecastDisplay: Error in safe theme update: {ex}")
+
+    def cleanup(self):
+        """Clean up observers and resources when component is destroyed."""
+        try:
+            if self._state_manager:
+                # Unregister all observers
+                try:
+                    self._state_manager.unregister_observer("language_event", self._safe_language_update)
+                except Exception as e:
+                    logging.debug(f"WeeklyForecastDisplay: Error unregistering language observer: {e}")
+                try:
+                    self._state_manager.unregister_observer("unit", self._safe_unit_update)
+                except Exception as e:
+                    logging.debug(f"WeeklyForecastDisplay: Error unregistering unit observer: {e}")
+                try:
+                    self._state_manager.unregister_observer("theme_event", self._safe_theme_update)
+                except Exception as e:
+                    logging.debug(f"WeeklyForecastDisplay: Error unregistering theme observer: {e}")
+                
+                logging.debug("WeeklyForecastDisplay: Successfully cleaned up observers")
+                self._state_manager = None
+        except Exception as e:
+            logging.error(f"WeeklyForecastDisplay: Error during cleanup: {e}")

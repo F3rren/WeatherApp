@@ -53,10 +53,31 @@ class MeteoApp:
             def safe_update_container(container, color_key):
                 if container and hasattr(container, 'bgcolor'):
                     try:
+                        # More robust checking for container readiness
+                        is_ready = False
+                        
                         # Check if container is properly connected to page
                         if hasattr(container, 'page') and container.page is not None:
+                            is_ready = True
+                        # Alternative check - try to traverse up the widget tree
+                        elif hasattr(container, 'parent'):
+                            current = container
+                            while current and hasattr(current, 'parent') and current.parent:
+                                current = current.parent
+                                if hasattr(current, 'page') and current.page is not None:
+                                    is_ready = True
+                                    break
+                        
+                        if is_ready:
                             container.bgcolor = theme.get(color_key)
                             container.update()
+                        else:
+                            # Reduce log noise - only log occasionally
+                            if not hasattr(safe_update_container, '_not_ready_count'):
+                                safe_update_container._not_ready_count = {}
+                            safe_update_container._not_ready_count[color_key] = safe_update_container._not_ready_count.get(color_key, 0) + 1
+                            if safe_update_container._not_ready_count[color_key] % 20 == 1:  # Log every 20th occurrence
+                                logging.debug(f"Container ({color_key}) not ready for color update - not connected to page")
                     except (AssertionError, AttributeError) as e:
                         # Reduce log noise - only log once every 10 attempts
                         if not hasattr(safe_update_container, '_error_count'):
@@ -65,14 +86,26 @@ class MeteoApp:
                         if safe_update_container._error_count[color_key] % 10 == 1:  # Log first error and every 10th
                             logging.debug(f"Container ({color_key}) not ready for color update: {e}")
                     except Exception as e:
-                        logging.error(f"Error updating container color: {e}")
+                        logging.error(f"Error updating container color for {color_key}: {e}")
             
             # Aggiorna colori specifici per ogni container
             safe_update_container(self.sidebar_container, "SIDEBAR")
             
             if self.info_container_wrapper:
                 try:
+                    # More robust checking for info container
+                    is_ready = False
                     if hasattr(self.info_container_wrapper, 'page') and self.info_container_wrapper.page is not None:
+                        is_ready = True
+                    elif hasattr(self.info_container_wrapper, 'parent'):
+                        current = self.info_container_wrapper
+                        while current and hasattr(current, 'parent') and current.parent:
+                            current = current.parent
+                            if hasattr(current, 'page') and current.page is not None:
+                                is_ready = True
+                                break
+                    
+                    if is_ready:
                         # Applica gradiente se definito nel tema
                         if "INFO_GRADIENT" in theme:
                             gradient_start = theme["INFO_GRADIENT"]["start"]
@@ -87,6 +120,8 @@ class MeteoApp:
                             self.info_container_wrapper.bgcolor = theme.get("CARD_BACKGROUND")
                             self.info_container_wrapper.gradient = None
                         self.info_container_wrapper.update()
+                    else:
+                        logging.debug("Info container not ready for update - not connected to page")
                 except (AssertionError, AttributeError) as e:
                     logging.debug(f"Info container not ready for update: {e}")
                 except Exception as e:
@@ -99,8 +134,9 @@ class MeteoApp:
             
             # Aggiorna il colore di sfondo della pagina
             try:
-                self.page.bgcolor = theme.get("BACKGROUND")
-                self.page.update()
+                if self.page and hasattr(self.page, 'bgcolor'):
+                    self.page.bgcolor = theme.get("BACKGROUND")
+                    self.page.update()
             except (AssertionError, AttributeError) as e:
                 logging.debug(f"Page not ready for background update: {e}")
             except Exception as e:

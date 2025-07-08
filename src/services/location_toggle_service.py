@@ -84,15 +84,15 @@ class LocationToggleService:
         self.geolocation_service.set_location_callback(None)
         logging.info("Tracking della posizione disattivato")
 
-    async def handle_location_change(self, lat_lon: tuple) -> None:
+    async def handle_location_change(self, lat: float, lon: float) -> None:
         """
         Gestisce il cambio di posizione.
         
         Args:
-            lat_lon: Tupla (latitudine, longitudine)
+            lat: Latitudine
+            lon: Longitudine
         """
         try:
-            lat, lon = lat_lon
             await self.state_manager.update_state({
                 "current_lat": lat,
                 "current_lon": lon
@@ -116,12 +116,7 @@ class LocationToggleService:
         language = self.state_manager.get_state("language")
         unit = self.state_manager.get_state("unit")
         
-        await self.update_weather_callback(
-            lat=lat,
-            lon=lon,
-            language=language,
-            unit=unit
-        )
+        await self.update_weather_callback(lat, lon, language, unit)
         logging.info(f"Meteo aggiornato con coordinate: {lat}, {lon}")
 
     async def initialize_tracking(self) -> None:

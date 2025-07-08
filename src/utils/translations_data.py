@@ -1100,12 +1100,10 @@ TRANSLATIONS = {
             "total_precipitation": "Totale",
             "max_intensity": "Picco",
             "rainy_hours": "Ore di pioggia",
-            # Descrizioni intensità precipitazioni
             "intensity_light": "Leggera",
             "intensity_moderate": "Moderata", 
             "intensity_heavy": "Intensa",
             "intensity_very_heavy": "Molto intensa",
-            # Etichette aggiuntive
             "next_24h": "Prossime 24 ore",
             "precipitation_type": "Tipo",
             "rain": "Pioggia",
@@ -1115,7 +1113,8 @@ TRANSLATIONS = {
             "when_expected": "Prevista alle",
             "duration": "Durata",
             "peak_time": "Picco previsto"
-        }
+        },
+
     },
     "de": {
         "popup_menu_items": {
@@ -1651,5 +1650,65 @@ TRANSLATIONS = {
             "duration": "Продолжительность",
             "peak_time": "Пик ожидается"
         }
+    }
+}
+
+# Dizionari centralizzati per air_quality_indicators in tutte le lingue
+AIR_QUALITY_INDICATORS = {
+    "humidity": {
+        "excellent": {"en": "Excellent", "it": "Ottima", "fr": "Excellente", "de": "Ausgezeichnet", "es": "Excelente", "pt": "Excelente", "ru": "Отличная", "zh_cn": "优秀", "hi": "उत्कृष्ट", "ja": "優秀", "ar": "ممتاز", "id": "Sangat Baik"},
+        "good": {"en": "Good", "it": "Buona", "fr": "Bonne", "de": "Gut", "es": "Buena", "pt": "Boa", "ru": "Хорошая", "zh_cn": "良好", "hi": "अच्छा", "ja": "良い", "ar": "جيد", "id": "Baik"},
+        "moderate": {"en": "Moderate", "it": "Moderata", "fr": "Modérée", "de": "Mäßig", "es": "Moderada", "pt": "Moderada", "ru": "Умеренная", "zh_cn": "适中", "hi": "मध्यम", "ja": "普通", "ar": "معتدل", "id": "Sedang"},
+        "poor": {"en": "Poor", "it": "Scarsa", "fr": "Médiocre", "de": "Schlecht", "es": "Mala", "pt": "Ruim", "ru": "Плохая", "zh_cn": "差", "hi": "खराब", "ja": "悪い", "ar": "سيء", "id": "Buruk"},
+        "very_poor": {"en": "Very Poor", "it": "Molto scarsa", "fr": "Très médiocre", "de": "Sehr schlecht", "es": "Muy mala", "pt": "Muito ruim", "ru": "Очень плохая", "zh_cn": "很差", "hi": "बहुत खराब", "ja": "とても悪い", "ar": "سيء جداً", "id": "Sangat Buruk"}
+    },
+    "uv_index": {
+        "low": {"en": "Low", "it": "Basso", "fr": "Faible", "de": "Niedrig", "es": "Bajo", "pt": "Baixo", "ru": "Низкий", "zh_cn": "低", "hi": "कम", "ja": "低い", "ar": "منخفض", "id": "Rendah"},
+        "moderate": {"en": "Moderate", "it": "Moderato", "fr": "Modéré", "de": "Mäßig", "es": "Moderado", "pt": "Moderado", "ru": "Умеренный", "zh_cn": "适中", "hi": "मध्यम", "ja": "普通", "ar": "معتدل", "id": "Sedang"},
+        "high": {"en": "High", "it": "Alto", "fr": "Élevé", "de": "Hoch", "es": "Alto", "pt": "Alto", "ru": "Высокий", "zh_cn": "高", "hi": "उच्च", "ja": "高い", "ar": "عالي", "id": "Tinggi"},
+        "very_high": {"en": "Very High", "it": "Molto alto", "fr": "Très élevé", "de": "Sehr hoch", "es": "Muy alto", "pt": "Muito alto", "ru": "Очень высокий", "zh_cn": "很高", "hi": "बहुत उच्च", "ja": "とても高い", "ar": "عالي جداً", "id": "Sangat Tinggi"},
+        "extreme": {"en": "Extreme", "it": "Estremo", "fr": "Extrême", "de": "Extrem", "es": "Extremo", "pt": "Extremo", "ru": "Экстремальный", "zh_cn": "极端", "hi": "चरम", "ja": "極端", "ar": "متطرف", "id": "Ekstrem"}
+    },
+    "pressure": {
+        "normal": {"en": "Normal", "it": "Normale", "fr": "Normale", "de": "Normal", "es": "Normal", "pt": "Normal", "ru": "Нормальное", "zh_cn": "正常", "hi": "सामान्य", "ja": "正常", "ar": "طبيعي", "id": "Normal"},
+        "low": {"en": "Low", "it": "Bassa", "fr": "Basse", "de": "Niedrig", "es": "Baja", "pt": "Baixa", "ru": "Низкое", "zh_cn": "低", "hi": "कम", "ja": "低い", "ar": "منخفض", "id": "Rendah"},
+        "high": {"en": "High", "it": "Alta", "fr": "Élevée", "de": "Hoch", "es": "Alta", "pt": "Alta", "ru": "Высокое", "zh_cn": "高", "hi": "उच्च", "ja": "高い", "ar": "عالي", "id": "Tinggi"},
+        "very_low": {"en": "Very Low", "it": "Molto bassa", "fr": "Très basse", "de": "Sehr niedrig", "es": "Muy baja", "pt": "Muito baixa", "ru": "Очень низкое", "zh_cn": "很低", "hi": "बहुत कम", "ja": "とても低い", "ar": "منخفض جداً", "id": "Sangat Rendah"},
+        "very_high": {"en": "Very High", "it": "Molto alta", "fr": "Très élevée", "de": "Sehr hoch", "es": "Muy alta", "pt": "Muito alta", "ru": "Очень высокое", "zh_cn": "很高", "hi": "बहुत उच्च", "ja": "とても高い", "ar": "عالي جداً", "id": "Sangat Tinggi"}
+    },
+    "visibility": {
+        "excellent": {"en": "Excellent", "it": "Ottima", "fr": "Excellente", "de": "Ausgezeichnet", "es": "Excelente", "pt": "Excelente", "ru": "Отличная", "zh_cn": "优秀", "hi": "उत्कृष्ट", "ja": "優秀", "ar": "ممتاز", "id": "Sangat Baik"},
+        "good": {"en": "Good", "it": "Buona", "fr": "Bonne", "de": "Gut", "es": "Buena", "pt": "Boa", "ru": "Хорошая", "zh_cn": "良好", "hi": "अच्छा", "ja": "良い", "ar": "جيد", "id": "Baik"},
+        "moderate": {"en": "Moderate", "it": "Moderata", "fr": "Modérée", "de": "Mäßig", "es": "Moderada", "pt": "Moderada", "ru": "Умеренная", "zh_cn": "适中", "hi": "मध्यम", "ja": "普通", "ar": "معتدل", "id": "Sedang"},
+        "poor": {"en": "Poor", "it": "Scarsa", "fr": "Médiocre", "de": "Schlecht", "es": "Mala", "pt": "Ruim", "ru": "Плохая", "zh_cn": "差", "hi": "खराब", "ja": "悪い", "ar": "سيء", "id": "Buruk"},
+        "very_poor": {"en": "Very Poor", "it": "Molto scarsa", "fr": "Très médiocre", "de": "Sehr schlecht", "es": "Muy mala", "pt": "Muito ruim", "ru": "Очень плохая", "zh_cn": "很差", "hi": "बहुत खराब", "ja": "とても悪い", "ar": "سيء جداً", "id": "Sangat Buruk"}
+    },
+    "feels_like": {
+        "ideal": {"en": "Ideal", "it": "Ideale", "fr": "Idéale", "de": "Ideal", "es": "Ideal", "pt": "Ideal", "ru": "Идеальная", "zh_cn": "理想", "hi": "आदर्श", "ja": "理想的", "ar": "مثالي", "id": "Ideal"},
+        "comfortable": {"en": "Comfortable", "it": "Confortevole", "fr": "Confortable", "de": "Komfortabel", "es": "Cómoda", "pt": "Confortável", "ru": "Комфортная", "zh_cn": "舒适", "hi": "आरामदायक", "ja": "快適", "ar": "مريح", "id": "Nyaman"},
+        "acceptable": {"en": "Acceptable", "it": "Accettabile", "fr": "Acceptable", "de": "Akzeptabel", "es": "Aceptable", "pt": "Aceitável", "ru": "Приемлемая", "zh_cn": "可接受", "hi": "स्वीकार्य", "ja": "許容範囲", "ar": "مقبول", "id": "Dapat Diterima"},
+        "uncomfortable": {"en": "Uncomfortable", "it": "Scomodo", "fr": "Inconfortable", "de": "Unkomfortabel", "es": "Incómoda", "pt": "Desconfortável", "ru": "Некомфортная", "zh_cn": "不舒适", "hi": "असहज", "ja": "不快", "ar": "غير مريح", "id": "Tidak Nyaman"},
+        "extreme": {"en": "Extreme", "it": "Estremo", "fr": "Extrême", "de": "Extrem", "es": "Extrema", "pt": "Extrema", "ru": "Экстремальная", "zh_cn": "极端", "hi": "चरम", "ja": "極端", "ar": "متطرف", "id": "Ekstrem"}
+    },
+    "wind": {
+        "calm": {"en": "Calm", "it": "Calmo", "fr": "Calme", "de": "Windstill", "es": "Calmado", "pt": "Calmo", "ru": "Штиль", "zh_cn": "无风", "hi": "शांत", "ja": "無風", "ar": "هدوء", "id": "Tenang"},
+        "light": {"en": "Light", "it": "Leggero", "fr": "Léger", "de": "Schwach", "es": "Ligero", "pt": "Leve", "ru": "Слабый", "zh_cn": "微风", "hi": "हल्की", "ja": "軽風", "ar": "خفيف", "id": "Ringan"},
+        "moderate": {"en": "Moderate", "it": "Moderato", "fr": "Modéré", "de": "Mäßig", "es": "Moderado", "pt": "Moderado", "ru": "Умеренный", "zh_cn": "和风", "hi": "मध्यम", "ja": "中風", "ar": "معتدل", "id": "Sedang"},
+        "strong": {"en": "Strong", "it": "Forte", "fr": "Fort", "de": "Stark", "es": "Fuerte", "pt": "Forte", "ru": "Сильный", "zh_cn": "强风", "hi": "तेज़", "ja": "強風", "ar": "قوي", "id": "Kuat"},
+        "very_strong": {"en": "Very Strong", "it": "Molto forte", "fr": "Très fort", "de": "Sehr stark", "es": "Muy fuerte", "pt": "Muito forte", "ru": "Очень сильный", "zh_cn": "大风", "hi": "बहुत तेज़", "ja": "非常に強い", "ar": "قوي جداً", "id": "Sangat Kuat"}
+    },
+    "dew_point": {
+        "dry": {"en": "Dry", "it": "Secco", "fr": "Sec", "de": "Trocken", "es": "Seco", "pt": "Seco", "ru": "Сухо", "zh_cn": "干燥", "hi": "सूखा", "ja": "乾燥", "ar": "جاف", "id": "Kering"},
+        "comfortable": {"en": "Comfortable", "it": "Confortevole", "fr": "Confortable", "de": "Komfortabel", "es": "Cómodo", "pt": "Confortável", "ru": "Комфортно", "zh_cn": "舒适", "hi": "आरामदायक", "ja": "快適", "ar": "مريح", "id": "Nyaman"},
+        "humid": {"en": "Humid", "it": "Umido", "fr": "Humide", "de": "Feucht", "es": "Húmedo", "pt": "Úmido", "ru": "Влажно", "zh_cn": "潮湿", "hi": "नम", "ja": "湿気", "ar": "رطب", "id": "Lembap"},
+        "unpleasant": {"en": "Unpleasant", "it": "Sgradevole", "fr": "Désagréable", "de": "Unangenehm", "es": "Desagradable", "pt": "Desagradável", "ru": "Неприятно", "zh_cn": "不舒服", "hi": "अप्रिय", "ja": "不快", "ar": "غير مريح", "id": "Tidak Menyenangkan"},
+        "oppressive": {"en": "Oppressive", "it": "Oppressivo", "fr": "Oppressant", "de": "Drückend", "es": "Opresivo", "pt": "Opressivo", "ru": "Удушливо", "zh_cn": "闷热", "hi": "दमघोंटू", "ja": "圧迫的", "ar": "خانق", "id": "Menekan"}
+    },
+    "cloud_coverage": {
+        "clear": {"en": "Clear", "it": "Sereno", "fr": "Dégagé", "de": "Klar", "es": "Despejado", "pt": "Limpo", "ru": "Ясно", "zh_cn": "晴朗", "hi": "साफ", "ja": "晴れ", "ar": "صافي", "id": "Cerah"},
+        "partly_cloudy": {"en": "Partly Cloudy", "it": "Poco nuvoloso", "fr": "Partiellement nuageux", "de": "Teilweise bewölkt", "es": "Parcialmente nublado", "pt": "Parcialmente nublado", "ru": "Переменная облачность", "zh_cn": "部分多云", "hi": "आंशिक रूप से बादल", "ja": "一部曇り", "ar": "غائم جزئياً", "id": "Sebagian Berawan"},
+        "partly_cloudy_moderate": {"en": "Partly Cloudy", "it": "Parzialmente nuvoloso", "fr": "Partiellement nuageux", "de": "Mäßig bewölkt", "es": "Parcialmente nublado", "pt": "Parcialmente nublado", "ru": "Умеренная облачность", "zh_cn": "部分多云", "hi": "मध्यम बादल", "ja": "部分的に曇り", "ar": "غائم معتدل", "id": "Berawan Sedang"},
+        "mostly_cloudy": {"en": "Mostly Cloudy", "it": "Molto nuvoloso", "fr": "Très nuageux", "de": "Stark bewölkt", "es": "Muy nublado", "pt": "Muito nublado", "ru": "Пасмурно", "zh_cn": "多云", "hi": "अधिकतर बादल", "ja": "ほぼ曇り", "ar": "غائم في الغالب", "id": "Kebanyakan Berawan"},
+        "overcast": {"en": "Overcast", "it": "Coperto", "fr": "Couvert", "de": "Bedeckt", "es": "Nublado", "pt": "Encoberto", "ru": "Сплошная облачность", "zh_cn": "阴天", "hi": "बादलों से ढका", "ja": "曇天", "ar": "غائم تماماً", "id": "Mendung"}
     }
 }

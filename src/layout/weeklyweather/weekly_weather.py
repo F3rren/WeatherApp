@@ -161,32 +161,45 @@ class WeeklyForecastDisplay(ft.Container):
                 except (AssertionError, AttributeError) as update_error:
                     # Control not yet fully added to page, this is expected during initialization
                     logging.debug(f"WeeklyForecastDisplay: Skipping update - control not fully initialized: {update_error}")
+                except RuntimeError as update_error:
+                    # Handle "Container Control must be added to the page first" error
+                    if "must be added to the page first" in str(update_error):
+                        logging.debug(f"WeeklyForecastDisplay: Skipping update - control not added to page: {update_error}")
+                    else:
+                        logging.warning(f"WeeklyForecastDisplay: Runtime error during update: {update_error}")
                 except Exception as update_error:
                     logging.warning(f"WeeklyForecastDisplay: Unexpected error during update: {update_error}")
             else:
                 logging.debug("WeeklyForecastDisplay: Control not ready for update (not properly connected to page)")
                 
         except Exception as e:
-            logging.error(f"Error updating component WeeklyForecastDisplay: {e}")
-            # Set fallback content on error
-            try:
-                self.content = ft.Container(
-                    content=ft.Text(
-                        "Error loading weekly forecast",
-                        color=ft.Colors.RED_400,
-                        size=14
-                    ),
-                    alignment=ft.alignment.center,
-                    padding=20
-                )
-                # Only try to update if we're connected to the page
-                if self.page and hasattr(self, 'parent') and self.parent is not None:
-                    try:
-                        self.update()
-                    except Exception:
-                        pass  # Ignore update errors in fallback
-            except Exception:
-                pass  # Ignore errors in fallback
+            # Only log actual errors, not expected initialization issues
+            error_msg = str(e)
+            if "must be added to the page first" in error_msg:
+                logging.debug(f"WeeklyForecastDisplay: Control not ready for update: {e}")
+            else:
+                logging.error(f"Error updating component WeeklyForecastDisplay: {e}")
+            
+            # Set fallback content on error only for actual errors
+            if "must be added to the page first" not in error_msg:
+                try:
+                    self.content = ft.Container(
+                        content=ft.Text(
+                            "Error loading weekly forecast",
+                            color=ft.Colors.RED_400,
+                            size=14
+                        ),
+                        alignment=ft.alignment.center,
+                        padding=20
+                    )
+                    # Only try to update if we're connected to the page
+                    if self.page and hasattr(self, 'parent') and self.parent is not None:
+                        try:
+                            self.update()
+                        except Exception:
+                            pass  # Ignore update errors in fallback
+                except Exception:
+                    pass  # Ignore errors in fallback
 
     def build(self):
         """Constructs the modern UI for the weekly forecast with header and styled cards."""
@@ -473,9 +486,44 @@ class WeeklyForecastDisplay(ft.Container):
     def _safe_theme_update(self, e=None):
         """Safely handle theme change event."""
         try:
-            # Check if component is still valid and connected
+            # Enhanced readiness check
             if not self.page or not hasattr(self, '_city') or not self._city:
                 logging.debug("WeeklyForecastDisplay: Skipping theme update - component not ready")
+                return
+                
+            # Check if control is properly connected to the page
+            is_connected = False
+            try:
+                # Check if we have a parent and the parent is connected to the page
+                if hasattr(self, 'parent') and self.parent is not None:
+                    if hasattr(self.parent, 'page') and self.parent.page is not None:
+                        is_connected = True
+                    else:
+                        # Try to traverse up the widget tree to find page connection
+                        current = self
+                        while current and hasattr(current, 'parent') and current.parent:
+                            current = current.parent
+                            if hasattr(current, 'page') and current.page is not None:
+                                is_connected = True
+                                break
+                        
+                # Additional check: verify that the page is the same as our stored page
+                if is_connected and hasattr(self, 'page') and self.page is not None:
+                    current = self
+                    while current and hasattr(current, 'parent') and current.parent:
+                        current = current.parent
+                        if hasattr(current, 'page') and current.page is not None:
+                            if current.page != self.page:
+                                is_connected = False
+                                logging.debug("WeeklyForecastDisplay: Page mismatch detected")
+                            break
+                            
+            except Exception as check_error:
+                logging.debug(f"WeeklyForecastDisplay: Error checking connection: {check_error}")
+                is_connected = False
+                
+            if not is_connected:
+                logging.debug("WeeklyForecastDisplay: Skipping theme update - control not properly connected to page")
                 return
                 
             if self.page and hasattr(self.page, 'run_task') and callable(getattr(self.page, 'run_task', None)):

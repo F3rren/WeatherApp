@@ -182,7 +182,7 @@ class MeteoApp:
             page=page,
             geolocation_service=self.geolocation_service,
             state_manager=self.state_manager,
-            update_weather_callback=self.update_weather_with_sidebar # Imposta il callback
+            update_weather_callback=self.update_weather_with_coordinates # Use coordinate-based callback
         )
         self.theme_toggle_service = ThemeToggleService(
             page=page, 

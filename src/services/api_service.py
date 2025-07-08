@@ -481,7 +481,7 @@ class ApiService:
         """
         import flet as ft
         from layout.frontend.weeklyweather.daily_forecast_items import DailyForecastItems
-        from components.responsive_text_handler import ResponsiveTextHandler
+
         
         try:
             # Get weather data

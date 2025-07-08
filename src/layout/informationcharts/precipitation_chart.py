@@ -143,6 +143,12 @@ class PrecipitationChartDisplay(ft.Container):
             except (AssertionError, AttributeError) as e:
                 # Control not yet added to page or not properly connected, update will happen when added
                 logging.debug(f"PrecipitationChart: Container not ready for update: {e}")
+            except RuntimeError as e:
+                # Handle "Container Control must be added to the page first" error
+                if "must be added to the page first" in str(e):
+                    logging.debug(f"PrecipitationChart: Container not added to page: {e}")
+                else:
+                    logging.error(f"PrecipitationChart: Runtime error during update: {e}")
             except Exception as e:
                 logging.error(f"PrecipitationChart: Unexpected error during update: {e}")
                 
@@ -171,6 +177,12 @@ class PrecipitationChartDisplay(ft.Container):
             except (AssertionError, AttributeError) as e:
                 # Control not yet added to page or not properly connected
                 logging.debug(f"PrecipitationChart: Reset state - Container not ready for update: {e}")
+            except RuntimeError as e:
+                # Handle "Container Control must be added to the page first" error
+                if "must be added to the page first" in str(e):
+                    logging.debug(f"PrecipitationChart: Reset state - Container not added to page: {e}")
+                else:
+                    logging.error(f"PrecipitationChart: Reset state - Runtime error during update: {e}")
             except Exception as e:
                 logging.error(f"PrecipitationChart: Reset state - Unexpected error during update: {e}")
         except Exception as e:

@@ -249,13 +249,14 @@ class AirConditionInfo(ft.Container):
                     value_text=value_text,
                     raw_value=value,
                     metric_key=config["key"],
-                    color_scheme=config["color"]
+                    color_scheme=config["color"],
+                    translation_service=translation_service
                 )
                 cards.append(card)
         
         return cards
     
-    def _create_metric_card(self, icon, name, value_text, raw_value, metric_key, color_scheme="blue"):
+    def _create_metric_card(self, icon, name, value_text, raw_value, metric_key, color_scheme="blue", translation_service=None):
         """Creates a modern card for a single air condition metric."""
         # Color schemes
         color_schemes = {
@@ -293,36 +294,145 @@ class AirConditionInfo(ft.Container):
         
         # Quality indicator based on metric type
         def get_quality_indicator(value, key):
+            from utils.translations_data import AIR_QUALITY_INDICATORS
+            lang = self._current_language
+            
             if key == "humidity":
-                if 30 <= value <= 50:
-                    return ("Ideale", ft.Colors.GREEN_400)
-                elif 20 <= value <= 70:
-                    return ("Buona", ft.Colors.BLUE_400)
+                if 40 <= value <= 60:
+                    label = AIR_QUALITY_INDICATORS["humidity"]["excellent"].get(lang, "Ottima")
+                    color = ft.Colors.GREEN_400
+                elif 30 <= value <= 70:
+                    label = AIR_QUALITY_INDICATORS["humidity"]["good"].get(lang, "Buona")
+                    color = ft.Colors.BLUE_400
+                elif 20 <= value <= 80:
+                    label = AIR_QUALITY_INDICATORS["humidity"]["moderate"].get(lang, "Moderata")
+                    color = ft.Colors.YELLOW_600
+                elif 10 <= value <= 90:
+                    label = AIR_QUALITY_INDICATORS["humidity"]["poor"].get(lang, "Scarsa")
+                    color = ft.Colors.ORANGE_400
                 else:
-                    return ("Non ideale", ft.Colors.ORANGE_400)
+                    label = AIR_QUALITY_INDICATORS["humidity"]["very_poor"].get(lang, "Molto scarsa")
+                    color = ft.Colors.RED_400
+                return (label, color)
             elif key == "uv_index":
                 if value <= 2:
-                    return ("Basso", ft.Colors.GREEN_400)
+                    label = AIR_QUALITY_INDICATORS["uv_index"]["low"].get(lang, "Basso")
+                    color = ft.Colors.GREEN_400
                 elif value <= 5:
-                    return ("Moderato", ft.Colors.YELLOW_600)
+                    label = AIR_QUALITY_INDICATORS["uv_index"]["moderate"].get(lang, "Moderato")
+                    color = ft.Colors.YELLOW_600
                 elif value <= 7:
-                    return ("Alto", ft.Colors.ORANGE_400)
+                    label = AIR_QUALITY_INDICATORS["uv_index"]["high"].get(lang, "Alto")
+                    color = ft.Colors.ORANGE_400
+                elif value <= 10:
+                    label = AIR_QUALITY_INDICATORS["uv_index"]["very_high"].get(lang, "Molto alto")
+                    color = ft.Colors.RED_400
                 else:
-                    return ("Molto alto", ft.Colors.RED_400)
+                    label = AIR_QUALITY_INDICATORS["uv_index"]["extreme"].get(lang, "Estremo")
+                    color = ft.Colors.PURPLE_400
+                return (label, color)
             elif key == "pressure":
                 if 1013 <= value <= 1023:
-                    return ("Normale", ft.Colors.GREEN_400)
-                elif value < 1013:
-                    return ("Bassa", ft.Colors.BLUE_400)
-                else:
-                    return ("Alta", ft.Colors.ORANGE_400)
+                    label = AIR_QUALITY_INDICATORS["pressure"]["normal"].get(lang, "Normale")
+                    color = ft.Colors.GREEN_400
+                elif 1000 <= value < 1013:
+                    label = AIR_QUALITY_INDICATORS["pressure"]["low"].get(lang, "Bassa")
+                    color = ft.Colors.YELLOW_600
+                elif 1023 < value <= 1030:
+                    label = AIR_QUALITY_INDICATORS["pressure"]["high"].get(lang, "Alta")
+                    color = ft.Colors.ORANGE_400
+                elif value < 1000:
+                    label = AIR_QUALITY_INDICATORS["pressure"]["very_low"].get(lang, "Molto bassa")
+                    color = ft.Colors.RED_400
+                else:  # > 1030
+                    label = AIR_QUALITY_INDICATORS["pressure"]["very_high"].get(lang, "Molto alta")
+                    color = ft.Colors.PURPLE_400
+                return (label, color)
             elif key == "visibility":
-                if value >= 10000:
-                    return ("Ottima", ft.Colors.GREEN_400)
+                if value >= 20000:
+                    label = AIR_QUALITY_INDICATORS["visibility"]["excellent"].get(lang, "Ottima")
+                    color = ft.Colors.GREEN_400
+                elif value >= 10000:
+                    label = AIR_QUALITY_INDICATORS["visibility"]["good"].get(lang, "Buona")
+                    color = ft.Colors.BLUE_400
                 elif value >= 5000:
-                    return ("Buona", ft.Colors.BLUE_400)
+                    label = AIR_QUALITY_INDICATORS["visibility"]["moderate"].get(lang, "Moderata")
+                    color = ft.Colors.YELLOW_600
+                elif value >= 1000:
+                    label = AIR_QUALITY_INDICATORS["visibility"]["poor"].get(lang, "Scarsa")
+                    color = ft.Colors.ORANGE_400
                 else:
-                    return ("Limitata", ft.Colors.ORANGE_400)
+                    label = AIR_QUALITY_INDICATORS["visibility"]["very_poor"].get(lang, "Molto scarsa")
+                    color = ft.Colors.RED_400
+                return (label, color)
+            elif key == "feels_like":
+                if 18 <= value <= 24:
+                    label = AIR_QUALITY_INDICATORS["feels_like"]["ideal"].get(lang, "Ideale")
+                    color = ft.Colors.GREEN_400
+                elif 15 <= value <= 28:
+                    label = AIR_QUALITY_INDICATORS["feels_like"]["comfortable"].get(lang, "Confortevole")
+                    color = ft.Colors.BLUE_400
+                elif 10 <= value <= 32:
+                    label = AIR_QUALITY_INDICATORS["feels_like"]["acceptable"].get(lang, "Accettabile")
+                    color = ft.Colors.YELLOW_600
+                elif 5 <= value <= 38:
+                    label = AIR_QUALITY_INDICATORS["feels_like"]["uncomfortable"].get(lang, "Scomodo")
+                    color = ft.Colors.ORANGE_400
+                else:
+                    label = AIR_QUALITY_INDICATORS["feels_like"]["extreme"].get(lang, "Estremo")
+                    color = ft.Colors.RED_400
+                return (label, color)
+            elif key == "wind":
+                if value <= 10:
+                    label = AIR_QUALITY_INDICATORS["wind"]["calm"].get(lang, "Calmo")
+                    color = ft.Colors.GREEN_400
+                elif value <= 20:
+                    label = AIR_QUALITY_INDICATORS["wind"]["light"].get(lang, "Leggero")
+                    color = ft.Colors.BLUE_400
+                elif value <= 40:
+                    label = AIR_QUALITY_INDICATORS["wind"]["moderate"].get(lang, "Moderato")
+                    color = ft.Colors.YELLOW_600
+                elif value <= 60:
+                    label = AIR_QUALITY_INDICATORS["wind"]["strong"].get(lang, "Forte")
+                    color = ft.Colors.ORANGE_400
+                else:
+                    label = AIR_QUALITY_INDICATORS["wind"]["very_strong"].get(lang, "Molto forte")
+                    color = ft.Colors.RED_400
+                return (label, color)
+            elif key == "dew_point":
+                if value <= 10:
+                    label = AIR_QUALITY_INDICATORS["dew_point"]["dry"].get(lang, "Secco")
+                    color = ft.Colors.GREEN_400
+                elif value <= 15:
+                    label = AIR_QUALITY_INDICATORS["dew_point"]["comfortable"].get(lang, "Confortevole")
+                    color = ft.Colors.BLUE_400
+                elif value <= 20:
+                    label = AIR_QUALITY_INDICATORS["dew_point"]["humid"].get(lang, "Umido")
+                    color = ft.Colors.YELLOW_600
+                elif value <= 24:
+                    label = AIR_QUALITY_INDICATORS["dew_point"]["unpleasant"].get(lang, "Sgradevole")
+                    color = ft.Colors.ORANGE_400
+                else:
+                    label = AIR_QUALITY_INDICATORS["dew_point"]["oppressive"].get(lang, "Oppressivo")
+                    color = ft.Colors.RED_400
+                return (label, color)
+            elif key == "cloud_coverage":
+                if value <= 10:
+                    label = AIR_QUALITY_INDICATORS["cloud_coverage"]["clear"].get(lang, "Sereno")
+                    color = ft.Colors.GREEN_400
+                elif value <= 30:
+                    label = AIR_QUALITY_INDICATORS["cloud_coverage"]["partly_cloudy"].get(lang, "Poco nuvoloso")
+                    color = ft.Colors.BLUE_400
+                elif value <= 70:
+                    label = AIR_QUALITY_INDICATORS["cloud_coverage"]["partly_cloudy_moderate"].get(lang, "Parzialmente nuvoloso")
+                    color = ft.Colors.YELLOW_600
+                elif value <= 90:
+                    label = AIR_QUALITY_INDICATORS["cloud_coverage"]["mostly_cloudy"].get(lang, "Molto nuvoloso")
+                    color = ft.Colors.ORANGE_400
+                else:
+                    label = AIR_QUALITY_INDICATORS["cloud_coverage"]["overcast"].get(lang, "Coperto")
+                    color = ft.Colors.GREY_600
+                return (label, color)
             else:
                 return ("", ft.Colors.TRANSPARENT)
         

@@ -66,14 +66,14 @@ class ChartsView:
                             ),
                             height=200,
                             alignment=ft.alignment.center,
-                            border=ft.border.all(1, ft.colors.OUTLINE),
+                            border=ft.border.all(1, ft.Colors.OUTLINE),
                             border_radius=8,
                             padding=20
                         )
                     ], spacing=10),
                     padding=15,
                     border_radius=8,
-                    bgcolor=ft.colors.SURFACE_VARIANT,
+                    bgcolor=ft.Colors.SURFACE_VARIANT,
                     margin=ft.margin.only(bottom=15)
                 ),
                 
@@ -90,14 +90,14 @@ class ChartsView:
                             ),
                             height=200,
                             alignment=ft.alignment.center,
-                            border=ft.border.all(1, ft.colors.OUTLINE),
+                            border=ft.border.all(1, ft.Colors.OUTLINE),
                             border_radius=8,
                             padding=20
                         )
                     ], spacing=10),
                     padding=15,
                     border_radius=8,
-                    bgcolor=ft.colors.SURFACE_VARIANT,
+                    bgcolor=ft.Colors.SURFACE_VARIANT,
                     margin=ft.margin.only(bottom=15)
                 ),
                 
@@ -114,14 +114,14 @@ class ChartsView:
                             ),
                             height=200,
                             alignment=ft.alignment.center,
-                            border=ft.border.all(1, ft.colors.OUTLINE),
+                            border=ft.border.all(1, ft.Colors.OUTLINE),
                             border_radius=8,
                             padding=20
                         )
                     ], spacing=10),
                     padding=15,
                     border_radius=8,
-                    bgcolor=ft.colors.SURFACE_VARIANT
+                    bgcolor=ft.Colors.SURFACE_VARIANT
                 )
             ], 
             spacing=10,
@@ -139,7 +139,7 @@ class ChartsView:
         theme = DARK_THEME if is_dark else LIGHT_THEME
         
         if self.main_container:
-            self.main_container.bgcolor = theme.get("CARD_BACKGROUND", ft.colors.SURFACE)
+            self.main_container.bgcolor = theme.get("CARD_BACKGROUND", ft.Colors.SURFACE)
             try:
                 self.main_container.update()
             except Exception:

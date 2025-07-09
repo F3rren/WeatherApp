@@ -201,6 +201,47 @@ class WeeklyForecastDisplay(ft.Container):
                 except Exception:
                     pass  # Ignore errors in fallback
 
+    def update(self):
+        """Updates state and rebuilds the UI without fetching new data. Follows MainWeatherInfo pattern."""
+        if not self.page or not self.visible:
+            return
+
+        try:
+            # Update state from state_manager (like MainWeatherInfo)
+            if self._state_manager:
+                new_language = self._state_manager.get_state('language') or self._current_language
+                new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
+                self._current_language = new_language
+                self._current_unit_system = new_unit_system
+
+            # Update theme color (like MainWeatherInfo)
+            if self.page and self.page.theme_mode:
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+                current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
+                self._current_text_color = current_theme_config.get("TEXT", ft.Colors.BLACK)
+            else:
+                self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+
+            # Rebuild and update UI (like MainWeatherInfo)
+            self.content = self.build()
+            
+            # Update the component itself
+            try:
+                super().update()
+                logging.debug("WeeklyForecastDisplay: Successfully updated UI")
+            except (AssertionError, AttributeError):
+                # Component not yet added to page, skip update
+                logging.debug("WeeklyForecastDisplay: Component not ready for update")
+                pass
+            # Also try to update the parent container if possible
+            if hasattr(self, 'parent') and self.parent:
+                try:
+                    self.parent.update()
+                except (AssertionError, AttributeError):
+                    pass
+        except Exception as e:
+            logging.error(f"WeeklyForecastDisplay: Error updating: {e}")
+
     def build(self):
         """Constructs the modern UI for the weekly forecast with header and styled cards."""
         # Safe theme detection with robust checking
@@ -208,6 +249,9 @@ class WeeklyForecastDisplay(ft.Container):
         if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         theme = DARK_THEME if is_dark else LIGHT_THEME
+        
+        # CRITICAL FIX: Always update text color on build to ensure consistency
+        self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
         
         # Header section
         header_text = TranslationService.translate_from_dict("weekly_forecast_items", "header", self._current_language)
@@ -454,37 +498,35 @@ class WeeklyForecastDisplay(ft.Container):
             logging.error(f"WeeklyForecastDisplay: Error updating city: {e}")
 
     def _safe_language_update(self, e=None):
-        """Safely handle language change event."""
+        """Safely handle language change event using MainWeatherInfo pattern."""
         try:
             # Check if component is still valid and connected
             if not self.page or not hasattr(self, '_city') or not self._city:
                 logging.debug("WeeklyForecastDisplay: Skipping language update - component not ready")
                 return
                 
-            if self.page and hasattr(self.page, 'run_task') and callable(getattr(self.page, 'run_task', None)):
-                self.page.run_task(self.update_ui, e)
-            else:
-                logging.debug("WeeklyForecastDisplay: Cannot schedule language update - page.run_task not available")
+            # Use the new update method (like MainWeatherInfo)
+            self.update()
+            logging.debug("WeeklyForecastDisplay: Language update completed")
         except Exception as ex:
             logging.error(f"WeeklyForecastDisplay: Error in safe language update: {ex}")
     
     def _safe_unit_update(self, e=None):
-        """Safely handle unit change event."""
+        """Safely handle unit change event using MainWeatherInfo pattern."""
         try:
             # Check if component is still valid and connected
             if not self.page or not hasattr(self, '_city') or not self._city:
                 logging.debug("WeeklyForecastDisplay: Skipping unit update - component not ready")
                 return
                 
-            if self.page and hasattr(self.page, 'run_task') and callable(getattr(self.page, 'run_task', None)):
-                self.page.run_task(self.update_ui, e)
-            else:
-                logging.debug("WeeklyForecastDisplay: Cannot schedule unit update - page.run_task not available")
+            # Use the new update method (like MainWeatherInfo)
+            self.update()
+            logging.debug("WeeklyForecastDisplay: Unit update completed")
         except Exception as ex:
             logging.error(f"WeeklyForecastDisplay: Error in safe unit update: {ex}")
     
     def _safe_theme_update(self, e=None):
-        """Safely handle theme change event."""
+        """Safely handle theme change event using MainWeatherInfo pattern."""
         try:
             # Enhanced readiness check
             if not self.page or not hasattr(self, '_city') or not self._city:
@@ -525,11 +567,37 @@ class WeeklyForecastDisplay(ft.Container):
             if not is_connected:
                 logging.debug("WeeklyForecastDisplay: Skipping theme update - control not properly connected to page")
                 return
-                
-            if self.page and hasattr(self.page, 'run_task') and callable(getattr(self.page, 'run_task', None)):
-                self.page.run_task(self.update_ui, e)
+            
+            # MAIN FIX: Use MainWeatherInfo pattern - update synchronously
+            # Update theme color immediately
+            if self.page and self.page.theme_mode:
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+                current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
+                self._current_text_color = current_theme_config.get("TEXT", ft.Colors.BLACK)
             else:
-                logging.debug("WeeklyForecastDisplay: Cannot schedule theme update - page.run_task not available")
+                self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+            
+            logging.debug(f"WeeklyForecastDisplay: Theme update - text_color: {self._current_text_color}")
+            
+            # Rebuild and update UI immediately (like MainWeatherInfo)
+            self.content = self.build()
+            
+            # Update the component itself
+            try:
+                super().update()
+                logging.debug("WeeklyForecastDisplay: Successfully updated UI with new theme")
+            except (AssertionError, AttributeError):
+                # Component not yet added to page, skip update
+                logging.debug("WeeklyForecastDisplay: Component not ready for update")
+                pass
+            
+            # Also try to update the parent container if possible
+            if hasattr(self, 'parent') and self.parent:
+                try:
+                    self.parent.update()
+                except (AssertionError, AttributeError):
+                    pass
+                    
         except Exception as ex:
             logging.error(f"WeeklyForecastDisplay: Error in safe theme update: {ex}")
 

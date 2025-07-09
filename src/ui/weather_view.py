@@ -718,7 +718,7 @@ class WeatherView:
             self.precipitation_chart_container.update()
             logging.info("DEBUG: Updated precipitation chart container")
         except AssertionError:
-            logging.error("DEBUG: Container not ready for update")
+            logging.error("Container not ready for update")
             pass
 
     async def _update_air_pollution_chart(self, lat: float, lon: float) -> None:

@@ -3,7 +3,8 @@ import logging
 import traceback
 from services.api_service import ApiService
 from services.translation_service import TranslationService
-from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME
+from utils.config import DEFAULT_LANGUAGE
+from services.theme_handler import ThemeHandler
 from components.responsive_text_handler import ResponsiveTextHandler
 from utils.translations_data import TRANSLATIONS
 
@@ -14,16 +15,17 @@ class AirPollutionDisplay(ft.Container):
     Manages its own UI construction, updates, and state observers.
     """
     
-    def __init__(self, page: ft.Page, lat: float = None, lon: float = None, **kwargs):
+    def __init__(self, page: ft.Page, lat: float = None, lon: float = None, theme_handler: ThemeHandler = None, **kwargs):
         super().__init__(**kwargs)
         self.page = page
+        self.theme_handler = theme_handler or ThemeHandler(self.page)
         self._lat = lat
         self._lon = lon
-        
+
         self._api_service = ApiService()
         self._state_manager = None
         self._current_language = DEFAULT_LANGUAGE
-        self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+        self._current_text_color = self.theme_handler.get_text_color()
         self._pollution_data = {}
 
         self._text_handler = ResponsiveTextHandler(
@@ -34,15 +36,15 @@ class AirPollutionDisplay(ft.Container):
             },
             breakpoints=[600, 900, 1200, 1600]
         )
-        
+
         if 'expand' not in kwargs:
             self.expand = True
         if 'padding' not in kwargs:
             self.padding = ft.padding.all(10)
-        
+
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
-        
+
         self.content = self.build()
 
     async def update(self):
@@ -64,15 +66,8 @@ class AirPollutionDisplay(ft.Container):
                 else:
                     self._pollution_data = {}
 
-            # Safe theme detection
-            if self.page and hasattr(self.page, 'theme_mode'):
-                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            else:
-                # Default to light theme if page is not available
-                is_dark = False
-            
-            theme = DARK_THEME if is_dark else LIGHT_THEME
-            self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
+            # Safe theme detection centralizzata
+            self._current_text_color = self.theme_handler.get_text_color()
 
             self.content = self.build()
             # Only update if this control is already in the page

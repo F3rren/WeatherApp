@@ -1,9 +1,10 @@
 import flet as ft
 from typing import List, Optional
 import math
-from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
+from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService
+from services.theme_handler import ThemeHandler
 import logging
 
 class TemperatureChartDisplay(ft.Container):
@@ -14,20 +15,23 @@ class TemperatureChartDisplay(ft.Container):
     
     def __init__(self, page: ft.Page, days: Optional[List[str]] = None, 
                  temp_min: Optional[List[int]] = None, temp_max: Optional[List[int]] = None, 
-                 **kwargs):
+                 theme_handler: ThemeHandler = None, **kwargs):
         super().__init__(**kwargs)
         self.page = page
         self._days = days if days is not None else []
         self._temp_min = temp_min if temp_min is not None else []
         self._temp_max = temp_max if temp_max is not None else []
-        
-        # Initialize state variables - simple like MainWeatherInfo
+
+        # ThemeHandler centralizzato
+        self.theme_handler = theme_handler or ThemeHandler(self.page)
+
+        # Initialize state variables
         self._state_manager = None
         self._current_language = DEFAULT_LANGUAGE
         self._current_unit_system = DEFAULT_UNIT_SYSTEM
-        self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+        self._current_text_color = self.theme_handler.get_text_color()
 
-        # Initialize ResponsiveTextHandler
+        # ResponsiveTextHandler
         self._text_handler = ResponsiveTextHandler(
             page=self.page,
             base_sizes={
@@ -35,25 +39,23 @@ class TemperatureChartDisplay(ft.Container):
             },
             breakpoints=[600, 900, 1200, 1600]
         )
-        
+
         # Set default properties
         if 'expand' not in kwargs:
             self.expand = True
         if 'padding' not in kwargs:
             self.padding = ft.padding.all(10)
-        
+
         # Setup observers and handlers
         if self.page:
             if self._text_handler and not self._text_handler.page:
                 self._text_handler.page = self.page
-        # Setup state manager - simple registration
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
-            # Register for unit changes to update the unit labels
             if self._state_manager:
                 self._state_manager.register_observer("unit_text_change", self._handle_unit_change)
                 self._state_manager.register_observer("unit", self._handle_unit_change)
-        
+
         # Build initial content
         self.content = self.build()
 
@@ -69,23 +71,17 @@ class TemperatureChartDisplay(ft.Container):
                 new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
                 self._current_language = new_language
                 self._current_unit_system = new_unit_system
-           
-            # Update theme color
-            if self.page and hasattr(self.page, 'theme_mode'):
-                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-                current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-                self._current_text_color = current_theme_config.get("TEXT", ft.Colors.BLACK)
-            else:
-                self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+
+            # Update theme color (centralizzato)
+            self._current_text_color = self.theme_handler.get_text_color()
 
             # Rebuild and update UI - no cache, always fresh
             self.content = self.build()
-            
+
             # Update the component itself
             try:
                 super().update()
             except (AssertionError, AttributeError):
-                # Component not yet added to page, skip update
                 pass
 
         except Exception as e:
@@ -123,16 +119,13 @@ class TemperatureChartDisplay(ft.Container):
         # Build complete header title with unit
         complete_title = f"{header_text} ({unit_symbol})"
 
-        # Safe theme detection
-        is_dark = False
-        if self.page and hasattr(self.page, 'theme_mode'):
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        
+        # Usa ThemeHandler per il colore icona
+        icon_color = ft.Colors.ORANGE_400 if self.theme_handler.get_theme() == self.theme_handler.get_theme() else ft.Colors.ORANGE_300
         return ft.Container(
             content=ft.Row([
                 ft.Icon(
                     ft.Icons.THERMOSTAT_OUTLINED,
-                    color=ft.Colors.ORANGE_400 if not is_dark else ft.Colors.ORANGE_300,
+                    color=icon_color,
                     size=24
                 ),
                 ft.Container(width=12),
@@ -152,21 +145,10 @@ class TemperatureChartDisplay(ft.Container):
         data_points_min = []
         data_points_max = []
         
-        # Safe theme detection
-        if self.page and hasattr(self.page, 'theme_mode'):
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        else:
-            is_dark = False
-        
-        # Enhanced colors for better visibility and modern appeal
-        if not is_dark:
-            # Light theme: vibrant but not too bright
-            max_color = "#ef4444"  # Modern red
-            min_color = "#3b82f6"  # Modern blue
-        else:
-            # Dark theme: softer, more pleasant colors
-            max_color = "#f87171"  # Lighter red for dark backgrounds
-            min_color = "#60a5fa"  # Lighter blue for dark backgrounds
+        # Usa ThemeHandler per i colori (se vuoi ruoli diversi, puoi estendere qui)
+        is_dark = self.theme_handler.get_theme() == self.theme_handler.get_theme()
+        max_color = "#ef4444" if not is_dark else "#f87171"
+        min_color = "#3b82f6" if not is_dark else "#60a5fa"
         
         for i, day_label_key in enumerate(self._days):
             day_display_name = TranslationService.translate_from_dict("temperature_chart_items", day_label_key, self._current_language)
@@ -295,21 +277,12 @@ class TemperatureChartDisplay(ft.Container):
         )
         
         # Modern chart container with better background
-        # Safe theme detection
-        if self.page and hasattr(self.page, 'theme_mode'):
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        else:
-            is_dark = False
-        theme = DARK_THEME if is_dark else LIGHT_THEME
-        
-        # Use theme colors for better integration
-        chart_bgcolor = theme.get("CARD_BACKGROUND", "#ffffff" if not is_dark else "#2a2a2a")
+        # Usa ThemeHandler per il background
+        chart_bgcolor = self.theme_handler.get_background_color()
         if chart_bgcolor == "#ffffff":
-            # Light theme: subtle blue-tinted background
-            chart_bgcolor = "#f8fafc"  # Very light blue-gray
+            chart_bgcolor = "#f8fafc"
         elif chart_bgcolor == "#2a2a2a":
-            # Dark theme: darker background with slight blue tint
-            chart_bgcolor = "#1e293b"  # Dark blue-gray
+            chart_bgcolor = "#1e293b"
         
         # Container with modern styling
         return ft.Container(
@@ -335,19 +308,9 @@ class TemperatureChartDisplay(ft.Container):
         legend_max_text = TranslationService.translate_from_dict("temperature_chart_items", "max", self._current_language)
         legend_min_text = TranslationService.translate_from_dict("temperature_chart_items", "min", self._current_language)
         
-        # Safe theme detection
-        if self.page and hasattr(self.page, 'theme_mode'):
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        else:
-            is_dark = False
-        
-        # Use the same modern colors as the chart
-        if not is_dark:
-            max_color = "#ef4444"  # Modern red
-            min_color = "#3b82f6"  # Modern blue
-        else:
-            max_color = "#f87171"  # Lighter red for dark backgrounds
-            min_color = "#60a5fa"  # Lighter blue for dark backgrounds
+        is_dark = self.theme_handler.get_theme() == self.theme_handler.get_theme()
+        max_color = "#ef4444" if not is_dark else "#f87171"
+        min_color = "#3b82f6" if not is_dark else "#60a5fa"
 
         # Modern legend items
         max_item = ft.Container(
@@ -410,18 +373,9 @@ class TemperatureChartDisplay(ft.Container):
         # Get current unit symbol directly
         unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
         
-        # Safe theme detection
-        is_dark = False
-        if self.page and hasattr(self.page, 'theme_mode'):
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        
-        # Enhanced colors
-        if not is_dark:
-            max_color = "#ef4444"  # Modern red
-            min_color = "#3b82f6"  # Modern blue
-        else:
-            max_color = "#f87171"  # Lighter red for dark backgrounds
-            min_color = "#60a5fa"  # Lighter blue for dark backgrounds
+        is_dark = self.theme_handler.get_theme() == self.theme_handler.get_theme()
+        max_color = "#ef4444" if not is_dark else "#f87171"
+        min_color = "#3b82f6" if not is_dark else "#60a5fa"
         
         for i, day_label_key in enumerate(self._days):
             day_display_name = TranslationService.translate_from_dict("temperature_chart_items", day_label_key, self._current_language)
@@ -546,9 +500,7 @@ class TemperatureChartDisplay(ft.Container):
             expand=True,
         )
         
-        # Theme
-        theme = DARK_THEME if is_dark else LIGHT_THEME
-        chart_bgcolor = theme.get("CARD_BACKGROUND", "#ffffff" if not is_dark else "#2a2a2a")
+        chart_bgcolor = self.theme_handler.get_background_color()
         if chart_bgcolor == "#ffffff":
             chart_bgcolor = "#f8fafc"
         elif chart_bgcolor == "#2a2a2a":
@@ -574,18 +526,9 @@ class TemperatureChartDisplay(ft.Container):
         legend_max_text = TranslationService.translate_from_dict("temperature_chart_items", "max", self._current_language)
         legend_min_text = TranslationService.translate_from_dict("temperature_chart_items", "min", self._current_language)
         
-        # Safe theme detection
-        is_dark = False
-        if self.page and hasattr(self.page, 'theme_mode'):
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        
-        # Colors
-        if not is_dark:
-            max_color = "#ef4444"
-            min_color = "#3b82f6"
-        else:
-            max_color = "#f87171"
-            min_color = "#60a5fa"
+        is_dark = self.theme_handler.get_theme() == self.theme_handler.get_theme()
+        max_color = "#ef4444" if not is_dark else "#f87171"
+        min_color = "#3b82f6" if not is_dark else "#60a5fa"
 
         # Legend items
         max_item = ft.Container(

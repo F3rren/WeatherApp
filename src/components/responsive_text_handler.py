@@ -57,7 +57,7 @@ class ResponsiveTextHandler:
         """Controlla periodicamente la dimensione della finestra come fallback."""
         last_width = None
         while True:
-            await asyncio.sleep(0.5)  # Controlla ogni 500ms
+            await asyncio.sleep(0.1)  # Controlla ogni 100ms
             
             if self.page and hasattr(self.page, 'width') and self.page.width:
                 current_width = self.page.width

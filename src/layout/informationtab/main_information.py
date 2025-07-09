@@ -1,5 +1,6 @@
 import flet as ft
-from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
+from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
+from services.theme_handler import ThemeHandler
 import logging
 from services.translation_service import TranslationService
 from components.responsive_text_handler import ResponsiveTextHandler
@@ -12,7 +13,7 @@ class MainWeatherInfo(ft.Container):
     """
 
     def __init__(self, city: str, location: str, temperature: int,
-                 weather_icon: str, page: ft.Page = None, **kwargs):
+                 weather_icon: str, page: ft.Page = None, theme_handler: ThemeHandler = None, **kwargs):
         super().__init__(**kwargs)
         self._city_data = city.upper()
         self._location_data = location
@@ -24,11 +25,14 @@ class MainWeatherInfo(ft.Container):
         self._temp_max = None
         self.page = page
 
+        # Theme handler centralizzato
+        self.theme_handler = theme_handler if theme_handler else ThemeHandler(self.page)
+
         # Initialize state variables
         self._state_manager = None
         self._current_language = DEFAULT_LANGUAGE
         self._current_unit_system = DEFAULT_UNIT_SYSTEM
-        self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+        self._current_text_color = self.theme_handler.get_text_color()
 
         # Initialize ResponsiveTextHandler
         self._text_handler = ResponsiveTextHandler(
@@ -50,8 +54,59 @@ class MainWeatherInfo(ft.Container):
         # Setup state manager
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
+            # Register as observer for theme, language, and unit events
+            self._state_manager.register_observer("theme_event", self.update_theme)
+            self._state_manager.register_observer("language_event", self.update_language)
+            self._state_manager.register_observer("unit", self.update_unit)
         
         self.content = self.build()
+
+    def update_theme(self, event_data=None):
+        """
+        Update only the theme-related properties of this component.
+        """
+        # Usa ThemeHandler per aggiornare il colore testo
+        self._current_text_color = self.theme_handler.get_text_color()
+        self.content = self.build()
+        try:
+            super().update()
+        except Exception:
+            pass
+
+    def update_language(self, event_data=None):
+        """
+        Update only the language-dependent texts of this component.
+        """
+        if self._state_manager:
+            new_language = self._state_manager.get_state('language') or self._current_language
+            self._current_language = new_language
+        self.content = self.build()
+        try:
+            super().update()
+        except Exception:
+            pass
+
+    def update_unit(self, event_data=None):
+        """
+        Update only the unit-dependent values of this component.
+        """
+        if self._state_manager:
+            new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
+            self._current_unit_system = new_unit_system
+        self.content = self.build()
+        try:
+            super().update()
+        except Exception:
+            pass
+
+    def cleanup(self):
+        """
+        Deregister this component from all observers.
+        """
+        if self._state_manager:
+            self._state_manager.remove_observer("theme_event", self.update_theme)
+            self._state_manager.remove_observer("language_event", self.update_language)
+            self._state_manager.remove_observer("unit", self.update_unit)
 
     def update(self):
         """Updates state and rebuilds the UI without fetching new data."""
@@ -66,13 +121,8 @@ class MainWeatherInfo(ft.Container):
                 self._current_language = new_language
                 self._current_unit_system = new_unit_system
 
-            # Update theme color
-            if self.page and self.page.theme_mode:
-                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-                current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-                self._current_text_color = current_theme_config.get("TEXT", ft.Colors.BLACK)
-            else:
-                self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+            # Aggiorna il colore testo tramite ThemeHandler
+            self._current_text_color = self.theme_handler.get_text_color()
 
             # Rebuild and update UI
             self.content = self.build()
@@ -168,8 +218,7 @@ class MainWeatherInfo(ft.Container):
                     ft.Icon(
                         ft.Icons.MY_LOCATION,
                         size=18, 
-                        #color=ft.Colors.with_opacity(0.8, self._current_text_color)
-                        color=ft.Colors.RED
+                        color=ft.Colors.with_opacity(0.8, self._current_text_color)
                     ),
                     ft.Text(
                         f"{self._city_data.split(', ')[0]}",

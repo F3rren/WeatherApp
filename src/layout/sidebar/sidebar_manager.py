@@ -14,7 +14,7 @@ from layout.weeklyweather.weekly_weather import WeeklyForecastDisplay
 from state_manager import StateManager
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
-from utils.config import DARK_THEME, LIGHT_THEME
+from services.theme_handler import ThemeHandler
 from components.responsive_text_handler import ResponsiveTextHandler
 
 # Configure logging
@@ -36,7 +36,6 @@ class SidebarManager(ft.Container):
                  update_weather_callback: Optional[Callable] = None,
                  **kwargs):
         super().__init__(**kwargs)
-        
         # Core references
         self.page = page
         self.api_service = api_service
@@ -44,16 +43,15 @@ class SidebarManager(ft.Container):
         self.location_toggle_service = location_toggle_service
         self.theme_toggle_service = theme_toggle_service
         self.update_weather_callback = update_weather_callback
-        
+        # Theme handler must be initialized before components
+        self.theme_handler = ThemeHandler(self.page)
         # Component state
         self.current_city = None
         self.cities = []
-        
         # Child components
         self.pop_menu = None
         self.search_bar = None
         self.weekly_forecast_display = None
-        
         # Text handler for responsive design
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
@@ -67,11 +65,9 @@ class SidebarManager(ft.Container):
             },
             breakpoints=[600, 900, 1200, 1600]
         )
-        
         # Initialize components and styling
         self._initialize_styling()
         self._initialize_components()
-        
         # Build initial content
         self.content = self.build()
 
@@ -84,16 +80,14 @@ class SidebarManager(ft.Container):
         """Initialize all child components of the sidebar."""
         logger.info("Initializing sidebar components")
         
-        # Get current theme and language
-        text_color = (DARK_THEME if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME)
+        # Get current language
         language = self.state_manager.get_state("language") or "en"
-        
+
         # Define city selection handler
         async def handle_city_selected(city):
             logger.info(f"City selected in sidebar: {city}")
             language = self.state_manager.get_state("language") or "en"
             unit = self.state_manager.get_state("unit") or "metric"
-            
             if self.update_weather_callback is not None:
                 try:
                     result = await self.update_weather_callback(city, language, unit)
@@ -105,8 +99,8 @@ class SidebarManager(ft.Container):
             else:
                 logger.error("No weather update callback available")
                 return False
-        
-        # Initialize popup menu
+
+        # Initialize popup menu with theme_handler
         self.pop_menu = PopMenu(
             page=self.page,
             state_manager=self.state_manager,
@@ -114,19 +108,19 @@ class SidebarManager(ft.Container):
             handle_theme_toggle=self.theme_toggle_service.handle_theme_toggle,
             theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
             location_toggle_value=self.state_manager.get_state("using_location") or False,
-            text_color=text_color,
             language=language,
-            text_handler_get_size=self.text_handler.get_size
+            text_handler_get_size=self.text_handler.get_size,
+            theme_handler=self.theme_handler
         )
-        
-        # Initialize search bar
+
+        # Initialize search bar with theme_handler
         self.search_bar = SearchBar(
             page=self.page,
-            text_color=text_color,
             cities=self.cities,
             on_city_selected=handle_city_selected,
             language=language,
             text_handler_get_size=self.text_handler.get_size,
+            theme_handler=self.theme_handler
         )
 
         self.border_radius = 22
@@ -142,9 +136,10 @@ class SidebarManager(ft.Container):
         logger.info("Registering SidebarManager event handlers")
         
         try:
-            # Register theme and language change handlers
+            # Register theme, language and unit change handlers
             self.state_manager.register_observer("theme_event", self.handle_theme_change)
             self.state_manager.register_observer("language_event", self.handle_language_change)
+            self.state_manager.register_observer("unit", self.handle_unit_change)
             logger.debug("SidebarManager event handlers registered successfully")
         except Exception as e:
             logger.warning(f"Error registering SidebarManager event handlers: {e}")
@@ -159,13 +154,10 @@ class SidebarManager(ft.Container):
         logger.info("SidebarManager handling theme change")
         
         try:
-            # STEP 1: Update text color for components
-            text_color = (DARK_THEME if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME)
-            
-            # STEP 2: Reinitialize components with new theme (SIDEBAR PATTERN)
+            # STEP 1: Reinitialize components with new theme (SIDEBAR PATTERN)
             language = self.state_manager.get_state("language") or "en"
-            
-            # Reinitialize popup menu with new theme
+
+            # Reinitialize popup menu with new theme_handler
             self.pop_menu = PopMenu(
                 page=self.page,
                 state_manager=self.state_manager,
@@ -173,17 +165,16 @@ class SidebarManager(ft.Container):
                 handle_theme_toggle=self.theme_toggle_service.handle_theme_toggle,
                 theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
                 location_toggle_value=self.state_manager.get_state("using_location") or False,
-                text_color=text_color,
                 language=language,
-                text_handler_get_size=self.text_handler.get_size
+                text_handler_get_size=self.text_handler.get_size,
+                theme_handler=self.theme_handler
             )
-            
-            # Reinitialize search bar with new theme
+
+            # Reinitialize search bar with new theme_handler
             async def handle_city_selected(city):
                 logger.info(f"City selected in sidebar: {city}")
                 language = self.state_manager.get_state("language") or "en"
                 unit = self.state_manager.get_state("unit") or "metric"
-                
                 if self.update_weather_callback is not None:
                     try:
                         result = await self.update_weather_callback(city, language, unit)
@@ -195,35 +186,34 @@ class SidebarManager(ft.Container):
                 else:
                     logger.error("No weather update callback available")
                     return False
-            
+
             self.search_bar = SearchBar(
                 page=self.page,
-                text_color=text_color,
                 cities=self.cities,
                 on_city_selected=handle_city_selected,
                 language=language,
                 text_handler_get_size=self.text_handler.get_size,
+                theme_handler=self.theme_handler
             )
-            
-            # STEP 3: Update existing WeeklyForecastDisplay with new theme
+
+            # STEP 2: Update existing WeeklyForecastDisplay with new theme
             if self.weekly_forecast_display and hasattr(self.weekly_forecast_display, 'update'):
                 try:
-                    # Force theme update on the weekly forecast display using MainWeatherInfo pattern
                     self.weekly_forecast_display.update()
                     logger.debug("Triggered WeeklyForecastDisplay theme update using MainWeatherInfo pattern")
                 except Exception as e:
                     logger.warning(f"Error updating WeeklyForecastDisplay theme: {e}")
-            
-            # STEP 4: Rebuild sidebar content with new theme (SIDEBAR PATTERN)
+
+            # STEP 3: Rebuild sidebar content with new theme (SIDEBAR PATTERN)
             self.content = self.build()
-            
+
             # STEP 4: Update sidebar container if attached to page
             try:
                 self.update()
                 logger.info("SidebarManager theme change handled successfully")
             except (AssertionError, AttributeError) as e:
                 logger.debug(f"SidebarManager not ready for update: {e}")
-                
+
         except Exception as e:
             logger.error(f"Error handling SidebarManager theme change: {e}")
 
@@ -237,13 +227,12 @@ class SidebarManager(ft.Container):
         logger.info("SidebarManager handling language change")
         
         try:
-            # STEP 1: Get new language and theme
+            # STEP 1: Get new language
             language = self.state_manager.get_state("language") or "en"
-            text_color = (DARK_THEME if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME)
-            
+
             # STEP 2: Reinitialize components with new language (SIDEBAR PATTERN)
-            
-            # Reinitialize popup menu with new language
+
+            # Reinitialize popup menu with new language and theme_handler
             self.pop_menu = PopMenu(
                 page=self.page,
                 state_manager=self.state_manager,
@@ -251,17 +240,16 @@ class SidebarManager(ft.Container):
                 handle_theme_toggle=self.theme_toggle_service.handle_theme_toggle,
                 theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
                 location_toggle_value=self.state_manager.get_state("using_location") or False,
-                text_color=text_color,
                 language=language,
-                text_handler_get_size=self.text_handler.get_size
+                text_handler_get_size=self.text_handler.get_size,
+                theme_handler=self.theme_handler
             )
-            
-            # Reinitialize search bar with new language
+
+            # Reinitialize search bar with new language and theme_handler
             async def handle_city_selected(city):
                 logger.info(f"City selected in sidebar: {city}")
                 language = self.state_manager.get_state("language") or "en"
                 unit = self.state_manager.get_state("unit") or "metric"
-                
                 if self.update_weather_callback is not None:
                     try:
                         result = await self.update_weather_callback(city, language, unit)
@@ -273,37 +261,61 @@ class SidebarManager(ft.Container):
                 else:
                     logger.error("No weather update callback available")
                     return False
-            
+
             self.search_bar = SearchBar(
                 page=self.page,
-                text_color=text_color,
                 cities=self.cities,
                 on_city_selected=handle_city_selected,
                 language=language,
                 text_handler_get_size=self.text_handler.get_size,
+                theme_handler=self.theme_handler
             )
-            
+
             # STEP 3: Update existing WeeklyForecastDisplay with new language
             if self.weekly_forecast_display and hasattr(self.weekly_forecast_display, 'update'):
                 try:
-                    # Force language update on the weekly forecast display using MainWeatherInfo pattern
                     self.weekly_forecast_display.update()
                     logger.debug("Triggered WeeklyForecastDisplay language update using MainWeatherInfo pattern")
                 except Exception as e:
                     logger.warning(f"Error updating WeeklyForecastDisplay language: {e}")
-            
+
             # STEP 4: Rebuild sidebar content with new language (SIDEBAR PATTERN)
             self.content = self.build()
-            
-            # STEP 4: Update sidebar container if attached to page
+
+            # STEP 5: Update sidebar container if attached to page
             try:
                 self.update()
                 logger.info("SidebarManager language change handled successfully")
             except (AssertionError, AttributeError) as e:
                 logger.debug(f"SidebarManager not ready for update: {e}")
-                
+
         except Exception as e:
             logger.error(f"Error handling SidebarManager language change: {e}")
+
+    def handle_unit_change(self, event_data=None) -> None:
+        """
+        Handle unit change events for sidebar components.
+        
+        Args:
+            event_data: Unit change event data
+        """
+        logger.info("SidebarManager handling unit change")
+        
+        try:
+            # Get current state to refresh the weekly forecast with new units
+            unit = self.state_manager.get_state("unit") or "metric"
+            city = self.current_city or self.state_manager.get_state("city")
+            
+            if city:
+                # Update weekly forecast with new unit system
+                logger.debug(f"Updating weekly forecast for unit change: {unit}")
+                self.update_weekly_forecast(city)
+                logger.info("SidebarManager unit change handled successfully")
+            else:
+                logger.warning("No city available for unit change update")
+                
+        except Exception as e:
+            logger.error(f"Error handling SidebarManager unit change: {e}")
 
     def update_weekly_forecast(self, city: str) -> bool:
         """
@@ -363,7 +375,7 @@ class SidebarManager(ft.Container):
                 content=ft.Text(
                     "Select a city to view weekly forecast",
                     size=14,
-                    color=(DARK_THEME if self.page.theme_mode == ft.ThemeMode.DARK else LIGHT_THEME).get("SECONDARY_TEXT"),
+                    color=self.theme_handler.get_text_color("SECONDARY_TEXT"),
                     text_align=ft.TextAlign.CENTER
                 ),
                 padding=ft.padding.all(20),
@@ -436,6 +448,7 @@ class SidebarManager(ft.Container):
             # Unregister event handlers
             self.state_manager.unregister_observer("theme_event", self.handle_theme_change)
             self.state_manager.unregister_observer("language_event", self.handle_language_change)
+            self.state_manager.unregister_observer("unit", self.handle_unit_change)
             
             # Cleanup child components
             if self.search_bar:

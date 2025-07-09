@@ -148,6 +148,9 @@ class MeteoApp:
         # Register language change handler
         self.state_manager.register_observer("language_event", self._handle_language_change)
         
+        # Register unit change handler
+        self.state_manager.register_observer("unit", self._handle_unit_change)
+        
         # Register cleanup handlers
         self._register_cleanup_handlers()
 
@@ -262,7 +265,60 @@ class MeteoApp:
             
             safe_update_container(self.hourly_container_wrapper, "HOURLY")
             safe_update_container(self.chart_container_wrapper, "CHART")
-            safe_update_container(self.precipitation_chart_container_wrapper, "CHART") # For precipitation chart
+            
+            # Apply specific theme for precipitation chart
+            if self.precipitation_chart_container_wrapper and hasattr(self.precipitation_chart_container_wrapper, 'bgcolor'):
+                try:
+                    is_ready = False
+                    if hasattr(self.precipitation_chart_container_wrapper, 'page') and self.precipitation_chart_container_wrapper.page is not None:
+                        is_ready = True
+                    elif hasattr(self.precipitation_chart_container_wrapper, 'parent'):
+                        current = self.precipitation_chart_container_wrapper
+                        while current and hasattr(current, 'parent') and current.parent:
+                            current = current.parent
+                            if hasattr(current, 'page') and current.page is not None:
+                                is_ready = True
+                                break
+                    
+                    if is_ready:
+                        # Apply specific styling for precipitation chart to match the chart itself
+                        bg_color = theme.get("CARD_BACKGROUND", "#ffffff" if not is_dark else "#161b22")
+                        self.precipitation_chart_container_wrapper.bgcolor = bg_color
+                        
+                        # Apply border for better visibility with custom color for precipitation chart
+                        border_color = ft.Colors.with_opacity(0.1, theme.get("BORDER", "#e1e8ed"))
+                        self.precipitation_chart_container_wrapper.border = ft.border.all(
+                            width=1, 
+                            color=border_color
+                        )
+                        
+                        # Apply shadow for better depth
+                        shadow_color = ft.Colors.with_opacity(0.1, ft.Colors.BLACK)
+                        self.precipitation_chart_container_wrapper.shadow = ft.BoxShadow(
+                            spread_radius=0,
+                            blur_radius=4,
+                            color=shadow_color,
+                            offset=ft.Offset(0, 2)
+                        )
+                        
+                        # Notify any precipitation chart instances that theme changed
+                        # This helps ensure inner content also gets updated
+                        try:
+                            if self.weather_view_instance and hasattr(self.weather_view_instance, 'precipitation_chart'):
+                                precipitation_chart = self.weather_view_instance.precipitation_chart
+                                if precipitation_chart and hasattr(precipitation_chart, '_safe_theme_update'):
+                                    precipitation_chart._safe_theme_update({'is_dark': is_dark})
+                                    logging.debug("Triggered theme update on precipitation chart instance")
+                        except Exception as e:
+                            logging.debug(f"Note: Could not trigger theme update on precipitation chart: {e}")
+                        
+                        self.precipitation_chart_container_wrapper.update()
+                        logging.debug("Precipitation chart container updated with specific theme")
+                    else:
+                        logging.debug("Precipitation chart container not ready for theme update")
+                except Exception as e:
+                    logging.error(f"Error updating precipitation chart container: {e}")
+            
             safe_update_container(self.air_pollution_container_wrapper, "CARD_BACKGROUND")
             
             # Aggiorna il colore di sfondo della pagina
@@ -522,6 +578,42 @@ class MeteoApp:
                 
         except Exception as e:
             logging.error(f"Error handling language change: {e}")
+    
+    def _handle_unit_change(self, event_data=None):
+        """Handle unit change events at the main app level."""
+        try:
+            logging.info(f"Main app: handling unit change event with data: {event_data}")
+            
+            # Get current state
+            state_manager = self.state_manager
+            if not state_manager:
+                logging.warning("No state manager available for unit change")
+                return
+                
+            # Get current location context
+            language = state_manager.get_state('language') or DEFAULT_LANGUAGE
+            unit = state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
+            using_location = state_manager.get_state('using_location')
+            current_lat = state_manager.get_state('current_lat')
+            current_lon = state_manager.get_state('current_lon')
+            city = state_manager.get_state('city')
+            
+            # Trigger weather update with new unit
+            if using_location and current_lat is not None and current_lon is not None:
+                # Use coordinates to refresh with new unit
+                logging.info("Unit change: updating weather by coordinates")
+                if self.page and hasattr(self.page, 'run_task'):
+                    self.page.run_task(self.update_weather_with_coordinates, current_lat, current_lon, language, unit)
+            elif city:
+                # Use city name to get data with new unit
+                logging.info(f"Unit change: updating weather by city ({city})")
+                if self.page and hasattr(self.page, 'run_task'):
+                    self.page.run_task(self.update_weather_with_sidebar, city, language, unit)
+            else:
+                logging.warning("Unit change: no location context available for update")
+                
+        except Exception as e:
+            logging.error(f"Error handling unit change: {e}")
     
     async def update_weather_with_coordinates(self, lat: float, lon: float, language: str, unit: str):
         """Update weather data using coordinates."""

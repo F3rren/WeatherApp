@@ -8,6 +8,7 @@ import logging # Add logging import
 from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, LIGHT_THEME, DARK_THEME
 from services.api_service import ApiService
 from services.translation_service import TranslationService # Import TranslationService
+from services.theme_handler import ThemeHandler
 
 from layout.weather_card import WeatherCard
 from layout.informationtab.hourly_forecast import HourlyForecastDisplay # Importa la nuova classe
@@ -25,52 +26,53 @@ class WeatherView:
     
     def __init__(self, page: ft.Page, api_service: ApiService):
         self.page = page
-        # Backend service for all data fetching/processing
         self.api_service = api_service
-        self.weather_data = {}
-        self.city_info = {}
-        # Store current coordinates for theme change rebuilds
+        self.state_manager = self.page.session.get('state_manager')
+        self.weather_data = None
+        self.city_info = None
         self.current_lat = None
         self.current_lon = None
         self.current_city = None
-        self._update_text_color() 
-        
-        self.main_weather_info_instance = None
-        self.air_condition_instance = None
-        self.weekly_forecast_display_instance = None # CHANGED: Renamed from weekly_weather_instance
-        self.hourly_forecast_instance = None # ADDED
-        self.temperature_chart_instance = None # ADDED
-        self.air_pollution_display_instance = None # CHANGED: Renamed from air_pollution_instance
-        self.air_pollution_chart_instance = None # Add air pollution chart instance
-        self.precipitation_chart_instance = None # CHANGED: Renamed from air_pollution_chart_instance
+        self._update_text_color()
 
-        # Register for theme change events
-        state_manager = self.page.session.get('state_manager')
-        if state_manager:
-            state_manager.register_observer("theme_event", self.handle_theme_change)
-            state_manager.register_observer("language_event", self.handle_language_change)
-            state_manager.register_observer("unit", self.handle_unit_system_change) # Register observer for unit changes
-            state_manager.register_observer("unit_text_change", self.handle_unit_text_change)
+        # ThemeHandler centralizzato
+        self.theme_handler = ThemeHandler(self.page)
 
-        self.info_container = ft.Container() # Apply initial text color
-        self.air_condition_container = ft.Container()
-        self.hourly_container = ft.Container()
-        self.weekly_container = ft.Container()
-        self.chart_container = ft.Container()
-        self.air_pollution_container = ft.Container()
-        self.air_pollution_chart_container = ft.Container() # Add air pollution chart container
-        self.precipitation_chart_container = ft.Container() # CHANGED: Renamed from air_pollution_chart_container
-        self.loading = False
-        # RIMOSSO: self._loading_dialog e ProgressRing modale
+        # Main containers for different sections of the view
+        self.info_container = ft.Container(expand=True)
+        self.hourly_container = ft.Container(expand=True)
+        self.weekly_container = ft.Container(expand=True)
+        self.chart_container = ft.Container(expand=True)
+        self.precipitation_chart_container = ft.Container(expand=True)
+        self.air_pollution_container = ft.Container(expand=True)
 
-        # Add the main on_resize handler for WeatherView
-        if self.page:
-            # It's important that WeatherView's on_resize is set up to call the
-            # original handler if one existed, and then propagate to its children.
-            # The children (like HourlyForecastDisplay) will then replace page.on_resize
-            # with their own combined handler.
-            self._original_page_resize_handler = self.page.on_resized # Corrected: store page.on_resize not on_resized
-            self.page.on_resize = self._handle_page_resize
+        self.loading = ft.Column(
+            [ft.ProgressRing(width=32, height=32)],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            expand=True,
+            visible=False
+        )
+
+        self._register_observers()
+
+    def _register_observers(self):
+        if self.state_manager:
+            self.state_manager.register_observer("theme_event", self.handle_theme_change)
+            self.state_manager.register_observer("language_event", self.handle_language_or_unit_change)
+            self.state_manager.register_observer("unit", self.handle_language_or_unit_change)
+            logging.info("WeatherView observers registered.")
+
+    def _unregister_observers(self):
+        if self.state_manager:
+            self.state_manager.unregister_observer("theme_event", self.handle_theme_change)
+            self.state_manager.unregister_observer("language_event", self.handle_language_or_unit_change)
+            self.state_manager.unregister_observer("unit", self.handle_language_or_unit_change)
+            logging.info("WeatherView observers unregistered.")
+
+    def cleanup(self):
+        self._unregister_observers()
+        logging.info("WeatherView cleanup complete.")
 
     def _handle_page_resize(self, e=None):
         """Handles page resize events for WeatherView and propagates to children."""
@@ -88,149 +90,45 @@ class WeatherView:
         if self.page: 
             self.page.update()
 
-    def _cleanup_child_components(self): 
-        """Calls cleanup on all child component instances."""
-        children_to_cleanup = [
-            self.main_weather_info_instance,
-            self.air_condition_instance,
-            self.weekly_forecast_display_instance, 
-            self.hourly_forecast_instance,
-            self.temperature_chart_instance,
-            self.air_pollution_display_instance, # CHANGED: Renamed
-            self.air_pollution_chart_instance, # Add air pollution chart instance
-            self.precipitation_chart_instance # CHANGED: Renamed from air_pollution_chart_instance
-        ]
-        for child in children_to_cleanup:
-            if child and hasattr(child, 'will_unmount'): # Use will_unmount for ft.Control based components
-                child.will_unmount()
-            elif child and hasattr(child, 'cleanup'): # Fallback for older components
-                child.cleanup()
-        
-        self.main_weather_info_instance = None
-        self.air_condition_instance = None
-        self.weekly_forecast_display_instance = None # CHANGED: Renamed
-        self.hourly_forecast_instance = None
-        self.temperature_chart_instance = None
-        self.air_pollution_display_instance = None # CHANGED: Renamed
-        self.air_pollution_chart_instance = None # Add air pollution chart instance
-        self.precipitation_chart_instance = None # CHANGED: Renamed from air_pollution_chart_instance
+    def _cleanup_child_components(self):
+        """Clears all child containers' content to remove old components."""
+        self.info_container.content = None
+        self.hourly_container.content = None
+        self.weekly_container.content = None
+        self.chart_container.content = None
+        self.precipitation_chart_container.content = None
+        self.air_pollution_container.content = None
 
     def _update_text_color(self):
-        """Updates text_color based on the current page theme."""
         is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         self.text_color = DARK_THEME["TEXT"] if is_dark else LIGHT_THEME["TEXT"]
 
     def _safe_update(self):
-        if getattr(self, "page", None):
+        if self.page:
             self.page.update()
 
     def handle_theme_change(self, event_data=None):
-        """Handles theme change events by updating text color and forcing component updates."""
-        try:
-            logging.info("WeatherView: handle_theme_change called")
-            if event_data is not None and not isinstance(event_data, dict):
-                logging.warning(f"handle_theme_change received unexpected event_data type: {type(event_data)}")
-            self._update_text_color()
-            if self.info_container.content and isinstance(self.info_container.content, ft.Text):
-                self.info_container.content.color = self.text_color
-            
-            # Force update all component instances to pick up theme changes
-            components_to_update = [
-                self.main_weather_info_instance,
-                self.air_condition_instance,
-                self.hourly_forecast_instance,
-                self.temperature_chart_instance,
-                self.air_pollution_display_instance,
-                self.precipitation_chart_instance,
-                self.weekly_forecast_display_instance
-            ]
-            
-            for component in components_to_update:
-                if component and hasattr(component, 'update'):
-                    try:
-                        # For sync components
-                        if hasattr(component, '__class__') and component.__class__.__name__ in ['MainWeatherInfo', 'TemperatureChartDisplay', 'AirConditionComponent', 'AirConditionGroupComponent']:
-                            component.update()
-                        # For async components
-                        elif hasattr(component, '__class__') and component.__class__.__name__ in ['HourlyForecastDisplay', 'AirConditionInfo', 'AirPollutionDisplay']:
-                            if self.page:
-                                self.page.run_task(component.update)
-                        else:
-                            # Default: try sync first, then async if it fails
-                            try:
-                                component.update()
-                            except TypeError:
-                                # Might be async
-                                if self.page:
-                                    self.page.run_task(component.update)
-                    except Exception as e:
-                        logging.error(f"Error updating component {component.__class__.__name__}: {e}")
-                elif component and hasattr(component, 'update_ui'):
-                    # Schedule async update for old components that still use update_ui
-                    try:
-                        if self.page:
-                            self.page.run_task(component.update_ui)
-                    except Exception as e:
-                        logging.error(f"Error updating component with update_ui {component.__class__.__name__}: {e}")
-            
-            logging.info("WeatherView: handle_theme_change completed successfully")
-        except Exception as e:
-            logging.error(f"WeatherView: Error in handle_theme_change: {e}")
-            import traceback
-            logging.error(traceback.format_exc())
-        
-        # Force update of container contents after component updates
-        try:
-            if self.info_container:
-                self.info_container.update()
-            if self.air_condition_container:
-                self.air_condition_container.update()
-            if self.hourly_container:
-                self.hourly_container.update()
-        except Exception as e:
-            logging.warning(f"Error updating containers after theme change: {e}")
-        
-        self._safe_update()
-        
-        # Force update info container specifically for MainWeatherInfo
-        if self.info_container:
-            try:
-                self.info_container.update()
-            except (AssertionError, AttributeError):
-                pass
+        logging.info("WeatherView: Handling theme change.")
+        self._update_text_color()
+        # Trigger a full UI update so all child components are rebuilt with the new theme
+        self.handle_language_or_unit_change(event_data)
 
-    def handle_unit_text_change(self, event_data=None):
-        """Handles unit text change events by updating relevant UI text parts without a full rebuild."""
-        logging.debug(f"WeatherView: Handling unit_text_change with data: {event_data}")
+    def handle_language_or_unit_change(self, event_data=None):
+        logging.info(f"WeatherView: Handling language/unit change. Event: {event_data}")
+        if not self.current_city and not (self.current_lat and self.current_lon):
+            logging.warning("Cannot update for language/unit change: no location set.")
+            return
+
+        language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
+        unit = self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
         
-        # Get the new unit from event data or state manager
-        new_unit = None
-        if event_data and isinstance(event_data, dict):
-            new_unit = event_data.get('unit')
-        
-        if not new_unit:
-            state_manager = self.page.session.get('state_manager')
-            if state_manager:
-                new_unit = state_manager.get_state('unit')
-        
-        if new_unit:
-            logging.info(f"WeatherView: Unit changed to {new_unit}, triggering full weather update")
-            # Trigger a full update with new unit to ensure data is consistent
-            if self.page:
-                self.page.run_task(self._handle_unit_change_full_update, new_unit)
+        # Re-fetch data for the current location with new settings
+        if self.state_manager.get_state('using_location') and self.current_lat is not None and self.current_lon is not None:
+            self.page.run_task(self.update_by_coordinates, self.current_lat, self.current_lon, language, unit)
+        elif self.current_city:
+            self.page.run_task(self.update_by_city, self.current_city, language, unit)
         else:
-            # Fallback: just update component texts
-            self._update_component_texts(event_type="unit_text_change", data=event_data)
-
-    async def _handle_unit_change_full_update(self, new_unit: str):
-        """Handle unit change with full data refresh."""
-        try:
-            logging.info(f"WeatherView: Performing full update for unit change to {new_unit}")
-            await self.handle_unit_system_change(new_unit)
-        except Exception as e:
-            logging.error(f"WeatherView: Error in full unit update: {e}")
-            # Fallback to component text updates only
-            self._update_component_texts(event_type="unit_text_change", data={"unit": new_unit})
+            logging.warning("Language/unit change handler: No location context available for update.")
 
     def _update_component_texts(self, event_type=None, data=None):
         """Update text elements in child components that support selective updates"""
@@ -266,8 +164,7 @@ class WeatherView:
         
         # Check for components with _update_text_elements method (for other events)
         # Rimosso air_condition_container perché ora è incluso nel info_container
-        for container in [self.info_container, self.hourly_container, self.weekly_container, self.chart_container,
-                         self.air_pollution_chart_container, self.air_pollution_container]:
+        for container in [self.info_container, self.hourly_container, self.weekly_container, self.chart_container, self.air_pollution_container]:
             if container and container.content:
                 # If the component itself has the method
                 if hasattr(container.content, '_update_text_elements'):
@@ -368,7 +265,7 @@ class WeatherView:
                 self.weather_data = weather_data
                 self.city_info = city_info
                 logging.info(f"Weather data keys: {list(weather_data.keys()) if weather_data else 'None'}")
-                logging.info(f"City info: {city_info}")
+                
                 
                 # Debug: Log della struttura city nel weather_data
                 if weather_data and "city" in weather_data:
@@ -424,11 +321,7 @@ class WeatherView:
         await self._update_location_in_state(city, lat, lon)
 
         # Ensure text_color is up-to-date before updating sub-components
-        self._update_text_color() 
-        
-        # Aggiorna prima air condition per averlo disponibile nel main info
-        await self._update_air_condition()
-        
+        self._update_text_color()
         # Ora aggiorna main info che includerà air condition
         await self._update_main_info(city, is_current_location)
         await self._update_weekly_forecast()
@@ -467,93 +360,55 @@ class WeatherView:
             logging.info(f"Posizione aggiornata nello stato: City={city}, Lat={lat}, Lon={lon}")
 
     async def _update_main_info(self, city: str, is_current_location: bool) -> None:
-        """Frontend: Updates main weather info UI"""
-        # Dati meteo correnti dal servizio API
+        """Frontend: Updates main weather info UI (robust, always creates new instance)."""
         temperature = self.api_service.get_current_temperature(self.weather_data)
         feels_like = self.api_service.get_feels_like_temperature(self.weather_data)
         icon_code = self.api_service.get_weather_icon_code(self.weather_data)
         weather_description = self.api_service.get_weather_description(self.weather_data)
         temp_min, temp_max = self.api_service.get_min_max_temperature(self.weather_data)
 
-        logging.info(f"Extracted weather data: temp={temperature}, temp_min={temp_min}, temp_max={temp_max}, description='{weather_description}'")
-
-        # Determina la posizione e il nome della città tradotto da mostrare
-        
-        # Ottieni il nome della città tradotto - priorità al weather_data che supporta la localizzazione
+        # Determine display location and translated city name
         if is_current_location:
-            location = f"📍 {TranslationService.translate_from_dict('main_information_items', 'current_location', self.page.session.get('state_manager').get_state('language'))}"
-            translated_city = TranslationService.translate_from_dict('main_information_items', 'current_location', self.page.session.get('state_manager').get_state('language'))
-        elif self.weather_data.get("city"):
-            # PRIORITÀ: Usa i dati della città dal weather_data che includono il nome localizzato
+            language = self.state_manager.get_state('language')
+            location_str = TranslationService.translate_from_dict('main_information_items', 'current_location', language)
+            location = f"📍 {location_str}"
+            translated_city = location_str
+        elif self.weather_data and self.weather_data.get("city"):
             city_data = self.weather_data["city"]
             city_name = city_data.get("name", city)
             country = city_data.get("country", "")
-            
-            # Per la location completa, usa solo i dati dal weather_data per consistenza linguistica
-            # Il weather_data non include "state" ma ha country localizzato implicitamente
             location = f"{city_name}, {country}" if country else city_name
-            translated_city = city_name  # Usa il nome tradotto dall'API weather
+            translated_city = city_name
         elif self.city_info:
-            # Fallback ai city_info se weather_data non ha la città
             data = self.city_info[0]
             location = ", ".join(filter(None, [data.get("name"), data.get("state"), data.get("country")]))
             translated_city = data.get("name", city)
         else:
-            # Fallback finale al nome originale
             location = city
             translated_city = city
-        
-        logging.info(f"Original city: {city}, Translated city: {translated_city}, Location: {location}")
-        
-        # Create new MainWeatherInfo instance for each update to ensure proper refresh
-        self.main_weather_info_instance = MainWeatherInfo(
-            city=translated_city,  # Usa il nome della città tradotto
+
+        main_weather_info = MainWeatherInfo(
+            city=translated_city,
             location=location,
             temperature=temperature,
             weather_icon=icon_code,
             page=self.page,
-            expand=True # Ensure it expands if needed within the column
+            theme_handler=self.theme_handler,
+            expand=True
         )
+        main_weather_info._weather_description = weather_description
+        main_weather_info._feels_like = feels_like
+        main_weather_info._temp_min = temp_min
+        main_weather_info._temp_max = temp_max
 
-        # IMPORTANTE: Imposta i dati aggiuntivi PRIMA di inizializzare il contenuto
-        self.main_weather_info_instance._weather_description = weather_description
-        self.main_weather_info_instance._feels_like = feels_like
-        self.main_weather_info_instance._temp_min = temp_min
-        self.main_weather_info_instance._temp_max = temp_max
-        
-        # Aggiorna lo stato del componente per assicurarsi che rifletta il tema/lingua correnti
-        self.main_weather_info_instance.update()
-        
-        # Prepara i controlli per il container info (main info)
-        info_controls = [
-            self.main_weather_info_instance,
-            ft.Container(height=5)  # Spacer ridotto
-        ]
-        
-        # Aggiungi air condition sotto le informazioni principali se disponibile
-        if hasattr(self, 'air_condition_instance') and self.air_condition_instance:
-            info_controls.extend([
-                #ft.Container(height=2),  # Spacer molto piccolo
-                self.air_condition_instance,
-                #ft.Container(height=5)  # Spacer ridotto
-            ])
-        
-        # Popola il container info (main info) con air condition incluso
+        # Always create a new AirConditionInfo instance
+        air_condition_info = await self._build_air_condition()
+
         self.info_container.content = ft.Column(
-            controls=info_controls,
+            controls=[main_weather_info, air_condition_info],
             spacing=5,
             expand=True
         )
-
-        # IMPORTANTE: Aggiorna il container dopo aver cambiato il contenuto
-        try:
-            self.info_container.update()
-        except (AssertionError, AttributeError):
-            # Container not yet added to page, skip update
-            pass
-
-        # IMPORTANTE: Aggiorna anche i container wrapper nel layout manager
-        # Questo assicura che i wrapper facciano riferimento ai container popolati
         self._update_layout_manager_containers()
 
 
@@ -574,22 +429,13 @@ class WeatherView:
             # self.weekly_container.update() # Covered by page.update()
             return
 
-        # Instantiate or update the WeeklyForecastDisplay instance
-        if not hasattr(self, 'weekly_forecast_display_instance') or not self.weekly_forecast_display_instance:
-            self.weekly_forecast_display_instance = WeeklyForecastDisplay(
-                page=self.page, 
-                city=self.current_city
-                # expand=True # WeeklyForecastDisplay sets its own expand
-            )
-        else:
-            # If the city has changed, update the component
-            if self.weekly_forecast_display_instance._city != self.current_city:
-                self.weekly_forecast_display_instance.update_city(self.current_city)
-            # Language and unit changes are handled internally by WeeklyForecastDisplay via observers
-
-        # The WeatherCard is a generic wrapper, WeeklyForecastDisplay is the actual content.
+        # Always create a new instance to guarantee a full rebuild and color update
+        self.weekly_forecast_display_instance = WeeklyForecastDisplay(
+            page=self.page,
+            city=self.current_city,
+            theme_handler=self.theme_handler
+        )
         self.weekly_container.content = weather_card.build(self.weekly_forecast_display_instance)
-        # self.weekly_container.update() # Covered by page.update() in _update_ui
 
     async def _update_temperature_chart(self) -> None:
         """Frontend: Updates temperature chart UI using TemperatureChartDisplay."""
@@ -604,7 +450,8 @@ class WeatherView:
                 page=self.page,
                 days=days,
                 temp_min=forecast_data["temp_min"],
-                temp_max=forecast_data["temp_max"]
+                temp_max=forecast_data["temp_max"],
+                theme_handler=self.theme_handler
                 # expand=True # TemperatureChartDisplay sets its own expand if needed
             )
         else:
@@ -642,6 +489,7 @@ class WeatherView:
             self.hourly_forecast_instance = HourlyForecastDisplay(
                 page=self.page,
                 city=self.current_city,
+                theme_handler=self.theme_handler
                 # expand=True # HourlyForecastDisplay sets its own expand property if needed
             )
         else:
@@ -670,7 +518,8 @@ class WeatherView:
             self.air_pollution_display_instance = AirPollutionDisplay(
                 page=self.page,
                 lat=lat,
-                lon=lon
+                lon=lon,
+                theme_handler=self.theme_handler
             )
         else:
             if self.air_pollution_display_instance._lat != lat or self.air_pollution_display_instance._lon != lon:
@@ -701,7 +550,8 @@ class WeatherView:
 
         # Always create a new instance to ensure proper updates
         self.precipitation_chart_instance = PrecipitationChartDisplay(
-            page=self.page
+            page=self.page,
+            theme_handler=self.theme_handler
         )
         logging.info("DEBUG: Created new PrecipitationChartDisplay instance")
         
@@ -731,72 +581,33 @@ class WeatherView:
         # This avoids the linting error and aligns with available components.
         await self._update_precipitation_chart(self.weather_data)
 
-    async def _update_air_condition(self) -> None:
-        """Frontend: Updates air condition UI"""
+    async def _build_air_condition(self):
         if not self.weather_data:
-            return
-
-        # Extract air condition data from weather_data
-        feels_like = self.api_service.get_feels_like_temperature(self.weather_data)
-        humidity = self.api_service.get_humidity(self.weather_data)
-        wind_speed = self.api_service.get_wind_speed(self.weather_data)
-        pressure = self.api_service.get_pressure(self.weather_data)
-        wind_direction = self.api_service.get_wind_direction(self.weather_data)
-        wind_gust = self.api_service.get_wind_gust(self.weather_data)
-        visibility = self.api_service.get_visibility(self.weather_data)
-        uv_index = self.api_service.get_uv_index(self.weather_data)
-        dew_point = self.api_service.get_dew_point(self.weather_data)
-        cloud_coverage = self.api_service.get_cloud_coverage(self.weather_data)
-
-        # Create new AirConditionInfo instance
-        self.air_condition_instance = AirConditionInfo(
+            return None
+        return AirConditionInfo(
             city=self.current_city or "Unknown",
-            feels_like=feels_like or 0,
-            humidity=humidity or 0,
-            wind_speed=wind_speed or 0,
-            pressure=pressure or 0,
-            wind_direction=wind_direction,
-            wind_gust=wind_gust,
-            visibility=visibility,
-            uv_index=uv_index,
-            dew_point=dew_point,
-            cloud_coverage=cloud_coverage,
-            page=self.page
+            feels_like=self.api_service.get_feels_like_temperature(self.weather_data) or 0,
+            humidity=self.api_service.get_humidity(self.weather_data) or 0,
+            wind_speed=self.api_service.get_wind_speed(self.weather_data) or 0,
+            pressure=self.api_service.get_pressure(self.weather_data) or 0,
+            wind_direction=self.api_service.get_wind_direction(self.weather_data),
+            wind_gust=self.api_service.get_wind_gust(self.weather_data),
+            visibility=self.api_service.get_visibility(self.weather_data),
+            uv_index=self.api_service.get_uv_index(self.weather_data),
+            dew_point=self.api_service.get_dew_point(self.weather_data),
+            cloud_coverage=self.api_service.get_cloud_coverage(self.weather_data),
+            page=self.page,
+            theme_handler=self.theme_handler
         )
-
-        # Update component with current state
-        await self.air_condition_instance.update()
-
-        # Populate the air condition container
-        self.air_condition_container.content = ft.Column(
-            controls=[
-                self.air_condition_instance,
-                ft.Container(height=10)  # Spacer
-            ],
-            spacing=10,
-            expand=True
-        )
-
-        # IMPORTANTE: Aggiorna il container dopo aver cambiato il contenuto
-        try:
-            self.air_condition_container.update()
-        except (AssertionError, AttributeError):
-            # Container not yet added to page, skip update
-            pass
-        except (AssertionError, AttributeError):
-            # Container not yet added to page, skip update
-            pass
 
     def _set_loading(self, value: bool):
         self.loading = value
         self.info_container.visible = not value
-        # Rimosso air_condition_container perché ora è incluso nel info_container
         self.hourly_container.visible = not value
         self.weekly_container.visible = not value
         self.chart_container.visible = not value
         self.air_pollution_container.visible = not value
-        self.air_pollution_chart_container.visible = not value # Add air pollution chart visibility
-        self.precipitation_chart_container.visible = not value # CHANGED: From air_pollution_chart_container
+        self.precipitation_chart_container.visible = not value
         self._safe_update()
 
     def get_containers(self) -> tuple:
@@ -812,15 +623,7 @@ class WeatherView:
             self.air_pollution_container           
         )
 
-    def cleanup(self):
-        """Annulla la registrazione degli osservatori per prevenire memory leak."""
-        state_manager = self.page.session.get('state_manager')
-        if state_manager:
-            state_manager.unregister_observer("theme_event", self.handle_theme_change)
-            state_manager.unregister_observer("language_event", self.handle_language_change)
-            state_manager.unregister_observer("unit", self.handle_unit_system_change)
-            state_manager.unregister_observer("unit_text_change", self.handle_unit_text_change)
-        logging.info("WeatherView cleanup complete.")
+    # cleanup is now defined at the top of the class, no need for a duplicate here.
 
     def _update_layout_manager_containers(self):
         """

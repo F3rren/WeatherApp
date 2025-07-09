@@ -7,23 +7,28 @@ import logging
 import asyncio
 import traceback
 
+from services.theme_handler import ThemeHandler
+
 class HourlyForecastDisplay(ft.Container):
     """
     Manages the display of the entire hourly forecast section.
     """
-    def __init__(self, city: str, page: ft.Page, **kwargs):
+    def __init__(self, city: str, page: ft.Page, theme_handler=None, **kwargs):
         super().__init__(**kwargs)
         self._city = city
         self.page = page
         self._api_service = ApiService()
         self._hourly_data_list = []
-        
+
+        # Theme handler centralizzato
+        self.theme_handler = theme_handler if theme_handler else ThemeHandler(self.page)
+
         self._state_manager = None
         self._language = DEFAULT_LANGUAGE
         self._unit_system = DEFAULT_UNIT_SYSTEM
-        self._text_color = LIGHT_THEME["TEXT"]
+        self._text_color = self.theme_handler.get_text_color()
 
-        self.expand = True 
+        self.expand = True
 
         self.text_handler = ResponsiveTextHandler(
             page=self.page,
@@ -69,7 +74,7 @@ class HourlyForecastDisplay(ft.Container):
             if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
                 is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             theme = DARK_THEME if is_dark else LIGHT_THEME
-            self._text_color = theme.get("TEXT", ft.Colors.BLACK)
+            self._text_color = self.theme_handler.get_text_color()
 
             self.content = self.build()
             try:

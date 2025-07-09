@@ -52,7 +52,7 @@ class AirConditionInfo(ft.Container):
     def __init__(self, city: str, feels_like: int, humidity: int, wind_speed: int,
                  pressure: int, wind_direction: int = None, wind_gust: float = None, 
                  visibility: int = None, uv_index: float = None, dew_point: int = None, 
-                 cloud_coverage: int = None, page: ft.Page = None, **kwargs):
+                 cloud_coverage: int = None, page: ft.Page = None, theme_handler=None, **kwargs):
         super().__init__(**kwargs)
         self._city = city
         self._feels_like_data = feels_like
@@ -66,11 +66,15 @@ class AirConditionInfo(ft.Container):
         self._dew_point_data = dew_point
         self._cloud_coverage_data = cloud_coverage
         self.page = page
-        
+
+        # Theme handler centralizzato
+        from services.theme_handler import ThemeHandler as TH
+        self.theme_handler = theme_handler if theme_handler else TH(self.page)
+
         self._state_manager = None
         self._current_language = DEFAULT_LANGUAGE
         self._current_unit_system = DEFAULT_UNIT_SYSTEM
-        self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+        self._current_text_color = self.theme_handler.get_text_color()
         self.padding = 16
         self._api_service = ApiService()
 
@@ -82,8 +86,82 @@ class AirConditionInfo(ft.Container):
 
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
+            self._register_event_handlers()
 
         self.content = self.build()
+
+    def _register_event_handlers(self) -> None:
+        """Register event handlers for state changes."""
+        if not self._state_manager:
+            return
+            
+        try:
+            logging.info("Registering AirConditionInfo event handlers")
+            self._state_manager.register_observer("unit", self._handle_unit_change)
+            self._state_manager.register_observer("language_event", self._handle_language_change)
+            self._state_manager.register_observer("theme_event", self._handle_theme_change)
+            logging.debug("AirConditionInfo event handlers registered successfully")
+        except Exception as e:
+            logging.warning(f"Error registering AirConditionInfo event handlers: {e}")
+
+    def _handle_unit_change(self, event_data=None) -> None:
+        """Handle unit change events."""
+        try:
+            logging.info("AirConditionInfo handling unit change")
+            if self.page and hasattr(self.page, 'run_task'):
+                self.page.run_task(self.update)
+        except Exception as e:
+            logging.error(f"Error handling AirConditionInfo unit change: {e}")
+
+    def _handle_language_change(self, event_data=None) -> None:
+        """Handle language change events."""
+        try:
+            logging.info("AirConditionInfo handling language change")
+            if self.page and hasattr(self.page, 'run_task'):
+                self.page.run_task(self.update)
+        except Exception as e:
+            logging.error(f"Error handling AirConditionInfo language change: {e}")
+
+    def _handle_theme_change(self, event_data=None) -> None:
+        """Handle theme change events."""
+        try:
+            logging.info("AirConditionInfo handling theme change")
+            if self.page and hasattr(self.page, 'run_task'):
+                self.page.run_task(self.update)
+        except Exception as e:
+            logging.error(f"Error handling AirConditionInfo theme change: {e}")
+
+    def cleanup(self) -> None:
+        """Cleanup event handlers."""
+        if self._state_manager:
+            try:
+                logging.info("Cleaning up AirConditionInfo event handlers")
+                self._state_manager.unregister_observer("unit", self._handle_unit_change)
+                self._state_manager.unregister_observer("language_event", self._handle_language_change)
+                self._state_manager.unregister_observer("theme_event", self._handle_theme_change)
+                logging.debug("AirConditionInfo cleanup completed")
+            except Exception as e:
+                logging.error(f"Error during AirConditionInfo cleanup: {e}")
+    
+    def _get_theme_mode(self) -> bool:
+        """
+        Safely get the current theme mode (dark or light).
+        
+        Returns:
+            bool: True if dark theme is active, False for light theme
+        """
+        is_dark = False
+        try:
+            if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            elif self._state_manager:
+                # Fallback to state manager if page theme_mode is not available
+                is_dark = self._state_manager.get_state('using_theme') or False
+            logging.debug(f"AirConditionInfo: Theme mode is {'dark' if is_dark else 'light'}")
+        except Exception as e:
+            logging.warning(f"AirConditionInfo: Error determining theme mode: {e}")
+            # Default to light theme if there's an error
+        return is_dark
 
     async def update(self):
         """Update language, unit, theme and rebuild content."""
@@ -91,16 +169,21 @@ class AirConditionInfo(ft.Container):
             return
 
         try:
+            data_changed = False
             if self._state_manager:
                 new_language = self._state_manager.get_state('language') or self._current_language
                 new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
                 
                 unit_changed = self._current_unit_system != new_unit_system
+                language_changed = self._current_language != new_language
+                data_changed = unit_changed or language_changed
+                
                 self._current_language = new_language
                 self._current_unit_system = new_unit_system
 
-                # Only fetch new data if unit system changed
-                if unit_changed:
+                # Only fetch new data if unit system or language changed
+                if data_changed:
+                    logging.info(f"AirConditionInfo: Fetching new data due to {'unit' if unit_changed else 'language'} change")
                     weather_data = await asyncio.to_thread(
                         self._api_service.get_weather_data,
                         city=self._city, language=self._current_language, unit=self._current_unit_system
@@ -116,16 +199,27 @@ class AirConditionInfo(ft.Container):
                         self._uv_index_data = self._api_service.get_uv_index(weather_data)
                         self._dew_point_data = self._api_service.get_dew_point(weather_data)
                         self._cloud_coverage_data = self._api_service.get_cloud_coverage(weather_data)
+                        logging.info("AirConditionInfo: Data updated successfully")
 
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            theme = DARK_THEME if is_dark else LIGHT_THEME
-            self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
+            # Update theme using helper method
+            # Aggiorna il colore testo tramite ThemeHandler
+            self._current_text_color = self.theme_handler.get_text_color()
 
+            # Rebuild content
             self.content = self.build()
+            
+            # Update UI safely
             try:
-                super().update()
-            except AssertionError:
-                pass
+                if hasattr(self, 'parent') and self.parent is not None:
+                    super().update()
+                    logging.debug("AirConditionInfo: UI updated successfully")
+                else:
+                    logging.debug("AirConditionInfo: Skipping update - component not attached to parent")
+            except (AssertionError, AttributeError) as e:
+                logging.debug(f"AirConditionInfo: Skipping update - component not ready: {e}")
+            except Exception as e:
+                logging.warning(f"AirConditionInfo: Error during UI update: {e}")
+                
         except Exception as e:
             logging.error(f"AirConditionInfo: Error updating: {e}\n{traceback.format_exc()}")
 
@@ -171,8 +265,9 @@ class AirConditionInfo(ft.Container):
         if translation_service:
             header_text = translation_service.translate_from_dict("air_condition_items", "air_condition_title", self._current_language) or header_text
         
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        
+        # Get theme mode using helper method
+        is_dark = self._get_theme_mode()
+
         return ft.Container(
             content=ft.Row([
                 ft.Icon(
@@ -482,7 +577,7 @@ class AirConditionInfo(ft.Container):
         ], spacing=4)
         
         # Card container
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        is_dark = self._get_theme_mode()
         
         return ft.Container(
             content=card_content,

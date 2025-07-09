@@ -92,3 +92,21 @@ class ThemeToggle:
             return self.switch.value
         return self._value
 
+# ESEMPIO DI CALLBACK DA USARE CON ThemeToggle
+# Da inserire dove istanzi ThemeToggle, ad esempio nella PopMenu o nel gestore delle impostazioni
+
+def theme_toggle_callback(e, page, state_manager):
+    """
+    Callback da passare a ThemeToggle per cambiare il tema globale e notificare i componenti.
+    """
+    # Cambia il tema della pagina
+    if hasattr(page, 'theme_mode'):
+        page.theme_mode = ft.ThemeMode.DARK if e.control.value else ft.ThemeMode.LIGHT
+        page.update()
+    # Notifica tutti i componenti registrati che il tema è cambiato
+    if state_manager:
+        state_manager.notify_observers('theme_event')
+
+# Quando crei ThemeToggle:
+# theme_toggle = ThemeToggle(on_change=lambda e: theme_toggle_callback(e, page, state_manager), value=..., page=page)
+

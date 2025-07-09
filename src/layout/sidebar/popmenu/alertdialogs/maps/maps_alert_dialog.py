@@ -15,16 +15,25 @@ class MapsAlertDialog:
         self.current_lon = None
 
     def build(self):
-        """Costruisce l'interfaccia dell'AlertDialog."""
+        """Costruisce l'interfaccia dell'AlertDialog con supporto tema chiaro/scuro."""
         self.map_view_instance = MapView(self.page, lat=self.current_lat, lon=self.current_lon)
+
+        # Supporto dark mode per il background del dialog
+        is_dark = False
+        if hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        dialog_bg = "#161b22" if is_dark else "#ffffff"
 
         dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text(f"Mappa Meteo - {self.current_city}"),
+            bgcolor=dialog_bg,
             content=ft.Container(
                 content=self.map_view_instance.build(),
                 width=800,
                 height=600,
+                bgcolor=dialog_bg,
+                opacity=1.0,
             ),
             actions=[
                 ft.TextButton("Schermo Intero", on_click=self._open_fullscreen_map),

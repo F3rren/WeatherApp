@@ -6,12 +6,11 @@ from services.translation_service import TranslationService
 
 class DropdownLanguage:
     
-    def __init__(self, page: ft.Page, state_manager, text_color: dict, language: str, text_handler_get_size):
+    def __init__(self, page: ft.Page, state_manager, text_color: dict, language: str):
         self.page = page
         self.state_manager = state_manager
         self.text_color = text_color
         self.current_language_display = language # For potential future use if this component had its own translatable text
-        self.text_handler_get_size = text_handler_get_size
         
         self.selected_language = None # This will be set from state_manager or during selection
         self.dropdown = None
@@ -41,12 +40,10 @@ class DropdownLanguage:
             new_language_code = event_data.get("language", None)
         if new_language_code:
             self.current_language_display = new_language_code
-            self.update_text_sizes(self.text_handler_get_size, self.text_color, new_language_code)
             self.notify_child_observers(new_language_code)
 
-    def update_text_sizes(self, text_handler_get_size, text_color: dict, language: str):
+    def update_text_sizes(self, text_color: dict, language: str):
         """Update text sizes and colors for the dropdown."""
-        self.text_handler_get_size = text_handler_get_size
         self.text_color = text_color
         self.current_language_display = language # Update if this component had its own text
 
@@ -57,8 +54,6 @@ class DropdownLanguage:
             # Safe access to text_color properties
             if isinstance(self.text_color, dict) and 'dropdown_text' in self.text_color:
                 self.dropdown.text_size = self.text_color['dropdown_text']
-            elif hasattr(self, 'text_handler') and self.text_handler:
-                self.dropdown.text_size = self.text_handler.get_size('dropdown_text')
             else:
                 self.dropdown.text_size = 14  # Default size
                 
@@ -187,7 +182,6 @@ class DropdownLanguage:
             self.selected_language = current_language_code
             logging.info(f'Lingua corrente dallo state manager: {current_language_code}')
 
-        # Use the passed-in text_color (theme) and text_handler_get_size
         
         translated_hint_text = TranslationService.translate_from_dict("unit_items", "language", self.current_language_display)
         self.dropdown = ft.Dropdown(
@@ -203,7 +197,6 @@ class DropdownLanguage:
             bgcolor=self.text_color["CARD_BACKGROUND"],
             color=self.text_color["TEXT"],
             content_padding=ft.padding.symmetric(horizontal=10, vertical=8),
-            text_size=self.text_handler_get_size('dropdown_text'),
             hint_style=ft.TextStyle(color=self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color["TEXT"])))
         )
         

@@ -4,7 +4,6 @@ Centralizes layout building functions for different UI components.
 """
 
 import flet as ft
-from components.responsive_text_handler import ResponsiveTextHandler
 
 class LayoutBuilder:
     """

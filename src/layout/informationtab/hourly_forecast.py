@@ -1,7 +1,7 @@
 import flet as ft
 from datetime import datetime
 from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
-from components.responsive_text_handler import ResponsiveTextHandler
+
 from services.api_service import ApiService
 import logging
 import asyncio
@@ -30,11 +30,7 @@ class HourlyForecastDisplay(ft.Container):
 
         self.expand = True
 
-        self.text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={'icon': 60, 'time': 20, 'temp': 25},
-            breakpoints=[600, 900, 1200, 1600]
-        )
+
 
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
@@ -136,7 +132,7 @@ class HourlyForecastDisplay(ft.Container):
                 ft.Container(width=12),  # Spacer
                 ft.Text(
                     header_text,
-                    size=self.text_handler.get_size('axis_title') + 2,
+                    size=25,
                     weight=ft.FontWeight.BOLD,
                     color=self._text_color,
                     font_family="system-ui",

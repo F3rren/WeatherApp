@@ -12,7 +12,7 @@ from services.api_service import ApiService
 from services.translation_service import TranslationService
 from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 from services.theme_handler import ThemeHandler
-from components.responsive_text_handler import ResponsiveTextHandler
+
 
 class PrecipitationChartDisplay(ft.Container):
     """
@@ -40,18 +40,7 @@ class PrecipitationChartDisplay(ft.Container):
         if self.page and hasattr(self.page, 'session') and self.page.session:
             self._state_manager = self.page.session.get('state_manager')
 
-        # Initialize responsive text handler
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'title': 18,
-                'subtitle': 14,
-                'body': 12,
-                'small': 10,
-                'axis_title': 14,  # Match other components sizing
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
+
 
         # Set default properties
         if 'expand' not in kwargs:
@@ -70,18 +59,6 @@ class PrecipitationChartDisplay(ft.Container):
             self._state_manager.register_observer("unit", self._safe_unit_update)
             self._state_manager.register_observer("unit_text_change", self._safe_unit_update)  # Also listen for unit text changes
             self._state_manager.register_observer("theme_event", self._safe_theme_update)
-
-        # Set up page resize handler (guard for on_resize existence)
-        if self.page and hasattr(self.page, "on_resize"):
-            original_on_resize = self.page.on_resize
-            def resize_handler(e):
-                if original_on_resize:
-                    original_on_resize(e)
-                if self._text_handler:
-                    self._text_handler._handle_resize(e)
-                if self.page:
-                    self.page.run_task(self.update_ui)
-            self.page.on_resize = resize_handler
 
         # Initialize content
         self.content = self.build()
@@ -231,7 +208,7 @@ class PrecipitationChartDisplay(ft.Container):
                 ft.Container(width=12),  # Spacer
                 ft.Text(
                     header_text,
-                    size=self._text_handler.get_size('axis_title') + 2,
+                    size=20,
                     weight=ft.FontWeight.BOLD,
                     color=self._current_text_color,
                     font_family="system-ui",
@@ -260,7 +237,7 @@ class PrecipitationChartDisplay(ft.Container):
                 ft.Container(height=10),
                 ft.Text(
                     loading_text,
-                    size=self._text_handler.get_size('body'),
+                    size=14,
                     color=ft.Colors.GREY_600
                 )
             ], 
@@ -527,7 +504,7 @@ class PrecipitationChartDisplay(ft.Container):
                 ft.Icon(ft.Icons.WATER_DROP_OUTLINED, size=48, color=ft.Colors.GREY_400),
                 ft.Text(
                     no_data_text,
-                    size=self._text_handler.get_size('body'),
+                    size=14,
                     color=ft.Colors.with_opacity(0.7, self._current_text_color)
                 )
             ], 

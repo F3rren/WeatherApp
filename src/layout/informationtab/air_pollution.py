@@ -5,7 +5,7 @@ from services.api_service import ApiService
 from services.translation_service import TranslationService
 from utils.config import DEFAULT_LANGUAGE
 from services.theme_handler import ThemeHandler
-from components.responsive_text_handler import ResponsiveTextHandler
+
 from utils.translations_data import TRANSLATIONS
 
 class AirPollutionDisplay(ft.Container):
@@ -28,14 +28,7 @@ class AirPollutionDisplay(ft.Container):
         self._current_text_color = self.theme_handler.get_text_color()
         self._pollution_data = {}
 
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'title': 20, 'label': 15, 'value': 15, 
-                'subtitle': 15, 'aqi_value': 16, 'axis_title': 14
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
+
 
         if 'expand' not in kwargs:
             self.expand = True
@@ -89,7 +82,7 @@ class AirPollutionDisplay(ft.Container):
                     content=ft.Text(
                         loading_text,
                         color=self._current_text_color,
-                        size=self._text_handler.get_size('label')
+                        size=14
                     ),
                     alignment=ft.alignment.center,
                     padding=ft.padding.all(20)
@@ -147,7 +140,7 @@ class AirPollutionDisplay(ft.Container):
                 ft.Container(width=12),  # Spacer
                 ft.Text(
                     header_text,
-                    size=self._text_handler.get_size('axis_title') + 2,
+                    size=20,
                     weight=ft.FontWeight.BOLD,
                     color=self._current_text_color
                 ),
@@ -189,7 +182,7 @@ class AirPollutionDisplay(ft.Container):
                 ft.Container(width=12),  # Spacer
                 ft.Text(
                     header_text,
-                    size=self._text_handler.get_size('axis_title') + 2,
+                    size=20,
                     weight=ft.FontWeight.BOLD,
                     color=self._current_text_color
                 ),

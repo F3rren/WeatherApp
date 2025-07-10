@@ -1,6 +1,6 @@
 import flet as ft
 from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME, DEFAULT_UNIT_SYSTEM
-from components.responsive_text_handler import ResponsiveTextHandler
+
 from services.translation_service import TranslationService
 from services.api_service import ApiService
 import asyncio
@@ -78,11 +78,7 @@ class AirConditionInfo(ft.Container):
         self.padding = 16
         self._api_service = ApiService()
 
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={'title': 24, 'label': 16, 'value': 16, 'icon': 20},
-            breakpoints=[600, 900, 1200, 1600]
-        )
+
 
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')

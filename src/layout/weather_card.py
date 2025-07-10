@@ -1,5 +1,4 @@
 import flet as ft
-from components.responsive_text_handler import ResponsiveTextHandler
 
 class WeatherCard:
     """
@@ -8,34 +7,8 @@ class WeatherCard:
     
     def __init__(self, page: ft.Page):
         self.page = page
-        # Remove gradient - background will be managed by the main containers in app.py
         
-        # Initialize ResponsiveTextHandler
-        self.text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'card_title': 18,    # Titolo della card
-                'card_text': 14,     # Testo normale nella card
-                'card_small': 12,    # Testo piccolo nella card
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
-        
-        # Dictionary to track text controls
-        self.text_controls = {}
-        
-        # Register as observer for responsive updates
-        self.text_handler.add_observer(self.update_text_controls)
-        
-    def update_text_controls(self):
-        """Update text sizes for all registered controls"""
-        for control, size_category in self.text_controls.items():
-            if hasattr(control, 'size'):
-                control.size = self.text_handler.get_size(size_category)
-        
-        # Request page update
-        if self.page:
-            self.page.update()
+    # update_text_controls removed (no longer needed)
     
     def build(self, content: ft.Control) -> ft.Container:
         """Builds the weather card with the given content."""
@@ -48,6 +21,5 @@ class WeatherCard:
         )
         
     def cleanup(self):
-        """Cleanup method to remove observers"""
-        if hasattr(self, 'text_handler') and self.text_handler:
-            self.text_handler.remove_observer(self.update_text_controls)
+        """Cleanup method (no observers to remove)"""
+        pass

@@ -4,7 +4,7 @@ import logging
 from services.api_service import ApiService
 from services.translation_service import TranslationService
 from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE
-from components.responsive_text_handler import ResponsiveTextHandler
+
 from typing import Optional
 
 class AirPollutionChartDisplay(ft.Container):
@@ -28,13 +28,7 @@ class AirPollutionChartDisplay(ft.Container):
         self._header_language = None  # Track which language the header was built for
         self._last_theme_mode = None  # Track theme changes for header cache invalidation
 
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page, 
-            base_sizes={
-                'axis_title': 14, 'label': 14, 'tooltip': 12
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
+
         
         if 'expand' not in kwargs:
             self.expand = True
@@ -45,18 +39,7 @@ class AirPollutionChartDisplay(ft.Container):
             self._state_manager = self.page.session.get('state_manager')
             self._state_manager.register_observer("language_event", self._safe_language_update)
             self._state_manager.register_observer("theme_event", self._safe_theme_update)
-        
-        if self.page:
-            original_on_resize = self.page.on_resize
-            def resize_handler(e):
-                if original_on_resize:
-                    original_on_resize(e)
-                if self._text_handler:
-                    self._text_handler._handle_resize(e)
-                if self.page:
-                    self.page.run_task(self.update_ui)
-            self.page.on_resize = resize_handler
-        
+          
         self.content = self.build()
         if self.page:
             self.page.run_task(self.update_ui)
@@ -121,7 +104,7 @@ class AirPollutionChartDisplay(ft.Container):
                     content=ft.Text(
                         TranslationService.translate_from_dict("air_pollution_chart_items", "no_air_pollution_data", self._current_language),
                         color=self._current_text_color,
-                        size=self._text_handler.get_size('label'),
+                        size=14,
                         text_align=ft.TextAlign.CENTER,
                     ),
                     alignment=ft.alignment.center,
@@ -214,7 +197,7 @@ class AirPollutionChartDisplay(ft.Container):
                     label=ft.Text(
                         label_text, 
                         color=self._current_text_color, 
-                        size=self._text_handler.get_size('label')
+                        size=14
                     )
                 )
             )
@@ -243,7 +226,7 @@ class AirPollutionChartDisplay(ft.Container):
             border=ft.border.all(1, border_color),  # Bordo più delicato
             bottom_axis=ft.ChartAxis(
                 labels=bottom_axis_labels,
-                labels_size=self._text_handler.get_size('label') * 3.5,
+                labels_size=14 * 3.5,
                 labels_interval=1,  # Mostra tutte le etichette
             ),
             horizontal_grid_lines=ft.ChartGridLines(
@@ -288,7 +271,7 @@ class AirPollutionChartDisplay(ft.Container):
                 ft.Container(width=12),  # Spacer
                 ft.Text(
                     f"{header_text}" " (μg/m3)",
-                    size=self._text_handler.get_size('axis_title') + 2,
+                    size=25,
                     weight=ft.FontWeight.BOLD,
                     color=self._current_text_color
                 ),

@@ -1,6 +1,5 @@
 import logging
 import flet as ft
-from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService
 
 class WeatherAlertDialog:
@@ -14,15 +13,6 @@ class WeatherAlertDialog:
         self.current_language = language
         self.theme_handler = theme_handler
         self.dialog = None
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'title': 20,
-                'body': 14,
-                'icon': 20,
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
         self.update_ui()
 
     def update_ui(self, event_data=None):
@@ -40,7 +30,14 @@ class WeatherAlertDialog:
         self.dialog = self.build()
 
     def build(self):
-        get_size = self._text_handler.get_size
+        def get_size(k):
+            if k == 'title':
+                return 20
+            elif k == 'body':
+                return 14
+            elif k == 'icon':
+                return 20
+            return 14
         dialog_text_color = self.text_color["TEXT"]
         accent_color = self.text_color.get("ACCENT", "#0078d4")
         title_size = get_size('title')

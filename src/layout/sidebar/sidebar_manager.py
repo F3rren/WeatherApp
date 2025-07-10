@@ -15,7 +15,6 @@ from state_manager import StateManager
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
 from services.theme_handler import ThemeHandler
-from components.responsive_text_handler import ResponsiveTextHandler
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -52,19 +51,7 @@ class SidebarManager(ft.Container):
         self.pop_menu = None
         self.search_bar = None
         self.weekly_forecast_display = None
-        # Text handler for responsive design
-        self.text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'icon': 25,
-                'search_bar_text': 30,
-                'popup_menu_button_icon': 20,
-                'alert_dialog_text': 15,
-                'alert_dialog_subtext': 15,
-                'alert_dialog_subicon': 15
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
+
         # Initialize components and styling
         self._initialize_styling()
         self._initialize_components()
@@ -109,7 +96,6 @@ class SidebarManager(ft.Container):
             theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
             location_toggle_value=self.state_manager.get_state("using_location") or False,
             language=language,
-            text_handler_get_size=self.text_handler.get_size,
             theme_handler=self.theme_handler
         )
 
@@ -119,7 +105,6 @@ class SidebarManager(ft.Container):
             cities=self.cities,
             on_city_selected=handle_city_selected,
             language=language,
-            text_handler_get_size=self.text_handler.get_size,
             theme_handler=self.theme_handler
         )
 
@@ -166,7 +151,6 @@ class SidebarManager(ft.Container):
                 theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
                 location_toggle_value=self.state_manager.get_state("using_location") or False,
                 language=language,
-                text_handler_get_size=self.text_handler.get_size,
                 theme_handler=self.theme_handler
             )
 
@@ -192,7 +176,6 @@ class SidebarManager(ft.Container):
                 cities=self.cities,
                 on_city_selected=handle_city_selected,
                 language=language,
-                text_handler_get_size=self.text_handler.get_size,
                 theme_handler=self.theme_handler
             )
 
@@ -241,7 +224,6 @@ class SidebarManager(ft.Container):
                 theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
                 location_toggle_value=self.state_manager.get_state("using_location") or False,
                 language=language,
-                text_handler_get_size=self.text_handler.get_size,
                 theme_handler=self.theme_handler
             )
 
@@ -267,7 +249,6 @@ class SidebarManager(ft.Container):
                 cities=self.cities,
                 on_city_selected=handle_city_selected,
                 language=language,
-                text_handler_get_size=self.text_handler.get_size,
                 theme_handler=self.theme_handler
             )
 
@@ -393,7 +374,7 @@ class SidebarManager(ft.Container):
                 ft.Container(
                     content=self.search_bar.build(
                         popmenu_widget=self.pop_menu,  # Use the PopMenu container directly
-                        clear_icon_size=self.text_handler.get_size('icon'),
+                clear_icon_size=25,
                     ),
                     expand=True,
                 ),

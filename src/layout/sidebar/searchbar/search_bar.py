@@ -16,8 +16,6 @@ class SearchBar:
         language: str = DEFAULT_LANGUAGE,
         prefix_widget: Optional[ft.Control] = None,
         suffix_widget: Optional[ft.Control] = None,
-        text_handler_get_size: Optional[Callable] = None,  # aggiunto parametro
-        text_handler=None,
         theme_handler: ThemeHandler = None
     ):
         self.cities = cities or []
@@ -27,8 +25,6 @@ class SearchBar:
         self.language = language
         self.prefix_widget = prefix_widget
         self.suffix_widget = suffix_widget
-        self.text_handler_get_size = text_handler_get_size  # salva funzione
-        self.text_handler = text_handler
         self.focused = False
         self.search_field = None
 
@@ -58,7 +54,7 @@ class SearchBar:
 
         clear_btn = ft.IconButton(
             icon=ft.Icons.CLOSE,
-            icon_size=self.text_handler_get_size('icon'),
+            icon_size=14,
             on_click=clear_text,
             tooltip="Cancella",
             style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12))
@@ -67,7 +63,7 @@ class SearchBar:
         # Use theme_handler for text color if available
         text_color = self.theme_handler.get_text_color() if self.theme_handler else self.text_color.get("TEXT", "#000000")
         self.search_field = ft.TextField(
-            text_style=ft.TextStyle(size=self.text_handler_get_size('body'), color=text_color),
+            text_style=ft.TextStyle(size=14, color=text_color),
             border_radius=24,
             bgcolor="transparent",
             border_color="transparent",

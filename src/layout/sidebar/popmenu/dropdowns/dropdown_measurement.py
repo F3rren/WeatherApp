@@ -2,7 +2,6 @@
 import logging
 from services.api_service import ApiService
 from utils.config import LIGHT_THEME, DARK_THEME, UNIT_SYSTEMS, DEFAULT_LANGUAGE
-from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService
 
 class DropdownMeasurement:
@@ -18,37 +17,8 @@ class DropdownMeasurement:
         self.unit_name_keys = {code: details["name_key"] for code, details in UNIT_SYSTEMS.items()} # Corrected this line
         self.api = ApiService()  # Assuming ApiService is defined elsewhere
 
-        # Initialize ResponsiveTextHandler
-        if self.page:
-            self.text_handler = ResponsiveTextHandler(
-                page=self.page,
-                base_sizes={
-                    'dropdown_text': 14,  # Dropdown text size
-                    'hint_text': 13,      # Hint text size
-                },
-                breakpoints=[600, 900, 1200, 1600]
-            )
-            
-            # Dictionary to track text controls
-            self.text_controls = {}
-            
-            # Register as observer for responsive updates
-            self.text_handler.add_observer(self.update_text_controls)
 
-    def update_text_controls(self):
-        """Update text sizes for all registered controls"""
-        if not self.page or not self.text_handler: # Add checks for page and text_handler
-            return
-        if self.dropdown:
-            if hasattr(self.dropdown, 'text_style') and self.dropdown.text_style:
-                 self.dropdown.text_style.size = self.text_handler.get_size('dropdown_text')
-            if hasattr(self.dropdown, 'hint_style') and self.dropdown.hint_style:
-                 self.dropdown.hint_style.size = self.text_handler.get_size('hint_text')
-        
-        if self.dropdown and self.dropdown.page: # Check if dropdown is on page
-            self.dropdown.update()
-        # elif self.page: # Avoid redundant page update if dropdown itself is updated
-            # self.page.update()
+    # update_text_controls removed (no longer needed)
 
     def get_options(self, theme=None):
         # Accept theme so we can set the correct color for option content
@@ -111,9 +81,9 @@ class DropdownMeasurement:
             on_change=self.on_unit_change, # Changed to a dedicated async method
             # Styling consistent with DropdownLanguage
             width=250,
-            text_style=ft.TextStyle(color=text_color, size=self.text_handler.get_size('dropdown_text') if self.text_handler else 14),
+            text_style=ft.TextStyle(color=text_color, size=14),
             hint_text=translated_hint_text,
-            hint_style=ft.TextStyle(color=ft.Colors.with_opacity(0.6, text_color), size=self.text_handler.get_size('hint_text') if self.text_handler else 13),
+            hint_style=ft.TextStyle(color=ft.Colors.with_opacity(0.6, text_color), size=13),
             bgcolor=bgcolor,
             border_color=border_color,
             border_radius=ft.border_radius.all(8),
@@ -123,10 +93,6 @@ class DropdownMeasurement:
         )
 
         # Register the dropdown for responsive text updates
-        if self.text_handler:
-            # self.text_controls[self.dropdown] = 'dropdown_text' # Not needed if updating style directly
-            self.update_text_controls() # Apply initial size
-
         return self.dropdown
 
     async def on_unit_change(self, e):

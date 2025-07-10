@@ -2,7 +2,6 @@
 import logging
 from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE
 from utils.translations_data import LANGUAGES 
-from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService # Added import
 
 class DropdownLanguage:
@@ -12,40 +11,8 @@ class DropdownLanguage:
         self.state_manager = state_manager
         self.page = page
         self.dropdown = None
-        
-        # Initialize ResponsiveTextHandler
-        if self.page:
-            self.text_handler = ResponsiveTextHandler(
-                page=self.page,
-                base_sizes={
-                    'dropdown_text': 14,  # Dropdown text size
-                    'hint_text': 13,      # Hint text size
-                },
-                breakpoints=[600, 900, 1200, 1600]
-            )
-            
-            # Dictionary to track text controls (currently not used by update_text_controls in this class)
-            self.text_controls = {} 
-            
-            # Register as observer for responsive updates
-            self.text_handler.add_observer(self.update_text_controls)
 
-    def update_text_controls(self):
-        """Update text sizes for all registered controls"""
-        if not self.page or not hasattr(self, 'text_handler') or not self.text_handler:
-            return
-
-        if self.dropdown:
-            if hasattr(self.dropdown, 'text_style') and self.dropdown.text_style:
-                 self.dropdown.text_style.size = self.text_handler.get_size('dropdown_text')
-            if hasattr(self.dropdown, 'hint_style') and self.dropdown.hint_style:
-                 self.dropdown.hint_style.size = self.text_handler.get_size('hint_text')
-            elif hasattr(self.dropdown, 'text_size'): # Fallback
-                self.dropdown.text_size = self.text_handler.get_size('dropdown_text')
-        
-        if self.dropdown and self.dropdown.page:
-            self.dropdown.update()
-        
+    # update_text_controls removed (no longer needed)
 
     def get_language_name_by_code(self, code):
         """Restituisce il nome della lingua dato il codice"""
@@ -158,9 +125,8 @@ class DropdownLanguage:
             self.dropdown.update()
 
     def cleanup(self):
-        """Cleanup method to remove observers"""
-        if hasattr(self, 'text_handler') and self.text_handler:
-            self.text_handler.remove_observer(self.update_text_controls)
+        """Cleanup method (no observers to remove)"""
+        pass
     
     def build(self):
         """Costruisce e restituisce il controllo Dropdown."""
@@ -190,9 +156,9 @@ class DropdownLanguage:
             options=self.get_options(theme=current_theme), # Pass theme
             on_change=self.on_language_change,
             width=250, 
-            text_style=ft.TextStyle(color=text_color, size=self.text_handler.get_size('dropdown_text') if self.text_handler else 14),
+            text_style=ft.TextStyle(color=text_color, size=14),
             hint_text=translated_hint_text, # Translated hint
-            hint_style=ft.TextStyle(color=ft.Colors.with_opacity(0.6, text_color), size=self.text_handler.get_size('hint_text') if self.text_handler else 13),
+            hint_style=ft.TextStyle(color=ft.Colors.with_opacity(0.6, text_color), size=13),
             bgcolor=bgcolor,
             border_color=border_color,
             border_radius=ft.border_radius.all(8),
@@ -200,11 +166,6 @@ class DropdownLanguage:
             focused_border_color=current_theme["ACCENT"],
             content_padding=ft.padding.symmetric(horizontal=12, vertical=8),
         )
-        
-        if self.text_handler:
-            # self.text_controls[self.dropdown] = 'dropdown_text' # Removed: not used by update_text_controls
-            self.update_text_controls() 
-
         return self.dropdown
 
     async def on_language_change(self, e):

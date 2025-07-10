@@ -13,7 +13,7 @@ class PopMenu(ft.Container):
     def __init__(self, page: ft.Page = None, state_manager=None, 
                  handle_location_toggle=None, handle_theme_toggle=None, 
                  theme_toggle_value=False, location_toggle_value=False, 
-                 language: str = None, text_handler_get_size=None, theme_handler: ThemeHandler = None, **kwargs):
+                 language: str = None, theme_handler: ThemeHandler = None, **kwargs):
         super().__init__(**kwargs)
         self.page = page
         self.state_manager = state_manager
@@ -23,7 +23,6 @@ class PopMenu(ft.Container):
         self.location_toggle_value = location_toggle_value
         self.theme_handler = theme_handler or ThemeHandler(page)
         self.language = language if language else DEFAULT_LANGUAGE
-        self.text_handler_get_size = text_handler_get_size
         self.weather_alert = None
         self.map_alert = None
         self.setting_alert = None
@@ -59,7 +58,7 @@ class PopMenu(ft.Container):
             "map": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "map", self.language), color=self._current_text_color),
             "settings": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "settings", self.language), color=self._current_text_color)
         }
-        self.popup_menu_button_icon = ft.Icon(ft.Icons.FILTER_ALT_OUTLINED, color=self._current_text_color)        # Do not call self.update() here; let parent/container update as needed
+        self.popup_menu_button_icon = ft.Icon(ft.Icons.FILTER_ALT_OUTLINED, color=self._current_text_color)
 
     def build(self):
         """Build the frontend component."""
@@ -67,28 +66,28 @@ class PopMenu(ft.Container):
             return [
                 ft.PopupMenuItem(
                     content=ft.Row([
-                        ft.Icon(ft.Icons.SUNNY, color="#FF8C00", size=self.text_handler_get_size('popup_menu_button_icon')),
+                        ft.Icon(ft.Icons.SUNNY, color="#FF8C00", size=20),
                         self.pop_menu_items["weather"]
                     ]),
                     on_click=lambda _, al=self.weather_alert: self.weather_alert.open_dialog(),
                 ),
                 ft.PopupMenuItem(
                     content=ft.Row([
-                        ft.Icon(ft.Icons.MAP_OUTLINED, color="#0000FF", size=self.text_handler_get_size('popup_menu_button_icon')),
+                        ft.Icon(ft.Icons.MAP_OUTLINED, color="#0000FF", size=20),
                         self.pop_menu_items["map"]
                     ]),
                     on_click=lambda _, al=self.map_alert: self.map_alert.open_dialog(),
                 ),
                 ft.PopupMenuItem(
                     content=ft.Row([
-                        ft.Icon(ft.Icons.SETTINGS, color="#808080", size=self.text_handler_get_size('popup_menu_button_icon')),
+                        ft.Icon(ft.Icons.SETTINGS, color="#808080", size=20),
                         self.pop_menu_items["settings"]
                     ]),
                     on_click=lambda _, al=self.setting_alert: self.setting_alert.open_dialog(),
                 ),
             ]
         self.popup_menu_button_control = ft.PopupMenuButton(
-            content=ft.Icon(ft.Icons.MENU, color=self._current_text_color, size=self.text_handler_get_size('icon')),
+            content=ft.Icon(ft.Icons.MENU, color=self._current_text_color, size=20),
             items=build_popup_menu_items(),
             style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12))
         )

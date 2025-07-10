@@ -3,7 +3,6 @@ import traceback
 import asyncio
 import logging
 from services.api_service import ApiService
-from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService
 from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 from services.theme_handler import ThemeHandler
@@ -26,17 +25,7 @@ class WeeklyForecastDisplay(ft.Container):
         self._current_text_color = self.theme_handler.get_text_color()
         self._forecast_data = []
 
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'header_title': 18,
-                'day_label': 16,
-                'temp_value': 15,
-                'weather_icon': 40,
-                'loading_text': 14
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
+
 
         if 'expand' not in kwargs:
             self.expand = True
@@ -69,8 +58,6 @@ class WeeklyForecastDisplay(ft.Container):
             def resize_handler(e):
                 if original_on_resize:
                     original_on_resize(e)
-                if self._text_handler:
-                    self._text_handler._handle_resize(e)
                 if self.page:
                     self.page.run_task(self.update_ui)
             self.page.on_resize = resize_handler
@@ -217,7 +204,7 @@ class WeeklyForecastDisplay(ft.Container):
                 ft.Container(width=12),
                 ft.Text(
                     header_text,
-                    size=self._text_handler.get_size('axis_title') + 2,
+                    size=20,
                     weight=ft.FontWeight.BOLD,
                     color=self._current_text_color
                 )
@@ -238,7 +225,7 @@ class WeeklyForecastDisplay(ft.Container):
                     content=ft.Text(
                         loading_text,
                         color=self._current_text_color,
-                        size=self._text_handler.get_size('loading_text')
+                        size=14
                     ),
                     alignment=ft.alignment.center,
                     padding=ft.padding.all(20)
@@ -301,15 +288,15 @@ class WeeklyForecastDisplay(ft.Container):
         # Weather icon - simplified without background
         weather_icon = ft.Image(
             src=f"https://openweathermap.org/img/wn/{day_data['icon']}@2x.png",
-            width=self._text_handler.get_size('weather_icon'),
-            height=self._text_handler.get_size('weather_icon'),
+            width=40,
+            height=40,
             fit=ft.ImageFit.CONTAIN
         )
         
         # Day label
         day_label = ft.Text(
             translated_day,
-            size=self._text_handler.get_size('day_label'),
+            size=16,
             weight=ft.FontWeight.W_600,
             color=self._current_text_color
         )
@@ -322,14 +309,14 @@ class WeeklyForecastDisplay(ft.Container):
                     ft.TextStyle(
                         weight=ft.FontWeight.W_600, 
                         color=ft.Colors.BLUE_400,
-                        size=self._text_handler.get_size('temp_value')
+                        size=15
                     )
                 ),
                 ft.TextSpan(
                     "\n", 
                     ft.TextStyle(
                         color=self._current_text_color, 
-                        size=self._text_handler.get_size('temp_value')
+                        size=15
                     )
                 ),
                 ft.TextSpan(
@@ -337,7 +324,7 @@ class WeeklyForecastDisplay(ft.Container):
                     ft.TextStyle(
                         weight=ft.FontWeight.W_600, 
                         color=ft.Colors.RED_400,
-                        size=self._text_handler.get_size('temp_value')
+                        size=15
                     )
                 )
             ]

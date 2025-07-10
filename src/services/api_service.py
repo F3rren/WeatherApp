@@ -501,7 +501,6 @@ class ApiService:
             # Determina il colore del testo in base al tema
             text_color = "#1F1A1A" if self.page and self.page.theme_mode == ft.ThemeMode.LIGHT else "#adadad"
             
-            # Use ResponsiveTextHandler for consistent text sizing
             for day_data in forecast_days:
                 day_item = DailyForecastItems(
                     day=day_data["day_key"],

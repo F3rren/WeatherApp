@@ -3,7 +3,7 @@ from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 from services.theme_handler import ThemeHandler
 import logging
 from services.translation_service import TranslationService
-from components.responsive_text_handler import ResponsiveTextHandler
+
 import traceback
 
 class MainWeatherInfo(ft.Container):
@@ -34,23 +34,10 @@ class MainWeatherInfo(ft.Container):
         self._current_unit_system = DEFAULT_UNIT_SYSTEM
         self._current_text_color = self.theme_handler.get_text_color()
 
-        # Initialize ResponsiveTextHandler
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'city': 36,
-                'location': 20,
-                'temperature': 40,
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
+
         
         self.content = ft.Text("Loading Main Info...")
 
-        # Setup observers and handlers
-        if self.page:
-            if self._text_handler and not self._text_handler.page:
-                self._text_handler.page = self.page
         # Setup state manager
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
@@ -145,10 +132,6 @@ class MainWeatherInfo(ft.Container):
     def build(self):
         """Costruisce la UI principale con testo tradotto e dati API."""
         try:
-            if not self._text_handler:
-                logging.error(f"MainWeatherInfo ({self._city_data}): Text handler is None in build.")
-                return ft.Text("Error: Text handler not available.", color=ft.Colors.RED)
-
             # Format temperature unit symbol
             unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
             # Usa la descrizione già tradotta dalla API
@@ -372,9 +355,6 @@ class MainWeatherInfo(ft.Container):
                 expand=True,
                 alignment=ft.alignment.center_left,
             )
-        except Exception as e:
-            logging.error(f"MainWeatherInfo ({self._city_data}): Failed to build UI elements: {e}\nTraceback: {traceback.format_exc()}")
-            return ft.Text(f"Error displaying {self._city_data}", color=ft.Colors.RED)
         except Exception as e:
             logging.error(f"MainWeatherInfo ({self._city_data}): Failed to build UI elements: {e}\nTraceback: {traceback.format_exc()}")
             return ft.Text(f"Error displaying {self._city_data}", color=ft.Colors.RED)

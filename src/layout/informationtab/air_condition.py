@@ -52,7 +52,7 @@ class AirConditionInfo(ft.Container):
     def __init__(self, city: str, feels_like: int, humidity: int, wind_speed: int,
                  pressure: int, wind_direction: int = None, wind_gust: float = None, 
                  visibility: int = None, uv_index: float = None, dew_point: int = None, 
-                 cloud_coverage: int = None, page: ft.Page = None, theme_handler=None, **kwargs):
+                 cloud_coverage: int = None, page: ft.Page = None, theme_handler=None, language=None, unit=None, **kwargs):
         super().__init__(**kwargs)
         self._city = city
         self._feels_like_data = feels_like
@@ -72,8 +72,8 @@ class AirConditionInfo(ft.Container):
         self.theme_handler = theme_handler if theme_handler else TH(self.page)
 
         self._state_manager = None
-        self._current_language = DEFAULT_LANGUAGE
-        self._current_unit_system = DEFAULT_UNIT_SYSTEM
+        self._current_language = language or DEFAULT_LANGUAGE
+        self._current_unit_system = unit or DEFAULT_UNIT_SYSTEM
         self._current_text_color = self.theme_handler.get_text_color()
         self.padding = 16
         self._api_service = ApiService()

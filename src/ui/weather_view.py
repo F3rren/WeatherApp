@@ -91,7 +91,21 @@ class WeatherView:
             self.page.update()
 
     def _cleanup_child_components(self):
-        """Clears all child containers' content to remove old components."""
+        """Clears all child containers' content to remove old components and calls cleanup on observer components."""
+        # Cleanup observer components if they exist
+        if hasattr(self, 'main_weather_info_instance') and self.main_weather_info_instance:
+            try:
+                self.main_weather_info_instance.cleanup()
+            except Exception:
+                pass
+            self.main_weather_info_instance = None
+        if hasattr(self, 'air_condition_instance') and self.air_condition_instance:
+            try:
+                self.air_condition_instance.cleanup()
+            except Exception:
+                pass
+            self.air_condition_instance = None
+        # Add similar cleanup for other observer-based components if needed
         self.info_container.content = None
         self.hourly_container.content = None
         self.weekly_container.content = None
@@ -115,18 +129,19 @@ class WeatherView:
 
     def handle_language_or_unit_change(self, event_data=None):
         logging.info(f"WeatherView: Handling language/unit change. Event: {event_data}")
-        if not self.current_city and not (self.current_lat and self.current_lon):
-            logging.warning("Cannot update for language/unit change: no location set.")
-            return
-
+        # Always get the latest state from state_manager
         language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
         unit = self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
-        
-        # Re-fetch data for the current location with new settings
-        if self.state_manager.get_state('using_location') and self.current_lat is not None and self.current_lon is not None:
-            self.page.run_task(self.update_by_coordinates, self.current_lat, self.current_lon, language, unit)
-        elif self.current_city:
-            self.page.run_task(self.update_by_city, self.current_city, language, unit)
+        using_location = self.state_manager.get_state('using_location')
+        current_lat = self.state_manager.get_state('current_lat')
+        current_lon = self.state_manager.get_state('current_lon')
+        city = self.state_manager.get_state('city') or self.current_city
+
+        # Always force a full data refetch and UI rebuild
+        if using_location and current_lat is not None and current_lon is not None:
+            self.page.run_task(self.update_by_coordinates, current_lat, current_lon, language, unit)
+        elif city:
+            self.page.run_task(self.update_by_city, city, language, unit)
         else:
             logging.warning("Language/unit change handler: No location context available for update.")
 
@@ -361,6 +376,7 @@ class WeatherView:
 
     async def _update_main_info(self, city: str, is_current_location: bool) -> None:
         """Frontend: Updates main weather info UI (robust, always creates new instance)."""
+        language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
         temperature = self.api_service.get_current_temperature(self.weather_data)
         feels_like = self.api_service.get_feels_like_temperature(self.weather_data)
         icon_code = self.api_service.get_weather_icon_code(self.weather_data)
@@ -369,7 +385,6 @@ class WeatherView:
 
         # Determine display location and translated city name
         if is_current_location:
-            language = self.state_manager.get_state('language')
             location_str = TranslationService.translate_from_dict('main_information_items', 'current_location', language)
             location = f"📍 {location_str}"
             translated_city = location_str
@@ -387,7 +402,13 @@ class WeatherView:
             location = city
             translated_city = city
 
-        main_weather_info = MainWeatherInfo(
+        # Cleanup previous instance if exists
+        if hasattr(self, 'main_weather_info_instance') and self.main_weather_info_instance:
+            try:
+                self.main_weather_info_instance.cleanup()
+            except Exception:
+                pass
+        self.main_weather_info_instance = MainWeatherInfo(
             city=translated_city,
             location=location,
             temperature=temperature,
@@ -396,16 +417,21 @@ class WeatherView:
             theme_handler=self.theme_handler,
             expand=True
         )
-        main_weather_info._weather_description = weather_description
-        main_weather_info._feels_like = feels_like
-        main_weather_info._temp_min = temp_min
-        main_weather_info._temp_max = temp_max
+        self.main_weather_info_instance._weather_description = weather_description
+        self.main_weather_info_instance._feels_like = feels_like
+        self.main_weather_info_instance._temp_min = temp_min
+        self.main_weather_info_instance._temp_max = temp_max
 
-        # Always create a new AirConditionInfo instance
-        air_condition_info = await self._build_air_condition()
+        # Always create a new AirConditionInfo instance and cleanup previous
+        if hasattr(self, 'air_condition_instance') and self.air_condition_instance:
+            try:
+                self.air_condition_instance.cleanup()
+            except Exception:
+                pass
+        self.air_condition_instance = await self._build_air_condition()
 
         self.info_container.content = ft.Column(
-            controls=[main_weather_info, air_condition_info],
+            controls=[self.main_weather_info_instance, self.air_condition_instance],
             spacing=5,
             expand=True
         )
@@ -442,106 +468,71 @@ class WeatherView:
         forecast_data = self.api_service.get_daily_forecast_data(self.weather_data)
         days = self.api_service.get_upcoming_days()
         weather_card = WeatherCard(self.page)
-        # self._update_text_color() # TemperatureChartDisplay manages its own text color
-
-        # Instantiate or update the TemperatureChartDisplay instance
-        if not hasattr(self, 'temperature_chart_instance') or not self.temperature_chart_instance:
-            self.temperature_chart_instance = TemperatureChartDisplay(
-                page=self.page,
-                days=days,
-                temp_min=forecast_data["temp_min"],
-                temp_max=forecast_data["temp_max"],
-                theme_handler=self.theme_handler
-                # expand=True # TemperatureChartDisplay sets its own expand if needed
-            )
-        else:
-            # If data needs to be updated (e.g., city change, unit change affecting data)
-            self.temperature_chart_instance.update_data(
-                days=days,
-                temp_min=forecast_data["temp_min"],
-                temp_max=forecast_data["temp_max"]
-            )
-            # Language and theme changes are handled internally by TemperatureChartDisplay
-
-        # IMPORTANT: Always call update to ensure the component reflects current state
+        # Cleanup previous instance if exists
+        if hasattr(self, 'temperature_chart_instance') and self.temperature_chart_instance:
+            try:
+                self.temperature_chart_instance.cleanup()
+            except Exception:
+                pass
+        self.temperature_chart_instance = TemperatureChartDisplay(
+            page=self.page,
+            days=days,
+            temp_min=forecast_data["temp_min"],
+            temp_max=forecast_data["temp_max"],
+            theme_handler=self.theme_handler
+        )
         try:
             self.temperature_chart_instance.update()
         except Exception as e:
             logging.error(f"Error updating temperature chart: {e}")
-
-        # The WeatherCard is a generic wrapper, TemperatureChartDisplay is the actual content.
         self.chart_container.content = weather_card.build(self.temperature_chart_instance)
-        
-        # IMPORTANTE: Aggiorna il container dopo aver cambiato il contenuto
         try:
             self.chart_container.update()
         except (AssertionError, AttributeError):
-            # Container not yet added to page, skip update
             pass
 
     async def _update_hourly_container(self) -> None:
         """Frontend: Updates hourly forecast UI"""
-        weather_card = WeatherCard(self.page) 
-        self._update_text_color() # Ensure text_color is current for components not self-managing it
-
-        # Instantiate the refactored HourlyForecastDisplay
-        if not hasattr(self, 'hourly_forecast_instance') or not self.hourly_forecast_instance:
-            self.hourly_forecast_instance = HourlyForecastDisplay(
-                page=self.page,
-                city=self.current_city,
-                theme_handler=self.theme_handler
-                # expand=True # HourlyForecastDisplay sets its own expand property if needed
-            )
-        else:
-            # Update city if changed
-            if self.hourly_forecast_instance._city != self.current_city:
-                await self.hourly_forecast_instance.update_city(self.current_city)
-        
-        # IMPORTANTE: Aspetta che i dati siano caricati prima di ricostruire il contenuto
+        weather_card = WeatherCard(self.page)
+        self._update_text_color()
+        # Cleanup previous instance if exists
+        if hasattr(self, 'hourly_forecast_instance') and self.hourly_forecast_instance:
+            try:
+                self.hourly_forecast_instance.cleanup()
+            except Exception:
+                pass
+        self.hourly_forecast_instance = HourlyForecastDisplay(
+            page=self.page,
+            city=self.current_city,
+            theme_handler=self.theme_handler
+        )
         await self.hourly_forecast_instance.update()
-        
-        # The WeatherCard is a generic wrapper, the HourlyForecastDisplay is the actual content.
         self.hourly_container.content = weather_card.build(self.hourly_forecast_instance)
-        
-        # IMPORTANTE: Aggiorna il container dopo aver cambiato il contenuto
         try:
             self.hourly_container.update()
         except (AssertionError, AttributeError):
-            # Container not yet added to page, skip update
             pass
     
     async def _update_air_pollution(self, lat: float, lon: float) -> None:
         """Frontend: Updates air pollution UI using AirPollutionDisplay."""
         weather_card = WeatherCard(self.page)
-
-        if not hasattr(self, 'air_pollution_display_instance') or not self.air_pollution_display_instance:
-            self.air_pollution_display_instance = AirPollutionDisplay(
-                page=self.page,
-                lat=lat,
-                lon=lon,
-                theme_handler=self.theme_handler
-            )
-        else:
-            if self.air_pollution_display_instance._lat != lat or self.air_pollution_display_instance._lon != lon:
-                await self.air_pollution_display_instance.update_location(lat, lon)
-            # Language and theme changes are handled internally by AirPollutionDisplay
-
-        # --- FIX: Aggiorna sempre la lingua e l'unità prima del refresh ---
-        state_manager = self.page.session.get('state_manager')
-        if state_manager:
-            self.air_pollution_display_instance._current_language = state_manager.get_state('language') or self.air_pollution_display_instance._current_language
-            self.air_pollution_display_instance._current_unit = state_manager.get_state('unit') or getattr(self.air_pollution_display_instance, '_current_unit', DEFAULT_UNIT_SYSTEM)
-
-        # IMPORTANTE: Aspetta che i dati siano caricati prima di ricostruire il contenuto
+        # Cleanup previous instance if exists
+        if hasattr(self, 'air_pollution_display_instance') and self.air_pollution_display_instance:
+            try:
+                self.air_pollution_display_instance.cleanup()
+            except Exception:
+                pass
+        self.air_pollution_display_instance = AirPollutionDisplay(
+            page=self.page,
+            lat=lat,
+            lon=lon,
+            theme_handler=self.theme_handler
+        )
         await self.air_pollution_display_instance.update()
-
         self.air_pollution_container.content = weather_card.build(self.air_pollution_display_instance)
-        
-        # IMPORTANTE: Aggiorna il container dopo aver cambiato il contenuto
         try:
             self.air_pollution_container.update()
         except (AssertionError, AttributeError):
-            # Container not yet added to page, skip update
             pass
     
     async def _update_precipitation_chart(self, forecast_data: dict) -> None:
@@ -584,6 +575,8 @@ class WeatherView:
     async def _build_air_condition(self):
         if not self.weather_data:
             return None
+        language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
+        unit = self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
         return AirConditionInfo(
             city=self.current_city or "Unknown",
             feels_like=self.api_service.get_feels_like_temperature(self.weather_data) or 0,
@@ -597,7 +590,9 @@ class WeatherView:
             dew_point=self.api_service.get_dew_point(self.weather_data),
             cloud_coverage=self.api_service.get_cloud_coverage(self.weather_data),
             page=self.page,
-            theme_handler=self.theme_handler
+            theme_handler=self.theme_handler,
+            language=language,
+            unit=unit
         )
 
     def _set_loading(self, value: bool):

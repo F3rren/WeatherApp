@@ -538,6 +538,8 @@ class WeatherView:
         # Always create a new instance to ensure proper updates
         self.precipitation_chart_instance = PrecipitationChartDisplay(
             page=self.page,
+            language=self.state_manager.get_state('language') or DEFAULT_LANGUAGE,
+            unit=self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM,
             theme_handler=self.theme_handler
         )
         logging.info("DEBUG: Created new PrecipitationChartDisplay instance")

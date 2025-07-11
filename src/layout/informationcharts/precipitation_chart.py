@@ -10,7 +10,6 @@ import logging
 
 from services.api_service import ApiService
 from services.translation_service import TranslationService
-from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 from services.theme_handler import ThemeHandler
 
 
@@ -20,13 +19,16 @@ class PrecipitationChartDisplay(ft.Container):
     Shows precipitation forecast as a textual list along with key statistics.
     """
 
-    def __init__(self, page: ft.Page, theme_handler: ThemeHandler = None, **kwargs):
+    def __init__(self, page: ft.Page,
+                 language: str = None,
+                 unit: str = None,
+                 theme_handler: ThemeHandler = None, **kwargs):
         super().__init__(**kwargs)
         self.page = page
         self.theme_handler = theme_handler or ThemeHandler(self.page)
         self._api_service = ApiService()
-        self._current_language = DEFAULT_LANGUAGE
-        self._current_unit_system = DEFAULT_UNIT_SYSTEM
+        self._current_language = language
+        self._current_unit_system = unit
         self._current_text_color = self.theme_handler.get_text_color()
         self._precipitation_data = []
         self._forecast_data = {}

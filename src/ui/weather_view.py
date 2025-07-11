@@ -376,16 +376,9 @@ class WeatherView:
 
     async def _update_main_info(self, city: str, is_current_location: bool) -> None:
         """Frontend: Updates main weather info UI (robust, always creates new instance)."""
-        language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
-        temperature = self.api_service.get_current_temperature(self.weather_data)
-        feels_like = self.api_service.get_feels_like_temperature(self.weather_data)
-        icon_code = self.api_service.get_weather_icon_code(self.weather_data)
-        weather_description = self.api_service.get_weather_description(self.weather_data)
-        temp_min, temp_max = self.api_service.get_min_max_temperature(self.weather_data)
-
         # Determine display location and translated city name
         if is_current_location:
-            location_str = TranslationService.translate_from_dict('main_information_items', 'current_location', language)
+            location_str = TranslationService.translate_from_dict('main_information_items', 'current_location', self.state_manager.get_state('language') or DEFAULT_LANGUAGE)
             location = f"{location_str}"
             translated_city = location_str
         elif self.weather_data and self.weather_data.get("city"):
@@ -408,23 +401,24 @@ class WeatherView:
                 self.main_weather_info_instance.cleanup()
             except Exception:
                 pass
-        language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
-        unit = self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
+
+        temp_min, temp_max = self.api_service.get_min_max_temperature(self.weather_data)
 
         self.main_weather_info_instance = MainWeatherInfo(
             city=translated_city,
             location=location,
-            temperature=temperature,
             temp_min=temp_min,
             temp_max=temp_max,
-            weather_icon=icon_code,
+            temperature=self.api_service.get_current_temperature(self.weather_data),
+            weather_icon=self.api_service.get_weather_icon_code(self.weather_data),
+            language=self.state_manager.get_state('language') or DEFAULT_LANGUAGE,
+            unit=self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM,
+            weather_description=self.api_service.get_weather_description(self.weather_data),
+            feels_like=self.api_service.get_feels_like_temperature(self.weather_data),
             page=self.page,
-            language=self.state_manager.get_state('language'),  # <-- PATCH: passa sempre la lingua aggiornata
-            unit=self.state_manager.get_state('unit'),          # <-- PATCH: passa sempre l'unità aggiornata
             theme_handler=self.theme_handler,
             expand=True
         )
-
 
         # Always create a new AirConditionInfo instance and cleanup previous
         if hasattr(self, 'air_condition_instance') and self.air_condition_instance:
@@ -501,8 +495,11 @@ class WeatherView:
         self.hourly_forecast_instance = HourlyForecastDisplay(
             page=self.page,
             city=self.current_city,
+            language=self.state_manager.get_state('language') or DEFAULT_LANGUAGE,
+            unit=self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM,
             theme_handler=self.theme_handler
         )
+
         await self.hourly_forecast_instance.update()
         self.hourly_container.content = weather_card.build(self.hourly_forecast_instance)
         try:
@@ -572,8 +569,7 @@ class WeatherView:
     async def _build_air_condition(self):
         if not self.weather_data:
             return None
-        language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
-        unit = self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
+
         return AirConditionInfo(
             city=self.current_city or "Unknown",
             feels_like=self.api_service.get_feels_like_temperature(self.weather_data) or 0,
@@ -588,8 +584,8 @@ class WeatherView:
             cloud_coverage=self.api_service.get_cloud_coverage(self.weather_data),
             page=self.page,
             theme_handler=self.theme_handler,
-            language=language,
-            unit=unit
+            language=self.state_manager.get_state('language') or DEFAULT_LANGUAGE,
+            unit=self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
         )
 
     def _set_loading(self, value: bool):

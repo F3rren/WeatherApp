@@ -1,6 +1,5 @@
 import flet as ft
 from datetime import datetime
-from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 
 from services.api_service import ApiService
 import logging
@@ -13,19 +12,25 @@ class HourlyForecastDisplay(ft.Container):
     """
     Manages the display of the entire hourly forecast section.
     """
-    def __init__(self, city: str, page: ft.Page, theme_handler=None, **kwargs):
+    def __init__(self, 
+                 city: str, 
+                 page: ft.Page, 
+                 language: str = None, 
+                 unit: int = None, 
+                 theme_handler: ThemeHandler = None, 
+                 **kwargs):
         super().__init__(**kwargs)
         self._city = city
         self.page = page
         self._api_service = ApiService()
         self._hourly_data_list = []
+        self._language = language
+        self._unit_system = unit
 
         # Theme handler centralizzato
         self.theme_handler = theme_handler if theme_handler else ThemeHandler(self.page)
 
         self._state_manager = None
-        self._language = DEFAULT_LANGUAGE
-        self._unit_system = DEFAULT_UNIT_SYSTEM
         self._text_color = self.theme_handler.get_text_color()
 
         self.expand = True
@@ -66,10 +71,7 @@ class HourlyForecastDisplay(ft.Container):
                     all_hourly_data = self._api_service.get_hourly_forecast_data(weather_data, hours=40)  # Get more data
                     self._hourly_data_list = all_hourly_data[:24]  # But use only first 24 hours
 
-            is_dark = False
-            if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
-                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            theme = DARK_THEME if is_dark else LIGHT_THEME
+            
             self._text_color = self.theme_handler.get_text_color()
 
             self.content = self.build()

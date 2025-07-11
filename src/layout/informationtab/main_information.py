@@ -48,7 +48,6 @@ class MainWeatherInfo(ft.Container):
         # Setup state manager
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
-            # Register as observer for theme, language, and unit events
             self._state_manager.register_observer("theme_event", self.update_theme)
             self._state_manager.register_observer("language_event", self.update_language)
             self._state_manager.register_observer("unit", self.update_unit)

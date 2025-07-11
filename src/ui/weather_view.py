@@ -470,6 +470,8 @@ class WeatherView:
             days=days,
             temp_min=forecast_data["temp_min"],
             temp_max=forecast_data["temp_max"],
+            language=self.state_manager.get_state('language') or DEFAULT_LANGUAGE,
+            unit=self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM,
             theme_handler=self.theme_handler
         )
         try:

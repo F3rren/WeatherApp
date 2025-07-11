@@ -1,8 +1,7 @@
+import traceback
 import flet as ft
 from typing import List, Optional
 import math
-from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
-
 from services.translation_service import TranslationService
 from services.theme_handler import ThemeHandler
 import logging
@@ -13,77 +12,126 @@ class TemperatureChartDisplay(ft.Container):
     Simple structure similar to MainWeatherInfo.
     """
     
-    def __init__(self, page: ft.Page, days: Optional[List[str]] = None, 
-                 temp_min: Optional[List[int]] = None, temp_max: Optional[List[int]] = None, 
-                 theme_handler: ThemeHandler = None, **kwargs):
+    def __init__(self, 
+                 page: ft.Page, 
+                 days: Optional[List[str]] = None, 
+                 temp_min: Optional[List[int]] = None, 
+                 temp_max: Optional[List[int]] = None, 
+                 language: str = None,
+                 unit: str = None,
+                 theme_handler: ThemeHandler = None, 
+                 **kwargs):
         super().__init__(**kwargs)
         self.page = page
-        self._days = days if days is not None else []
-        self._temp_min = temp_min if temp_min is not None else []
-        self._temp_max = temp_max if temp_max is not None else []
+        self.days = days if days is not None else []
+        self.temp_min = temp_min if temp_min is not None else []
+        self.temp_max = temp_max if temp_max is not None else []
 
         # ThemeHandler centralizzato
         self.theme_handler = theme_handler or ThemeHandler(self.page)
 
-        # Initialize state variables
-        self._state_manager = None
-        self._current_language = DEFAULT_LANGUAGE
-        self._current_unit_system = DEFAULT_UNIT_SYSTEM
-        self._current_text_color = self.theme_handler.get_text_color()
+        # State manager e variabili di stato
+        self.state_manager = None
+        self.current_language = language
+        self.current_unit_system = unit
+        self.current_text_color = self.theme_handler.get_text_color()
 
-
-
-        # Set default properties
-        if 'expand' not in kwargs:
-            self.expand = True
-        if 'padding' not in kwargs:
-            self.padding = ft.padding.all(10)
-
-
-        # Setup state manager and observers
+        # Setup state manager
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
-            if self._state_manager:
-                self._state_manager.register_observer("unit_text_change", self._handle_unit_change)
-                self._state_manager.register_observer("unit", self._handle_unit_change)
+            self._state_manager.register_observer("theme_event", self.update_theme)
+            self._state_manager.register_observer("language_event", self.update_language)
+            self._state_manager.register_observer("unit", self.update_unit)
 
         # Build initial content
         self.content = self.build()
 
+    def update_theme(self, event_data=None):
+        """
+        Update only the theme-related properties of this component.
+        """
+        # Usa ThemeHandler per aggiornare il colore testo
+        self._current_text_color = self.theme_handler.get_text_color()
+        self.content = self.build()
+        try:
+            super().update()
+        except Exception:
+            pass
+    def update_language(self, event_data=None):
+        """
+        Update only the language-dependent texts of this component.
+        """
+        if self._state_manager:
+            new_language = self._state_manager.get_state('language') or self.current_language
+            self.current_language = new_language
+        self.content = self.build()
+        try:
+            super().update()
+        except Exception:
+            pass
+
+    def update_unit(self, event_data=None):
+        """
+        Update only the unit-dependent values of this component.
+        """
+        if self._state_manager:
+            new_unit_system = self._state_manager.get_state('unit') or self.current_unit_system
+            self.current_unit_system = new_unit_system
+        self.content = self.build()
+        try:
+            super().update()
+        except Exception:
+            pass
+
+    def cleanup(self):
+        """
+        Deregister this component from all observers.
+        """
+        if self._state_manager:
+            self._state_manager.remove_observer("theme_event", self.update_theme)
+            self._state_manager.remove_observer("language_event", self.update_language)
+            self._state_manager.remove_observer("unit", self.update_unit)
+
     def update(self):
-        """Updates state and rebuilds the UI - simple like MainWeatherInfo."""
+        """Updates state and rebuilds the UI without fetching new data."""
         if not self.page or not self.visible:
             return
 
         try:
             # Update state from state_manager
             if self._state_manager:
-                new_language = self._state_manager.get_state('language') or self._current_language
-                new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
-                self._current_language = new_language
-                self._current_unit_system = new_unit_system
+                new_language = self._state_manager.get_state('language') or self.current_language
+                new_unit_system = self._state_manager.get_state('unit') or self.current_unit_system
+                self.current_language = new_language
+                self.current_unit_system = new_unit_system
 
-            # Update theme color (centralizzato)
+            # Aggiorna il colore testo tramite ThemeHandler
             self._current_text_color = self.theme_handler.get_text_color()
 
-            # Rebuild and update UI - no cache, always fresh
+            # Rebuild and update UI
             self.content = self.build()
-
+            
             # Update the component itself
             try:
                 super().update()
             except (AssertionError, AttributeError):
+                # Component not yet added to page, skip update
                 pass
-
+            # Also try to update the parent container if possible
+            if hasattr(self, 'parent') and self.parent:
+                try:
+                    self.parent.update()
+                except (AssertionError, AttributeError):
+                    pass
         except Exception as e:
-            logging.error(f"TemperatureChartDisplay: Error updating: {e}")
+            logging.error(f"MainWeatherInfo: Error updating: {e}\n{traceback.format_exc()}")
 
     def build(self):
         """Constructs the UI for the temperature chart - simple and direct."""
         try:
             # Validate data
-            if not self._days or not self._temp_min or not self._temp_max or \
-               len(self._days) != len(self._temp_min) or len(self._days) != len(self._temp_max):
+            if not self.days or not self.temp_min or not self.temp_max or \
+               len(self.days) != len(self.temp_min) or len(self.days) != len(self.temp_max):
                 return self._build_no_data_view()
 
             # Build components
@@ -103,8 +151,8 @@ class TemperatureChartDisplay(ft.Container):
 
     def _build_header(self):
         """Builds header - simple, no cache."""
-        header_text = TranslationService.translate_from_dict("temperature_chart_items", "temperature", self._current_language)
-        unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
+        header_text = TranslationService.translate_from_dict("temperature_chart_items", "temperature", self.current_language)
+        unit_symbol = TranslationService.get_unit_symbol("temperature", self.current_unit_system)
         complete_title = f"{header_text} ({unit_symbol})"
         icon_color = ft.Colors.ORANGE_400
         return ft.Container(
@@ -119,7 +167,7 @@ class TemperatureChartDisplay(ft.Container):
                     complete_title,
                     size=18,
                     weight=ft.FontWeight.BOLD,
-                    color=self._current_text_color
+                    color=self.current_text_color
                 ),
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.only(left=20, top=20, bottom=10)
@@ -129,15 +177,15 @@ class TemperatureChartDisplay(ft.Container):
         """Builds the temperature chart - simple version."""
         data_points_min = []
         data_points_max = []
-        unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
+        unit_symbol = TranslationService.get_unit_symbol("temperature", self.current_language)
         max_color = "#ef4444"
         min_color = "#3b82f6"
-        for i, day_label_key in enumerate(self._days):
-            day_display_name = TranslationService.translate_from_dict("temperature_chart_items", day_label_key, self._current_language)
+        for i, day_label_key in enumerate(self.days):
+            day_display_name = TranslationService.translate_from_dict("temperature_chart_items", day_label_key, self.current_language)
             data_points_min.append(
                 ft.LineChartDataPoint(
-                    i, self._temp_min[i],
-                    tooltip=f"{day_display_name}: {self._temp_min[i]}{unit_symbol}",
+                    i, self.temp_min[i],
+                    tooltip=f"{day_display_name}: {self.temp_min[i]}{unit_symbol}",
                     tooltip_style=ft.TextStyle(
                         size=12,
                         color=ft.Colors.WHITE,
@@ -147,8 +195,8 @@ class TemperatureChartDisplay(ft.Container):
             )
             data_points_max.append(
                 ft.LineChartDataPoint(
-                    i, self._temp_max[i],
-                    tooltip=f"{day_display_name}: {self._temp_max[i]}{unit_symbol}",
+                    i, self.temp_max[i],
+                    tooltip=f"{day_display_name}: {self.temp_max[i]}{unit_symbol}",
                     tooltip_style=ft.TextStyle(
                         size=12,
                         color=ft.Colors.WHITE,
@@ -171,8 +219,8 @@ class TemperatureChartDisplay(ft.Container):
             stroke_cap_round=True,
         )
         x_labels = []
-        for i, day_label_key in enumerate(self._days):
-            day_display_name = TranslationService.translate_from_dict("temperature_chart_items", day_label_key, self._current_language)
+        for i, day_label_key in enumerate(self.days):
+            day_display_name = TranslationService.translate_from_dict("temperature_chart_items", day_label_key, self.current_language)
             if day_display_name and isinstance(day_display_name, str):
                 day_display_name = day_display_name[0].upper() + day_display_name[1:] if len(day_display_name) > 1 else day_display_name.upper()
             x_labels.append(
@@ -181,12 +229,12 @@ class TemperatureChartDisplay(ft.Container):
                     label=ft.Text(
                         day_display_name,
                         size=14,
-                        color=self._current_text_color,
+                        color=self.current_text_color,
                         weight=ft.FontWeight.W_500
                     )
                 )
             )
-        all_temps = self._temp_min + self._temp_max
+        all_temps = self.temp_min + self.temp_max
         step = 5
         if not all_temps:
             min_y_val = 0
@@ -203,15 +251,15 @@ class TemperatureChartDisplay(ft.Container):
         chart_control = ft.LineChart(
             interactive=False,
             data_series=[line_min, line_max],
-            border=ft.border.all(1, ft.Colors.with_opacity(0.1, self._current_text_color)),
+            border=ft.border.all(1, ft.Colors.with_opacity(0.1, self.current_text_color)),
             horizontal_grid_lines=ft.ChartGridLines(
                 interval=step,
-                color=ft.Colors.with_opacity(0.08, self._current_text_color),
+                color=ft.Colors.with_opacity(0.08, self.current_text_color),
                 width=1
             ),
             vertical_grid_lines=ft.ChartGridLines(
                 interval=1,
-                color=ft.Colors.with_opacity(0.08, self._current_text_color),
+                color=ft.Colors.with_opacity(0.08, self.current_text_color),
                 width=1
             ),
             left_axis=ft.ChartAxis(
@@ -221,7 +269,7 @@ class TemperatureChartDisplay(ft.Container):
                         label=ft.Text(
                             str(int(y)),
                             size=14,
-                            color=self._current_text_color,
+                            color=self.current_text_color,
                             weight=ft.FontWeight.W_500
                         )
                     ) for y in range(int(min_y_val), int(max_y_val) + 1, step)
@@ -260,15 +308,15 @@ class TemperatureChartDisplay(ft.Container):
     
     def _build_legend(self):
         """Builds legend - simple version."""
-        legend_max_text = TranslationService.translate_from_dict("temperature_chart_items", "max", self._current_language)
-        legend_min_text = TranslationService.translate_from_dict("temperature_chart_items", "min", self._current_language)
+        legend_max_text = TranslationService.translate_from_dict("temperature_chart_items", "max", self.current_language)
+        legend_min_text = TranslationService.translate_from_dict("temperature_chart_items", "min", self.current_language)
         max_color = "#ef4444"
         min_color = "#3b82f6"
         max_item = ft.Container(
             content=ft.Row([
                 ft.Container(width=16, height=4, bgcolor=max_color, border_radius=2),
                 ft.Container(width=8),
-                ft.Text(legend_max_text, color=self._current_text_color, size=14, weight=ft.FontWeight.W_500)
+                ft.Text(legend_max_text, color=self.current_text_color, size=14, weight=ft.FontWeight.W_500)
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.symmetric(horizontal=12, vertical=6),
             border_radius=8,
@@ -278,7 +326,7 @@ class TemperatureChartDisplay(ft.Container):
             content=ft.Row([
                 ft.Container(width=16, height=4, bgcolor=min_color, border_radius=2),
                 ft.Container(width=8),
-                ft.Text(legend_min_text, color=self._current_text_color, size=14, weight=ft.FontWeight.W_500)
+                ft.Text(legend_min_text, color=self.current_text_color, size=14, weight=ft.FontWeight.W_500)
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.symmetric(horizontal=12, vertical=6),
             border_radius=8,
@@ -295,8 +343,8 @@ class TemperatureChartDisplay(ft.Container):
             self._build_header(),
             ft.Container(
                 content=ft.Text(
-                    TranslationService.translate_from_dict("temperature_chart_items", "no_temperature_data", self._current_language),
-                    color=self._current_text_color,
+                    TranslationService.translate_from_dict("temperature_chart_items", "no_temperature_data", self.current_language),
+                    color=self.current_text_color,
                     size=14
                 ),
                 alignment=ft.alignment.center,
@@ -319,9 +367,9 @@ class TemperatureChartDisplay(ft.Container):
 
     def update_data(self, days: List[str], temp_min: List[int], temp_max: List[int]):
         """Updates chart data and refreshes display."""
-        self._days = days if days is not None else []
-        self._temp_min = temp_min if temp_min is not None else []
-        self._temp_max = temp_max if temp_max is not None else []
+        self.days = days if days is not None else []
+        self.temp_min = temp_min if temp_min is not None else []
+        self.temp_max = temp_max if temp_max is not None else []
         
         if self.page and self.visible:
             try:
@@ -339,9 +387,9 @@ class TemperatureChartDisplay(ft.Container):
 
     def cleanup(self):
         """Clean up observers and resources."""
-        if self._state_manager:
+        if self.state_manager:
             try:
-                self._state_manager.unregister_observer("unit_text_change", self._handle_unit_change)
-                self._state_manager.unregister_observer("unit", self._handle_unit_change)
+                self.state_manager.unregister_observer("unit_text_change", self._handle_unit_change)
+                self.state_manager.unregister_observer("unit", self._handle_unit_change)
             except Exception as e:
                 logging.error(f"TemperatureChartDisplay: Error during cleanup: {e}")

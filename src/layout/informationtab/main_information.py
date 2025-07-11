@@ -12,8 +12,8 @@ class MainWeatherInfo(ft.Container):
     Manages its own UI build and updates based on state changes.
     """
 
-    def __init__(self, city: str, location: str, temperature: int,
-                 weather_icon: str, page: ft.Page = None, theme_handler: ThemeHandler = None, **kwargs):
+    def __init__(self, city: str, location: str, temperature: int, temp_min: int, temp_max: int,
+                 weather_icon: str, page: ft.Page = None, theme_handler=None, language=None, unit=None, **kwargs):
         super().__init__(**kwargs)
         self._city_data = city.upper()
         self._location_data = location
@@ -21,17 +21,15 @@ class MainWeatherInfo(ft.Container):
         self._weather_icon_data = weather_icon
         self._weather_description = ""
         self._feels_like = None
-        self._temp_min = None
-        self._temp_max = None
+        self._temp_min = temp_min
+        self._temp_max = temp_max
         self.page = page
-
-        # Theme handler centralizzato
         self.theme_handler = theme_handler if theme_handler else ThemeHandler(self.page)
 
         # Initialize state variables
         self._state_manager = None
-        self._current_language = DEFAULT_LANGUAGE
-        self._current_unit_system = DEFAULT_UNIT_SYSTEM
+        self._current_language = language or DEFAULT_LANGUAGE
+        self._current_unit_system = unit or DEFAULT_UNIT_SYSTEM
         self._current_text_color = self.theme_handler.get_text_color()
 
 

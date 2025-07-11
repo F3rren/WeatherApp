@@ -1,5 +1,5 @@
 import flet as ft
-from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME, DEFAULT_UNIT_SYSTEM
+from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 
 from services.translation_service import TranslationService
 from services.api_service import ApiService

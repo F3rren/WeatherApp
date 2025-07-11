@@ -386,7 +386,7 @@ class WeatherView:
         # Determine display location and translated city name
         if is_current_location:
             location_str = TranslationService.translate_from_dict('main_information_items', 'current_location', language)
-            location = f"📍 {location_str}"
+            location = f"{location_str}"
             translated_city = location_str
         elif self.weather_data and self.weather_data.get("city"):
             city_data = self.weather_data["city"]
@@ -408,19 +408,23 @@ class WeatherView:
                 self.main_weather_info_instance.cleanup()
             except Exception:
                 pass
+        language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
+        unit = self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
+
         self.main_weather_info_instance = MainWeatherInfo(
             city=translated_city,
             location=location,
             temperature=temperature,
+            temp_min=temp_min,
+            temp_max=temp_max,
             weather_icon=icon_code,
             page=self.page,
+            language=self.state_manager.get_state('language'),  # <-- PATCH: passa sempre la lingua aggiornata
+            unit=self.state_manager.get_state('unit'),          # <-- PATCH: passa sempre l'unità aggiornata
             theme_handler=self.theme_handler,
             expand=True
         )
-        self.main_weather_info_instance._weather_description = weather_description
-        self.main_weather_info_instance._feels_like = feels_like
-        self.main_weather_info_instance._temp_min = temp_min
-        self.main_weather_info_instance._temp_max = temp_max
+
 
         # Always create a new AirConditionInfo instance and cleanup previous
         if hasattr(self, 'air_condition_instance') and self.air_condition_instance:
@@ -443,16 +447,9 @@ class WeatherView:
         weather_card = WeatherCard(self.page) 
         self._update_text_color() # Ensure text_color is current for components not self-managing it
 
-        # state_manager = self.page.session.get(\'state_manager\')
-        # language = state_manager.get_state(\'language\') if state_manager else \'en\'
-        # unit = state_manager.get_state(\'unit\') if state_manager else \'metric\'
-        # The WeeklyForecastDisplay will get lang/unit from state_manager itself.
-
         if not self.current_city:
-            # Handle case where city is not yet set, perhaps show a placeholder or log
             logging.warning("Weekly forecast update skipped: current_city is not set.")
             self.weekly_container.content = ft.Text("City not selected for weekly forecast.", color=self.text_color)
-            # self.weekly_container.update() # Covered by page.update()
             return
 
         # Always create a new instance to guarantee a full rebuild and color update

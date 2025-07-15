@@ -160,12 +160,12 @@ class TemperatureChartDisplay(ft.Container):
                 ft.Icon(
                     ft.Icons.THERMOSTAT_OUTLINED,
                     color=icon_color,
-                    size=24
+                    size=25
                 ),
-                ft.Container(width=12),
+                ft.Container(width=5),
                 ft.Text(
                     complete_title,
-                    size=18,
+                    size=20,
                     weight=ft.FontWeight.BOLD,
                     color=self.current_text_color
                 ),

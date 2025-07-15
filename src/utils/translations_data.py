@@ -47,6 +47,13 @@ TRANSLATIONS = {
             "dark_theme": "Dark theme:", # Used in SettingsAlertDialog
             "close": "Close" # Used in SettingsAlertDialog
         },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Weather Map",
+            "fullscreen": "Fullscreen",
+            "close": "Close",
+            "loading": "Loading map...",
+            "error": "Error loading map"
+        },
         "weekly_forecast_items": {
             "header": "5-Day Forecast",
             "loading": "Loading weekly forecast...",
@@ -181,6 +188,13 @@ TRANSLATIONS = {
             "use_current_location": "使用当前位置：",
             "dark_theme": "深色主题：",
             "close": "关闭"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "天气地图",
+            "fullscreen": "全屏",
+            "close": "关闭",
+            "loading": "地图加载中...",
+            "error": "地图加载错误"
         },
         "weekly_forecast_items": {
             "header": "5天预报",
@@ -341,6 +355,13 @@ TRANSLATIONS = {
             "dark_theme": "डार्क थीम:",
             "close": "बंद करें"
         },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "मौसम मानचित्र",
+            "fullscreen": "पूर्ण स्क्रीन",
+            "close": "बंद करें",
+            "loading": "मानचित्र लोड हो रहा है...",
+            "error": "मानचित्र लोड करने में त्रुटि"
+        },
         "weekly_forecast_items": {
             "header": "5 दिन का पूर्वानुमान",
             "loading": "साप्ताहिक पूर्वानुमान लोड हो रहा है...",
@@ -475,6 +496,13 @@ TRANSLATIONS = {
             "use_current_location": "Usar ubicación actual:",
             "dark_theme": "Tema oscuro:",
             "close": "Cerrar"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Mapa del Tiempo",
+            "fullscreen": "Pantalla Completa",
+            "close": "Cerrar",
+            "loading": "Cargando mapa...",
+            "error": "Error al cargar el mapa"
         },
         "weekly_forecast_items": {
             "header": "Pronóstico 5 Días",
@@ -611,6 +639,13 @@ TRANSLATIONS = {
             "dark_theme": "الوضع الداكن:",
             "close": "إغلاق"
         },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "خريطة الطقس",
+            "fullscreen": "ملء الشاشة",
+            "close": "إغلاق",
+            "loading": "تحميل الخريطة...",
+            "error": "خطأ في تحميل الخريطة"
+        },
         "weekly_forecast_items": {
             "header": "توقعات 5 أيام",
             "loading": "تحميل التوقعات الأسبوعية...",
@@ -744,6 +779,13 @@ TRANSLATIONS = {
             "use_current_location": "Gunakan lokasi saat ini:",
             "dark_theme": "Tema gelap:",
             "close": "Tutup"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Peta Cuaca",
+            "fullscreen": "Layar Penuh",
+            "close": "Tutup",
+            "loading": "Memuat peta...",
+            "error": "Kesalahan memuat peta"
         },
         "weekly_forecast_items": {
             "header": "Prakiraan 5 Hari",
@@ -879,6 +921,13 @@ TRANSLATIONS = {
             "dark_theme": "ダークテーマ:",
             "close": "閉じる"
         },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "天気マップ",
+            "fullscreen": "全画面",
+            "close": "閉じる",
+            "loading": "マップを読み込み中...",
+            "error": "マップ読み込みエラー"
+        },
         "weekly_forecast_items": {
             "header": "5日間予報",
             "loading": "週間予報を読み込み中...",
@@ -1013,6 +1062,13 @@ TRANSLATIONS = {
             "dark_theme": "Tema scuro:",
             "close": "Chiudi"
         },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Mappa Meteo",
+            "fullscreen": "Schermo Intero",
+            "close": "Chiudi",
+            "loading": "Caricamento mappa...",
+            "error": "Errore nel caricamento della mappa"
+        },
         "weekly_forecast_items": {
             "header": "Previsioni 5 Giorni",
             "loading": "Caricamento previsioni settimanali...",
@@ -1038,7 +1094,7 @@ TRANSLATIONS = {
             "temperature": "Temperatura"
         },
         "air_pollution_items": {
-            "air_quality_index": "Indice di qualità dell'aria",
+            "air_quality_index": "Indice qualità aria",
             "CO": "Monossido di carbonio",
             "NO": "Monossido di azoto",
             "NO2": "Biossido di azoto",
@@ -1147,6 +1203,13 @@ TRANSLATIONS = {
             "use_current_location": "Aktuellen Standort verwenden:",
             "dark_theme": "Dunkles Thema:",
             "close": "Schließen"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Wetterkarte",
+            "fullscreen": "Vollbild",
+            "close": "Schließen",
+            "loading": "Karte wird geladen...",
+            "error": "Fehler beim Laden der Karte"
         },
         "weekly_forecast_items": {
             "header": "5-Tage-Prognose",
@@ -1282,6 +1345,13 @@ TRANSLATIONS = {
             "dark_theme": "Thème sombre:",
             "close": "Fermer"
         },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Carte Météo",
+            "fullscreen": "Plein Écran",
+            "close": "Fermer",
+            "loading": "Chargement de la carte...",
+            "error": "Erreur lors du chargement de la carte"
+        },
         "weekly_forecast_items": {
             "header": "Prévisions 5 Jours",
             "loading": "Chargement des prévisions hebdomadaires...",
@@ -1416,6 +1486,13 @@ TRANSLATIONS = {
             "dark_theme": "Tema escuro:",
             "close": "Fechar"
         },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Mapa do Tempo",
+            "fullscreen": "Tela Cheia",
+            "close": "Fechar",
+            "loading": "Carregando mapa...",
+            "error": "Erro ao carregar mapa"
+        },
         "weekly_forecast_items": {
             "header": "Previsão 5 Dias",
             "loading": "Carregando previsão semanal...",
@@ -1549,6 +1626,13 @@ TRANSLATIONS = {
             "use_current_location": "Использовать текущее местоположение:",
             "dark_theme": "Темная тема:",
             "close": "Закрыть"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Карта Погоды",
+            "fullscreen": "Полный Экран",
+            "close": "Закрыть",
+            "loading": "Загрузка карты...",
+            "error": "Ошибка загрузки карты"
         },
         "weekly_forecast_items": {
             "header": "Прогноз на 5 дней",

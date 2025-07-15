@@ -40,7 +40,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class MeteoApp:
     """
     Main application class for the MeteoApp.

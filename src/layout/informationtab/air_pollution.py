@@ -120,24 +120,48 @@ class AirPollutionDisplay(ft.Container):
         if self.page:
             await self.update_ui()
 
+    def _get_theme_mode(self) -> bool:
+        """
+        Safely get the current theme mode (dark or light).
+        
+        Returns:
+            bool: True if dark theme is active, False for light theme
+        """
+        is_dark = False
+        try:
+            if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            elif self._state_manager:
+                # Fallback to state manager if page theme_mode is not available
+                is_dark = self._state_manager.get_state('using_theme') or False
+            logging.debug(f"AirConditionInfo: Theme mode is {'dark' if is_dark else 'light'}")
+        except Exception as e:
+            logging.warning(f"AirConditionInfo: Error determining theme mode: {e}")
+            # Default to light theme if there's an error
+        return is_dark
+
     def _build_header(self):
         """Builds a modern header for air pollution section."""
-        header_text = TranslationService.translate_from_dict("air_pollution_items", "air_quality_index", self._current_language)
+        # Get translation service
+        translation_service = None
+        if self.page and hasattr(self.page, 'session'):
+            translation_service = self.page.session.get('translation_service')
+
+        header_text = "Inquinamento dell'aria"
+        if translation_service:
+            header_text = TranslationService.translate_from_dict("air_pollution_items", "air_quality_index", self._current_language)
         
-        # Safe theme detection
-        if self.page and hasattr(self.page, 'theme_mode'):
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        else:
-            is_dark = False
+        # Get theme mode using helper method
+        is_dark = self._get_theme_mode()
         
         return ft.Container(
             content=ft.Row([
                 ft.Icon(
                     ft.Icons.AIR_OUTLINED,
                     color=ft.Colors.GREEN_400 if not is_dark else ft.Colors.GREEN_300,
-                    size=24
+                    size=25
                 ),
-                ft.Container(width=12),  # Spacer
+                ft.Container(width=5),  # Spacer
                 ft.Text(
                     header_text,
                     size=20,
@@ -174,19 +198,20 @@ class AirPollutionDisplay(ft.Container):
         
         return ft.Container(
             content=ft.Row([
-                ft.Icon(
-                    ft.Icons.AIR_OUTLINED,
-                    color=ft.Colors.GREEN_400 if not is_dark else ft.Colors.GREEN_300,
-                    size=24
-                ),
-                ft.Container(width=12),  # Spacer
-                ft.Text(
-                    header_text,
-                    size=20,
-                    weight=ft.FontWeight.BOLD,
-                    color=self._current_text_color
-                ),
-                ft.Container(
+                ft.Row([
+                    ft.Icon(
+                        ft.Icons.AIR_OUTLINED,
+                        color=ft.Colors.GREEN_400 if not is_dark else ft.Colors.GREEN_300,
+                        size=24
+                    ),
+                    ft.Container(width=12),
+                    ft.Text(
+                        header_text,
+                        size=20,
+                        weight=ft.FontWeight.BOLD,
+                        color=self._current_text_color
+                    ),
+                    ft.Container(
                     content=ft.Text(
                         aqi_desc,
                         size=12,
@@ -203,6 +228,7 @@ class AirPollutionDisplay(ft.Container):
                         offset=ft.Offset(0, 2)
                     )
                 )
+                ], alignment=ft.MainAxisAlignment.START, expand=True),
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
             padding=ft.padding.only(left=20, right=20, top=20, bottom=10)
         )

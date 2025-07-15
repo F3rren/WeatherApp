@@ -129,12 +129,12 @@ class HourlyForecastDisplay(ft.Container):
                 ft.Icon(
                     ft.Icons.TIMELINE,
                     color=ft.Colors.GREEN_400 if not is_dark else ft.Colors.GREEN_300,
-                    size=24
+                    size=25
                 ),
-                ft.Container(width=12),  # Spacer
+                ft.Container(width=5),  # Spacer
                 ft.Text(
                     header_text,
-                    size=25,
+                    size=20,
                     weight=ft.FontWeight.BOLD,
                     color=self._text_color,
                     font_family="system-ui",

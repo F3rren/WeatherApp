@@ -205,9 +205,9 @@ class PrecipitationChartDisplay(ft.Container):
                 ft.Icon(
                     ft.Icons.WATER_DROP,
                     color=icon_color,
-                    size=24
+                    size=25
                 ),
-                ft.Container(width=12),  # Spacer
+                ft.Container(width=5),  # Spacer
                 ft.Text(
                     header_text,
                     size=20,

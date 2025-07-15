@@ -62,14 +62,21 @@ class HourlyForecastDisplay(ft.Container):
                 data_changed = language_changed or unit_changed
 
             if not self._hourly_data_list or data_changed:
-                weather_data = await asyncio.to_thread(
+                weather_response = await asyncio.to_thread(
                     self._api_service.get_weather_data,
                     city=self._city, language=self._language, unit=self._unit_system
                 )
-                if weather_data:
+                if weather_response and weather_response.get('success', False):
+                    weather_data = weather_response.get('data', {})
                     # Get exactly 24 hours of data and then limit to 24 in the display
                     all_hourly_data = self._api_service.get_hourly_forecast_data(weather_data, hours=40)  # Get more data
                     self._hourly_data_list = all_hourly_data[:24]  # But use only first 24 hours
+                else:
+                    # Handle API error
+                    error_info = weather_response.get('error', {}) if weather_response else {}
+                    error_message = error_info.get('message', 'Failed to fetch weather data')
+                    logging.warning(f"HourlyForecast: {error_message}")
+                    self._hourly_data_list = []
 
             
             self._text_color = self.theme_handler.get_text_color()

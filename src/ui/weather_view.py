@@ -266,10 +266,32 @@ class WeatherView:
         try:
             try:
                 # Recupera i dati in thread separato
-                weather_data, city_info = await asyncio.gather(
+                weather_response, city_info = await asyncio.gather(
                     asyncio.to_thread(self.api_service.get_weather_data, city=city, lat=None, lon=None, language=language, unit=unit),
                     asyncio.to_thread(self.api_service.get_city_info, city)
                 )
+                
+                # Controlla se la chiamata API è riuscita
+                if not weather_response.get('success', False):
+                    error_info = weather_response.get('error', {})
+                    error_type = error_info.get('type', 'unknown')
+                    error_message = error_info.get('message', 'Unknown error occurred')
+                    
+                    logging.warning(f"Weather API error: {error_type} - {error_message}")
+                    
+                    # Mostra popup di errore specifico
+                    if error_type == 'city_not_found':
+                        self._show_city_not_found_popup(city, error_message)
+                    elif error_type == 'network_error':
+                        self._show_network_error_popup(error_message)
+                    elif error_type == 'api_key_error':
+                        self._show_api_error_popup(error_message)
+                    else:
+                        self._show_generic_error_popup(error_message)
+                    
+                    return False
+                
+                weather_data = weather_response.get('data', {})
                 
                 # Verifica se la città è stata trovata
                 if not weather_data or not city_info:
@@ -293,11 +315,9 @@ class WeatherView:
                 logging.error(f"Errore durante il recupero dati: {e}")
                 return
 
-            lat = lon = None
-            if self.city_info and len(self.city_info) > 0:
-                lat = self.city_info[0].get("lat")
-                lon = self.city_info[0].get("lon")
-                await self._update_ui(city, lat=lat, lon=lon)
+            lat = self.city_info[0].get("lat") if self.city_info and len(self.city_info) > 0 else None
+            lon = self.city_info[0].get("lon") if self.city_info and len(self.city_info) > 0 else None
+            await self._update_ui(city, lat=lat, lon=lon)
             # Aggiorna la UI dopo aver cambiato i dati
             if hasattr(self, 'page') and self.page:
                 self.page.update()
@@ -307,12 +327,22 @@ class WeatherView:
 
     async def update_by_coordinates(self, lat: float, lon: float, language: str, unit: str) -> None:
         """Frontend: Triggers backend to fetch weather by coordinates, then updates UI"""
-        self.weather_data = self.api_service.get_weather_data(
+        weather_response = self.api_service.get_weather_data(
             lat=lat,
             lon=lon,
             language=language,
             unit=unit
         )
+        
+        # Controlla se la chiamata API è riuscita
+        if not weather_response.get('success', False):
+            error_info = weather_response.get('error', {})
+            error_message = error_info.get('message', 'Unknown error occurred')
+            logging.error(f"Error fetching weather by coordinates: {error_message}")
+            self._show_generic_error_popup(error_message)
+            return
+        
+        self.weather_data = weather_response.get('data', {})
         city = self.api_service.get_city_by_coordinates(lat, lon)
         await self._update_ui(city, is_current_location=True, lat=lat, lon=lon)
 
@@ -666,3 +696,325 @@ class WeatherView:
                 
         except Exception as e:
             logging.error(f"DEBUG: Errore durante l'aggiornamento dei container wrapper: {e}")
+
+    def _show_city_not_found_popup(self, city: str, error_message: str) -> None:
+        """Show popup when city is not found"""
+        import flet as ft
+        
+        def close_popup(e):
+            error_dialog.open = False
+            if hasattr(self, 'page') and self.page:
+                self.page.update()
+        
+        # Get translations
+        current_language = self.state_manager.get_language()
+        translations = self.translation_service.translate_from_dict({
+            'error_title': {
+                'en': 'City Not Found',
+                'it': 'Città non trovata', 
+                'es': 'Ciudad no encontrada',
+                'fr': 'Ville non trouvée',
+                'de': 'Stadt nicht gefunden',
+                'pt': 'Cidade não encontrada',
+                'ru': 'Город не найден',
+                'zh': '未找到城市',
+                'ja': '都市が見つかりません',
+                'ar': 'لم يتم العثور على المدينة',
+                'hi': 'शहर नहीं मिला',
+                'ko': '도시를 찾을 수 없습니다'
+            },
+            'city_error_message': {
+                'en': f"The city '{city}' was not found. Please check the spelling and try again.",
+                'it': f"La città '{city}' non è stata trovata. Controlla l'ortografia e riprova.",
+                'es': f"La ciudad '{city}' no fue encontrada. Por favor verifica la ortografía e inténtalo de nuevo.",
+                'fr': f"La ville '{city}' n'a pas été trouvée. Veuillez vérifier l'orthographe et réessayer.",
+                'de': f"Die Stadt '{city}' wurde nicht gefunden. Bitte überprüfen Sie die Schreibweise und versuchen Sie es erneut.",
+                'pt': f"A cidade '{city}' não foi encontrada. Por favor, verifique a ortografia e tente novamente.",
+                'ru': f"Город '{city}' не найден. Пожалуйста, проверьте правописание и попробуйте снова.",
+                'zh': f"未找到城市 '{city}'。请检查拼写后重试。",
+                'ja': f"都市 '{city}' が見つかりませんでした。スペルを確認してもう一度お試しください。",
+                'ar': f"لم يتم العثور على المدينة '{city}'. يرجى التحقق من الإملاء والمحاولة مرة أخرى.",
+                'hi': f"शहर '{city}' नहीं मिला। कृपया वर्तनी जांचें और फिर से प्रयास करें।",
+                'ko': f"도시 '{city}'를 찾을 수 없습니다. 철자를 확인하고 다시 시도해주세요."
+            },
+            'ok_button': {
+                'en': 'OK',
+                'it': 'OK',
+                'es': 'Aceptar',
+                'fr': 'OK',
+                'de': 'OK',
+                'pt': 'OK',
+                'ru': 'OK',
+                'zh': '确定',
+                'ja': 'OK',
+                'ar': 'حسناً',
+                'hi': 'ठीक',
+                'ko': '확인'
+            }
+        }, current_language)
+        
+        error_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(
+                translations.get('error_title', 'Error'),
+                weight=ft.FontWeight.BOLD,
+                color=ft.colors.RED_400
+            ),
+            content=ft.Text(
+                translations.get('city_error_message', error_message),
+                size=14
+            ),
+            actions=[
+                ft.TextButton(
+                    translations.get('ok_button', 'OK'),
+                    on_click=close_popup,
+                    style=ft.ButtonStyle(
+                        color=ft.colors.BLUE_400
+                    )
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.END
+        )
+        
+        if hasattr(self, 'page') and self.page:
+            self.page.dialog = error_dialog
+            error_dialog.open = True
+            self.page.update()
+
+    def _show_network_error_popup(self, error_message: str) -> None:
+        """Show popup for network errors"""
+        import flet as ft
+        
+        def close_popup(e):
+            error_dialog.open = False
+            if hasattr(self, 'page') and self.page:
+                self.page.update()
+        
+        # Get translations
+        current_language = self.state_manager.get_language()
+        translations = self.translation_service.translate_from_dict({
+            'network_error_title': {
+                'en': 'Network Error',
+                'it': 'Errore di rete',
+                'es': 'Error de red',
+                'fr': 'Erreur réseau',
+                'de': 'Netzwerkfehler',
+                'pt': 'Erro de rede',
+                'ru': 'Ошибка сети',
+                'zh': '网络错误',
+                'ja': 'ネットワークエラー',
+                'ar': 'خطأ في الشبكة',
+                'hi': 'नेटवर्क त्रुटि',
+                'ko': '네트워크 오류'
+            },
+            'network_error_message': {
+                'en': 'Unable to connect to weather service. Please check your internet connection and try again.',
+                'it': 'Impossibile connettersi al servizio meteo. Controlla la connessione internet e riprova.',
+                'es': 'No se puede conectar al servicio meteorológico. Por favor verifica tu conexión a internet e inténtalo de nuevo.',
+                'fr': 'Impossible de se connecter au service météo. Veuillez vérifier votre connexion internet et réessayer.',
+                'de': 'Verbindung zum Wetterdienst nicht möglich. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.',
+                'pt': 'Não é possível conectar ao serviço meteorológico. Por favor, verifique sua conexão com a internet e tente novamente.',
+                'ru': 'Невозможно подключиться к службе погоды. Пожалуйста, проверьте подключение к интернету и попробуйте снова.',
+                'zh': '无法连接到天气服务。请检查您的互联网连接并重试。',
+                'ja': '天気サービスに接続できません。インターネット接続を確認して、もう一度お試しください。',
+                'ar': 'تعذر الاتصال بخدمة الطقس. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.',
+                'hi': 'मौसम सेवा से कनेक्ट नहीं हो सका। कृपया अपना इंटरनेट कनेक्शन जांचें और फिर से प्रयास करें।',
+                'ko': '날씨 서비스에 연결할 수 없습니다. 인터넷 연결을 확인하고 다시 시도해주세요.'
+            },
+            'ok_button': {
+                'en': 'OK',
+                'it': 'OK',
+                'es': 'Aceptar',
+                'fr': 'OK',
+                'de': 'OK',
+                'pt': 'OK',
+                'ru': 'OK',
+                'zh': '确定',
+                'ja': 'OK',
+                'ar': 'حسناً',
+                'hi': 'ठीक',
+                'ko': '확인'
+            }
+        }, current_language)
+        
+        error_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(
+                translations.get('network_error_title', 'Network Error'),
+                weight=ft.FontWeight.BOLD,
+                color=ft.colors.ORANGE_400
+            ),
+            content=ft.Text(
+                translations.get('network_error_message', error_message),
+                size=14
+            ),
+            actions=[
+                ft.TextButton(
+                    translations.get('ok_button', 'OK'),
+                    on_click=close_popup,
+                    style=ft.ButtonStyle(
+                        color=ft.colors.BLUE_400
+                    )
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.END
+        )
+        
+        if hasattr(self, 'page') and self.page:
+            self.page.dialog = error_dialog
+            error_dialog.open = True
+            self.page.update()
+
+    def _show_api_error_popup(self, error_message: str) -> None:
+        """Show popup for API key errors"""
+        import flet as ft
+        
+        def close_popup(e):
+            error_dialog.open = False
+            if hasattr(self, 'page') and self.page:
+                self.page.update()
+        
+        # Get translations
+        current_language = self.state_manager.get_language()
+        translations = self.translation_service.translate_from_dict({
+            'api_error_title': {
+                'en': 'API Error',
+                'it': 'Errore API',
+                'es': 'Error de API',
+                'fr': 'Erreur API',
+                'de': 'API-Fehler',
+                'pt': 'Erro de API',
+                'ru': 'Ошибка API',
+                'zh': 'API错误',
+                'ja': 'APIエラー',
+                'ar': 'خطأ في واجهة برمجة التطبيقات',
+                'hi': 'API त्रुटि',
+                'ko': 'API 오류'
+            },
+            'api_error_message': {
+                'en': 'There was an issue with the weather service. Please try again later.',
+                'it': 'Si è verificato un problema con il servizio meteo. Riprova più tardi.',
+                'es': 'Hubo un problema con el servicio meteorológico. Por favor inténtalo más tarde.',
+                'fr': 'Il y a eu un problème avec le service météo. Veuillez réessayer plus tard.',
+                'de': 'Es gab ein Problem mit dem Wetterdienst. Bitte versuchen Sie es später erneut.',
+                'pt': 'Houve um problema com o serviço meteorológico. Por favor, tente novamente mais tarde.',
+                'ru': 'Возникла проблема со службой погоды. Пожалуйста, попробуйте позже.',
+                'zh': '天气服务出现问题。请稍后再试。',
+                'ja': '天気サービスに問題が発生しました。後でもう一度お試しください。',
+                'ar': 'حدثت مشكلة في خدمة الطقس. يرجى المحاولة مرة أخرى لاحقاً.',
+                'hi': 'मौसम सेवा में समस्या थी। कृपया बाद में फिर से प्रयास करें।',
+                'ko': '날씨 서비스에 문제가 발생했습니다. 나중에 다시 시도해주세요.'
+            },
+            'ok_button': {
+                'en': 'OK',
+                'it': 'OK',
+                'es': 'Aceptar',
+                'fr': 'OK',
+                'de': 'OK',
+                'pt': 'OK',
+                'ru': 'OK',
+                'zh': '确定',
+                'ja': 'OK',
+                'ar': 'حسناً',
+                'hi': 'ठीक',
+                'ko': '확인'
+            }
+        }, current_language)
+        
+        error_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(
+                translations.get('api_error_title', 'API Error'),
+                weight=ft.FontWeight.BOLD,
+                color=ft.colors.RED_600
+            ),
+            content=ft.Text(
+                translations.get('api_error_message', error_message),
+                size=14
+            ),
+            actions=[
+                ft.TextButton(
+                    translations.get('ok_button', 'OK'),
+                    on_click=close_popup,
+                    style=ft.ButtonStyle(
+                        color=ft.colors.BLUE_400
+                    )
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.END
+        )
+        
+        if hasattr(self, 'page') and self.page:
+            self.page.dialog = error_dialog
+            error_dialog.open = True
+            self.page.update()
+
+    def _show_generic_error_popup(self, error_message: str) -> None:
+        """Show popup for generic errors"""
+        import flet as ft
+        
+        def close_popup(e):
+            error_dialog.open = False
+            if hasattr(self, 'page') and self.page:
+                self.page.update()
+        
+        # Get translations
+        current_language = self.state_manager.get_language()
+        translations = self.translation_service.translate_from_dict({
+            'generic_error_title': {
+                'en': 'Error',
+                'it': 'Errore',
+                'es': 'Error',
+                'fr': 'Erreur',
+                'de': 'Fehler',
+                'pt': 'Erro',
+                'ru': 'Ошибка',
+                'zh': '错误',
+                'ja': 'エラー',
+                'ar': 'خطأ',
+                'hi': 'त्रुटि',
+                'ko': '오류'
+            },
+            'ok_button': {
+                'en': 'OK',
+                'it': 'OK',
+                'es': 'Aceptar',
+                'fr': 'OK',
+                'de': 'OK',
+                'pt': 'OK',
+                'ru': 'OK',
+                'zh': '确定',
+                'ja': 'OK',
+                'ar': 'حسناً',
+                'hi': 'ठीक',
+                'ko': '확인'
+            }
+        }, current_language)
+        
+        error_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(
+                translations.get('generic_error_title', 'Error'),
+                weight=ft.FontWeight.BOLD,
+                color=ft.colors.RED_500
+            ),
+            content=ft.Text(
+                error_message,
+                size=14
+            ),
+            actions=[
+                ft.TextButton(
+                    translations.get('ok_button', 'OK'),
+                    on_click=close_popup,
+                    style=ft.ButtonStyle(
+                        color=ft.colors.BLUE_400
+                    )
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.END
+        )
+        
+        if hasattr(self, 'page') and self.page:
+            self.page.dialog = error_dialog
+            error_dialog.open = True
+            self.page.update()

@@ -3,9 +3,8 @@ import flet as ft
 
 from config import DARK_THEME, LIGHT_THEME
 
-
-
 class ThemeHandler:
+    
     def __init__(self, page: ft.Page):
         self.page = page
 

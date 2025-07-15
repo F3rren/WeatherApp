@@ -2,10 +2,12 @@ import flet as ft
 from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 from utils.translations_data import AIR_QUALITY_INDICATORS
 
+from services.theme_handler import ThemeHandler
 from services.translation_service import TranslationService
 from services.api_service import ApiService
 import asyncio
 import logging
+
 class AirConditionInfo(ft.Container):
     """
     Air condition information display - simplified elementary approach.
@@ -16,8 +18,7 @@ class AirConditionInfo(ft.Container):
                  language=None, unit=None, **kwargs):
         super().__init__(**kwargs)
         self.page = page
-        from services.theme_handler import ThemeHandler as TH
-        self.theme_handler = theme_handler if theme_handler else TH(self.page)
+        self.theme_handler = theme_handler if theme_handler else ThemeHandler(self.page)
         self._api_service = ApiService()
         self._state_manager = page.session.get('state_manager') if page and hasattr(page, 'session') else None
         self._current_language = language or DEFAULT_LANGUAGE
@@ -33,7 +34,8 @@ class AirConditionInfo(ft.Container):
         self.content = self.build()
 
     def _register_observers(self):
-        if not self._state_manager: return
+        if not self._state_manager: 
+            return
         for event, handler in [("unit", self._on_change), ("language_event", self._on_change), ("theme_event", self._on_change)]:
             self._state_manager.register_observer(event, handler)
 
@@ -43,7 +45,8 @@ class AirConditionInfo(ft.Container):
             self.page.run_task(self.update)
 
     def cleanup(self):
-        if not self._state_manager: return
+        if not self._state_manager: 
+            return
         for event, handler in [("unit", self._on_change), ("language_event", self._on_change), ("theme_event", self._on_change)]:
             self._state_manager.unregister_observer(event, handler)
     
@@ -68,7 +71,8 @@ class AirConditionInfo(ft.Container):
         return is_dark
 
     async def update(self):
-        if not self.page: return
+        if not self.page: 
+            return
         if self._state_manager:
             lang = self._state_manager.get_state('language') or self._current_language
             unit = self._state_manager.get_state('unit') or self._current_unit_system

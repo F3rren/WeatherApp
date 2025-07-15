@@ -102,13 +102,22 @@ class WeeklyForecastDisplay(ft.Container):
 
             if not self._forecast_data or data_changed:
                 if self._city:
-                    weather_data_payload = await asyncio.to_thread(
+                    weather_response = await asyncio.to_thread(
                         self._api_service.get_weather_data,
                         city=self._city, 
                         language=self._current_language, 
                         unit=self._current_unit_system
                     )
-                    self._forecast_data = self._api_service.get_weekly_forecast_data(weather_data_payload) if weather_data_payload else []
+                    
+                    # Check if API call was successful and extract data
+                    if weather_response and weather_response.get('success', False):
+                        weather_data_payload = weather_response.get('data', {})
+                        self._forecast_data = self._api_service.get_weekly_forecast_data(weather_data_payload) if weather_data_payload else []
+                    else:
+                        error_info = weather_response.get('error', {}) if weather_response else {}
+                        error_message = error_info.get('message', 'Failed to fetch weather data')
+                        logging.warning(f"WeeklyWeather: {error_message}")
+                        self._forecast_data = []
                 else:
                     self._forecast_data = []
 

@@ -15,6 +15,7 @@ from state_manager import StateManager
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
 from services.theme_handler import ThemeHandler
+from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -33,6 +34,7 @@ class SidebarManager(ft.Container):
                  location_toggle_service: LocationToggleService,
                  theme_toggle_service: ThemeToggleService,
                  update_weather_callback: Optional[Callable] = None,
+                 language=None, unit=None,
                  **kwargs):
         super().__init__(**kwargs)
         # Core references
@@ -51,6 +53,11 @@ class SidebarManager(ft.Container):
         self.pop_menu = None
         self.search_bar = None
         self.weekly_forecast_display = None
+        
+        self.current_language = language or DEFAULT_LANGUAGE
+        self.current_unit_system = unit or DEFAULT_UNIT_SYSTEM
+        self.current_text_color = self.theme_handler.get_text_color()
+
 
         # Initialize components and styling
         self._initialize_styling()
@@ -68,12 +75,11 @@ class SidebarManager(ft.Container):
         logger.info("Initializing sidebar components")
         
         # Get current language
-        language = self.state_manager.get_state("language") or "en"
+        language = self.current_language
 
         # Define city selection handler
         async def handle_city_selected(city):
             logger.info(f"City selected in sidebar: {city}")
-            language = self.state_manager.get_state("language") or "en"
             unit = self.state_manager.get_state("unit") or "metric"
             if self.update_weather_callback is not None:
                 try:
@@ -139,7 +145,12 @@ class SidebarManager(ft.Container):
         logger.info("SidebarManager handling theme change")
         
         try:
-            # STEP 1: Reinitialize components with new theme (SIDEBAR PATTERN)
+            # STEP 1: Update theme handler and text color
+            self.theme_handler = ThemeHandler(self.page)
+            self.current_text_color = self.theme_handler.get_text_color()
+            logger.debug(f"Updated theme handler and text color: {self.current_text_color}")
+            
+            # STEP 2: Reinitialize components with new theme (SIDEBAR PATTERN)
             language = self.state_manager.get_state("language") or "en"
 
             # Reinitialize popup menu with new theme_handler
@@ -179,7 +190,15 @@ class SidebarManager(ft.Container):
                 theme_handler=self.theme_handler
             )
 
-            # STEP 2: Update existing WeeklyForecastDisplay with new theme
+            # STEP 3: Reinitialize WeeklyForecastDisplay if it exists to apply new theme
+            if self.weekly_forecast_display and self.current_city:
+                logger.debug(f"Reinitializing WeeklyForecastDisplay for theme change: {self.current_city}")
+                self.weekly_forecast_display = WeeklyForecastDisplay(
+                    page=self.page,
+                    city=self.current_city
+                )
+
+            # STEP 4: Update existing WeeklyForecastDisplay with new theme
             if self.weekly_forecast_display and hasattr(self.weekly_forecast_display, 'update'):
                 try:
                     self.weekly_forecast_display.update()
@@ -187,10 +206,10 @@ class SidebarManager(ft.Container):
                 except Exception as e:
                     logger.warning(f"Error updating WeeklyForecastDisplay theme: {e}")
 
-            # STEP 3: Rebuild sidebar content with new theme (SIDEBAR PATTERN)
+            # STEP 4: Rebuild sidebar content with new theme (SIDEBAR PATTERN)
             self.content = self.build()
 
-            # STEP 4: Update sidebar container if attached to page
+            # STEP 5: Update sidebar container if attached to page
             try:
                 self.update()
                 logger.info("SidebarManager theme change handled successfully")
@@ -284,7 +303,7 @@ class SidebarManager(ft.Container):
         
         try:
             # Get current state to refresh the weekly forecast with new units
-            unit = self.state_manager.get_state("unit") or "metric"
+            unit = self.current_unit_system
             city = self.current_city or self.state_manager.get_state("city")
             
             if city:
@@ -356,7 +375,7 @@ class SidebarManager(ft.Container):
                 content=ft.Text(
                     "Select a city to view weekly forecast",
                     size=14,
-                    color=self.theme_handler.get_text_color("SECONDARY_TEXT"),
+                    color=self.current_text_color,
                     text_align=ft.TextAlign.CENTER
                 ),
                 padding=ft.padding.all(20),

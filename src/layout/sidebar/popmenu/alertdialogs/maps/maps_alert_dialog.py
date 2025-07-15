@@ -173,7 +173,7 @@ class MapsAlertDialog:
             logging.info(f"Opening Windy for: city={self.current_city}, lat={self.current_lat}, lon={self.current_lon}")
             
             # Open Windy directly
-            windy_url = f"https://www.windy.com/?{self.current_lat},{self.current_lon},10"
+            windy_url = f"https://www.windy.com/?{self.current_lat},{self.current_lon},16"
             webbrowser.open(windy_url)
             logging.info(f"Windy opened: {windy_url}")
                 

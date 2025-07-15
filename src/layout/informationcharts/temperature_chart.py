@@ -177,7 +177,7 @@ class TemperatureChartDisplay(ft.Container):
         """Builds the temperature chart - simple version."""
         data_points_min = []
         data_points_max = []
-        unit_symbol = TranslationService.get_unit_symbol("temperature", self.current_language)
+        unit_symbol = TranslationService.get_unit_symbol("temperature", self.current_unit_system)
         max_color = "#ef4444"
         min_color = "#3b82f6"
         for i, day_label_key in enumerate(self.days):

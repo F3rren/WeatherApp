@@ -21,7 +21,6 @@ class SettingsAlertDialog:
 
         self.language_dropdown = None
         self.measurement_dropdown = None
-        self.location_toggle_control = None
         self.theme_toggle_control = None
         if self.state_manager:
             self.state_manager.register_observer("language_event", self.update_ui)
@@ -94,6 +93,7 @@ class SettingsAlertDialog:
                 opacity=1.0,
                 content=ft.Column(
                     controls=[
+                        # Language settings row
                         ft.Row(
                             controls=[
                                 ft.Row(
@@ -103,6 +103,8 @@ class SettingsAlertDialog:
                                     ], spacing=10),
                                 language_dropdown_control,
                             ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                        
+                        # Unit measurement row
                         ft.Row(
                             controls=[
                                 ft.Row(
@@ -112,6 +114,8 @@ class SettingsAlertDialog:
                                     ], spacing=10),
                                 measurement_dropdown_control,
                             ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                        
+                        # Location toggle row
                         ft.Row(
                             controls=[
                                 ft.Row(
@@ -119,8 +123,10 @@ class SettingsAlertDialog:
                                         ft.Icon(ft.Icons.LOCATION_ON, size=16, color="#ef4444"),
                                         ft.Text(TranslationService.translate_from_dict("settings_alert_dialog_items", "use_current_location", self.language), size=16, weight=ft.FontWeight.W_500, color=text_color["TEXT"]),
                                     ], spacing=10),
-                                self._create_location_toggle_instance(),
+                                self._create_location_button_instance(text_color),
                             ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                        
+                        # Theme toggle row
                         ft.Row(
                             controls=[
                                 ft.Row(
@@ -130,6 +136,50 @@ class SettingsAlertDialog:
                                     ], spacing=10),
                                 self._create_theme_toggle_instance(),
                             ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                        
+                        # Divider
+                        ft.Divider(color=ft.Colors.with_opacity(0.2, text_color["TEXT"])),
+                        
+                        # App information section
+                        self._build_app_info_section(text_color),
+                        
+                        # Quick actions section
+                        ft.Row(
+                            controls=[
+                                ft.ElevatedButton(
+                                    text=self._get_translation_local("refresh_data"),
+                                    icon=ft.Icons.REFRESH,
+                                    on_click=self._refresh_weather_data,
+                                    bgcolor=ft.Colors.with_opacity(0.1, text_color.get("ACCENT", "#0078d4")),
+                                    color=text_color.get("ACCENT", "#0078d4"),
+                                    style=ft.ButtonStyle(
+                                        shape=ft.RoundedRectangleBorder(radius=8)
+                                    )
+                                ),
+                                ft.ElevatedButton(
+                                    text=self._get_translation_local("reset_settings"),
+                                    icon=ft.Icons.RESTORE,
+                                    on_click=self._reset_settings,
+                                    bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.ORANGE),
+                                    color=ft.Colors.ORANGE_700,
+                                    style=ft.ButtonStyle(
+                                        shape=ft.RoundedRectangleBorder(radius=8)
+                                    )
+                                ),
+                                ft.OutlinedButton(
+                                    text=self._get_translation_local("about_app"),
+                                    icon=ft.Icons.INFO_OUTLINE,
+                                    on_click=self._show_about_dialog,
+                                    style=ft.ButtonStyle(
+                                        color=text_color.get("ACCENT", "#0078d4"),
+                                        side=ft.BorderSide(1, text_color.get("ACCENT", "#0078d4")),
+                                        shape=ft.RoundedRectangleBorder(radius=8)
+                                    )
+                                ),
+                            ],
+                            spacing=10,
+                            alignment=ft.MainAxisAlignment.CENTER
+                        ),
                     ],
                     spacing=20,
                 ),
@@ -204,9 +254,6 @@ class SettingsAlertDialog:
                 color=self.text_color.get("ACCENT"),
                 overlay_color=ft.Colors.with_opacity(0.1, self.text_color.get("ACCENT")),
             )
-        if self.location_toggle_control:
-            self.location_toggle_control.active_color = self.text_color.get("ACCENT")
-            self.location_toggle_control.active_track_color = ft.Colors.with_opacity(0.5, self.text_color.get("ACCENT"))
         if self.theme_toggle_control:
             self.theme_toggle_control.value = self.page.theme_mode == ft.ThemeMode.DARK
             self.theme_toggle_control.active_color = self.text_color.get("ACCENT")
@@ -243,16 +290,59 @@ class SettingsAlertDialog:
             self.page.dialog.open = False
             self.page.update()
 
-    def _create_location_toggle_instance(self):
-        if self.location_toggle_control is None:
-            self.location_toggle_control = ft.Switch(
-                value=False,  # Puoi collegare qui lo stato reale se disponibile
-                on_change=self.handle_location_toggle_callback,
-                active_color="#ef4444",
-                inactive_thumb_color="#cccccc",
-                inactive_track_color="#eeeeee",
-            )
-        return self.location_toggle_control
+    def _create_location_button_instance(self, text_color):
+        """Create location button with current state indication."""
+        # Get current location state
+        using_location = False
+        if self.state_manager:
+            using_location = self.state_manager.get_state('using_location') or False
+        
+        # Determine button style based on state
+        if using_location:
+            button_text = self._get_translation_local("location_enabled")
+            button_icon = ft.Icons.GPS_FIXED
+            button_color = ft.Colors.GREEN_700
+            button_bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.GREEN)
+        else:
+            button_text = self._get_translation_local("location_disabled")
+            button_icon = ft.Icons.GPS_OFF
+            button_color = ft.Colors.GREY_700
+            button_bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.GREY)
+        
+        async def on_location_click(e):
+            """Handle location button click."""
+            try:
+                new_state = not using_location
+                if self.state_manager:
+                    await self.state_manager.set_state('using_location', new_state)
+                
+                # Call the callback if provided
+                if self.handle_location_toggle_callback:
+                    # Create a mock event for compatibility
+                    mock_event = type('MockEvent', (), {
+                        'control': type('MockControl', (), {'value': new_state})()
+                    })()
+                    await self.handle_location_toggle_callback(mock_event)
+                
+                # Update the dialog to reflect the new state
+                self.update_ui()
+                
+            except Exception as ex:
+                logging.error(f"Error toggling location: {ex}")
+        
+        return ft.ElevatedButton(
+            text=button_text,
+            icon=button_icon,
+            on_click=on_location_click,
+            bgcolor=button_bgcolor,
+            color=button_color,
+            style=ft.ButtonStyle(
+                shape=ft.RoundedRectangleBorder(radius=6),
+                padding=ft.padding.symmetric(horizontal=12, vertical=8)
+            ),
+            width=140,
+            height=36
+        )
 
     def _create_theme_toggle_instance(self):
         # Leggi lo stato persistente dal state_manager se disponibile
@@ -287,6 +377,230 @@ class SettingsAlertDialog:
         else:
             self.theme_toggle_control.value = theme_value
         return self.theme_toggle_control
+
+    def _build_app_info_section(self, text_color):
+        """Build app information section."""
+        try:
+            current_city = self.state_manager.get_state('city') if self.state_manager else "Unknown"
+            current_language = self.state_manager.get_state('language') if self.state_manager else "en"
+            current_unit = self.state_manager.get_state('unit') if self.state_manager else "metric"
+            
+            info_color = text_color["TEXT"]
+            accent_color = text_color.get("ACCENT", "#0078d4")
+            
+            return ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Text(
+                            self._get_translation_local("app_status"),
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=info_color
+                        ),
+                        ft.Row(
+                            controls=[
+                                ft.Icon(ft.Icons.LOCATION_CITY, size=14, color="#f59e0b"),
+                                ft.Text(f"{self._get_translation_local('current_city')}: {current_city}", size=12, color=info_color),
+                            ],
+                            spacing=5
+                        ),
+                        ft.Row(
+                            controls=[
+                                ft.Icon(ft.Icons.LANGUAGE, size=14, color="#ff6b35"),
+                                ft.Text(f"{self._get_translation_local('active_language')}: {current_language.upper()}", size=12, color=info_color),
+                            ],
+                            spacing=5
+                        ),
+                        ft.Row(
+                            controls=[
+                                ft.Icon(ft.Icons.STRAIGHTEN, size=14, color="#22c55e"),
+                                ft.Text(f"{self._get_translation_local('unit_system')}: {current_unit.title()}", size=12, color=info_color),
+                            ],
+                            spacing=5
+                        ),
+                        # App version info
+                        ft.Row(
+                            controls=[
+                                ft.Icon(ft.Icons.INFO, size=14, color=accent_color),
+                                ft.Text("MeteoApp v1.0.0", size=10, color=ft.Colors.with_opacity(0.7, info_color)),
+                            ],
+                            spacing=5
+                        ),
+                    ],
+                    spacing=5
+                ),
+                padding=ft.padding.all(8),
+                bgcolor=ft.Colors.with_opacity(0.05, text_color["TEXT"]),
+                border_radius=8,
+            )
+        except Exception as e:
+            logging.warning(f"Error building app info section: {e}")
+            return ft.Container(
+                content=ft.Text(
+                    self._get_translation_local("app_info_unavailable"),
+                    size=12,
+                    color=ft.Colors.with_opacity(0.6, text_color["TEXT"])
+                ),
+                padding=8
+            )
+
+    def _get_translation_local(self, key):
+        """Get translation using the standard translation service."""
+        try:
+            return self._get_translation(key, "settings_alert_dialog_items")
+        except Exception as e:
+            logging.warning(f"Translation error for key '{key}': {e}")
+            return key
+
+    def _reset_settings(self, e):
+        """Reset all settings to defaults with confirmation."""
+        try:
+            # Create confirmation dialog
+            def confirm_reset(e):
+                confirmation_dialog.open = False
+                self.page.update()
+                
+                # Perform the reset
+                if self.state_manager:
+                    from utils.config import DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
+                    
+                    async def do_reset():
+                        await self.state_manager.update_state({
+                            "city": DEFAULT_CITY,
+                            "language": DEFAULT_LANGUAGE,
+                            "unit": DEFAULT_UNIT_SYSTEM,
+                            "using_location": False
+                        })
+                    
+                    if hasattr(self.page, 'run_task'):
+                        self.page.run_task(do_reset)
+                    
+                    # Show confirmation
+                    self.page.show_snack_bar(
+                        ft.SnackBar(
+                            content=ft.Text(self._get_translation_local("settings_reset")),
+                            duration=3000
+                        )
+                    )
+                    
+                    # Update the dialog content
+                    self.update_ui()
+
+            def cancel_reset(e):
+                confirmation_dialog.open = False
+                self.page.update()
+
+            confirmation_dialog = ft.AlertDialog(
+                title=ft.Text(self._get_translation_local("reset_confirmation")),
+                content=ft.Text(self._get_translation_local("confirm_reset")),
+                actions=[
+                    ft.TextButton(
+                        self._get_translation_local("cancel"),
+                        on_click=cancel_reset
+                    ),
+                    ft.ElevatedButton(
+                        self._get_translation_local("confirm"),
+                        on_click=confirm_reset,
+                        bgcolor=ft.Colors.ORANGE,
+                        color=ft.Colors.WHITE
+                    ),
+                ],
+                actions_alignment=ft.MainAxisAlignment.END
+            )
+            
+            self.page.dialog = confirmation_dialog
+            confirmation_dialog.open = True
+            self.page.update()
+            
+        except Exception as ex:
+            logging.error(f"Error resetting settings: {ex}")
+
+    def _refresh_weather_data(self, e):
+        """Refresh weather data."""
+        try:
+            main_app = self.page.session.get('main_app') if self.page else None
+            if main_app and self.state_manager:
+                city = self.state_manager.get_state('city')
+                language = self.state_manager.get_state('language')
+                unit = self.state_manager.get_state('unit')
+                
+                if city and language and unit:
+                    if hasattr(self.page, 'run_task'):
+                        self.page.run_task(main_app.update_weather_with_sidebar, city, language, unit)
+                    
+                    # Show temporary feedback
+                    self.page.show_snack_bar(
+                        ft.SnackBar(
+                            content=ft.Text(self._get_translation_local("refreshing_data")),
+                            duration=2000
+                        )
+                    )
+        except Exception as ex:
+            logging.error(f"Error refreshing weather data: {ex}")
+
+    def _show_about_dialog(self, e):
+        """Show application information dialog."""
+        try:
+            def close_about(e):
+                about_dialog.open = False
+                self.page.update()
+
+            about_content = ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.WB_SUNNY, size=32, color="#f59e0b"),
+                            ft.Text("MeteoApp", size=24, weight=ft.FontWeight.BOLD),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        spacing=10
+                    ),
+                    ft.Divider(),
+                    ft.Text(
+                        self._get_translation_local("about_description"),
+                        size=14,
+                        text_align=ft.TextAlign.CENTER
+                    ),
+                    ft.Divider(),
+                    ft.Text(f"{self._get_translation_local('version')}: 1.0.0", size=12),
+                    ft.Text(f"{self._get_translation_local('developer')}: F3rren", size=12),
+                    ft.Divider(),
+                    ft.Text(
+                        self._get_translation_local("features"),
+                        size=14,
+                        weight=ft.FontWeight.W_600
+                    ),
+                    ft.Text(
+                        self._get_translation_local("feature_list"),
+                        size=12
+                    ),
+                ],
+                spacing=10,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+            )
+
+            about_dialog = ft.AlertDialog(
+                title=ft.Text(self._get_translation_local("about_title")),
+                content=ft.Container(
+                    content=about_content,
+                    width=400,
+                    height=350,
+                ),
+                actions=[
+                    ft.TextButton(
+                        self._get_translation("close", "settings_alert_dialog_items"),
+                        on_click=close_about
+                    )
+                ],
+                actions_alignment=ft.MainAxisAlignment.CENTER
+            )
+            
+            self.page.dialog = about_dialog
+            about_dialog.open = True
+            self.page.update()
+            
+        except Exception as ex:
+            logging.error(f"Error showing about dialog: {ex}")
 
     def cleanup(self):
         if self.state_manager:

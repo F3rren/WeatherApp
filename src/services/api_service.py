@@ -48,6 +48,18 @@ class ApiService:
         """
         Get weather forecast data for a city or coordinates.
         Attempts first with coordinates, then with city name if coordinates are not available.
+        
+        Returns:
+            Dict containing weather data or error information with structure:
+            {
+                'success': bool,
+                'data': dict (if success=True),
+                'error': {
+                    'type': str ('city_not_found', 'network_error', 'api_error', etc.),
+                    'message': str,
+                    'code': int (HTTP status code if applicable)
+                } (if success=False)
+            }
         """
         try:
             #logging.info(f"get_weather_data called with: city='{city}', lat={lat}, lon={lon}, language='{language}', unit='{unit}'")
@@ -63,11 +75,11 @@ class ApiService:
                 }
                 #logging.info(f"Making API call with coordinates. URL: {url}, params: {params}")
                 response = requests.get(url, params=params)
-                response.raise_for_status() # Added for consistent error handling
-                # if response.status_code == 200: # No longer needed due to raise_for_status
-                return response.json()
-                # If the request with coordinates fails (e.g. 4xx, 5xx), raise_for_status will throw an exception
-                # logging.warning("Coordinate non valide o nessun dato trovato, provo con nome città...") # Commented out, error handled by exception
+                response.raise_for_status()
+                return {
+                    'success': True,
+                    'data': response.json()
+                }
             
             # Then attempt with city name if lat/lon failed or were not provided
             if city:
@@ -82,22 +94,52 @@ class ApiService:
                 response = requests.get(url, params=params)
                 response.raise_for_status()
                 result = response.json()
+                
+                # Check if city was found (OpenWeatherMap returns cod=200 but empty list for invalid cities)
+                if result.get('cod') == '404' or (result.get('list') and len(result.get('list', [])) == 0):
+                    return {
+                        'success': False,
+                        'error': {
+                            'type': 'city_not_found',
+                            'message': f"City '{city}' not found. Please check the spelling and try again.",
+                            'code': 404
+                        }
+                    }
+                
                 #logging.info(f"API call successful. Response contains {len(result.get('list', []))} forecast items")
-                return result
+                return {
+                    'success': True,
+                    'data': result
+                }
             else:
-                # This case should ideally not be reached if called from WeatherView,
-                # as WeatherView ensures either city or lat/lon.
-                # If coordinate request failed above, and no city was provided, this is an issue.
-                # However, the original logic would attempt city if coordinate call returned non-200,
-                # but if city is None here, it's an issue.
-                # For now, keeping the original error log if no city and no successful coord fetch.
                 logging.error("Either city or lat/lon must be provided and result in a successful API call.")
-                return {}
+                return {
+                    'success': False,
+                    'error': {
+                        'type': 'invalid_input',
+                        'message': 'Either city name or coordinates must be provided.',
+                        'code': 400
+                    }
+                }
         except requests.exceptions.HTTPError as http_err:
             # Specific handling for HTTP errors (4xx, 5xx)
+            status_code = http_err.response.status_code if http_err.response else 0
+            
+            if status_code == 404:
+                error_type = 'city_not_found'
+                error_message = f"City '{city or 'Unknown'}' not found. Please check the spelling and try again."
+            elif status_code == 401:
+                error_type = 'api_key_error'
+                error_message = "Invalid API key. Please check your API configuration."
+            elif status_code >= 500:
+                error_type = 'server_error'
+                error_message = "Weather service is temporarily unavailable. Please try again later."
+            else:
+                error_type = 'api_error'
+                error_message = f"Weather service error: {str(http_err)}"
+            
             if lat is not None and lon is not None and city:
                 # This block means coordinate call failed, now try city
-                #logging.warning(f"Coordinate call failed ({http_err}), trying with city name '{city}'...")
                 try:
                     city_normalized = self._normalize_city_name(city)
                     params = {
@@ -108,17 +150,54 @@ class ApiService:
                     }
                     response = requests.get(url, params=params)
                     response.raise_for_status()
-                    return response.json()
+                    result = response.json()
+                    
+                    # Check for city not found
+                    if result.get('cod') == '404' or (result.get('list') and len(result.get('list', [])) == 0):
+                        return {
+                            'success': False,
+                            'error': {
+                                'type': 'city_not_found',
+                                'message': f"City '{city}' not found. Please check the spelling and try again.",
+                                'code': 404
+                            }
+                        }
+                    
+                    return {
+                        'success': True,
+                        'data': result
+                    }
                 except requests.exceptions.RequestException as e_city:
                     logging.error(f"Error fetching weather data for city '{city}' after coordinate failure: {e_city}")
-                    return {}
+                    return {
+                        'success': False,
+                        'error': {
+                            'type': 'city_not_found',
+                            'message': f"City '{city}' not found. Please check the spelling and try again.",
+                            'code': 404
+                        }
+                    }
             else:
                 logging.error(f"HTTP error fetching weather data: {http_err}")
-                return {}
+                return {
+                    'success': False,
+                    'error': {
+                        'type': error_type,
+                        'message': error_message,
+                        'code': status_code
+                    }
+                }
         except requests.exceptions.RequestException as e:
             # General request exceptions (network issues, etc.)
             logging.error(f"Error fetching weather data: {e}")
-            return {}
+            return {
+                'success': False,
+                'error': {
+                    'type': 'network_error',
+                    'message': 'Network error. Please check your internet connection and try again.',
+                    'code': 0
+                }
+            }
     
     def get_city_info(self, city: str) -> List[Dict[str, Any]]:
         """
@@ -480,12 +559,18 @@ class ApiService:
             A flet Control (Row) with the hourly forecast items.
         """
         import flet as ft
-        from layout.frontend.weeklyweather.daily_forecast_items import DailyForecastItems
+        from layout.informationtab.daily_forecast import DailyForecast
 
         
         try:
             # Get weather data
-            weather_data = self.get_weather_data(self.city)
+            weather_response = self.get_weather_data(self.city)
+            if not weather_response.get('success', False):
+                error_info = weather_response.get('error', {})
+                error_message = error_info.get('message', 'No data available')
+                return ft.Text(error_message)
+            
+            weather_data = weather_response.get('data', {})
             if not weather_data:
                 return ft.Text("No data available")
             
@@ -502,7 +587,7 @@ class ApiService:
             text_color = "#1F1A1A" if self.page and self.page.theme_mode == ft.ThemeMode.LIGHT else "#adadad"
             
             for day_data in forecast_days:
-                day_item = DailyForecastItems(
+                day_item = DailyForecast(
                     day=day_data["day_key"],
                     icon_code=day_data["icon"],
                     temp_min=day_data["temp_min"],

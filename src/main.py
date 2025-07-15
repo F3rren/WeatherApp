@@ -11,6 +11,8 @@ import asyncio
 import flet as ft
 
 # Local imports - Config
+from services.theme_handler import ThemeHandler
+
 from utils.config import (
     DARK_THEME, 
     LIGHT_THEME,
@@ -50,6 +52,10 @@ class MeteoApp:
         """Initialize the MeteoApp with default values."""
         # Core references
         self.page: ft.Page = None
+        self.theme_handler = ThemeHandler(self.page)
+        self.language= DEFAULT_LANGUAGE
+        self.unit_system = DEFAULT_UNIT_SYSTEM
+        self.text_color = self.theme_handler.get_text_color()
         
         # Core services (initialized early)
         self.api_service = ApiService()
@@ -131,7 +137,8 @@ class MeteoApp:
             state_manager=self.state_manager,
             location_toggle_service=self.location_toggle_service,
             theme_toggle_service=self.theme_toggle_service,
-            update_weather_callback=self.update_weather_with_sidebar
+            update_weather_callback=self.update_weather_with_sidebar,
+            language=self.language, unit= self.unit_system
         )
         
         # Initialize layout manager

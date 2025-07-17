@@ -130,10 +130,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Air Pollution (μg/m³)", # For AirPollutionChart y-axis title
-        },        "unit_items": {
-            "unit_metric": "Metric", # Unit option
-            "unit_imperial": "Imperial", # Unit option
-            "unit_standard": "Standard", # Unit option
+        },        
+        "unit_items": {
+            "unit_metric": "Metric (°C)", # Unit option
+            "unit_imperial": "Imperial (°F)", # Unit option
+            "unit_standard": "Standard (K)", # Unit option
             "measurement": "Measurement", # Used in settings dialog
         },
         "air_pollution_chart_items": {
@@ -317,10 +318,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "空气污染 (微克/立方米)"
-        },        "unit_items": {
-            "unit_metric": "公制",
-            "unit_imperial": "英制",
-            "unit_standard": "标准",
+        },        
+        "unit_items": {
+            "unit_metric": "公制 (°C)",
+            "unit_imperial": "英制 (°F)",
+            "unit_standard": "标准 (K)",
             "measurement": "测量单位"
         },
         "air_pollution_chart_items": {
@@ -507,9 +509,9 @@ TRANSLATIONS = {
             "air_pollution_chart_title": "वायु प्रदूषण (माइक्रोग्राम/घन मीटर)"
         },
         "unit_items": {
-            "unit_metric": "मीट्रिक",
-            "unit_imperial": "इंपीरियल",
-            "unit_standard": "मानक",
+            "unit_metric": "मीट्रिक (°C)",
+            "unit_imperial": "इंपीरियल (°F)",
+            "unit_standard": "मानक (K)",
             "measurement": "मापन इकाई"
         },
         "air_pollution_chart_items": {
@@ -717,9 +719,9 @@ TRANSLATIONS = {
             "air_pollution_chart_title": "Contaminación del Aire (μg/m³)"
         },
         "unit_items": {
-            "unit_metric": "Métrico",
-            "unit_imperial": "Imperial",
-            "unit_standard": "Estándar",
+            "unit_metric": "Métrico (°C)",
+            "unit_imperial": "Imperial (°F)",
+            "unit_standard": "Estándar (K)",
             "measurement": "Medición"
         },
         "air_pollution_chart_items": {
@@ -905,9 +907,9 @@ TRANSLATIONS = {
             "air_pollution_chart_title": "تلوث الهواء (ميكروغرام/م³)"
         },
         "unit_items": {
-            "unit_metric": "متري",
-            "unit_imperial": "إمبراطوري",
-            "unit_standard": "قياسي",
+            "unit_metric": "متري (°C)",
+            "unit_imperial": "إمبراطوري (°F)",
+            "unit_standard": "قياسي (K)",
             "measurement": "القياس"
         },
         "air_pollution_chart_items": {
@@ -1092,9 +1094,9 @@ TRANSLATIONS = {
             "air_pollution_chart_title": "Polusi Udara (μg/m³)"
         },
         "unit_items": {
-            "unit_metric": "Metrik",
-            "unit_imperial": "Imperial",
-            "unit_standard": "Standar",
+            "unit_metric": "Metrik (°C)",
+            "unit_imperial": "Imperial (°F)",
+            "unit_standard": "Standar (K)",
             "measurement": "Pengukuran"
         },
         "air_pollution_chart_items": {
@@ -1279,9 +1281,9 @@ TRANSLATIONS = {
             "air_pollution_chart_title": "大気汚染 (μg/m³)"
         },
         "unit_items": {
-            "unit_metric": "メートル法",
-            "unit_imperial": "ヤード・ポンド法",
-            "unit_standard": "標準",
+            "unit_metric": "メートル法 (°C)",
+            "unit_imperial": "ヤード・ポンド法 (°F)",
+            "unit_standard": "標準 (K)",
             "measurement": "測定"
         },
         "air_pollution_chart_items": {
@@ -1489,9 +1491,9 @@ TRANSLATIONS = {
             "air_pollution_chart_title": "Inquinamento dell'aria (μg/m³)"
         },
         "unit_items": {
-            "unit_metric": "Metrico",
-            "unit_imperial": "Imperiale",
-            "unit_standard": "Standard",
+            "unit_metric": "Metrico (°C)",
+            "unit_imperial": "Imperiale (°F)",
+            "unit_standard": "Standard (K)",
             "measurement": "Misurazione"
         },
         "air_pollution_chart_items": {
@@ -1697,9 +1699,9 @@ TRANSLATIONS = {
             "air_pollution_chart_title": "Luftverschmutzung (μg/m³)"
         },
         "unit_items": {
-            "unit_metric": "Metrisch",
-            "unit_imperial": "Imperial",
-            "unit_standard": "Standard",
+            "unit_metric": "Metrisch (°C)",
+            "unit_imperial": "Imperial (°F)",
+            "unit_standard": "Standard (K)",
             "measurement": "Messung"
         },
         "air_pollution_chart_items": {
@@ -1906,9 +1908,9 @@ TRANSLATIONS = {
             "air_pollution_chart_title": "Pollution de l'air (μg/m³)"
         },
         "unit_items": {
-            "unit_metric": "Métrique",
-            "unit_imperial": "Impérial",
-            "unit_standard": "Standard",
+            "unit_metric": "Métrique (°C)",
+            "unit_imperial": "Impérial (°F)",
+            "unit_standard": "Standard (K)",
             "measurement": "Mesure"
         },
         "air_pollution_chart_items": {
@@ -2093,9 +2095,9 @@ TRANSLATIONS = {
             "air_pollution_chart_title": "Poluição do Ar (μg/m³)"
         },
         "unit_items": {
-            "unit_metric": "Métrico",
-            "unit_imperial": "Imperial",
-            "unit_standard": "Padrão",
+            "unit_metric": "Métrico (°C)",
+            "unit_imperial": "Imperial (°F)",
+            "unit_standard": "Padrão (K)",
             "measurement": "Medição"
         },
         "air_pollution_chart_items": {
@@ -2278,10 +2280,11 @@ TRANSLATIONS = {
         },
         "air_pollution_chart_title_items": {
             "air_pollution_chart_title": "Загрязнение воздуха (μг/м³)"
-        },        "unit_items": {
-            "unit_metric": "Метрическая",
-            "unit_imperial": "Имперская",
-            "unit_standard": "Стандартная",
+        },        
+        "unit_items": {
+            "unit_metric": "Метрическая (°C)",
+            "unit_imperial": "Имперская (°F)",
+            "unit_standard": "Стандартная (K)",
             "measurement": "Измерение"
         },
         "air_pollution_chart_items": {

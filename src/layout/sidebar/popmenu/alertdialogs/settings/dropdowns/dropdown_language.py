@@ -34,22 +34,50 @@ class DropdownLanguage:
                 observer.on_language_change(new_language_code)
 
     def _handle_language_event(self, event_data=None):
-        # Called when language_event is received from state_manager
+        """Called when language_event is received from state_manager"""
         new_language_code = None
         if event_data and isinstance(event_data, dict):
             new_language_code = event_data.get("language", None)
-        if new_language_code:
+        elif self.state_manager:
+            new_language_code = self.state_manager.get_state('language')
+            
+        if new_language_code and new_language_code != self.selected_language:
+            logging.info(f"Language dropdown handling language event: {new_language_code}")
+            self.selected_language = new_language_code
             self.current_language_display = new_language_code
+            
+            # Update dropdown value if it exists
+            if self.dropdown and self.dropdown.value != new_language_code:
+                self.dropdown.value = new_language_code
+                try:
+                    if self.dropdown.page:
+                        self.dropdown.update()
+                except Exception as e:
+                    logging.debug(f"Error updating dropdown value: {e}")
+            
+            # Notify child observers
             self.notify_child_observers(new_language_code)
 
     def update_text_sizes(self, text_color: dict, language: str):
         """Update text sizes and colors for the dropdown."""
         self.text_color = text_color
-        self.current_language_display = language # Update if this component had its own text
+        self.current_language_display = language
+        
+        # Update selected language from state manager if available
+        if self.state_manager:
+            current_state_language = self.state_manager.get_state('language')
+            if current_state_language:
+                self.selected_language = current_state_language
+                self.current_language_display = current_state_language
 
         if self.dropdown:
+            # Update hint text with current language
             translated_hint_text = TranslationService.translate_from_dict("settings_alert_dialog_items", "language", self.current_language_display)
             self.dropdown.hint_text = translated_hint_text
+            
+            # Update dropdown value to match current language
+            if self.selected_language and self.dropdown.value != self.selected_language:
+                self.dropdown.value = self.selected_language
             
             # Safe access to text_color properties
             if isinstance(self.text_color, dict) and 'dropdown_text' in self.text_color:
@@ -87,10 +115,43 @@ class DropdownLanguage:
             # If options had complex styling that doesn't inherit, they'd need updating here.
             # For now, assume ft.Text within options inherits color or is handled by Flet's theme propagation.
 
-            if self.dropdown.page:
-                self.dropdown.update()
-                if self.page:
-                    self.page.update()
+            try:
+                if self.dropdown.page:
+                    self.dropdown.update()
+                    if self.page:
+                        self.page.update()
+            except Exception as e:
+                logging.debug(f"Error updating dropdown: {e}")
+    
+    def update_theme_colors(self, text_color: dict, is_dark: bool):
+        """Update dropdown colors based on current theme."""
+        self.text_color = text_color
+        
+        if self.dropdown:
+            # Update dropdown background and border colors based on theme
+            if is_dark:
+                self.dropdown.bgcolor = "#2d3748"
+                self.dropdown.border_color = "#4a5568" 
+                self.dropdown.focused_border_color = text_color.get("ACCENT", "#3b82f6")
+                self.dropdown.color = text_color.get("TEXT", "#ffffff")
+            else:
+                self.dropdown.bgcolor = "#ffffff"
+                self.dropdown.border_color = "#e2e8f0"
+                self.dropdown.focused_border_color = text_color.get("ACCENT", "#0078d4")
+                self.dropdown.color = text_color.get("TEXT", "#000000")
+                
+            # Update hint style
+            secondary_color = ft.Colors.with_opacity(0.6, text_color.get("TEXT", "#000000"))
+            if self.dropdown.hint_style:
+                self.dropdown.hint_style.color = secondary_color
+            else:
+                self.dropdown.hint_style = ft.TextStyle(color=secondary_color)
+                
+            try:
+                if self.dropdown.page:
+                    self.dropdown.update()
+            except Exception as e:
+                logging.debug(f"Error updating dropdown theme: {e}")
 
     def get_language_name_by_code(self, code):
         """Restituisce il nome della lingua dato il codice"""
@@ -168,10 +229,28 @@ class DropdownLanguage:
                 self.text_color = DARK_THEME
 
         def dropdown_changed(e):
-            # Ottieni direttamente il codice lingua dalla selezione
-            # Poiché hai impostato key=language["code"] nelle opzioni
+            # Get the language code directly from the selection
             selected_code = e.control.value
+            
+            # Use the same pattern as weather_alert_dialog for consistency
+            if self.state_manager and selected_code:
+                import asyncio
+                # Use page.run_task if available for better async handling
+                if hasattr(self.page, 'run_task'):
+                    # First update the state
+                    self.page.run_task(self.state_manager.set_state, "language", selected_code)
+                    # Then trigger the language_event to update the weather data
+                    self.page.run_task(self.state_manager.notify_all, "language_event", {"language": selected_code})
+                else:
+                    # Fallback for older versions
+                    asyncio.create_task(self.state_manager.set_state("language", selected_code))
+                    asyncio.create_task(self.state_manager.notify_all("language_event", {"language": selected_code}))
+                
+                logging.info(f'Language updated via state manager and event triggered: {selected_code}')
+            
+            # Update local state
             self.set_language(selected_code)
+            
             if hasattr(self, 'parent') and self.parent:
                 self.parent.update()
 
@@ -210,27 +289,19 @@ class DropdownLanguage:
         return "en"  # Default
 
     def set_language(self, language_code): # Renamed parameter for clarity
+        """Set the selected language and update local state."""
         self.selected_language = language_code
-        logging.info(f'Impostazione lingua: {language_code} - {self.get_language_name_by_code(language_code)}')
-
-        if self.state_manager:
-            import asyncio
-            def call_async_safely(coro):
-                try:
-                    loop = asyncio.get_event_loop()
-                except RuntimeError:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                if not loop.is_running():
-                    return loop.run_until_complete(coro)
-                else:
-                    return asyncio.create_task(coro)
-            call_async_safely(self.state_manager.set_state("language", language_code))
-            logging.info(f'Stato aggiornato con lingua: {language_code}')
-            call_async_safely(self.state_manager.notify_all("language_event", {"language": language_code}))
-            # --- AGGIUNTA: Notifica anche unit_text_change per forzare refresh UI come per il cambio unità ---
-            call_async_safely(self.state_manager.notify_all("unit_text_change", {"unit": self.state_manager.get_state("unit") or "metric"}))
-        logging.info(f'Lingua impostata con successo: {self.selected_language} - {self.get_language_name_by_code(self.selected_language)}')
+        
+        # Update the dropdown value if it exists and is different
+        if self.dropdown and self.dropdown.value != language_code:
+            self.dropdown.value = language_code
+            if self.dropdown.page:
+                self.dropdown.update()
+        
+        # Notify child observers
+        self.notify_child_observers(language_code)
+        
+        logging.info(f'Language set successfully: {self.selected_language} - {self.get_language_name_by_code(self.selected_language)}')
 
     def handle_theme_change(self, event_data=None): # This method might be deprecated by direct calls to update_text_sizes
         """Handle theme change events by updating the dropdown appearance using stored text_color."""

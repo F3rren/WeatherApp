@@ -58,6 +58,36 @@ class DropdownMeasurement:
             if self.page:
                 self.page.update()
 
+    def update_theme_colors(self, text_color: dict, is_dark: bool):
+        """Update dropdown colors based on current theme."""
+        self.text_color = text_color
+        
+        if self.dropdown:
+            # Update dropdown background and border colors based on theme
+            if is_dark:
+                self.dropdown.bgcolor = "#2d3748"
+                self.dropdown.border_color = "#4a5568" 
+                self.dropdown.focused_border_color = text_color.get("ACCENT", "#3b82f6")
+                self.dropdown.color = text_color.get("TEXT", "#ffffff")
+            else:
+                self.dropdown.bgcolor = "#ffffff"
+                self.dropdown.border_color = "#e2e8f0"
+                self.dropdown.focused_border_color = text_color.get("ACCENT", "#0078d4")
+                self.dropdown.color = text_color.get("TEXT", "#000000")
+                
+            # Update hint style
+            secondary_color = ft.Colors.with_opacity(0.6, text_color.get("TEXT", "#000000"))
+            if self.dropdown.hint_style:
+                self.dropdown.hint_style.color = secondary_color
+            else:
+                self.dropdown.hint_style = ft.TextStyle(color=secondary_color)
+                
+            try:
+                if self.dropdown.page:
+                    self.dropdown.update()
+            except Exception as e:
+                logging.debug(f"Error updating dropdown theme: {e}")
+
     def get_options(self):
         """Get translated dropdown options based on the current language."""
         # Defensive: ensure self.text_color is a dict, not a string
@@ -98,7 +128,26 @@ class DropdownMeasurement:
         def dropdown_changed(e):
             unit_code = e.control.value
             logging.info(f"Selected unit: {unit_code}")
+            
+            # Use the same pattern as weather_alert_dialog for consistency
+            if self.state_manager and unit_code:
+                import asyncio
+                # Use page.run_task if available for better async handling
+                if hasattr(self.page, 'run_task'):
+                    # First update the state
+                    self.page.run_task(self.state_manager.set_state, "unit", unit_code)
+                    # Then trigger the unit event to update the weather data
+                    self.page.run_task(self.state_manager.notify_all, "unit", {"unit": unit_code})
+                else:
+                    # Fallback for older versions
+                    asyncio.create_task(self.state_manager.set_state("unit", unit_code))
+                    asyncio.create_task(self.state_manager.notify_all("unit", {"unit": unit_code}))
+                
+                logging.info(f'Unit updated via state manager and event triggered: {unit_code}')
+            
+            # Update local state
             self.set_unit(unit_code)
+            
             if hasattr(self, 'parent') and self.parent:
                 self.parent.update()
 
@@ -130,39 +179,16 @@ class DropdownMeasurement:
         return self.dropdown
     
     def set_unit(self, unit_code):
-        """Set the selected unit and update application state."""
+        """Set the selected unit and update local state."""
         self.selected_unit = unit_code
-        logging.info(f"DropdownMeasurement: selected_unit updated to {unit_code}")
         
-        # Update application state if state_manager is available
-        if self.state_manager and self.page:
-            logging.info(f"DropdownMeasurement: Queuing state update for unit: {unit_code} via page.run_task")
-            
-            # First send a unit_text_change event to allow UI to update texts
-            # without refetching data or complete reconstruction
-            import asyncio
-            
-            def call_async_safely(coro):
-                try:
-                    loop = asyncio.get_event_loop()
-                except RuntimeError:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                
-                if not loop.is_running():
-                    return loop.run_until_complete(coro)
-                else:
-                    return asyncio.create_task(coro)
-            
-            # First notify for updating text only (without complete reconstruction)
-            call_async_safely(self.state_manager.notify_all("unit_text_change", {"unit": unit_code}))
-            
-            # Then update state which may cause data refetch
-            self.page.run_task(self.state_manager.set_state, "unit", unit_code)
-        elif not self.page:
-            logging.warning("DropdownMeasurement: self.page is not available, cannot run task for set_state.")
-        elif not self.state_manager:
-            logging.warning("DropdownMeasurement: self.state_manager is not available, cannot set state.")
+        # Update the dropdown value if it exists and is different
+        if self.dropdown and self.dropdown.value != unit_code:
+            self.dropdown.value = unit_code
+            if self.dropdown.page:
+                self.dropdown.update()
+        
+        logging.info(f"DropdownMeasurement: Unit set successfully: {unit_code}")
 
     def handle_theme_change(self, event_data=None):
         """Handle theme change events by updating the dropdown appearance."""

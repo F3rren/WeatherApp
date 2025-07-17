@@ -38,11 +38,19 @@ class StateManager:
         """Get a state value by key"""
         return self._state.get(key)
     
-    async def set_state(self, key: str, value: Any) -> None:
-        """Set a state value and notify observers"""
-        if key in self._state and self._state[key] != value:
-            self._state[key] = value
-            await self._notify_observers(key, value)
+    async def set_state(self, key: str, value: Any, notify: bool = True) -> None:
+        """Set a state value and optionally notify observers.
+        
+        Args:
+            key: State key
+            value: State value
+            notify: Whether to notify observers (default: True)
+        """
+        old_value = self._state.get(key)
+        self._state[key] = value
+        
+        if notify and old_value != value:
+            await self._notify_observers(key, {"old_value": old_value, "new_value": value})
     
     async def update_state(self, updates: Dict[str, Any]) -> None:
         """Update multiple state values at once"""

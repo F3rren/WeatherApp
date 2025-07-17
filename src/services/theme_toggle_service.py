@@ -29,7 +29,8 @@ class ThemeToggleService:
         """
         self.page = page
         self.state_manager = state_manager
-        
+        self.settings_service = page.session.get('settings_service') if page and page.session else None
+
     async def handle_theme_toggle(self, e: ft.ControlEvent) -> None:
         """
         Gestisce l'evento di toggle del tema.
@@ -85,6 +86,17 @@ class ThemeToggleService:
             
             # Salva il tema corrente nella sessione per accedervi da altre parti dell'app
             self.page.session.set('theme_mode', self.page.theme_mode)
+            
+            if self.settings_service:
+                saved_theme = self.settings_service.get_setting('theme_mode', 'light')
+                theme_mode = ft.ThemeMode.DARK if saved_theme == 'dark' else ft.ThemeMode.LIGHT
+                
+                if self.page.theme_mode != theme_mode:
+                    self.page.theme_mode = theme_mode
+                    self.page.update()
+                    
+                    # Notifica il cambio di tema al gestore dello stato
+                    await self.state_manager.notify_observers("theme_event", {"theme_mode": saved_theme})
             
             self.page.update()
             

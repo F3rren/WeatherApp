@@ -3,15 +3,54 @@ from utils.translations_data import TRANSLATIONS
 from utils.config import DEFAULT_LANGUAGE, UNIT_SYSTEMS # Added UNIT_SYSTEMS
 
 class TranslationService:
+    _global_instance = None  # Class variable for global instance
 
     def __init__(self, session=None):  # Modified to accept session
         self.session = session
+        if session is None:
+            try:
+                # Try to get session from page if available
+                if hasattr(self, 'page') and self.page and hasattr(self.page, 'session'):
+                    self.session = self.page.session
+            except Exception:
+                pass
+                
+        if self.session is None:
+            logging.debug("TranslationService initialized without session - using static methods only")
+
+    @classmethod
+    def get_global_instance(cls):
+        """Get the global translation service instance if available."""
+        return cls._global_instance
 
     def get_current_language(self):  # Added instance method
+        """Get current language from session or fallback to default."""
         if self.session:
-            lang = self.session.get("current_language")
-            return lang if lang is not None else DEFAULT_LANGUAGE
+            try:
+                lang = self.session.get("current_language")
+                return lang if lang is not None else DEFAULT_LANGUAGE
+            except Exception as e:
+                logging.debug(f"Error accessing session language: {e}")
+                
+        # Try global instance if available
+        if self._global_instance and self._global_instance.session:
+            try:
+                lang = self._global_instance.session.get("current_language")
+                return lang if lang is not None else DEFAULT_LANGUAGE
+            except Exception:
+                pass
+                
         return DEFAULT_LANGUAGE
+
+    def update_session(self, session):
+        """Update the session reference after initialization."""
+        self.session = session
+        logging.debug("TranslationService session updated")
+
+    @classmethod
+    def get_instance_with_session(cls, session):
+        """Factory method to create instance with session."""
+        return cls(session)
 
     @classmethod
     def normalize_lang_code(cls, code):  # Renamed from _normalize_lang_code

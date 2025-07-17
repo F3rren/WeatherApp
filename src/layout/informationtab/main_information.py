@@ -1,8 +1,8 @@
 import flet as ft
-from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
+from services.theme_handler import ThemeHandler
 import logging
 from services.translation_service import TranslationService
-from components.responsive_text_handler import ResponsiveTextHandler
+
 import traceback
 
 class MainWeatherInfo(ft.Container):
@@ -11,47 +11,95 @@ class MainWeatherInfo(ft.Container):
     Manages its own UI build and updates based on state changes.
     """
 
-    def __init__(self, city: str, location: str, temperature: int,
-                 weather_icon: str, page: ft.Page = None, **kwargs):
+    def __init__(self, 
+                 city: str = None, 
+                 location: str = None, 
+                 temp_min: int = None, 
+                 temp_max: int = None,
+                 temperature: int = None, 
+                 weather_icon: str = None, 
+                 language: str = None, 
+                 unit: int = None, 
+                 weather_description: str = None,
+                 feels_like: int = None,
+                 page: ft.Page = None, 
+                 theme_handler: ThemeHandler = None, 
+                 **kwargs):
+        
         super().__init__(**kwargs)
-        self._city_data = city.upper()
-        self._location_data = location
-        self._temperature_data = temperature
-        self._weather_icon_data = weather_icon
-        self._weather_description = ""
-        self._feels_like = None
-        self._temp_min = None
-        self._temp_max = None
+        self.city_data = city.upper()
+        self.location_data = location
+        self.temp_min = temp_min
+        self.temp_max = temp_max
+        self.temperature_data = temperature
+        self.weather_icon_data = weather_icon
+        self.current_language = language
+        self.current_unit_system = unit
+        self.weather_description = weather_description
+        self.feels_like = feels_like
         self.page = page
+        self.theme_handler = theme_handler if theme_handler else ThemeHandler(self.page)
 
         # Initialize state variables
         self._state_manager = None
-        self._current_language = DEFAULT_LANGUAGE
-        self._current_unit_system = DEFAULT_UNIT_SYSTEM
-        self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
-
-        # Initialize ResponsiveTextHandler
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'city': 36,
-                'location': 20,
-                'temperature': 40,
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
-        
+        self._current_text_color = self.theme_handler.get_text_color()
         self.content = ft.Text("Loading Main Info...")
 
-        # Setup observers and handlers
-        if self.page:
-            if self._text_handler and not self._text_handler.page:
-                self._text_handler.page = self.page
         # Setup state manager
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
+            self._state_manager.register_observer("theme_event", self.update_theme)
+            self._state_manager.register_observer("language_event", self.update_language)
+            self._state_manager.register_observer("unit", self.update_unit)
         
         self.content = self.build()
+
+    def update_theme(self, event_data=None):
+        """
+        Update only the theme-related properties of this component.
+        """
+        # Usa ThemeHandler per aggiornare il colore testo
+        self._current_text_color = self.theme_handler.get_text_color()
+        self.content = self.build()
+        try:
+            super().update()
+        except Exception:
+            pass
+
+    def update_language(self, event_data=None):
+        """
+        Update only the language-dependent texts of this component.
+        """
+        if self._state_manager:
+            new_language = self._state_manager.get_state('language') or self.current_language
+            self.current_language = new_language
+        self.content = self.build()
+        try:
+            super().update()
+        except Exception:
+            pass
+
+    def update_unit(self, event_data=None):
+        """
+        Update only the unit-dependent values of this component.
+        """
+        if self._state_manager:
+            new_unit_system = self._state_manager.get_state('unit') or self.current_unit_system
+            self.current_unit_system = new_unit_system
+        self.content = self.build()
+        try:
+            super().update()
+        except Exception:
+            pass
+
+    def cleanup(self):
+        """
+        Deregister this component from all observers.
+        """
+        if self._state_manager:
+            self._state_manager.remove_observer("theme_event", self.update_theme)
+            self._state_manager.remove_observer("language_event", self.update_language)
+            self._state_manager.remove_observer("unit", self.update_unit)
 
     def update(self):
         """Updates state and rebuilds the UI without fetching new data."""
@@ -61,19 +109,13 @@ class MainWeatherInfo(ft.Container):
         try:
             # Update state from state_manager
             if self._state_manager:
-                new_language = self._state_manager.get_state('language') or self._current_language
-                new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
-                
-                self._current_language = new_language
-                self._current_unit_system = new_unit_system
+                new_language = self._state_manager.get_state('language') or self.current_language
+                new_unit_system = self._state_manager.get_state('unit') or self.current_unit_system
+                self.current_language = new_language
+                self.current_unit_system = new_unit_system
 
-            # Update theme color
-            if self.page and self.page.theme_mode:
-                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-                current_theme_config = DARK_THEME if is_dark else LIGHT_THEME
-                self._current_text_color = current_theme_config.get("TEXT", ft.Colors.BLACK)
-            else:
-                self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+            # Aggiorna il colore testo tramite ThemeHandler
+            self._current_text_color = self.theme_handler.get_text_color()
 
             # Rebuild and update UI
             self.content = self.build()
@@ -84,33 +126,26 @@ class MainWeatherInfo(ft.Container):
             except (AssertionError, AttributeError):
                 # Component not yet added to page, skip update
                 pass
-            
             # Also try to update the parent container if possible
             if hasattr(self, 'parent') and self.parent:
                 try:
                     self.parent.update()
                 except (AssertionError, AttributeError):
                     pass
-
         except Exception as e:
             logging.error(f"MainWeatherInfo: Error updating: {e}\n{traceback.format_exc()}")
 
     def build(self):
         """Costruisce la UI principale con testo tradotto e dati API."""
         try:
-            if not self._text_handler:
-                logging.error(f"MainWeatherInfo ({self._city_data}): Text handler is None in build.")
-                return ft.Text("Error: Text handler not available.", color=ft.Colors.RED)
-
             # Format temperature unit symbol
-            unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
-
+            unit_symbol = TranslationService.get_unit_symbol("temperature", self.current_unit_system)
             # Usa la descrizione già tradotta dalla API
-            weather_description = (self._weather_description or "").capitalize()
+            weather_description = (self.weather_description or "").capitalize()
 
             # Mostra anche il feels_like se disponibile
             feels_like_str = ""
-            if self._feels_like is not None:
+            if self.feels_like is not None:
                 # Get translation service from session for dynamic language updates
                 translation_service = None
                 if self.page and hasattr(self.page, 'session'):
@@ -119,13 +154,13 @@ class MainWeatherInfo(ft.Container):
                 feels_like_label = "Feels like"  # Default fallback
                 if translation_service:
                     feels_like_label = translation_service.translate_from_dict(
-                        "air_condition_items", "feels_like", self._current_language
+                        "air_condition_items", "feels_like", self.current_language
                     ) or "Feels like"
                 else:
                     # Fallback to static method
-                    feels_like_label = TranslationService.translate_from_dict("air_condition_items", "feels_like", self._current_language)
+                    feels_like_label = TranslationService.translate_from_dict("air_condition_items", "feels_like", self.current_language)
                 
-                feels_like_str = f"{feels_like_label} {self._feels_like}{unit_symbol}"
+                feels_like_str = f"{feels_like_label} {self.feels_like}{unit_symbol}"
 
             # Unisce descrizione e feels_like
             description_line = weather_description
@@ -137,8 +172,8 @@ class MainWeatherInfo(ft.Container):
             icon_color = ft.Colors.ORANGE_400
             bg_color = ft.Colors.ORANGE_400
             
-            if self._weather_icon_data:
-                icon_code = self._weather_icon_data
+            if self.weather_icon_data:
+                icon_code = self.weather_icon_data
                 is_day = icon_code.endswith('d')
                 
                 if icon_code.startswith('01'):  # Clear sky
@@ -172,18 +207,17 @@ class MainWeatherInfo(ft.Container):
                     ft.Icon(
                         ft.Icons.MY_LOCATION,
                         size=18, 
-                        #color=ft.Colors.with_opacity(0.8, self._current_text_color)
-                        color=ft.Colors.RED
+                        color=ft.Colors.with_opacity(0.8, self._current_text_color)
                     ),
                     ft.Text(
-                        f"{self._city_data.split(', ')[0]}",
+                        f"{self.city_data.split(', ')[0]}",
                         size=18,
                         color=self._current_text_color,
                         weight="w500"
                     ),
                     ft.Container(
                         content=ft.Text(
-                            self._location_data,
+                            self.location_data,
                             size=14,
                             color=ft.Colors.with_opacity(0.7, self._current_text_color),
                             weight="w400"
@@ -200,7 +234,7 @@ class MainWeatherInfo(ft.Container):
                     # Temperature and icon on same row
                     ft.Row([
                         ft.Text(
-                            str(self._temperature_data),
+                            str(self.temperature_data),
                             size=72,
                             weight="w200",
                             color=self._current_text_color,
@@ -267,13 +301,13 @@ class MainWeatherInfo(ft.Container):
                                 ),
                                 ft.Column([
                                     ft.Text(
-                                        TranslationService.translate_from_dict('main_information_items', 'high', self._current_language).upper(),
+                                        TranslationService.translate_from_dict('main_information_items', 'high', self.current_language).upper(),
                                         size=10,
                                         color=ft.Colors.with_opacity(0.6, self._current_text_color),
                                         weight="w500"
                                     ),
                                     ft.Text(
-                                        f"{self._temp_max}{unit_symbol}",
+                                        f"{self.temp_max}{unit_symbol}",
                                         size=15,
                                         color=self._current_text_color,
                                         weight="w600"
@@ -295,13 +329,13 @@ class MainWeatherInfo(ft.Container):
                                 ),
                                 ft.Column([
                                     ft.Text(
-                                        TranslationService.translate_from_dict('main_information_items', 'low', self._current_language).upper(),
+                                        TranslationService.translate_from_dict('main_information_items', 'low', self.current_language).upper(),
                                         size=10,
                                         color=ft.Colors.with_opacity(0.6, self._current_text_color),
                                         weight="w500"
                                     ),
                                     ft.Text(
-                                        f"{self._temp_min}{unit_symbol}",
+                                        f"{self.temp_min}{unit_symbol}",
                                         size=15,
                                         color=self._current_text_color,
                                         weight="w600"
@@ -328,8 +362,5 @@ class MainWeatherInfo(ft.Container):
                 alignment=ft.alignment.center_left,
             )
         except Exception as e:
-            logging.error(f"MainWeatherInfo ({self._city_data}): Failed to build UI elements: {e}\nTraceback: {traceback.format_exc()}")
-            return ft.Text(f"Error displaying {self._city_data}", color=ft.Colors.RED)
-        except Exception as e:
-            logging.error(f"MainWeatherInfo ({self._city_data}): Failed to build UI elements: {e}\nTraceback: {traceback.format_exc()}")
-            return ft.Text(f"Error displaying {self._city_data}", color=ft.Colors.RED)
+            logging.error(f"MainWeatherInfo ({self.city_data}): Failed to build UI elements: {e}\nTraceback: {traceback.format_exc()}")
+            return ft.Text(f"Error displaying {self.city_data}", color=ft.Colors.RED)

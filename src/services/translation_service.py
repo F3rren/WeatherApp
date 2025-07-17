@@ -15,12 +15,8 @@ class TranslationService:
 
     @classmethod
     def normalize_lang_code(cls, code):  # Renamed from _normalize_lang_code
-        """
-        Normalizza il codice lingua per l'accesso al dizionario locale.
-        Esempio: 'en', 'En', 'en-US' -> 'en'. 'zh-cn' -> 'zh_cn'
-        """
         if not code:
-            return DEFAULT_LANGUAGE  # Default to lowercase 'en'
+            return DEFAULT_LANGUAGE  # Default to lowercase DEFAULT_LANGUAGE
         
         normalized_code = code.replace("-", "_").lower()
         
@@ -28,13 +24,13 @@ class TranslationService:
         if normalized_code in TRANSLATIONS:
             return normalized_code
         
-        # General case: try the main part of the language code (e.g., 'en' from 'en_us')
+        # General case: try the main part of the language code (e.g., DEFAULT_LANGUAGE from 'en_us')
         main_lang_part = normalized_code.split("_")[0]
         if main_lang_part in TRANSLATIONS:
             return main_lang_part
             
         # Fallback if no specific or main part match is found
-        return DEFAULT_LANGUAGE # Default to 'en' if no match
+        return DEFAULT_LANGUAGE # Default to DEFAULT_LANGUAGE if no match
 
     @classmethod
     def get_unit_symbol(cls, quantity: str, unit_system: str) -> str: # Removed language parameter
@@ -73,12 +69,12 @@ class TranslationService:
         target_lang = cls.normalize_lang_code(language_code)
         try:
             elements = TRANSLATIONS.get(target_lang, {}).get("chemical_elements", {})
-            if not elements and target_lang != 'en':  # Fallback to English
-                elements = TRANSLATIONS.get('en', {}).get("chemical_elements", {})
+            if not elements and target_lang != DEFAULT_LANGUAGE:  # Fallback to English
+                elements = TRANSLATIONS.get(DEFAULT_LANGUAGE, {}).get("chemical_elements", {})
             return elements
         except KeyError:
             # Fallback to English if the language itself is not found or chemical_elements key is missing
-            return TRANSLATIONS.get('en', {}).get("chemical_elements", {})
+            return TRANSLATIONS.get(DEFAULT_LANGUAGE, {}).get("chemical_elements", {})
         
     @classmethod
     def get_aqi_description(cls, aqi_value: int, lang_code: str) -> str:

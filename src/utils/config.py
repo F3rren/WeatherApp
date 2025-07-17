@@ -32,7 +32,7 @@ LIGHT_THEME = {
     "ICON": "#2c3e50",
     "BUTTON_TEXT": "#ffffff",
     "BUTTON_BACKGROUND": "#3498db",
-    "DIALOG_BACKGROUND": "#ffffff",
+    "DIALOG_BACKGROUND": "#7f8c8d",
     "DIALOG_TEXT": "#2c3e50",
     # Colori aggiuntivi per elementi specifici
     "TEMPERATURE_MAIN": "#2c3e50",  # Colore temperatura principale

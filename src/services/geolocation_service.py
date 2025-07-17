@@ -127,15 +127,36 @@ class GeolocationService:
             page.overlay.append(self._geolocator)
             page.update()
             
-            # Request permission
-            permission = await self._geolocator.request_permission_async()
-            if permission != "granted":
-                logging.warning("Location permission not granted")
+            # Request permission with timeout
+            import asyncio
+            try:
+                permission = await asyncio.wait_for(
+                    self._geolocator.request_permission_async(), 
+                    timeout=8.0
+                )
+                if permission != "granted":
+                    logging.warning("Location permission not granted")
+                    return False
+            except asyncio.TimeoutError:
+                logging.warning("Location permission request timed out")
+                return False
+            except Exception as e:
+                logging.error(f"Error requesting location permission: {e}")
                 return False
             
-            # Start tracking
-            await self._geolocator.start_position_watcher_async()
-            self._is_tracking = True
+            # Start tracking with timeout
+            try:
+                await asyncio.wait_for(
+                    self._geolocator.start_position_watcher_async(),
+                    timeout=5.0
+                )
+                self._is_tracking = True
+            except asyncio.TimeoutError:
+                logging.warning("Starting position watcher timed out")
+                return False
+            except Exception as e:
+                logging.error(f"Error starting position watcher: {e}")
+                return False
             
             # Start update thread
             self._stop_thread = False

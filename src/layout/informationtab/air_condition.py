@@ -1,160 +1,134 @@
 import flet as ft
-from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME, DEFAULT_UNIT_SYSTEM
-from components.responsive_text_handler import ResponsiveTextHandler
+from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
+from utils.translations_data import AIR_QUALITY_INDICATORS
+from utils.responsive_utils import ResponsiveComponentMixin, ResponsiveHelper, DeviceType
+
+from services.theme_handler import ThemeHandler
 from services.translation_service import TranslationService
 from services.api_service import ApiService
 import asyncio
 import logging
-import traceback
 
-def get_wind_direction_icon(wind_direction_deg):
-    """
-    Restituisce l'icona appropriata per la direzione del vento.
-    
-    Args:
-        wind_direction_deg: Direzione del vento in gradi (0-360)
-        
-    Returns:
-        Tupla (icona, descrizione) con l'icona ft.Icons e descrizione testuale
-    """
-    if wind_direction_deg is None:
-        return ft.Icons.QUESTION_MARK, "N/A"
-    
-    # Normalizza i gradi a 0-360
-    wind_direction_deg = wind_direction_deg % 360
-    
-    # Definisce le direzioni con le relative icone
-    # N = 0°, NE = 45°, E = 90°, SE = 135°, S = 180°, SW = 225°, W = 270°, NW = 315°
-    if wind_direction_deg >= 337.5 or wind_direction_deg < 22.5:
-        return ft.Icons.NORTH, "N"
-    elif 22.5 <= wind_direction_deg < 67.5:
-        return ft.Icons.NORTH_EAST, "NE"
-    elif 67.5 <= wind_direction_deg < 112.5:
-        return ft.Icons.EAST, "E"
-    elif 112.5 <= wind_direction_deg < 157.5:
-        return ft.Icons.SOUTH_EAST, "SE"
-    elif 157.5 <= wind_direction_deg < 202.5:
-        return ft.Icons.SOUTH, "S"
-    elif 202.5 <= wind_direction_deg < 247.5:
-        return ft.Icons.SOUTH_WEST, "SW"
-    elif 247.5 <= wind_direction_deg < 292.5:
-        return ft.Icons.WEST, "W"
-    elif 292.5 <= wind_direction_deg < 337.5:
-        return ft.Icons.NORTH_WEST, "NW"
-    else:
-        return ft.Icons.QUESTION_MARK, "N/A"
-
-class AirConditionInfo(ft.Container):
+class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
     """
     Air condition information display - simplified elementary approach.
+    
+    Ora con supporto responsive migliorato per mobile e aggiornamento automatico al ridimensionamento.
     """
 
-    def __init__(self, city: str, feels_like: int, humidity: int, wind_speed: int,
-                 pressure: int, wind_direction: int = None, wind_gust: float = None, 
-                 visibility: int = None, uv_index: float = None, dew_point: int = None, 
-                 cloud_coverage: int = None, page: ft.Page = None, **kwargs):
+    def __init__(self, city, feels_like, humidity, wind_speed, pressure, wind_direction=None, wind_gust=None,
+                 visibility=None, uv_index=None, dew_point=None, cloud_coverage=None, page=None, theme_handler=None,
+                 language=None, unit=None, **kwargs):
         super().__init__(**kwargs)
-        self._city = city
-        self._feels_like_data = feels_like
-        self._humidity_data = humidity
-        self._wind_speed_data = wind_speed
-        self._wind_direction_data = wind_direction
-        self._wind_gust_data = wind_gust
-        self._pressure_data = pressure
-        self._visibility_data = visibility
-        self._uv_index_data = uv_index
-        self._dew_point_data = dew_point
-        self._cloud_coverage_data = cloud_coverage
         self.page = page
-        
-        self._state_manager = None
-        self._current_language = DEFAULT_LANGUAGE
-        self._current_unit_system = DEFAULT_UNIT_SYSTEM
-        self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
-        self.padding = 16
+        self.theme_handler = theme_handler if theme_handler else ThemeHandler(self.page)
         self._api_service = ApiService()
-
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={'title': 24, 'label': 16, 'value': 16, 'icon': 20},
-            breakpoints=[600, 900, 1200, 1600]
-        )
-
-        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
-            self._state_manager = self.page.session.get('state_manager')
-
+        self._state_manager = page.session.get('state_manager') if page and hasattr(page, 'session') else None
+        self._current_language = language or DEFAULT_LANGUAGE
+        self._current_unit_system = unit or DEFAULT_UNIT_SYSTEM
+        self._current_text_color = self.theme_handler.get_text_color()
+        self._city = city
+        self._data = {
+            "feels_like": feels_like, "humidity": humidity, "wind": wind_speed, "pressure": pressure,
+            "wind_direction": wind_direction, "wind_gust": wind_gust, "visibility": visibility,
+            "uv_index": uv_index, "dew_point": dew_point, "cloud_coverage": cloud_coverage
+        }
+        
+        # Inizializza il supporto responsive
+        self.init_responsive()
+        
+        self._register_observers()
         self.content = self.build()
+        
+        # ResponsiveComponentMixin si occupa automaticamente di gestire gli eventi di resize
+
+    def _register_observers(self):
+        if not self._state_manager: 
+            return
+        for event, handler in [("unit", self._on_change), ("language_event", self._on_change), ("theme_event", self._on_change)]:
+            self._state_manager.register_observer(event, handler)
+
+
+    def _on_change(self, *_):
+        if self.page and hasattr(self.page, 'run_task'):
+            self.page.run_task(self.update)
+
+    def cleanup(self):
+        if not self._state_manager: 
+            return
+        for event, handler in [("unit", self._on_change), ("language_event", self._on_change), ("theme_event", self._on_change)]:
+            self._state_manager.unregister_observer(event, handler)
+    
+    def _get_theme_mode(self) -> bool:
+        """
+        Safely get the current theme mode (dark or light).
+        
+        Returns:
+            bool: True if dark theme is active, False for light theme
+        """
+        is_dark = False
+        try:
+            if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            elif self._state_manager:
+                # Fallback to state manager if page theme_mode is not available
+                is_dark = self._state_manager.get_state('using_theme') or False
+            logging.debug(f"AirConditionInfo: Theme mode is {'dark' if is_dark else 'light'}")
+        except Exception as e:
+            logging.warning(f"AirConditionInfo: Error determining theme mode: {e}")
+            # Default to light theme if there's an error
+        return is_dark
 
     async def update(self):
-        """Update language, unit, theme and rebuild content."""
-        if not self.page:
+        if not self.page: 
             return
-
+        if self._state_manager:
+            lang = self._state_manager.get_state('language') or self._current_language
+            unit = self._state_manager.get_state('unit') or self._current_unit_system
+            if lang != self._current_language or unit != self._current_unit_system:
+                self._current_language, self._current_unit_system = lang, unit
+                weather_data = await asyncio.to_thread(
+                    self._api_service.get_weather_data,
+                    city=self._city, language=lang, unit=unit
+                )
+                if weather_data:
+                    for key, func in [
+                        ("feels_like", self._api_service.get_feels_like_temperature),
+                        ("humidity", self._api_service.get_humidity),
+                        ("wind", self._api_service.get_wind_speed),
+                        ("wind_direction", self._api_service.get_wind_direction),
+                        ("wind_gust", self._api_service.get_wind_gust),
+                        ("pressure", self._api_service.get_pressure),
+                        ("visibility", self._api_service.get_visibility),
+                        ("uv_index", self._api_service.get_uv_index),
+                        ("dew_point", self._api_service.get_dew_point),
+                        ("cloud_coverage", self._api_service.get_cloud_coverage)
+                    ]:
+                        self._data[key] = func(weather_data)
+        self.content = self.build()
         try:
-            if self._state_manager:
-                new_language = self._state_manager.get_state('language') or self._current_language
-                new_unit_system = self._state_manager.get_state('unit') or self._current_unit_system
-                
-                unit_changed = self._current_unit_system != new_unit_system
-                self._current_language = new_language
-                self._current_unit_system = new_unit_system
-
-                # Only fetch new data if unit system changed
-                if unit_changed:
-                    weather_data = await asyncio.to_thread(
-                        self._api_service.get_weather_data,
-                        city=self._city, language=self._current_language, unit=self._current_unit_system
-                    )
-                    if weather_data:
-                        self._feels_like_data = self._api_service.get_feels_like_temperature(weather_data)
-                        self._humidity_data = self._api_service.get_humidity(weather_data)
-                        self._wind_speed_data = self._api_service.get_wind_speed(weather_data)
-                        self._wind_direction_data = self._api_service.get_wind_direction(weather_data)
-                        self._wind_gust_data = self._api_service.get_wind_gust(weather_data)
-                        self._pressure_data = self._api_service.get_pressure(weather_data)
-                        self._visibility_data = self._api_service.get_visibility(weather_data)
-                        self._uv_index_data = self._api_service.get_uv_index(weather_data)
-                        self._dew_point_data = self._api_service.get_dew_point(weather_data)
-                        self._cloud_coverage_data = self._api_service.get_cloud_coverage(weather_data)
-
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            theme = DARK_THEME if is_dark else LIGHT_THEME
-            self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
-
-            self.content = self.build()
-            try:
-                super().update()
-            except AssertionError:
-                pass
-        except Exception as e:
-            logging.error(f"AirConditionInfo: Error updating: {e}\n{traceback.format_exc()}")
+            super().update()
+        except Exception:
+            pass
 
     def build(self):
-        """Create the air condition display following AirPollution's modern design."""
-        if not self._feels_like_data and not self._humidity_data:
+        if not self._data.get("feels_like") and not self._data.get("humidity"):
             loading_text = "Loading air conditions..."
             return ft.Column([
                 self._build_header(),
                 ft.Container(
                     content=ft.Text(
                         loading_text,
-                        color=self._current_text_color,
+                        color=self.theme_handler.get_text_color() if self.theme_handler else ft.Colors.BLACK,
                         size=16
                     ),
                     alignment=ft.alignment.center,
                     padding=ft.padding.all(20)
                 )
             ])
-
-        # Build header
         header = self._build_header()
-        
-        # Build metric cards
         cards = self._build_metric_cards()
-        
-        # Cards container with responsive grid layout
         cards_container = self._build_responsive_grid(cards)
-        
         return ft.Column([
             header,
             cards_container
@@ -171,16 +145,17 @@ class AirConditionInfo(ft.Container):
         if translation_service:
             header_text = translation_service.translate_from_dict("air_condition_items", "air_condition_title", self._current_language) or header_text
         
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        
+        # Get theme mode using helper method
+        is_dark = self._get_theme_mode()
+
         return ft.Container(
             content=ft.Row([
                 ft.Icon(
                     ft.Icons.AIR_OUTLINED,
                     color=ft.Colors.BLUE_400 if not is_dark else ft.Colors.BLUE_300,
-                    size=24
+                    size=25
                 ),
-                ft.Container(width=12),  # Spacer
+                ft.Container(width=5),  # Spacer
                 ft.Text(
                     header_text,
                     size=20,
@@ -191,72 +166,89 @@ class AirConditionInfo(ft.Container):
             padding=ft.padding.only(left=20, top=20, bottom=10)
         )
     
-    def _build_metric_cards(self):
-        """Builds modern cards for each air condition metric."""
-        # Get translation service
-        translation_service = None
-        if self.page and hasattr(self.page, 'session'):
-            translation_service = self.page.session.get('translation_service')
+    def get_wind_direction_icon(self, wind_direction_deg):
+        """
+        Restituisce l'icona appropriata per la direzione del vento.
         
-        # Get unit symbols
+        Args:
+            wind_direction_deg: Direzione del vento in gradi (0-360)
+            
+        Returns:
+            Tupla (icona, descrizione) con l'icona ft.Icons e descrizione testuale
+        """
+        if wind_direction_deg is None:
+            return ft.Icons.QUESTION_MARK, "N/A"
+        
+        # Normalizza i gradi a 0-360
+        wind_direction_deg = wind_direction_deg % 360
+        
+        # Definisce le direzioni con le relative icone
+        # N = 0°, NE = 45°, E = 90°, SE = 135°, S = 180°, SW = 225°, W = 270°, NW = 315°
+        if wind_direction_deg >= 337.5 or wind_direction_deg < 22.5:
+            return ft.Icons.NORTH, "N"
+        elif 22.5 <= wind_direction_deg < 67.5:
+            return ft.Icons.NORTH_EAST, "NE"
+        elif 67.5 <= wind_direction_deg < 112.5:
+            return ft.Icons.EAST, "E"
+        elif 112.5 <= wind_direction_deg < 157.5:
+            return ft.Icons.SOUTH_EAST, "SE"
+        elif 157.5 <= wind_direction_deg < 202.5:
+            return ft.Icons.SOUTH, "S"
+        elif 202.5 <= wind_direction_deg < 247.5:
+            return ft.Icons.SOUTH_WEST, "SW"
+        elif 247.5 <= wind_direction_deg < 292.5:
+            return ft.Icons.WEST, "W"
+        elif 292.5 <= wind_direction_deg < 337.5:
+            return ft.Icons.NORTH_WEST, "NW"
+        else:
+            return ft.Icons.QUESTION_MARK, "N/A"
+
+    def _build_metric_cards(self):
+        translation_service = self.page.session.get('translation_service') if self.page and hasattr(self.page, 'session') else None
+        
+        # Funzione per ottenere l'etichetta tradotta invece di usare lambda
+        def get_label(k):
+            if translation_service:
+                return translation_service.translate_from_dict("air_condition_items", k, self._current_language) 
+            return k.replace('_', ' ').title()
         temp_unit = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
         wind_unit = TranslationService.get_unit_symbol("wind", self._current_unit_system)
         pressure_unit = TranslationService.get_unit_symbol("pressure", self._current_unit_system)
-        
-        # Helper to get translations
-        def get_label(key):
-            if translation_service:
-                return translation_service.translate_from_dict("air_condition_items", key, self._current_language) or key.replace('_', ' ').title()
-            return key.replace('_', ' ').title()
-        
-        metric_configs = [
-            {"key": "feels_like", "data": self._feels_like_data, "unit": temp_unit, "icon": ft.Icons.THERMOSTAT_OUTLINED, "color": "orange"},
-            {"key": "humidity", "data": self._humidity_data, "unit": "%", "icon": ft.Icons.WATER_DROP_OUTLINED, "color": "blue"},
-            {"key": "wind", "data": self._wind_speed_data, "unit": wind_unit, "icon": ft.Icons.AIR, "color": "teal"},
-            {"key": "pressure", "data": self._pressure_data, "unit": pressure_unit, "icon": ft.Icons.SPEED, "color": "purple"},
-            {"key": "visibility", "data": self._visibility_data, "unit": "m", "icon": ft.Icons.VISIBILITY_OUTLINED, "color": "cyan"},
-            {"key": "uv_index", "data": self._uv_index_data, "unit": "", "icon": ft.Icons.WB_SUNNY_OUTLINED, "color": "yellow"},
-            {"key": "dew_point", "data": self._dew_point_data, "unit": temp_unit, "icon": ft.Icons.WATER_OUTLINED, "color": "indigo"},
-            {"key": "cloud_coverage", "data": self._cloud_coverage_data, "unit": "%", "icon": ft.Icons.CLOUD_OUTLINED, "color": "grey"},
+        metrics = [
+            ("feels_like", temp_unit, ft.Icons.THERMOSTAT_OUTLINED, "orange"),
+            ("humidity", "%", ft.Icons.WATER_DROP_OUTLINED, "blue"),
+            ("wind", wind_unit, ft.Icons.AIR, "teal"),
+            ("pressure", pressure_unit, ft.Icons.SPEED, "purple"),
+            ("visibility", "m", ft.Icons.VISIBILITY_OUTLINED, "cyan"),
+            ("uv_index", "", ft.Icons.WB_SUNNY_OUTLINED, "yellow"),
+            ("dew_point", temp_unit, ft.Icons.WATER_OUTLINED, "indigo"),
+            ("cloud_coverage", "%", ft.Icons.CLOUD_OUTLINED, "grey"),
         ]
-        
         cards = []
-        
-        for config in metric_configs:
-            if config["data"] is not None:
-                value = config["data"]
-                
-                # Special formatting for wind (add direction)
-                if config["key"] == "wind" and self._wind_direction_data is not None:
-                    wind_icon, wind_desc = get_wind_direction_icon(self._wind_direction_data)
-                    value_text = f"{value} {config['unit']} {wind_desc}"
-                else:
-                    value_text = f"{value}{config['unit']}"
-                
-                # Special formatting for visibility (convert to km)
-                if config["key"] == "visibility":
-                    value_text = f"{value/1000:.1f} km"
-                
-                # Special formatting for UV index
-                if config["key"] == "uv_index":
-                    value_text = f"{round(value, 1)}"
-                
-                name = get_label(config["key"])
-                
-                card = self._create_metric_card(
-                    icon=config["icon"],
-                    name=name,
-                    value_text=value_text,
-                    raw_value=value,
-                    metric_key=config["key"],
-                    color_scheme=config["color"]
-                )
-                cards.append(card)
-        
+        for key, unit, icon, color in metrics:
+            value = self._data.get(key)
+            if value is None:
+                continue
+            value_text = f"{value}{unit}"
+            wind_desc = None
+            # Sigla direzione vento sempre visibile se disponibile
+            if key == "wind":
+                wind_direction = self._data.get("wind_direction")
+                if wind_direction is not None:
+                    wind_desc = self.get_wind_direction_icon(wind_direction)
+            if key == "visibility":
+                value_text = f"{value/1000:.1f} km"
+            if key == "uv_index":
+                value_text = f"{round(value, 1)}"
+            cards.append(self._create_metric_card(icon, get_label(key), value_text, value, key, color, wind_desc))
         return cards
     
-    def _create_metric_card(self, icon, name, value_text, raw_value, metric_key, color_scheme="blue"):
-        """Creates a modern card for a single air condition metric."""
+    def _create_metric_card(self, icon, name, value_text, raw_value, metric_key, color_scheme="blue", wind_desc=None):
+        """Creates a responsive modern card for a single air condition metric."""
+        # Get device type using improved detection from mixin
+        device_type = self.get_current_device_type()
+        is_mobile = (device_type == DeviceType.MOBILE) or (device_type == "mobile")
+        
         # Color schemes
         color_schemes = {
             "orange": {"bg": ft.Colors.ORANGE_400, "light": ft.Colors.ORANGE_100},
@@ -271,17 +263,37 @@ class AirConditionInfo(ft.Container):
         
         scheme = color_schemes.get(color_scheme, color_schemes["blue"])
         
+        # Responsive sizing
+        if is_mobile:
+            icon_size = 18
+            icon_container_size = 36
+            value_text_size = 13
+            name_text_size = 10
+            quality_text_size = 9
+            card_height = 90
+            padding = 10
+            border_radius = 12
+        else:
+            icon_size = 20
+            icon_container_size = 40
+            value_text_size = 14
+            name_text_size = 11
+            quality_text_size = 10
+            card_height = 100
+            padding = 14
+            border_radius = 14
+        
         # Icon container
         icon_container = ft.Container(
             content=ft.Icon(
                 icon,
                 color=ft.Colors.WHITE,
-                size=20
+                size=icon_size
             ),
-            width=40,
-            height=40,
+            width=icon_container_size,
+            height=icon_container_size,
             bgcolor=scheme["bg"],
-            border_radius=20,
+            border_radius=icon_container_size // 2,
             alignment=ft.alignment.center,
             shadow=ft.BoxShadow(
                 spread_radius=0,
@@ -293,36 +305,144 @@ class AirConditionInfo(ft.Container):
         
         # Quality indicator based on metric type
         def get_quality_indicator(value, key):
+            lang = self._current_language
+            
             if key == "humidity":
-                if 30 <= value <= 50:
-                    return ("Ideale", ft.Colors.GREEN_400)
-                elif 20 <= value <= 70:
-                    return ("Buona", ft.Colors.BLUE_400)
+                if 40 <= value <= 60:
+                    label = AIR_QUALITY_INDICATORS["humidity"]["excellent"].get(lang, "Ottima")
+                    color = ft.Colors.GREEN_400
+                elif 30 <= value <= 70:
+                    label = AIR_QUALITY_INDICATORS["humidity"]["good"].get(lang, "Buona")
+                    color = ft.Colors.BLUE_400
+                elif 20 <= value <= 80:
+                    label = AIR_QUALITY_INDICATORS["humidity"]["moderate"].get(lang, "Moderata")
+                    color = ft.Colors.YELLOW_600
+                elif 10 <= value <= 90:
+                    label = AIR_QUALITY_INDICATORS["humidity"]["poor"].get(lang, "Scarsa")
+                    color = ft.Colors.ORANGE_400
                 else:
-                    return ("Non ideale", ft.Colors.ORANGE_400)
+                    label = AIR_QUALITY_INDICATORS["humidity"]["very_poor"].get(lang, "Molto scarsa")
+                    color = ft.Colors.RED_400
+                return (label, color)
             elif key == "uv_index":
                 if value <= 2:
-                    return ("Basso", ft.Colors.GREEN_400)
+                    label = AIR_QUALITY_INDICATORS["uv_index"]["low"].get(lang, "Basso")
+                    color = ft.Colors.GREEN_400
                 elif value <= 5:
-                    return ("Moderato", ft.Colors.YELLOW_600)
+                    label = AIR_QUALITY_INDICATORS["uv_index"]["moderate"].get(lang, "Moderato")
+                    color = ft.Colors.YELLOW_600
                 elif value <= 7:
-                    return ("Alto", ft.Colors.ORANGE_400)
+                    label = AIR_QUALITY_INDICATORS["uv_index"]["high"].get(lang, "Alto")
+                    color = ft.Colors.ORANGE_400
+                elif value <= 10:
+                    label = AIR_QUALITY_INDICATORS["uv_index"]["very_high"].get(lang, "Molto alto")
+                    color = ft.Colors.RED_400
                 else:
-                    return ("Molto alto", ft.Colors.RED_400)
+                    label = AIR_QUALITY_INDICATORS["uv_index"]["extreme"].get(lang, "Estremo")
+                    color = ft.Colors.PURPLE_400
+                return (label, color)
             elif key == "pressure":
                 if 1013 <= value <= 1023:
-                    return ("Normale", ft.Colors.GREEN_400)
-                elif value < 1013:
-                    return ("Bassa", ft.Colors.BLUE_400)
-                else:
-                    return ("Alta", ft.Colors.ORANGE_400)
+                    label = AIR_QUALITY_INDICATORS["pressure"]["normal"].get(lang, "Normale")
+                    color = ft.Colors.GREEN_400
+                elif 1000 <= value < 1013:
+                    label = AIR_QUALITY_INDICATORS["pressure"]["low"].get(lang, "Bassa")
+                    color = ft.Colors.YELLOW_600
+                elif 1023 < value <= 1030:
+                    label = AIR_QUALITY_INDICATORS["pressure"]["high"].get(lang, "Alta")
+                    color = ft.Colors.ORANGE_400
+                elif value < 1000:
+                    label = AIR_QUALITY_INDICATORS["pressure"]["very_low"].get(lang, "Molto bassa")
+                    color = ft.Colors.RED_400
+                else:  # > 1030
+                    label = AIR_QUALITY_INDICATORS["pressure"]["very_high"].get(lang, "Molto alta")
+                    color = ft.Colors.PURPLE_400
+                return (label, color)
             elif key == "visibility":
-                if value >= 10000:
-                    return ("Ottima", ft.Colors.GREEN_400)
+                if value >= 20000:
+                    label = AIR_QUALITY_INDICATORS["visibility"]["excellent"].get(lang, "Ottima")
+                    color = ft.Colors.GREEN_400
+                elif value >= 10000:
+                    label = AIR_QUALITY_INDICATORS["visibility"]["good"].get(lang, "Buona")
+                    color = ft.Colors.BLUE_400
                 elif value >= 5000:
-                    return ("Buona", ft.Colors.BLUE_400)
+                    label = AIR_QUALITY_INDICATORS["visibility"]["moderate"].get(lang, "Moderata")
+                    color = ft.Colors.YELLOW_600
+                elif value >= 1000:
+                    label = AIR_QUALITY_INDICATORS["visibility"]["poor"].get(lang, "Scarsa")
+                    color = ft.Colors.ORANGE_400
                 else:
-                    return ("Limitata", ft.Colors.ORANGE_400)
+                    label = AIR_QUALITY_INDICATORS["visibility"]["very_poor"].get(lang, "Molto scarsa")
+                    color = ft.Colors.RED_400
+                return (label, color)
+            elif key == "feels_like":
+                if 18 <= value <= 24:
+                    label = AIR_QUALITY_INDICATORS["feels_like"]["ideal"].get(lang, "Ideale")
+                    color = ft.Colors.GREEN_400
+                elif 15 <= value <= 28:
+                    label = AIR_QUALITY_INDICATORS["feels_like"]["comfortable"].get(lang, "Confortevole")
+                    color = ft.Colors.BLUE_400
+                elif 10 <= value <= 32:
+                    label = AIR_QUALITY_INDICATORS["feels_like"]["acceptable"].get(lang, "Accettabile")
+                    color = ft.Colors.YELLOW_600
+                elif 5 <= value <= 38:
+                    label = AIR_QUALITY_INDICATORS["feels_like"]["uncomfortable"].get(lang, "Scomodo")
+                    color = ft.Colors.ORANGE_400
+                else:
+                    label = AIR_QUALITY_INDICATORS["feels_like"]["extreme"].get(lang, "Estremo")
+                    color = ft.Colors.RED_400
+                return (label, color)
+            elif key == "wind":
+                if value <= 10:
+                    label = AIR_QUALITY_INDICATORS["wind"]["calm"].get(lang, "Calmo")
+                    color = ft.Colors.GREEN_400
+                elif value <= 20:
+                    label = AIR_QUALITY_INDICATORS["wind"]["light"].get(lang, "Leggero")
+                    color = ft.Colors.BLUE_400
+                elif value <= 40:
+                    label = AIR_QUALITY_INDICATORS["wind"]["moderate"].get(lang, "Moderato")
+                    color = ft.Colors.YELLOW_600
+                elif value <= 60:
+                    label = AIR_QUALITY_INDICATORS["wind"]["strong"].get(lang, "Forte")
+                    color = ft.Colors.ORANGE_400
+                else:
+                    label = AIR_QUALITY_INDICATORS["wind"]["very_strong"].get(lang, "Molto forte")
+                    color = ft.Colors.RED_400
+                return (label, color)
+            elif key == "dew_point":
+                if value <= 10:
+                    label = AIR_QUALITY_INDICATORS["dew_point"]["dry"].get(lang, "Secco")
+                    color = ft.Colors.GREEN_400
+                elif value <= 15:
+                    label = AIR_QUALITY_INDICATORS["dew_point"]["comfortable"].get(lang, "Confortevole")
+                    color = ft.Colors.BLUE_400
+                elif value <= 20:
+                    label = AIR_QUALITY_INDICATORS["dew_point"]["humid"].get(lang, "Umido")
+                    color = ft.Colors.YELLOW_600
+                elif value <= 24:
+                    label = AIR_QUALITY_INDICATORS["dew_point"]["unpleasant"].get(lang, "Sgradevole")
+                    color = ft.Colors.ORANGE_400
+                else:
+                    label = AIR_QUALITY_INDICATORS["dew_point"]["oppressive"].get(lang, "Oppressivo")
+                    color = ft.Colors.RED_400
+                return (label, color)
+            elif key == "cloud_coverage":
+                if value <= 10:
+                    label = AIR_QUALITY_INDICATORS["cloud_coverage"]["clear"].get(lang, "Sereno")
+                    color = ft.Colors.GREEN_400
+                elif value <= 30:
+                    label = AIR_QUALITY_INDICATORS["cloud_coverage"]["partly_cloudy"].get(lang, "Poco nuvoloso")
+                    color = ft.Colors.BLUE_400
+                elif value <= 70:
+                    label = AIR_QUALITY_INDICATORS["cloud_coverage"]["partly_cloudy_moderate"].get(lang, "Parzialmente nuvoloso")
+                    color = ft.Colors.YELLOW_600
+                elif value <= 90:
+                    label = AIR_QUALITY_INDICATORS["cloud_coverage"]["mostly_cloudy"].get(lang, "Molto nuvoloso")
+                    color = ft.Colors.ORANGE_400
+                else:
+                    label = AIR_QUALITY_INDICATORS["cloud_coverage"]["overcast"].get(lang, "Coperto")
+                    color = ft.Colors.GREY_600
+                return (label, color)
             else:
                 return ("", ft.Colors.TRANSPARENT)
         
@@ -331,55 +451,110 @@ class AirConditionInfo(ft.Container):
         quality_badge = ft.Container(
             content=ft.Text(
                 quality_text,
-                size=10,
+                size=quality_text_size,
                 color=ft.Colors.WHITE,
                 weight=ft.FontWeight.W_600
             ),
             bgcolor=quality_color,
-            padding=ft.padding.symmetric(horizontal=6, vertical=2),
-            border_radius=8,
+            padding=ft.padding.symmetric(horizontal=4 if is_mobile else 6, vertical=1 if is_mobile else 2),
+            border_radius=6 if is_mobile else 8,
             visible=bool(quality_text)
         )
         
-        # Card content
-        card_content = ft.Column([
-            ft.Row([
-                icon_container,
-                ft.Container(width=8),
-                ft.Column([
-                    ft.Text(
-                        value_text,
-                        size=14,
-                        weight=ft.FontWeight.BOLD,
-                        color=self._current_text_color,
-                        max_lines=1,
-                        overflow=ft.TextOverflow.ELLIPSIS
-                    ),
-                    ft.Text(
-                        name,
-                        size=11,
-                        color=ft.Colors.with_opacity(0.7, self._current_text_color),
-                        max_lines=1,
-                        overflow=ft.TextOverflow.ELLIPSIS
-                    )
-                ], spacing=2, alignment=ft.MainAxisAlignment.CENTER, expand=True)
-            ], alignment=ft.MainAxisAlignment.START),
-            ft.Container(height=4),  # Spacer
-            ft.Row([
-                ft.Container(expand=True),
-                quality_badge
-            ], alignment=ft.MainAxisAlignment.END) if quality_text else ft.Container(height=18)
-        ], spacing=4)
+        # Card content with improved mobile layout
+        # Value row with wind direction info
+        value_row = [
+            ft.Text(
+                value_text,
+                size=value_text_size,
+                weight=ft.FontWeight.BOLD,
+                color=self._current_text_color,
+                max_lines=1,
+                overflow=ft.TextOverflow.ELLIPSIS
+            )
+        ]
+        
+        # Add wind direction info for wind cards
+        if metric_key == "wind" and wind_desc is not None:
+            wind_icon, wind_direction_text = wind_desc
+            # Wind icon
+            value_row.append(ft.Icon(
+                wind_icon,
+                size=14 if is_mobile else 16,
+                color=ft.Colors.with_opacity(0.85, self._current_text_color)
+            ))
+            # Wind direction text
+            value_row.append(ft.Container(
+                content=ft.Text(
+                    wind_direction_text,
+                    size=11 if is_mobile else 13,
+                    color=ft.Colors.with_opacity(0.85, self._current_text_color),
+                    weight=ft.FontWeight.W_700,
+                    max_lines=1,
+                    overflow=ft.TextOverflow.ELLIPSIS
+                ),
+                padding=ft.padding.only(left=2, right=2, top=0, bottom=0),
+                alignment=ft.alignment.center
+            ))
+
+        # Mobile optimized layout
+        if is_mobile:
+            card_content = ft.Column([
+                # Top row: icon and value
+                ft.Row([
+                    icon_container,
+                    ft.Container(width=6),
+                    ft.Column([
+                        ft.Row(value_row, spacing=3, alignment=ft.MainAxisAlignment.START),
+                        ft.Container(height=2),
+                        ft.Text(
+                            name,
+                            size=name_text_size,
+                            color=ft.Colors.with_opacity(0.7, self._current_text_color),
+                            max_lines=1,
+                            overflow=ft.TextOverflow.ELLIPSIS
+                        )
+                    ], spacing=1, alignment=ft.MainAxisAlignment.CENTER, expand=True)
+                ], alignment=ft.MainAxisAlignment.START),
+                # Bottom: quality badge
+                ft.Container(height=2),
+                ft.Row([
+                    quality_badge
+                ], alignment=ft.MainAxisAlignment.CENTER) if quality_text else ft.Container(height=12)
+            ], spacing=3)
+        else:
+            # Desktop layout (original)
+            card_content = ft.Column([
+                ft.Row([
+                    icon_container,
+                    ft.Container(width=8),
+                    ft.Column([
+                        ft.Row(value_row, spacing=4, alignment=ft.MainAxisAlignment.START),
+                        ft.Text(
+                            name,
+                            size=name_text_size,
+                            color=ft.Colors.with_opacity(0.7, self._current_text_color),
+                            max_lines=1,
+                            overflow=ft.TextOverflow.ELLIPSIS
+                        )
+                    ], spacing=2, alignment=ft.MainAxisAlignment.CENTER, expand=True)
+                ], alignment=ft.MainAxisAlignment.START),
+                ft.Container(height=4),  # Spacer
+                ft.Row([
+                    ft.Container(expand=True),
+                    quality_badge
+                ], alignment=ft.MainAxisAlignment.END) if quality_text else ft.Container(height=18)
+            ], spacing=4)
         
         # Card container
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        is_dark = self._get_theme_mode()
         
         return ft.Container(
             content=card_content,
             width=None,  # Let container expand based on available space
-            height=100,   # Slightly smaller than air pollution cards
-            padding=ft.padding.all(14),
-            border_radius=14,
+            height=card_height,
+            padding=ft.padding.all(padding),
+            border_radius=border_radius,
             bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.WHITE if not is_dark else ft.Colors.BLACK),
             border=ft.border.all(
                 1, 
@@ -387,7 +562,7 @@ class AirConditionInfo(ft.Container):
             ),
             shadow=ft.BoxShadow(
                 spread_radius=0,
-                blur_radius=8,
+                blur_radius=6 if is_mobile else 8,
                 color=ft.Colors.with_opacity(0.08, ft.Colors.BLACK),
                 offset=ft.Offset(0, 2)
             ),
@@ -396,40 +571,91 @@ class AirConditionInfo(ft.Container):
         )
     
     def _build_responsive_grid(self, cards):
-        """Creates a responsive grid layout for cards."""
+        """Creates a responsive grid layout optimized for mobile devices with 2x4 vertical layout."""
         if not cards:
             return ft.Container()
         
-        # Calculate cards per row based on screen size
-        if self.page and hasattr(self.page, 'window') and self.page.window:
-            screen_width = self.page.window.width or 1200
-        else:
-            screen_width = 1200
+        # Utilizziamo il metodo migliorato del ResponsiveComponentMixin
+        device_type = self.get_current_device_type()
         
-        # Determine optimal card count per row
-        if screen_width < 600:
-            cards_per_row = 1
-        elif screen_width < 900:
-            cards_per_row = 2
-        elif screen_width < 1200:
-            cards_per_row = 3
-        else:
-            cards_per_row = 4
+        # MOBILE LAYOUT: 2x4 vertical layout for better visibility
+        if device_type == DeviceType.MOBILE or device_type == "mobile":
+            return self._build_mobile_optimized_layout(cards)
         
-        # Split cards into rows
+        # TABLET LAYOUT: 2x4 or 3x3 layout
+        elif device_type == DeviceType.TABLET or device_type == "tablet":
+            return self._build_tablet_layout(cards)
+        
+        # DESKTOP LAYOUT: 4x2 horizontal layout
+        else:
+            return self._build_desktop_layout(cards)
+    
+    def _build_mobile_optimized_layout(self, cards):
+        """Builds a mobile-optimized 2x4 vertical layout."""
+        # Split cards into pairs for 2-column layout
         rows = []
-        for i in range(0, len(cards), cards_per_row):
-            row_cards = cards[i:i + cards_per_row]
-            # Pad the last row if needed
-            while len(row_cards) < cards_per_row:
+        
+        # Group cards in pairs (2 per row)
+        for i in range(0, len(cards), 2):
+            row_cards = cards[i:i + 2]
+            
+            # If odd number of cards, add an empty container
+            if len(row_cards) == 1:
                 row_cards.append(ft.Container(expand=True))
             
-            row = ft.Row(
-                controls=row_cards,
-                alignment=ft.MainAxisAlignment.CENTER,
-                spacing=12,
-                tight=False
-            )
+            # Create responsive row with equal width columns
+            row = ft.ResponsiveRow([
+                ft.Container(
+                    content=row_cards[0],
+                    col={"xs": 6},  # 50% width on mobile
+                    padding=ft.padding.symmetric(horizontal=4)
+                ),
+                ft.Container(
+                    content=row_cards[1] if len(row_cards) > 1 else ft.Container(),
+                    col={"xs": 6},  # 50% width on mobile
+                    padding=ft.padding.symmetric(horizontal=4)
+                )
+            ])
+            rows.append(row)
+        
+        return ft.Container(
+            content=ft.Column(
+                controls=rows,
+                spacing=8,  # Reduced spacing for mobile
+                alignment=ft.MainAxisAlignment.START
+            ),
+            padding=ft.padding.symmetric(horizontal=12, vertical=8)  # Reduced padding for mobile
+        )
+    
+    def _build_tablet_layout(self, cards):
+        """Builds a tablet-optimized layout."""
+        rows = []
+        cards_per_row = 3  # 3 cards per row on tablet
+        
+        for i in range(0, len(cards), cards_per_row):
+            row_cards = cards[i:i + cards_per_row]
+            
+            # Create responsive row
+            responsive_cards = []
+            for j, card in enumerate(row_cards):
+                responsive_cards.append(
+                    ft.Container(
+                        content=card,
+                        col={"sm": 4, "md": 4},  # 33% width on tablet
+                        padding=ft.padding.symmetric(horizontal=6)
+                    )
+                )
+            
+            # Fill remaining slots if needed
+            while len(responsive_cards) < cards_per_row:
+                responsive_cards.append(
+                    ft.Container(
+                        col={"sm": 4, "md": 4},
+                        padding=ft.padding.symmetric(horizontal=6)
+                    )
+                )
+            
+            row = ft.ResponsiveRow(responsive_cards)
             rows.append(row)
         
         return ft.Container(
@@ -438,5 +664,45 @@ class AirConditionInfo(ft.Container):
                 spacing=12,
                 alignment=ft.MainAxisAlignment.START
             ),
-            padding=ft.padding.symmetric(horizontal=20, vertical=10)
+            padding=ft.padding.symmetric(horizontal=16, vertical=10)
+        )
+    
+    def _build_desktop_layout(self, cards):
+        """Builds a desktop-optimized 4x2 layout."""
+        rows = []
+        cards_per_row = 4  # 4 cards per row on desktop
+        
+        for i in range(0, len(cards), cards_per_row):
+            row_cards = cards[i:i + cards_per_row]
+            
+            # Create responsive row
+            responsive_cards = []
+            for card in row_cards:
+                responsive_cards.append(
+                    ft.Container(
+                        content=card,
+                        col={"lg": 3, "xl": 3},  # 25% width on desktop
+                        padding=ft.padding.symmetric(horizontal=8)
+                    )
+                )
+            
+            # Fill remaining slots if needed
+            while len(responsive_cards) < cards_per_row:
+                responsive_cards.append(
+                    ft.Container(
+                        col={"lg": 3, "xl": 3},
+                        padding=ft.padding.symmetric(horizontal=8)
+                    )
+                )
+            
+            row = ft.ResponsiveRow(responsive_cards)
+            rows.append(row)
+        
+        return ft.Container(
+            content=ft.Column(
+                controls=rows,
+                spacing=16,
+                alignment=ft.MainAxisAlignment.START
+            ),
+            padding=ft.padding.symmetric(horizontal=20, vertical=12)
         )

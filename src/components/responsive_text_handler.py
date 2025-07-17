@@ -26,20 +26,23 @@ class ResponsiveTextHandler:
         self.page = page
         self.observers = []  # Lista di callback da chiamare quando le dimensioni cambiano
         
-        # Dimensioni predefinite se non specificate
+        # Dimensioni predefinite ottimizzate per dispositivi mobili
         self.base_sizes = base_sizes or {
-            'title': 28,       # Titoli principali (più contenuto)
-            'subtitle': 18,    # Sottotitoli (ridotto per coerenza)
-            'label': 14,       # Etichette (standardizzato)
-            'body': 14,        # Testo normale (base standard)
-            'caption': 12,     # Testo piccolo/caption (ridotto)
-            'value': 16,       # Valori (temperature, percentuali - moderato)
-            'sidebar_icon': 30,        # Icone (molto ridotto, più proporzionato)
-            'legend': 13,      # Per legende dei grafici
-            'axis_title': 25,  # Per titoli degli assi dei grafici
+            'title': 24,       # Titoli principali (ridotto per mobile)
+            'subtitle': 16,    # Sottotitoli (ottimizzato)
+            'label': 12,       # Etichette (ridotto per mobile)
+            'body': 12,        # Testo normale (ridotto per mobile)
+            'caption': 10,     # Testo piccolo/caption (ridotto)
+            'value': 14,       # Valori (temperature, percentuali)
+            'sidebar_icon': 24,# Icone (ridotto per mobile)
+            'legend': 11,      # Per legende dei grafici (ridotto)
+            'axis_title': 20,  # Per titoli degli assi dei grafici (ridotto)
+            'card_title': 18,  # Titoli delle card (nuovo)
+            'temperature': 28, # Temperature principali (nuovo)
+            'small_temp': 12,  # Temperature piccole (nuovo)
         }
         
-        # Breakpoint predefiniti se non specificati (in pixel)
+        # Breakpoint ottimizzati per dispositivi moderni
         self.breakpoints = breakpoints or [600, 900, 1200, 1600]
         
         # Inizializza le dimensioni correnti
@@ -48,7 +51,6 @@ class ResponsiveTextHandler:
         
         # Registra il callback per il ridimensionamento se la pagina è disponibile
         if self.page:
-            # self.page.on_resize = self._handle_resize # MODIFIED: Removed this line
             # Aggiungi controllo periodico come fallback
             import asyncio
             asyncio.create_task(self._periodic_size_check())
@@ -57,7 +59,7 @@ class ResponsiveTextHandler:
         """Controlla periodicamente la dimensione della finestra come fallback."""
         last_width = None
         while True:
-            await asyncio.sleep(0.5)  # Controlla ogni 500ms
+            await asyncio.sleep(0.1)  # Controlla ogni 100ms
             
             if self.page and hasattr(self.page, 'width') and self.page.width:
                 current_width = self.page.width
@@ -76,21 +78,31 @@ class ResponsiveTextHandler:
         # Ottieni la larghezza corrente della finestra
         width = self.page.width if hasattr(self.page, 'width') and self.page.width else 1200
         
-        # Calcola il fattore di scala in base alla larghezza
-        if width < self.breakpoints[0]:  # xs
-            scale_factor = 0.85  # Riduce del 15%
-        elif width < self.breakpoints[1]:  # sm
-            scale_factor = 0.9   # Riduce del 10%
-        elif width < self.breakpoints[2]:  # md
+        # Calcola il fattore di scala in base alla larghezza con curve più aggressive per mobile
+        if width < self.breakpoints[0]:  # xs (mobile)
+            scale_factor = 0.75  # Riduce del 25% per mobile
+        elif width < self.breakpoints[1]:  # sm (tablet portrait)
+            scale_factor = 0.85  # Riduce del 15% per tablet
+        elif width < self.breakpoints[2]:  # md (tablet landscape)
+            scale_factor = 0.95  # Riduce del 5%
+        elif width < self.breakpoints[3]:  # lg (desktop)
             scale_factor = 1.0   # Dimensione base
-        elif width < self.breakpoints[3]:  # lg
+        else:  # xl (large desktop)
             scale_factor = 1.1   # Aumenta del 10%
-        else:  # xl
-            scale_factor = 1.2   # Aumenta del 20%
         
-        # Applica il fattore di scala a tutte le dimensioni base
+        # Applica fattori di scala specifici per certi tipi di testo
         for key, base_size in self.base_sizes.items():
-            new_size = round(base_size * scale_factor)
+            # Fattori specifici per alcuni elementi
+            if key in ['temperature', 'card_title'] and width < self.breakpoints[0]:
+                # Temperature e titoli card più grandi anche su mobile
+                specific_scale = scale_factor + 0.1
+            elif key in ['caption', 'small_temp'] and width < self.breakpoints[0]:
+                # Elementi piccoli ancora più ridotti su mobile
+                specific_scale = scale_factor - 0.05
+            else:
+                specific_scale = scale_factor
+            
+            new_size = max(8, round(base_size * specific_scale))  # Minimo 8px
             self.current_sizes[key] = new_size
     
     def _handle_resize(self, e=None):

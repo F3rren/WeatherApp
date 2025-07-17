@@ -2,7 +2,6 @@ import flet as ft
 from typing import Callable, Optional
 import inspect
 import asyncio
-from components.responsive_text_handler import ResponsiveTextHandler
 
 class ThemeToggle:
     """
@@ -14,37 +13,9 @@ class ThemeToggle:
         self._value = value
         self.page = page
         self.switch = None
-        
-        # Initialize ResponsiveTextHandler
-        if self.page:
-            self.text_handler = ResponsiveTextHandler(
-                page=self.page,
-                base_sizes={
-                    'toggle_label': 14,  # Toggle label size
-                },
-                breakpoints=[600, 900, 1200, 1600]
-            )
-            
-            # Dictionary to track text controls
-            self.text_controls = {}
-            
-            # Register as observer for responsive updates
-            self.text_handler.add_observer(self.update_text_controls)
-
-    def update_text_controls(self):
-        """Update text sizes for all registered controls"""
-        if self.switch and hasattr(self.switch, 'label_style'):
-            if self.switch.label_style is None:
-                self.switch.label_style = ft.TextStyle()
-            self.switch.label_style.size = self.text_handler.get_size('toggle_label')
-        
-        # Request page update
-        if self.page:
-            self.page.update()
 
     def build(self) -> ft.Row:
         """Build the theme toggle"""
-
         def handle_toggle_change(e):
             if self.on_change:
                 # Usando una funzione wrapper che gestisce sia funzioni sincrone che asincrone
@@ -91,4 +62,22 @@ class ThemeToggle:
         if self.switch:
             return self.switch.value
         return self._value
+
+# ESEMPIO DI CALLBACK DA USARE CON ThemeToggle
+# Da inserire dove istanzi ThemeToggle, ad esempio nella PopMenu o nel gestore delle impostazioni
+
+def theme_toggle_callback(e, page, state_manager):
+    """
+    Callback da passare a ThemeToggle per cambiare il tema globale e notificare i componenti.
+    """
+    # Cambia il tema della pagina
+    if hasattr(page, 'theme_mode'):
+        page.theme_mode = ft.ThemeMode.DARK if e.control.value else ft.ThemeMode.LIGHT
+        page.update()
+    # Notifica tutti i componenti registrati che il tema è cambiato
+    if state_manager:
+        state_manager.notify_observers('theme_event')
+
+# Quando crei ThemeToggle:
+# theme_toggle = ThemeToggle(on_change=lambda e: theme_toggle_callback(e, page, state_manager), value=..., page=page)
 

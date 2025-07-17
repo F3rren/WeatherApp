@@ -42,10 +42,39 @@ TRANSLATIONS = {
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Settings",
             "language": "Language:", # Used in SettingsAlertDialog
-            "measurement": "Measurement", # Used in SettingsAlertDialog
+            "measurement": "Measurement:", # Used in SettingsAlertDialog
             "use_current_location": "Use current location:", # Used in SettingsAlertDialog
             "dark_theme": "Dark theme:", # Used in SettingsAlertDialog
-            "close": "Close" # Used in SettingsAlertDialog
+            "close": "Close", # Used in SettingsAlertDialog
+            "location_enabled": "GPS Active",
+            "location_disabled": "GPS Inactive",
+            "refresh_data": "Refresh",
+            "refreshing_data": "Refreshing weather data...",
+            "reset_settings": "Reset Settings",
+            "about_app": "About",
+            "app_status": "App Status",
+            "current_city": "City",
+            "active_language": "Language",
+            "unit_system": "Units",
+            "app_info_unavailable": "App info unavailable",
+            "settings_reset": "Settings have been reset to defaults",
+            "confirm_reset": "Reset all settings to default values?",
+            "reset_confirmation": "Confirm Reset",
+            "confirm": "Confirm",
+            "cancel": "Cancel",
+            "about_title": "About MeteoApp",
+            "about_description": "A modern weather application built with Flet and Python. Get real-time weather data, forecasts, and interactive maps.",
+            "version": "Version",
+            "developer": "Developer",
+            "features": "Features",
+            "feature_list": "• Real-time weather data\n• 5-day forecasts\n• Interactive maps\n• Multi-language support\n• Dark/Light themes\n• GPS location support"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Weather Map",
+            "fullscreen": "Fullscreen",
+            "close": "Close",
+            "loading": "Loading map...",
+            "error": "Error loading map"
         },
         "weekly_forecast_items": {
             "header": "5-Day Forecast",
@@ -127,8 +156,73 @@ TRANSLATIONS = {
             "precipitation_mm": "Precipitation (mm)",
             "probability_percent": "Probability (%)",
             "no_data": "No precipitation data available",
-            "loading": "Loading precipitation data..."
+            "loading": "Loading precipitation data...",
+            "time_hours": "Time (Hours)",
+            "total_precipitation": "Total",
+            "max_intensity": "Peak",
+            "rainy_hours": "Rainy hours",
+            # Precipitation intensity descriptions
+            "intensity_light": "Light",
+            "intensity_moderate": "Moderate", 
+            "intensity_heavy": "Heavy",
+            "intensity_very_heavy": "Very heavy",
+            # Additional labels
+            "next_24h": "Next 24 hours",
+            "precipitation_type": "Type",
+            "rain": "Rain",
+            "snow": "Snow",
+            "mixed": "Mixed",
+            "probability": "Probability",
+            "when_expected": "Expected at",
+            "duration": "Duration",
+            "peak_time": "Peak expected"
         },
+        "error_messages": {
+            "network_error": "Network connection failed",
+            "api_error": "Weather service temporarily unavailable",
+            "location_error": "Unable to access location services",
+            "data_error": "Error processing weather data",
+            "retry": "Retry",
+            "offline_mode": "Offline Mode",
+            "cached_data": "Showing cached data",
+            "last_updated": "Last updated",
+            "connection_restored": "Connection restored"
+        },
+        "performance": {
+            "loading": "Loading...",
+            "updating": "Updating...",
+            "optimizing": "Optimizing performance...",
+            "cache_cleared": "Cache cleared successfully"
+        },
+        "accessibility": {
+            "weather_icon": "Weather condition icon",
+            "temperature_reading": "Current temperature",
+            "humidity_level": "Humidity level",
+            "wind_speed": "Wind speed",
+            "pressure_reading": "Atmospheric pressure",
+            "high_contrast": "High contrast mode",
+            "large_text": "Large text mode",
+            "screen_reader": "Screen reader compatible"
+        },
+        "personalization": {
+            "favorites": "Favorite Locations",
+            "add_favorite": "Add to Favorites",
+            "remove_favorite": "Remove from Favorites",
+            "custom_alerts": "Weather Alerts",
+            "alert_temperature": "Temperature Alert",
+            "alert_rain": "Rain Alert",
+            "alert_wind": "Wind Alert",
+            "notification_settings": "Notification Settings",
+            "widget_customization": "Customize Widgets"
+        },
+        "advanced_features": {
+            "radar": "Weather Radar",
+            "satellite": "Satellite View",
+            "historical_data": "Historical Weather",
+            "comparison": "Compare Locations",
+            "export_data": "Export Data",
+            "share_weather": "Share Weather"
+        }
     },
     
     "zh_cn": {
@@ -158,10 +252,17 @@ TRANSLATIONS = {
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "设置",
             "language": "语言：",
-            "measurement": "测量单位",
+            "measurement": "测量单位:",
             "use_current_location": "使用当前位置：",
             "dark_theme": "深色主题：",
             "close": "关闭"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "天气地图",
+            "fullscreen": "全屏",
+            "close": "关闭",
+            "loading": "地图加载中...",
+            "error": "地图加载错误"
         },
         "weekly_forecast_items": {
             "header": "5天预报",
@@ -243,31 +344,72 @@ TRANSLATIONS = {
             "precipitation_mm": "降水量 (毫米)",
             "probability_percent": "概率 (%)",
             "no_data": "无降水数据",
-            "loading": "正在加载降水数据..."
+            "loading": "正在加载降水数据...",
+            "time_hours": "时间 (小时)",
+            "total_precipitation": "总计",
+            "max_intensity": "峰值",
+            "rainy_hours": "降雨小时",
+            # 降水强度描述
+            "intensity_light": "小雨",
+            "intensity_moderate": "中雨", 
+            "intensity_heavy": "大雨",
+            "intensity_very_heavy": "暴雨",
+            # 额外标签
+            "next_24h": "未来24小时",
+            "precipitation_type": "类型",
+            "rain": "雨",
+            "snow": "雪",
+            "mixed": "混合",
+            "probability": "概率",
+            "when_expected": "预期时间",
+            "duration": "持续时间",
+            "peak_time": "峰值预期"
         },
-        "other": {
-            "weather_card_title": "天气详情",
-            "settings_title": "设置",
+        "error_messages": {
+            "network_error": "网络连接失败",
+            "api_error": "天气服务暂时不可用",
+            "location_error": "无法访问定位服务",
+            "data_error": "处理天气数据时出错",
+            "retry": "重试",
+            "offline_mode": "离线模式",
+            "cached_data": "显示缓存数据",
+            "last_updated": "最后更新",
+            "connection_restored": "连接已恢复"
+        },
+        "performance": {
             "loading": "加载中...",
-            "search_city": "搜索城市...",
-            "filter_options": "筛选选项",
-            "select_language": "选择语言",
-            "theme_light": "浅色主题",
-            "theme_dark": "深色主题",
-            "theme_system": "系统主题",
-            "language_setting": "语言",
-            "measurement_setting": "测量单位",
-            "use_current_location_setting": "使用当前位置",
-            "dark_theme_setting": "深色主题",
-            "close_button": "关闭",
-            "aqi_descriptions": [
-                "无数据",
-                "优",
-                "良",
-                "中等",
-                "差",
-                "非常差"
-            ]
+            "updating": "更新中...",
+            "optimizing": "优化性能中...",
+            "cache_cleared": "缓存成功清除"
+        },
+        "accessibility": {
+            "weather_icon": "天气状况图标",
+            "temperature_reading": "当前温度",
+            "humidity_level": "湿度水平",
+            "wind_speed": "风速",
+            "pressure_reading": "大气压力",
+            "high_contrast": "高对比度模式",
+            "large_text": "大文本模式",
+            "screen_reader": "屏幕阅读器兼容"
+        },
+        "personalization": {
+            "favorites": "收藏地点",
+            "add_favorite": "添加到收藏",
+            "remove_favorite": "从收藏中移除",
+            "custom_alerts": "天气警报",
+            "alert_temperature": "温度警报",
+            "alert_rain": "降雨警报",
+            "alert_wind": "风警报",
+            "notification_settings": "通知设置",
+            "widget_customization": "自定义小部件"
+        },
+        "advanced_features": {
+            "radar": "天气雷达",
+            "satellite": "卫星视图",
+            "historical_data": "历史天气",
+            "comparison": "比较地点",
+            "export_data": "导出数据",
+            "share_weather": "分享天气"
         }
     },
 
@@ -298,10 +440,17 @@ TRANSLATIONS = {
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "सेटिंग्स",
             "language": "भाषा:",
-            "measurement": "मापन इकाई",
+            "measurement": "मापन इकाई:",
             "use_current_location": "वर्तमान स्थान का उपयोग करें:",
             "dark_theme": "डार्क थीम:",
             "close": "बंद करें"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "मौसम मानचित्र",
+            "fullscreen": "पूर्ण स्क्रीन",
+            "close": "बंद करें",
+            "loading": "मानचित्र लोड हो रहा है...",
+            "error": "मानचित्र लोड करने में त्रुटि"
         },
         "weekly_forecast_items": {
             "header": "5 दिन का पूर्वानुमान",
@@ -384,7 +533,72 @@ TRANSLATIONS = {
             "precipitation_mm": "वर्षा (मिमी)",
             "probability_percent": "संभावना (%)",
             "no_data": "वर्षा डेटा उपलब्ध नहीं है",
-            "loading": "वर्षा डेटा लोड हो रहा है..."
+            "loading": "वर्षा डेटा लोड हो रहा है...",
+            "time_hours": "समय (घंटे)",
+            "total_precipitation": "कुल",
+            "max_intensity": "चरम",
+            "rainy_hours": "बारिश के घंटे",
+            # वर्षा की तीव्रता का विवरण
+            "intensity_light": "हल्की",
+            "intensity_moderate": "मध्यम", 
+            "intensity_heavy": "भारी",
+            "intensity_very_heavy": "बहुत भारी",
+            # अतिरिक्त लेबल
+            "next_24h": "अगले 24 घंटे",
+            "precipitation_type": "प्रकार",
+            "rain": "बारिश",
+            "snow": "बर्फ",
+            "mixed": "मिश्रित",
+            "probability": "संभावना",
+            "when_expected": "अपेक्षित समय",
+            "duration": "अवधि",
+            "peak_time": "चरम अपेक्षित"
+        },
+        "error_messages": {
+            "network_error": "नेटवर्क कनेक्शन विफल",
+            "api_error": "मौसम सेवा अस्थायी रूप से अनुपलब्ध",
+            "location_error": "स्थान सेवाओं तक पहुंच असंभव",
+            "data_error": "मौसम डेटा संसाधित करते समय त्रुटि",
+            "retry": "पुनः प्रयास करें",
+            "offline_mode": "ऑफलाइन मोड",
+            "cached_data": "कैश किए गए डेटा को दिखा रहा है",
+            "last_updated": "अंतिम अपडेट",
+            "connection_restored": "कनेक्शन बहाल"
+        },
+        "performance": {
+            "loading": "लोड हो रहा है...",
+            "updating": "अपडेट हो रहा है...",
+            "optimizing": "प्रदर्शन का अनुकूलन कर रहा है...",
+            "cache_cleared": "कैश सफलतापूर्वक साफ़ किया गया"
+        },
+        "accessibility": {
+            "weather_icon": "मौसम स्थिति आइकन",
+            "temperature_reading": "वर्तमान तापमान",
+            "humidity_level": "नमी स्तर",
+            "wind_speed": "हवा की गति",
+            "pressure_reading": "वायुमंडलीय दबाव",
+            "high_contrast": "उच्च विपरीत मोड",
+            "large_text": "बड़ा पाठ मोड",
+            "screen_reader": "स्क्रीन रीडर संगत"
+        },
+        "personalization": {
+            "favorites": "पसंदीदा स्थान",
+            "add_favorite": "पसंदीदा में जोड़ें",
+            "remove_favorite": "पसंदीदा से हटाएँ",
+            "custom_alerts": "मौसम अलर्ट",
+            "alert_temperature": "तापमान अलर्ट",
+            "alert_rain": "बारिश अलर्ट",
+            "alert_wind": "हवा अलर्ट",
+            "notification_settings": "सूचना सेटिंग्स",
+            "widget_customization": "विजेट अनुकूलन करें"
+        },
+        "advanced_features": {
+            "radar": "मौसम रडार",
+            "satellite": "उपग्रह दृश्य",
+            "historical_data": "ऐतिहासिक मौसम",
+            "comparison": "स्थान की तुलना करें",
+            "export_data": "डेटा निर्यात करें",
+            "share_weather": "मौसम साझा करें"
         }
     },
     "es": {
@@ -414,10 +628,39 @@ TRANSLATIONS = {
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Configuración",
             "language": "Idioma:",
-            "measurement": "Unidad de medida",
+            "measurement": "Unidad de medida:",
             "use_current_location": "Usar ubicación actual:",
             "dark_theme": "Tema oscuro:",
-            "close": "Cerrar"
+            "close": "Cerrar",
+            "location_enabled": "GPS Activo",
+            "location_disabled": "GPS Inactivo",
+            "refresh_data": "Actualizar",
+            "refreshing_data": "Actualizando datos...",
+            "reset_settings": "Restablecer",
+            "about_app": "Acerca de",
+            "app_status": "Estado App",
+            "current_city": "Ciudad",
+            "active_language": "Idioma",
+            "unit_system": "Unidades",
+            "app_info_unavailable": "Info app no disponible",
+            "settings_reset": "Configuración restablecida a valores predeterminados",
+            "confirm_reset": "¿Restablecer toda la configuración a valores predeterminados?",
+            "reset_confirmation": "Confirmar Restablecimiento",
+            "confirm": "Confirmar",
+            "cancel": "Cancelar",
+            "about_title": "Acerca de MeteoApp",
+            "about_description": "Una aplicación meteorológica moderna construida con Flet y Python. Obtén datos meteorológicos en tiempo real, pronósticos y mapas interactivos.",
+            "version": "Versión",
+            "developer": "Desarrollador",
+            "features": "Características",
+            "feature_list": "• Datos meteorológicos en tiempo real\n• Pronósticos de 5 días\n• Mapas interactivos\n• Soporte multiidioma\n• Temas oscuro/claro\n• Soporte GPS"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Mapa del Tiempo",
+            "fullscreen": "Pantalla Completa",
+            "close": "Cerrar",
+            "loading": "Cargando mapa...",
+            "error": "Error al cargar el mapa"
         },
         "weekly_forecast_items": {
             "header": "Pronóstico 5 Días",
@@ -500,7 +743,72 @@ TRANSLATIONS = {
             "precipitation_mm": "Precipitaciones (mm)",
             "probability_percent": "Probabilidad (%)",
             "no_data": "Datos de precipitaciones no disponibles",
-            "loading": "Cargando datos de precipitaciones..."
+            "loading": "Cargando datos de precipitaciones...",
+            "time_hours": "Tiempo (Horas)",
+            "total_precipitation": "Total",
+            "max_intensity": "Pico",
+            "rainy_hours": "Horas de lluvia",
+            # Descripciones de intensidad de precipitación
+            "intensity_light": "Ligera",
+            "intensity_moderate": "Moderada", 
+            "intensity_heavy": "Fuerte",
+            "intensity_very_heavy": "Muy fuerte",
+            # Etiquetas adicionales
+            "next_24h": "Próximas 24 horas",
+            "precipitation_type": "Tipo",
+            "rain": "Lluvia",
+            "snow": "Nieve",
+            "mixed": "Mixta",
+            "probability": "Probabilidad",
+            "when_expected": "Esperado a las",
+            "duration": "Duración",
+            "peak_time": "Pico esperado"
+        },
+        "error_messages": {
+            "network_error": "Error de conexión de red",
+            "api_error": "Servicio meteorológico temporalmente no disponible",
+            "location_error": "No se puede acceder a los servicios de ubicación",
+            "data_error": "Error al procesar los datos meteorológicos",
+            "retry": "Reintentar",
+            "offline_mode": "Modo sin conexión",
+            "cached_data": "Mostrando datos en caché",
+            "last_updated": "Última actualización",
+            "connection_restored": "Conexión restaurada"
+        },
+        "performance": {
+            "loading": "Cargando...",
+            "updating": "Actualizando...",
+            "optimizing": "Optimizando rendimiento...",
+            "cache_cleared": "Caché borrada con éxito"
+        },
+        "accessibility": {
+            "weather_icon": "Ícono de condición meteorológica",
+            "temperature_reading": "Temperatura actual",
+            "humidity_level": "Nivel de humedad",
+            "wind_speed": "Velocidad del viento",
+            "pressure_reading": "Presión atmosférica",
+            "high_contrast": "Modo de alto contraste",
+            "large_text": "Modo de texto grande",
+            "screen_reader": "Compatible con lectores de pantalla"
+        },
+        "personalization": {
+            "favorites": "Ubicaciones favoritas",
+            "add_favorite": "Agregar a favoritos",
+            "remove_favorite": "Eliminar de favoritos",
+            "custom_alerts": "Alertas meteorológicas",
+            "alert_temperature": "Alerta de temperatura",
+            "alert_rain": "Alerta de lluvia",
+            "alert_wind": "Alerta de viento",
+            "notification_settings": "Configuración de notificaciones",
+            "widget_customization": "Personalizar widgets"
+        },
+        "advanced_features": {
+            "radar": "Radar meteorológico",
+            "satellite": "Vista satelital",
+            "historical_data": "Datos meteorológicos históricos",
+            "comparison": "Comparar ubicaciones",
+            "export_data": "Exportar datos",
+            "share_weather": "Compartir clima"
         }
     },
     "ar": {
@@ -530,10 +838,17 @@ TRANSLATIONS = {
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "الإعدادات",
             "language": "اللغة:",
-            "measurement": "القياس",
+            "measurement": "القياس:",
             "use_current_location": "استخدام الموقع الحالي:",
             "dark_theme": "الوضع الداكن:",
             "close": "إغلاق"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "خريطة الطقس",
+            "fullscreen": "ملء الشاشة",
+            "close": "إغلاق",
+            "loading": "تحميل الخريطة...",
+            "error": "خطأ في تحميل الخريطة"
         },
         "weekly_forecast_items": {
             "header": "توقعات 5 أيام",
@@ -615,7 +930,72 @@ TRANSLATIONS = {
             "precipitation_mm": "الهطول (مم)",
             "probability_percent": "الاحتمال (%)",
             "no_data": "لا توجد بيانات هطول متاحة",
-            "loading": "جاري تحميل بيانات الهطول..."
+            "loading": "جاري تحميل بيانات الهطول...",
+            "time_hours": "الوقت (ساعات)",
+            "total_precipitation": "المجموع",
+            "max_intensity": "الذروة",
+            "rainy_hours": "ساعات المطر",
+            # وصف شدة الهطول
+            "intensity_light": "خفيف",
+            "intensity_moderate": "معتدل", 
+            "intensity_heavy": "كثيف",
+            "intensity_very_heavy": "كثيف جداً",
+            # تسميات إضافية
+            "next_24h": "الـ 24 ساعة القادمة",
+            "precipitation_type": "النوع",
+            "rain": "مطر",
+            "snow": "ثلج",
+            "mixed": "مختلط",
+            "probability": "الاحتمال",
+            "when_expected": "متوقع في",
+            "duration": "المدة",
+            "peak_time": "الذروة متوقعة"
+        },
+        "error_messages": {
+            "network_error": "فشل اتصال الشبكة",
+            "api_error": "خدمة الطقس غير متاحة مؤقتًا",
+            "location_error": "غير قادر على الوصول إلى خدمات الموقع",
+            "data_error": "خطأ في معالجة بيانات الطقس",
+            "retry": "إعادة المحاولة",
+            "offline_mode": "وضع عدم الاتصال",
+            "cached_data": "عرض البيانات المخزنة",
+            "last_updated": "آخر تحديث",
+            "connection_restored": "تم استعادة الاتصال"
+        },
+        "performance": {
+            "loading": "جارٍ التحميل...",
+            "updating": "جارٍ التحديث...",
+            "optimizing": "جارٍ تحسين الأداء...",
+            "cache_cleared": "تم مسح الذاكرة المؤقتة بنجاح"
+        },
+        "accessibility": {
+            "weather_icon": "رمز حالة الطقس",
+            "temperature_reading": "درجة الحرارة الحالية",
+            "humidity_level": "مستوى الرطوبة",
+            "wind_speed": "سرعة الرياح",
+            "pressure_reading": "ضغط الهواء",
+            "high_contrast": "وضع التباين العالي",
+            "large_text": "وضع النص الكبير",
+            "screen_reader": "متوافق مع قارئات الشاشة"
+        },
+        "personalization": {
+            "favorites": "المواقع المفضلة",
+            "add_favorite": "أضف إلى المفضلة",
+            "remove_favorite": "إزالة من المفضلة",
+            "custom_alerts": "تنبيهات الطقس",
+            "alert_temperature": "تنبيه درجة الحرارة",
+            "alert_rain": "تنبيه المطر",
+            "alert_wind": "تنبيه الرياح",
+            "notification_settings": "إعدادات الإشعارات",
+            "widget_customization": "تخصيص الأدوات"
+        },
+        "advanced_features": {
+            "radar": "رادار الطقس",
+            "satellite": "عرض القمر الصناعي",
+            "historical_data": "الطقس التاريخي",
+            "comparison": "قارن المواقع",
+            "export_data": "تصدير البيانات",
+            "share_weather": "مشاركة الطقس"
         }
     },
     "id": {
@@ -645,10 +1025,17 @@ TRANSLATIONS = {
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Pengaturan",
             "language": "Bahasa:",
-            "measurement": "Pengukuran",
+            "measurement": "Pengukuran:",
             "use_current_location": "Gunakan lokasi saat ini:",
             "dark_theme": "Tema gelap:",
             "close": "Tutup"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Peta Cuaca",
+            "fullscreen": "Layar Penuh",
+            "close": "Tutup",
+            "loading": "Memuat peta...",
+            "error": "Kesalahan memuat peta"
         },
         "weekly_forecast_items": {
             "header": "Prakiraan 5 Hari",
@@ -730,7 +1117,72 @@ TRANSLATIONS = {
             "precipitation_mm": "Curah Hujan (mm)",
             "probability_percent": "Probabilitas (%)",
             "no_data": "Data curah hujan tidak tersedia",
-            "loading": "Memuat data curah hujan..."
+            "loading": "Memuat data curah hujan...",
+            "time_hours": "Waktu (Jam)",
+            "total_precipitation": "Total",
+            "max_intensity": "Puncak",
+            "rainy_hours": "Jam hujan",
+            # Deskripsi intensitas curah hujan
+            "intensity_light": "Ringan",
+            "intensity_moderate": "Sedang", 
+            "intensity_heavy": "Lebat",
+            "intensity_very_heavy": "Sangat lebat",
+            # Label tambahan
+            "next_24h": "24 jam ke depan",
+            "precipitation_type": "Jenis",
+            "rain": "Hujan",
+            "snow": "Salju",
+            "mixed": "Campuran",
+            "probability": "Probabilitas",
+            "when_expected": "Diperkirakan pada",
+            "duration": "Durasi",
+            "peak_time": "Puncak diperkirakan"
+        },
+        "error_messages": {
+            "network_error": "Kesalahan koneksi jaringan",
+            "api_error": "Layanan cuaca tidak tersedia sementara",
+            "location_error": "Tidak dapat mengakses layanan lokasi",
+            "data_error": "Kesalahan saat memproses data cuaca",
+            "retry": "Coba lagi",
+            "offline_mode": "Mode Offline",
+            "cached_data": "Menampilkan data yang disimpan",
+            "last_updated": "Terakhir diperbarui",
+            "connection_restored": "Koneksi dipulihkan"
+        },
+        "performance": {
+            "loading": "Memuat...",
+            "updating": "Memperbarui...",
+            "optimizing": "Mengoptimalkan kinerja...",
+            "cache_cleared": "Cache berhasil dibersihkan"
+        },
+        "accessibility": {
+            "weather_icon": "Ikon kondisi cuaca",
+            "temperature_reading": "Suhu saat ini",
+            "humidity_level": "Tingkat kelembaban",
+            "wind_speed": "Kecepatan angin",
+            "pressure_reading": "Tekanan atmosfer",
+            "high_contrast": "Mode kontras tinggi",
+            "large_text": "Mode teks besar",
+            "screen_reader": "Kompatibel dengan pembaca layar"
+        },
+        "personalization": {
+            "favorites": "Lokasi Favorit",
+            "add_favorite": "Tambahkan ke Favorit",
+            "remove_favorite": "Hapus dari Favorit",
+            "custom_alerts": "Peringatan Cuaca",
+            "alert_temperature": "Peringatan Suhu",
+            "alert_rain": "Peringatan Hujan",
+            "alert_wind": "Peringatan Angin",
+            "notification_settings": "Pengaturan Notifikasi",
+            "widget_customization": "Sesuaikan Widget"
+        },
+        "advanced_features": {
+            "radar": "Radar Cuaca",
+            "satellite": "Tampilan Satelit",
+            "historical_data": "Cuaca Historis",
+            "comparison": "Bandingkan Lokasi",
+            "export_data": "Ekspor Data",
+            "share_weather": "Bagikan Cuaca"
         }
     },
     "ja": {
@@ -760,10 +1212,17 @@ TRANSLATIONS = {
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "設定",
             "language": "言語:",
-            "measurement": "測定",
+            "measurement": "測定:",
             "use_current_location": "現在地を使用:",
             "dark_theme": "ダークテーマ:",
             "close": "閉じる"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "天気マップ",
+            "fullscreen": "全画面",
+            "close": "閉じる",
+            "loading": "マップを読み込み中...",
+            "error": "マップ読み込みエラー"
         },
         "weekly_forecast_items": {
             "header": "5日間予報",
@@ -845,7 +1304,72 @@ TRANSLATIONS = {
             "precipitation_mm": "降水量 (mm)",
             "probability_percent": "確率 (%)",
             "no_data": "降水量データがありません",
-            "loading": "降水量データを読み込み中..."
+            "loading": "降水量データを読み込み中...",
+            "time_hours": "時間 (時)",
+            "total_precipitation": "合計",
+            "max_intensity": "ピーク",
+            "rainy_hours": "雨の時間",
+            # 降水強度の説明
+            "intensity_light": "弱い",
+            "intensity_moderate": "中程度", 
+            "intensity_heavy": "強い",
+            "intensity_very_heavy": "非常に強い",
+            # 追加ラベル
+            "next_24h": "今後24時間",
+            "precipitation_type": "種類",
+            "rain": "雨",
+            "snow": "雪",
+            "mixed": "混合",
+            "probability": "確率",
+            "when_expected": "予想時刻",
+            "duration": "継続時間",
+            "peak_time": "ピーク予想"
+        },
+        "error_messages": {
+            "network_error": "ネットワーク接続に失敗しました",
+            "api_error": "天気サービスは一時的に利用できません",
+            "location_error": "位置情報サービスにアクセスできません",
+            "data_error": "天気データの処理中にエラーが発生しました",
+            "retry": "再試行",
+            "offline_mode": "オフラインモード",
+            "cached_data": "キャッシュデータを表示中",
+            "last_updated": "最終更新",
+            "connection_restored": "接続が回復しました"
+        },
+        "performance": {
+            "loading": "読み込み中...",
+            "updating": "更新中...",
+            "optimizing": "パフォーマンスを最適化中...",
+            "cache_cleared": "キャッシュが正常にクリアされました"
+        },
+        "accessibility": {
+            "weather_icon": "天気状態アイコン",
+            "temperature_reading": "現在の気温",
+            "humidity_level": "湿度レベル",
+            "wind_speed": "風速",
+            "pressure_reading": "大気圧",
+            "high_contrast": "高コントラストモード",
+            "large_text": "大文字モード",
+            "screen_reader": "スクリーンリーダー対応"
+        },
+        "personalization": {
+            "favorites": "お気に入りの場所",
+            "add_favorite": "お気に入りに追加",
+            "remove_favorite": "お気に入りから削除",
+            "custom_alerts": "天気アラート",
+            "alert_temperature": "温度アラート",
+            "alert_rain": "雨アラート",
+            "alert_wind": "風アラート",
+            "notification_settings": "通知設定",
+            "widget_customization": "ウィジェットをカスタマイズ"
+        },
+        "advanced_features": {
+            "radar": "天気レーダー",
+            "satellite": "衛星ビュー",
+            "historical_data": "過去の天気",
+            "comparison": "場所を比較",
+            "export_data": "データをエクスポート",
+            "share_weather": "天気を共有"
         }
     },
     "it": {
@@ -875,10 +1399,39 @@ TRANSLATIONS = {
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Impostazioni",
             "language": "Lingua:",
-            "measurement": "Misurazione",
+            "measurement": "Misurazione:",
             "use_current_location": "Usa posizione corrente:",
             "dark_theme": "Tema scuro:",
-            "close": "Chiudi"
+            "close": "Chiudi",
+            "location_enabled": "GPS Attivo",
+            "location_disabled": "GPS Inattivo",
+            "refresh_data": "Aggiorna",
+            "refreshing_data": "Aggiornamento dati meteo...",
+            "reset_settings": "Ripristina",
+            "about_app": "Info",
+            "app_status": "Stato App",
+            "current_city": "Città",
+            "active_language": "Lingua",
+            "unit_system": "Unità",
+            "app_info_unavailable": "Info app non disponibili",
+            "settings_reset": "Impostazioni ripristinate ai valori predefiniti",
+            "confirm_reset": "Ripristinare tutte le impostazioni ai valori predefiniti?",
+            "reset_confirmation": "Conferma Ripristino",
+            "confirm": "Conferma",
+            "cancel": "Annulla",
+            "about_title": "Info su MeteoApp",
+            "about_description": "Un'applicazione meteo moderna costruita con Flet e Python. Ottieni dati meteo in tempo reale, previsioni e mappe interattive.",
+            "version": "Versione",
+            "developer": "Sviluppatore",
+            "features": "Funzionalità",
+            "feature_list": "• Dati meteo in tempo reale\n• Previsioni a 5 giorni\n• Mappe interattive\n• Supporto multilingua\n• Temi scuro/chiaro\n• Supporto GPS"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Mappa Meteo",
+            "fullscreen": "Schermo Intero",
+            "close": "Chiudi",
+            "loading": "Caricamento mappa...",
+            "error": "Errore nel caricamento della mappa"
         },
         "weekly_forecast_items": {
             "header": "Previsioni 5 Giorni",
@@ -905,7 +1458,7 @@ TRANSLATIONS = {
             "temperature": "Temperatura"
         },
         "air_pollution_items": {
-            "air_quality_index": "Indice di qualità dell'aria",
+            "air_quality_index": "Indice qualità aria",
             "CO": "Monossido di carbonio",
             "NO": "Monossido di azoto",
             "NO2": "Biossido di azoto",
@@ -962,7 +1515,70 @@ TRANSLATIONS = {
             "precipitation_mm": "Precipitazioni (mm)",
             "probability_percent": "Probabilità (%)",
             "no_data": "Dati precipitazioni non disponibili",
-            "loading": "Caricamento dati precipitazioni..."
+            "loading": "Caricamento dati precipitazioni...",
+            "time_hours": "Tempo (Ore)",
+            "total_precipitation": "Totale",
+            "max_intensity": "Picco",
+            "rainy_hours": "Ore di pioggia",
+            "intensity_light": "Leggera",
+            "intensity_moderate": "Moderata", 
+            "intensity_heavy": "Intensa",
+            "intensity_very_heavy": "Molto intensa",
+            "next_24h": "Prossime 24 ore",
+            "precipitation_type": "Tipo",
+            "rain": "Pioggia",
+            "snow": "Neve",
+            "mixed": "Mista",
+            "probability": "Probabilità",
+            "when_expected": "Prevista alle",
+            "duration": "Durata",
+            "peak_time": "Picco previsto"
+        },
+        "error_messages": {
+            "network_error": "Errore di connessione di rete",
+            "api_error": "Servizio meteorologico temporaneamente non disponibile",
+            "location_error": "Impossibile accedere ai servizi di posizione",
+            "data_error": "Errore nell'elaborazione dei dati meteo",
+            "retry": "Riprova",
+            "offline_mode": "Modalità Offline",
+            "cached_data": "Mostrando dati memorizzati",
+            "last_updated": "Ultimo aggiornamento",
+            "connection_restored": "Connessione ripristinata"
+        },
+        "performance": {
+            "loading": "Caricamento...",
+            "updating": "Aggiornamento...",
+            "optimizing": "Ottimizzazione prestazioni...",
+            "cache_cleared": "Cache svuotata con successo"
+        },
+        "accessibility": {
+            "weather_icon": "Icona condizione meteo",
+            "temperature_reading": "Temperatura attuale",
+            "humidity_level": "Livello umidità",
+            "wind_speed": "Velocità vento",
+            "pressure_reading": "Pressione atmosferica",
+            "high_contrast": "Modalità alto contrasto",
+            "large_text": "Modalità testo grande",
+            "screen_reader": "Compatibile screen reader"
+        },
+        "personalization": {
+            "favorites": "Località Preferite",
+            "add_favorite": "Aggiungi ai Preferiti",
+            "remove_favorite": "Rimuovi dai Preferiti",
+            "custom_alerts": "Avvisi Meteo",
+            "alert_temperature": "Avviso Temperatura",
+            "alert_rain": "Avviso Pioggia",
+            "alert_wind": "Avviso Vento",
+            "notification_settings": "Impostazioni Notifiche",
+            "widget_customization": "Personalizza Widget"
+        },
+        "advanced_features": {
+            "radar": "Radar Meteo",
+            "satellite": "Vista Satellite",
+            "historical_data": "Dati Storici Meteo",
+            "comparison": "Confronta Località",
+            "export_data": "Esporta Dati",
+            "share_weather": "Condividi Meteo"
         }
     },
     "de": {
@@ -992,10 +1608,39 @@ TRANSLATIONS = {
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Einstellungen",
             "language": "Sprache:",
-            "measurement": "Messung",
+            "measurement": "Messung:",
             "use_current_location": "Aktuellen Standort verwenden:",
             "dark_theme": "Dunkles Thema:",
-            "close": "Schließen"
+            "close": "Schließen",
+            "location_enabled": "GPS Aktiv",
+            "location_disabled": "GPS Inaktiv",
+            "refresh_data": "Aktualisieren",
+            "refreshing_data": "Daten werden aktualisiert...",
+            "reset_settings": "Zurücksetzen",
+            "about_app": "Über",
+            "app_status": "App-Status",
+            "current_city": "Stadt",
+            "active_language": "Sprache",
+            "unit_system": "Einheiten",
+            "app_info_unavailable": "App-Info nicht verfügbar",
+            "settings_reset": "Einstellungen auf Standardwerte zurückgesetzt",
+            "confirm_reset": "Alle Einstellungen auf Standardwerte zurücksetzen?",
+            "reset_confirmation": "Zurücksetzen bestätigen",
+            "confirm": "Bestätigen",
+            "cancel": "Abbrechen",
+            "about_title": "Über MeteoApp",
+            "about_description": "Eine moderne Wetter-App, erstellt mit Flet und Python. Erhalten Sie Echtzeit-Wetterdaten, Vorhersagen und interaktive Karten.",
+            "version": "Version",
+            "developer": "Entwickler",
+            "features": "Funktionen",
+            "feature_list": "• Echtzeit-Wetterdaten\n• 5-Tage-Vorhersagen\n• Interaktive Karten\n• Mehrsprachiger Support\n• Dunkle/Helle Themes\n• GPS-Support"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Wetterkarte",
+            "fullscreen": "Vollbild",
+            "close": "Schließen",
+            "loading": "Karte wird geladen...",
+            "error": "Fehler beim Laden der Karte"
         },
         "weekly_forecast_items": {
             "header": "5-Tage-Prognose",
@@ -1077,7 +1722,72 @@ TRANSLATIONS = {
             "precipitation_mm": "Niederschlag (mm)",
             "probability_percent": "Wahrscheinlichkeit (%)",
             "no_data": "Keine Niederschlagsdaten verfügbar",
-            "loading": "Lade Niederschlagsdaten..."
+            "loading": "Lade Niederschlagsdaten...",
+            "time_hours": "Zeit (Stunden)",
+            "total_precipitation": "Gesamt",
+            "max_intensity": "Spitze",
+            "rainy_hours": "Regenstunden",
+            # Niederschlagsintensität Beschreibungen
+            "intensity_light": "Leicht",
+            "intensity_moderate": "Mäßig", 
+            "intensity_heavy": "Stark",
+            "intensity_very_heavy": "Sehr stark",
+            # Zusätzliche Etiketten
+            "next_24h": "Nächste 24 Stunden",
+            "precipitation_type": "Typ",
+            "rain": "Regen",
+            "snow": "Schnee",
+            "mixed": "Gemischt",
+            "probability": "Wahrscheinlichkeit",
+            "when_expected": "Erwartet um",
+            "duration": "Dauer",
+            "peak_time": "Spitze erwartet"
+        },
+        "error_messages": {
+            "network_error": "Netzwerkverbindung fehlgeschlagen",
+            "api_error": "Wetterdienst vorübergehend nicht verfügbar",
+            "location_error": "Standortdienste können nicht zugegriffen werden",
+            "data_error": "Fehler bei der Verarbeitung der Wetterdaten",
+            "retry": "Erneut versuchen",
+            "offline_mode": "Offline-Modus",
+            "cached_data": "Zeige zwischengespeicherte Daten",
+            "last_updated": "Zuletzt aktualisiert",
+            "connection_restored": "Verbindung wiederhergestellt"
+        },
+        "performance": {
+            "loading": "Laden...",
+            "updating": "Aktualisieren...",
+            "optimizing": "Leistung optimieren...",
+            "cache_cleared": "Cache erfolgreich geleert"
+        },
+        "accessibility": {
+            "weather_icon": "Wetterzustandsymbol",
+            "temperature_reading": "Aktuelle Temperatur",
+            "humidity_level": "Luftfeuchtigkeitslevel",
+            "wind_speed": "Windgeschwindigkeit",
+            "pressure_reading": "Luftdruck",
+            "high_contrast": "Hochkontrastmodus",
+            "large_text": "Großer Textmodus",
+            "screen_reader": "Bildschirmlesegerät kompatibel"
+        },
+        "personalization": {
+            "favorites": "Lieblingsstandorte",
+            "add_favorite": "Zu Favoriten hinzufügen",
+            "remove_favorite": "Von Favoriten entfernen",
+            "custom_alerts": "Wetterwarnungen",
+            "alert_temperature": "Temperaturwarnung",
+            "alert_rain": "Regenwarnung",
+            "alert_wind": "Windwarnung",
+            "notification_settings": "Benachrichtigungseinstellungen",
+            "widget_customization": "Widgets anpassen"
+        },
+        "advanced_features": {
+            "radar": "Wetterradar",
+            "satellite": "Satellitenansicht",
+            "historical_data": "Historische Wetterdaten",
+            "comparison": "Standorte vergleichen",
+            "export_data": "Daten exportieren",
+            "share_weather": "Wetter teilen"
         }
     },
     "fr": {
@@ -1107,10 +1817,39 @@ TRANSLATIONS = {
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Paramètres",
             "language": "Langue:",
-            "measurement": "Mesure",
+            "measurement": "Mesure:",
             "use_current_location": "Utiliser la position actuelle:",
             "dark_theme": "Thème sombre:",
-            "close": "Fermer"
+            "close": "Fermer",
+            "location_enabled": "GPS Actif",
+            "location_disabled": "GPS Inactif",
+            "refresh_data": "Actualiser",
+            "refreshing_data": "Actualisation des données...",
+            "reset_settings": "Réinitialiser",
+            "about_app": "À propos",
+            "app_status": "État App",
+            "current_city": "Ville",
+            "active_language": "Langue",
+            "unit_system": "Unités",
+            "app_info_unavailable": "Info app indisponible",
+            "settings_reset": "Paramètres réinitialisés aux valeurs par défaut",
+            "confirm_reset": "Réinitialiser tous les paramètres aux valeurs par défaut?",
+            "reset_confirmation": "Confirmer la Réinitialisation",
+            "confirm": "Confirmer",
+            "cancel": "Annuler",
+            "about_title": "À propos de MeteoApp",
+            "about_description": "Une application météo moderne construite avec Flet et Python. Obtenez des données météo en temps réel, des prévisions et des cartes interactives.",
+            "version": "Version",
+            "developer": "Développeur",
+            "features": "Fonctionnalités",
+            "feature_list": "• Données météo en temps réel\n• Prévisions 5 jours\n• Cartes interactives\n• Support multilingue\n• Thèmes sombre/clair\n• Support GPS"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Carte Météo",
+            "fullscreen": "Plein Écran",
+            "close": "Fermer",
+            "loading": "Chargement de la carte...",
+            "error": "Erreur lors du chargement de la carte"
         },
         "weekly_forecast_items": {
             "header": "Prévisions 5 Jours",
@@ -1192,7 +1931,72 @@ TRANSLATIONS = {
             "precipitation_mm": "Précipitations (mm)",
             "probability_percent": "Probabilité (%)",
             "no_data": "Aucune donnée de précipitations disponible",
-            "loading": "Chargement des données de précipitations..."
+            "loading": "Chargement des données de précipitations...",
+            "time_hours": "Temps (Heures)",
+            "total_precipitation": "Total",
+            "max_intensity": "Pic",
+            "rainy_hours": "Heures pluvieuses",
+            # Descriptions d'intensité des précipitations
+            "intensity_light": "Légère",
+            "intensity_moderate": "Modérée", 
+            "intensity_heavy": "Forte",
+            "intensity_very_heavy": "Très forte",
+            # Étiquettes supplémentaires
+            "next_24h": "Prochaines 24 heures",
+            "precipitation_type": "Type",
+            "rain": "Pluie",
+            "snow": "Neige",
+            "mixed": "Mixte",
+            "probability": "Probabilité",
+            "when_expected": "Attendu à",
+            "duration": "Durée",
+            "peak_time": "Pic attendu"
+        },
+        "error_messages": {
+            "network_error": "Échec de la connexion réseau",
+            "api_error": "Service météorologique temporairement indisponible",
+            "location_error": "Impossible d'accéder aux services de localisation",
+            "data_error": "Erreur lors du traitement des données météorologiques",
+            "retry": "Réessayer",
+            "offline_mode": "Mode hors ligne",
+            "cached_data": "Affichage des données mises en cache",
+            "last_updated": "Dernière mise à jour",
+            "connection_restored": "Connexion restaurée"
+        },
+        "performance": {
+            "loading": "Chargement...",
+            "updating": "Mise à jour...",
+            "optimizing": "Optimisation des performances...",
+            "cache_cleared": "Cache vidé avec succès"
+        },
+        "accessibility": {
+            "weather_icon": "Icône de condition météorologique",
+            "temperature_reading": "Température actuelle",
+            "humidity_level": "Niveau d'humidité",
+            "wind_speed": "Vitesse du vent",
+            "pressure_reading": "Pression atmosphérique",
+            "high_contrast": "Mode haute contraste",
+            "large_text": "Mode texte large",
+            "screen_reader": "Compatible avec les lecteurs d'écran"
+        },
+        "personalization": {
+            "favorites": "Lieux favoris",
+            "add_favorite": "Ajouter aux favoris",
+            "remove_favorite": "Retirer des favoris",
+            "custom_alerts": "Alertes météo",
+            "alert_temperature": "Alerte de température",
+            "alert_rain": "Alerte de pluie",
+            "alert_wind": "Alerte de vent",
+            "notification_settings": "Paramètres de notification",
+            "widget_customization": "Personnaliser les widgets"
+        },
+        "advanced_features": {
+            "radar": "Radar météo",
+            "satellite": "Vue satellite",
+            "historical_data": "Données météorologiques historiques",
+            "comparison": "Comparer les emplacements",
+            "export_data": "Exporter les données",
+            "share_weather": "Partager la météo"
         }
     },
     "pt": {
@@ -1222,10 +2026,17 @@ TRANSLATIONS = {
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Configurações",
             "language": "Idioma:",
-            "measurement": "Medição",
+            "measurement": "Medição:",
             "use_current_location": "Usar localização atual:",
             "dark_theme": "Tema escuro:",
             "close": "Fechar"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Mapa do Tempo",
+            "fullscreen": "Tela Cheia",
+            "close": "Fechar",
+            "loading": "Carregando mapa...",
+            "error": "Erro ao carregar mapa"
         },
         "weekly_forecast_items": {
             "header": "Previsão 5 Dias",
@@ -1307,7 +2118,72 @@ TRANSLATIONS = {
             "precipitation_mm": "Precipitação (mm)",
             "probability_percent": "Probabilidade (%)",
             "no_data": "Dados de precipitação não disponíveis",
-            "loading": "Carregando dados de precipitação..."
+            "loading": "Carregando dados de precipitação...",
+            "time_hours": "Tempo (Horas)",
+            "total_precipitation": "Total",
+            "max_intensity": "Pico",
+            "rainy_hours": "Horas chuvosas",
+            # Descrições de intensidade de precipitação
+            "intensity_light": "Leve",
+            "intensity_moderate": "Moderada", 
+            "intensity_heavy": "Pesada",
+            "intensity_very_heavy": "Muito pesada",
+            # Etiquetas adicionais
+            "next_24h": "Próximas 24 horas",
+            "precipitation_type": "Tipo",
+            "rain": "Chuva",
+            "snow": "Neve",
+            "mixed": "Mista",
+            "probability": "Probabilidade",
+            "when_expected": "Esperado às",
+            "duration": "Duração",
+            "peak_time": "Pico esperado"
+        },
+        "error_messages": {
+            "network_error": "Erro de conexão de rede",
+            "api_error": "Serviço meteorológico temporariamente não disponível",
+            "location_error": "Não é possível acessar os serviços de localização",
+            "data_error": "Erro ao processar os dados meteorológicos",
+            "retry": "Tentar novamente",
+            "offline_mode": "Modo offline",
+            "cached_data": "Exibindo dados em cache",
+            "last_updated": "Última atualização",
+            "connection_restored": "Conexão restaurada"
+        },
+        "performance": {
+            "loading": "Carregando...",
+            "updating": "Atualizando...",
+            "optimizing": "Otimizando desempenho...",
+            "cache_cleared": "Cache limpa com sucesso"
+        },
+        "accessibility": {
+            "weather_icon": "Ícone de condição meteorológica",
+            "temperature_reading": "Temperatura atual",
+            "humidity_level": "Nível de umidade",
+            "wind_speed": "Velocidade do vento",
+            "pressure_reading": "Pressão atmosférica",
+            "high_contrast": "Modo de alto contraste",
+            "large_text": "Modo de texto grande",
+            "screen_reader": "Compatível com leitores de tela"
+        },
+        "personalization": {
+            "favorites": "Locais Favoritos",
+            "add_favorite": "Adicionar aos Favoritos",
+            "remove_favorite": "Remover dos Favoritos",
+            "custom_alerts": "Alertas Meteorológicos",
+            "alert_temperature": "Alerta de Temperatura",
+            "alert_rain": "Alerta de Chuva",
+            "alert_wind": "Alerta de Vento",
+            "notification_settings": "Configurações de Notificação",
+            "widget_customization": "Personalizar Widgets"
+        },
+        "advanced_features": {
+            "radar": "Radar do Tempo",
+            "satellite": "Visão por Satélite",
+            "historical_data": "Dados Meteorológicos Históricos",
+            "comparison": "Comparar Localizações",
+            "export_data": "Exportar Dados",
+            "share_weather": "Compartilhar Clima"
         }
     },
     "ru": {
@@ -1337,10 +2213,17 @@ TRANSLATIONS = {
         "settings_alert_dialog_items": {
             "settings_alert_dialog_title": "Настройки",
             "language": "Язык:",
-            "measurement": "Измерение",
+            "measurement": "Измерение:",
             "use_current_location": "Использовать текущее местоположение:",
             "dark_theme": "Темная тема:",
             "close": "Закрыть"
+        },
+        "maps_alert_dialog_items": {
+            "weather_map_title": "Карта Погоды",
+            "fullscreen": "Полный Экран",
+            "close": "Закрыть",
+            "loading": "Загрузка карты...",
+            "error": "Ошибка загрузки карты"
         },
         "weekly_forecast_items": {
             "header": "Прогноз на 5 дней",
@@ -1421,7 +2304,132 @@ TRANSLATIONS = {
             "precipitation_mm": "Осадки (мм)",
             "probability_percent": "Вероятность (%)",
             "no_data": "Данные об осадках недоступны",
-            "loading": "Загрузка данных об осадках..."
+            "loading": "Загрузка данных об осадках...",
+            "time_hours": "Время (Часы)",
+            "total_precipitation": "Всего",
+            "max_intensity": "Пик",
+            "rainy_hours": "Дождливые часы",
+            # Описания интенсивности осадков
+            "intensity_light": "Легкие",
+            "intensity_moderate": "Умеренные", 
+            "intensity_heavy": "Сильные",
+            "intensity_very_heavy": "Очень сильные",
+            # Дополнительные метки
+            "next_24h": "Следующие 24 часа",
+            "precipitation_type": "Тип",
+            "rain": "Дождь",
+            "snow": "Снег",
+            "mixed": "Смешанные",
+            "probability": "Вероятность",
+            "when_expected": "Ожидается в",
+            "duration": "Продолжительность",
+            "peak_time": "Пик ожидается"
+        },
+        "error_messages": {
+            "network_error": "Ошибка сетевого подключения",
+            "api_error": "Служба погоды временно недоступна",
+            "location_error": "Не удается получить доступ к службам местоположения",
+            "data_error": "Ошибка обработки данных о погоде",
+            "retry": "Повторить",
+            "offline_mode": "Оффлайн режим",
+            "cached_data": "Показать кэшированные данные",
+            "last_updated": "Последнее обновление",
+            "connection_restored": "Соединение восстановлено"
+        },
+        "performance": {
+            "loading": "Загрузка...",
+            "updating": "Обновление...",
+            "optimizing": "Оптимизация производительности...",
+            "cache_cleared": "Кэш успешно очищен"
+        },
+        "accessibility": {
+            "weather_icon": "Иконка состояния погоды",
+            "temperature_reading": "Текущая температура",
+            "humidity_level": "Уровень влажности",
+            "wind_speed": "Скорость ветра",
+            "pressure_reading": "Атмосферное давление",
+            "high_contrast": "Режим высокого контраста",
+            "large_text": "Режим большого текста",
+            "screen_reader": "Совместимо с экранными считывателями"
+        },
+        "personalization": {
+            "favorites": "Избранные места",
+            "add_favorite": "Добавить в Избранное",
+            "remove_favorite": "Удалить из Избранного",
+            "custom_alerts": "Метео-оповещения",
+            "alert_temperature": "Предупреждение о температуре",
+            "alert_rain": "Предупреждение о дожде",
+            "alert_wind": "Предупреждение о ветре",
+            "notification_settings": "Настройки уведомлений",
+            "widget_customization": "Настроить виджеты"
+        },
+        "advanced_features": {
+            "radar": "Метеорадар",
+            "satellite": "Спутниковый вид",
+            "historical_data": "Исторические данные погоды",
+            "comparison": "Сравнить местоположения",
+            "export_data": "Экспорт данных",
+            "share_weather": "Поделиться погодой"
         }
+    }
+}
+
+# Dizionari centralizzati per air_quality_indicators in tutte le lingue
+AIR_QUALITY_INDICATORS = {
+    "humidity": {
+        "excellent": {"en": "Excellent", "it": "Ottima", "fr": "Excellente", "de": "Ausgezeichnet", "es": "Excelente", "pt": "Excelente", "ru": "Отличная", "zh_cn": "优秀", "hi": "उत्कृष्ट", "ja": "優秀", "ar": "ممتاز", "id": "Sangat Baik"},
+        "good": {"en": "Good", "it": "Buona", "fr": "Bonne", "de": "Gut", "es": "Buena", "pt": "Boa", "ru": "Хорошая", "zh_cn": "良好", "hi": "अच्छा", "ja": "良い", "ar": "جيد", "id": "Baik"},
+        "moderate": {"en": "Moderate", "it": "Moderata", "fr": "Modérée", "de": "Mäßig", "es": "Moderada", "pt": "Moderada", "ru": "Умеренная", "zh_cn": "适中", "hi": "मध्यम", "ja": "普通", "ar": "معتدل", "id": "Sedang"},
+        "poor": {"en": "Poor", "it": "Scarsa", "fr": "Médiocre", "de": "Schlecht", "es": "Mala", "pt": "Ruim", "ru": "Плохая", "zh_cn": "差", "hi": "खराब", "ja": "悪い", "ar": "سيء", "id": "Buruk"},
+        "very_poor": {"en": "Very Poor", "it": "Molto scarsa", "fr": "Très médiocre", "de": "Sehr schlecht", "es": "Muy mala", "pt": "Muito ruim", "ru": "Очень плохая", "zh_cn": "很差", "hi": "बहुत खराब", "ja": "とても悪い", "ar": "سيء جداً", "id": "Sangat Buruk"}
+    },
+    "uv_index": {
+        "low": {"en": "Low", "it": "Basso", "fr": "Faible", "de": "Niedrig", "es": "Bajo", "pt": "Baixo", "ru": "Низкий", "zh_cn": "低", "hi": "कम", "ja": "低い", "ar": "منخفض", "id": "Rendah"},
+        "moderate": {"en": "Moderate", "it": "Moderato", "fr": "Modéré", "de": "Mäßig", "es": "Moderado", "pt": "Moderado", "ru": "Умеренный", "zh_cn": "适中", "hi": "मध्यम", "ja": "普通", "ar": "معتدل", "id": "Sedang"},
+        "high": {"en": "High", "it": "Alto", "fr": "Élevé", "de": "Hoch", "es": "Alto", "pt": "Alto", "ru": "Высокий", "zh_cn": "高", "hi": "उच्च", "ja": "高い", "ar": "عالي", "id": "Tinggi"},
+        "very_high": {"en": "Very High", "it": "Molto alto", "fr": "Très élevé", "de": "Sehr hoch", "es": "Muy alto", "pt": "Muito alto", "ru": "Очень высокий", "zh_cn": "很高", "hi": "बहुत उच्च", "ja": "とても高い", "ar": "عالي جداً", "id": "Sangat Tinggi"},
+        "extreme": {"en": "Extreme", "it": "Estremo", "fr": "Extrême", "de": "Extrem", "es": "Extremo", "pt": "Extremo", "ru": "Экстремальный", "zh_cn": "极端", "hi": "चरम", "ja": "極端", "ar": "متطرف", "id": "Ekstrem"}
+    },
+    "pressure": {
+        "normal": {"en": "Normal", "it": "Normale", "fr": "Normale", "de": "Normal", "es": "Normal", "pt": "Normal", "ru": "Нормальное", "zh_cn": "正常", "hi": "सामान्य", "ja": "正常", "ar": "طبيعي", "id": "Normal"},
+        "low": {"en": "Low", "it": "Bassa", "fr": "Basse", "de": "Niedrig", "es": "Baja", "pt": "Baixa", "ru": "Низкое", "zh_cn": "低", "hi": "कम", "ja": "低い", "ar": "منخفض", "id": "Rendah"},
+        "high": {"en": "High", "it": "Alta", "fr": "Élevée", "de": "Hoch", "es": "Alta", "pt": "Alta", "ru": "Высокое", "zh_cn": "高", "hi": "उच्च", "ja": "高い", "ar": "عالي", "id": "Tinggi"},
+        "very_low": {"en": "Very Low", "it": "Molto bassa", "fr": "Très basse", "de": "Sehr niedrig", "es": "Muy baja", "pt": "Muito baixa", "ru": "Очень низкое", "zh_cn": "很低", "hi": "बहुत कम", "ja": "とても低い", "ar": "منخفض جداً", "id": "Sangat Rendah"},
+        "very_high": {"en": "Very High", "it": "Molto alta", "fr": "Très élevée", "de": "Sehr hoch", "es": "Muy alta", "pt": "Muito alta", "ru": "Очень высокое", "zh_cn": "很高", "hi": "बहुत उच्च", "ja": "とても高い", "ar": "عالي جداً", "id": "Sangat Tinggi"}
+    },
+    "visibility": {
+        "excellent": {"en": "Excellent", "it": "Ottima", "fr": "Excellente", "de": "Ausgezeichnet", "es": "Excelente", "pt": "Excelente", "ru": "Отличная", "zh_cn": "优秀", "hi": "उत्कृष्ट", "ja": "優秀", "ar": "ممتاز", "id": "Sangat Baik"},
+        "good": {"en": "Good", "it": "Buona", "fr": "Bonne", "de": "Gut", "es": "Buena", "pt": "Boa", "ru": "Хорошая", "zh_cn": "良好", "hi": "अच्छा", "ja": "良い", "ar": "جيد", "id": "Baik"},
+        "moderate": {"en": "Moderate", "it": "Moderata", "fr": "Modérée", "de": "Mäßig", "es": "Moderada", "pt": "Moderada", "ru": "Умеренная", "zh_cn": "适中", "hi": "मध्यम", "ja": "普通", "ar": "معتدل", "id": "Sedang"},
+        "poor": {"en": "Poor", "it": "Scarsa", "fr": "Médiocre", "de": "Schlecht", "es": "Mala", "pt": "Ruim", "ru": "Плохая", "zh_cn": "差", "hi": "खराब", "ja": "悪い", "ar": "سيء", "id": "Buruk"},
+        "very_poor": {"en": "Very Poor", "it": "Molto scarsa", "fr": "Très médiocre", "de": "Sehr schlecht", "es": "Muy mala", "pt": "Muito ruim", "ru": "Очень плохая", "zh_cn": "很差", "hi": "बहुत खराब", "ja": "とても悪い", "ar": "سيء جداً", "id": "Sangat Buruk"}
+    },
+    "feels_like": {
+        "ideal": {"en": "Ideal", "it": "Ideale", "fr": "Idéale", "de": "Ideal", "es": "Ideal", "pt": "Ideal", "ru": "Идеальная", "zh_cn": "理想", "hi": "आदर्श", "ja": "理想的", "ar": "مثالي", "id": "Ideal"},
+        "comfortable": {"en": "Comfortable", "it": "Confortevole", "fr": "Confortable", "de": "Komfortabel", "es": "Cómoda", "pt": "Confortável", "ru": "Комфортная", "zh_cn": "舒适", "hi": "आरामदायक", "ja": "快適", "ar": "مريح", "id": "Nyaman"},
+        "acceptable": {"en": "Acceptable", "it": "Accettabile", "fr": "Acceptable", "de": "Akzeptabel", "es": "Aceptable", "pt": "Aceitável", "ru": "Приемлемая", "zh_cn": "可接受", "hi": "स्वीकार्य", "ja": "許容範囲", "ar": "مقبول", "id": "Dapat Diterima"},
+        "uncomfortable": {"en": "Uncomfortable", "it": "Scomodo", "fr": "Inconfortable", "de": "Unkomfortabel", "es": "Incómoda", "pt": "Desconfortável", "ru": "Некомфортная", "zh_cn": "不舒适", "hi": "असहज", "ja": "不快", "ar": "غير مريح", "id": "Tidak Nyaman"},
+        "extreme": {"en": "Extreme", "it": "Estremo", "fr": "Extrême", "de": "Extrem", "es": "Extrema", "pt": "Extrema", "ru": "Экстремальная", "zh_cn": "极端", "hi": "चरम", "ja": "極端", "ar": "متطرف", "id": "Ekstrem"}
+    },
+    "wind": {
+        "calm": {"en": "Calm", "it": "Calmo", "fr": "Calme", "de": "Windstill", "es": "Calmado", "pt": "Calmo", "ru": "Штиль", "zh_cn": "无风", "hi": "शांत", "ja": "無風", "ar": "هدوء", "id": "Tenang"},
+        "light": {"en": "Light", "it": "Leggero", "fr": "Léger", "de": "Schwach", "es": "Ligero", "pt": "Leve", "ru": "Слабый", "zh_cn": "微风", "hi": "हल्की", "ja": "軽風", "ar": "خفيف", "id": "Ringan"},
+        "moderate": {"en": "Moderate", "it": "Moderato", "fr": "Modéré", "de": "Mäßig", "es": "Moderado", "pt": "Moderado", "ru": "Умеренный", "zh_cn": "和风", "hi": "मध्यम", "ja": "中風", "ar": "معتدل", "id": "Sedang"},
+        "strong": {"en": "Strong", "it": "Forte", "fr": "Fort", "de": "Stark", "es": "Fuerte", "pt": "Forte", "ru": "Сильный", "zh_cn": "强风", "hi": "तेज़", "ja": "強風", "ar": "قوي", "id": "Kuat"},
+        "very_strong": {"en": "Very Strong", "it": "Molto forte", "fr": "Très fort", "de": "Sehr stark", "es": "Muy fuerte", "pt": "Muito forte", "ru": "Очень сильный", "zh_cn": "大风", "hi": "बहुत तेज़", "ja": "非常に強い", "ar": "قوي جداً", "id": "Sangat Kuat"}
+    },
+    "dew_point": {
+        "dry": {"en": "Dry", "it": "Secco", "fr": "Sec", "de": "Trocken", "es": "Seco", "pt": "Seco", "ru": "Сухо", "zh_cn": "干燥", "hi": "सूखा", "ja": "乾燥", "ar": "جاف", "id": "Kering"},
+        "comfortable": {"en": "Comfortable", "it": "Confortevole", "fr": "Confortable", "de": "Komfortabel", "es": "Cómodo", "pt": "Confortável", "ru": "Комфортно", "zh_cn": "舒适", "hi": "आरामदायक", "ja": "快適", "ar": "مريح", "id": "Nyaman"},
+        "humid": {"en": "Humid", "it": "Umido", "fr": "Humide", "de": "Feucht", "es": "Húmedo", "pt": "Úmido", "ru": "Влажно", "zh_cn": "潮湿", "hi": "नम", "ja": "湿気", "ar": "رطب", "id": "Lembap"},
+        "unpleasant": {"en": "Unpleasant", "it": "Sgradevole", "fr": "Désagréable", "de": "Unangenehm", "es": "Desagradable", "pt": "Desagradável", "ru": "Неприятно", "zh_cn": "不舒服", "hi": "अप्रिय", "ja": "不快", "ar": "غير مريح", "id": "Tidak Menyenangkan"},
+        "oppressive": {"en": "Oppressive", "it": "Oppressivo", "fr": "Oppressant", "de": "Drückend", "es": "Opresivo", "pt": "Opressivo", "ru": "Удушливо", "zh_cn": "闷热", "hi": "दमघोंटू", "ja": "圧迫的", "ar": "خانق", "id": "Menekan"}
+    },
+    "cloud_coverage": {
+        "clear": {"en": "Clear", "it": "Sereno", "fr": "Dégagé", "de": "Klar", "es": "Despejado", "pt": "Limpo", "ru": "Ясно", "zh_cn": "晴朗", "hi": "साफ", "ja": "晴れ", "ar": "صافي", "id": "Cerah"},
+        "partly_cloudy": {"en": "Partly Cloudy", "it": "Poco nuvoloso", "fr": "Partiellement nuageux", "de": "Teilweise bewölkt", "es": "Parcialmente nublado", "pt": "Parcialmente nublado", "ru": "Переменная облачность", "zh_cn": "部分多云", "hi": "आंशिक रूप से बादल", "ja": "一部曇り", "ar": "غائم جزئياً", "id": "Sebagian Berawan"},
+        "partly_cloudy_moderate": {"en": "Partly Cloudy", "it": "Parzialmente nuvoloso", "fr": "Partiellement nuageux", "de": "Mäßig bewölkt", "es": "Parcialmente nublado", "pt": "Parcialmente nublado", "ru": "Умеренная облачность", "zh_cn": "部分多云", "hi": "मध्यम बादल", "ja": "部分的に曇り", "ar": "غائم معتدل", "id": "Berawan Sedang"},
+        "mostly_cloudy": {"en": "Mostly Cloudy", "it": "Molto nuvoloso", "fr": "Très nuageux", "de": "Stark bewölkt", "es": "Muy nublado", "pt": "Muito nublado", "ru": "Пасмурно", "zh_cn": "多云", "hi": "अधिकतर बादल", "ja": "ほぼ曇り", "ar": "غائم في الغالب", "id": "Kebanyakan Berawan"},
+        "overcast": {"en": "Overcast", "it": "Coperto", "fr": "Couvert", "de": "Bedeckt", "es": "Nublado", "pt": "Encoberto", "ru": "Сплошная облачность", "zh_cn": "阴天", "hi": "बादलों से ढका", "ja": "曇天", "ar": "غائم تماماً", "id": "Mendung"}
     }
 }

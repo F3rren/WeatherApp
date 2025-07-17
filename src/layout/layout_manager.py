@@ -1,6 +1,6 @@
 """
 Layout Manager per MeteoApp.
-Centralizza la gestione del layout dell'applicazione.
+Centralizza la gestione del layout dell'applicazione con supporto responsive migliorato.
 """
 
 import flet as ft
@@ -9,7 +9,6 @@ from typing import Dict
 
 from layout.layout_builder import LayoutBuilder
 from utils.config import LIGHT_THEME, DARK_THEME
-from components.responsive_text_handler import ResponsiveTextHandler
 
 class LayoutManager:
     """
@@ -19,7 +18,7 @@ class LayoutManager:
     
     def __init__(self, page: ft.Page):
         """
-        Inizializza il gestore del layout.
+        Inizializza il gestore del layout con supporto responsive.
         
         Args:
             page: Flet page object
@@ -28,34 +27,15 @@ class LayoutManager:
         self.containers = {}
         self.layout = None
         
-        # Initialize ResponsiveTextHandler
-        self.text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'title': 22,        # Titoli principali
-                'subtitle': 18,     # Sottotitoli
-                'body': 14,         # Testo normale
-                'small': 12,        # Testo piccolo
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
+        # Inizializza helper responsive
+        try:
+            from utils.responsive_utils import ResponsivePageHelper
+            self.responsive_helper = ResponsivePageHelper(page)
+            logging.info("Responsive helper initialized successfully")
+        except ImportError:
+            logging.warning("ResponsivePageHelper not available, using default layout")
+            self.responsive_helper = None
         
-        # Dictionary to track text controls
-        self.text_controls = {}
-        
-        # Register as observer for responsive updates
-        self.text_handler.add_observer(self.update_text_controls)
-    
-    def update_text_controls(self):
-        """Update text sizes for all registered controls"""
-        for control, size_category in self.text_controls.items():
-            if hasattr(control, 'size'):
-                control.size = self.text_handler.get_size(size_category)
-        
-        # Request page update
-        if self.page:
-            self.page.update()
-    
     def create_containers(self, sidebar_content, info_content, hourly_content, chart_content,
         precipitation_chart_content, air_pollution_content, animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
         """
@@ -114,7 +94,7 @@ class LayoutManager:
         )
 
         # Informazioni inquinamento (temporaneamente vuoto per ora)
-        self.containers['air_pollution_chart'] = LayoutBuilder.build_content_container(
+        self.containers['air_pollution'] = LayoutBuilder.build_content_container(
             air_pollution_content,
             #{"xs": 12},
             animation_duration,
@@ -190,7 +170,7 @@ class LayoutManager:
             self.containers['hourly'],
             self.containers['chart'],
             self.containers['precipitation_chart'],
-            self.containers['air_pollution_chart']
+            self.containers['air_pollution']
         )
         return self.layout
     

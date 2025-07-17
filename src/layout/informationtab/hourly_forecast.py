@@ -1,35 +1,41 @@
 import flet as ft
 from datetime import datetime
-from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
-from components.responsive_text_handler import ResponsiveTextHandler
+
 from services.api_service import ApiService
 import logging
 import asyncio
 import traceback
 
+from services.theme_handler import ThemeHandler
+
 class HourlyForecastDisplay(ft.Container):
     """
     Manages the display of the entire hourly forecast section.
     """
-    def __init__(self, city: str, page: ft.Page, **kwargs):
+    def __init__(self, 
+                 city: str, 
+                 page: ft.Page, 
+                 language: str = None, 
+                 unit: int = None, 
+                 theme_handler: ThemeHandler = None, 
+                 **kwargs):
         super().__init__(**kwargs)
         self._city = city
         self.page = page
         self._api_service = ApiService()
         self._hourly_data_list = []
-        
+        self._language = language
+        self._unit_system = unit
+
+        # Theme handler centralizzato
+        self.theme_handler = theme_handler if theme_handler else ThemeHandler(self.page)
+
         self._state_manager = None
-        self._language = DEFAULT_LANGUAGE
-        self._unit_system = DEFAULT_UNIT_SYSTEM
-        self._text_color = LIGHT_THEME["TEXT"]
+        self._text_color = self.theme_handler.get_text_color()
 
-        self.expand = True 
+        self.expand = True
 
-        self.text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={'icon': 60, 'time': 20, 'temp': 25},
-            breakpoints=[600, 900, 1200, 1600]
-        )
+
 
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
@@ -56,18 +62,24 @@ class HourlyForecastDisplay(ft.Container):
                 data_changed = language_changed or unit_changed
 
             if not self._hourly_data_list or data_changed:
-                weather_data = await asyncio.to_thread(
+                weather_response = await asyncio.to_thread(
                     self._api_service.get_weather_data,
                     city=self._city, language=self._language, unit=self._unit_system
                 )
-                if weather_data:
+                if weather_response and weather_response.get('success', False):
+                    weather_data = weather_response.get('data', {})
                     # Get exactly 24 hours of data and then limit to 24 in the display
                     all_hourly_data = self._api_service.get_hourly_forecast_data(weather_data, hours=40)  # Get more data
                     self._hourly_data_list = all_hourly_data[:24]  # But use only first 24 hours
+                else:
+                    # Handle API error
+                    error_info = weather_response.get('error', {}) if weather_response else {}
+                    error_message = error_info.get('message', 'Failed to fetch weather data')
+                    logging.warning(f"HourlyForecast: {error_message}")
+                    self._hourly_data_list = []
 
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            theme = DARK_THEME if is_dark else LIGHT_THEME
-            self._text_color = theme.get("TEXT", ft.Colors.BLACK)
+            
+            self._text_color = self.theme_handler.get_text_color()
 
             self.content = self.build()
             try:
@@ -116,18 +128,20 @@ class HourlyForecastDisplay(ft.Container):
             ) or header_text
 
         # Professional header with enhanced typography and subtle accent
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        is_dark = False
+        if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         header = ft.Container(
             content=ft.Row([
                 ft.Icon(
                     ft.Icons.TIMELINE,
                     color=ft.Colors.GREEN_400 if not is_dark else ft.Colors.GREEN_300,
-                    size=24
+                    size=25
                 ),
-                ft.Container(width=12),  # Spacer
+                ft.Container(width=5),  # Spacer
                 ft.Text(
                     header_text,
-                    size=self.text_handler.get_size('axis_title') + 2,
+                    size=20,
                     weight=ft.FontWeight.BOLD,
                     color=self._text_color,
                     font_family="system-ui",
@@ -345,7 +359,9 @@ class HourlyForecastDisplay(ft.Container):
                 )
                 
                 # Optimized compact container to fit more hours without scrolling
-                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+                is_dark = False
+                if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+                    is_dark = self.page.theme_mode == ft.ThemeMode.DARK
                 
                 # Determine if this is current hour for special styling
                 current_hour = datetime.now().strftime("%H")

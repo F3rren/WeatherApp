@@ -3,8 +3,10 @@ import logging
 import traceback
 from services.api_service import ApiService
 from services.translation_service import TranslationService
-from utils.config import DEFAULT_LANGUAGE, LIGHT_THEME, DARK_THEME
-from components.responsive_text_handler import ResponsiveTextHandler
+from utils.config import DEFAULT_LANGUAGE
+from services.theme_handler import ThemeHandler
+
+from utils.translations_data import TRANSLATIONS
 
 class AirPollutionDisplay(ft.Container):
     """
@@ -13,35 +15,29 @@ class AirPollutionDisplay(ft.Container):
     Manages its own UI construction, updates, and state observers.
     """
     
-    def __init__(self, page: ft.Page, lat: float = None, lon: float = None, **kwargs):
+    def __init__(self, page: ft.Page, lat: float = None, lon: float = None, theme_handler: ThemeHandler = None, **kwargs):
         super().__init__(**kwargs)
         self.page = page
+        self.theme_handler = theme_handler or ThemeHandler(self.page)
         self._lat = lat
         self._lon = lon
-        
+
         self._api_service = ApiService()
         self._state_manager = None
         self._current_language = DEFAULT_LANGUAGE
-        self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+        self._current_text_color = self.theme_handler.get_text_color()
         self._pollution_data = {}
 
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'title': 20, 'label': 15, 'value': 15, 
-                'subtitle': 15, 'aqi_value': 16, 'axis_title': 14
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
-        
+
+
         if 'expand' not in kwargs:
             self.expand = True
         if 'padding' not in kwargs:
             self.padding = ft.padding.all(10)
-        
+
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
-        
+
         self.content = self.build()
 
     async def update(self):
@@ -63,9 +59,8 @@ class AirPollutionDisplay(ft.Container):
                 else:
                     self._pollution_data = {}
 
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            theme = DARK_THEME if is_dark else LIGHT_THEME
-            self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
+            # Safe theme detection centralizzata
+            self._current_text_color = self.theme_handler.get_text_color()
 
             self.content = self.build()
             # Only update if this control is already in the page
@@ -87,7 +82,7 @@ class AirPollutionDisplay(ft.Container):
                     content=ft.Text(
                         loading_text,
                         color=self._current_text_color,
-                        size=self._text_handler.get_size('label')
+                        size=14
                     ),
                     alignment=ft.alignment.center,
                     padding=ft.padding.all(20)
@@ -125,23 +120,51 @@ class AirPollutionDisplay(ft.Container):
         if self.page:
             await self.update_ui()
 
+    def _get_theme_mode(self) -> bool:
+        """
+        Safely get the current theme mode (dark or light).
+        
+        Returns:
+            bool: True if dark theme is active, False for light theme
+        """
+        is_dark = False
+        try:
+            if self.page and hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            elif self._state_manager:
+                # Fallback to state manager if page theme_mode is not available
+                is_dark = self._state_manager.get_state('using_theme') or False
+            logging.debug(f"AirConditionInfo: Theme mode is {'dark' if is_dark else 'light'}")
+        except Exception as e:
+            logging.warning(f"AirConditionInfo: Error determining theme mode: {e}")
+            # Default to light theme if there's an error
+        return is_dark
+
     def _build_header(self):
         """Builds a modern header for air pollution section."""
-        header_text = TranslationService.translate_from_dict("air_pollution_items", "air_quality_index", self._current_language)
+        # Get translation service
+        translation_service = None
+        if self.page and hasattr(self.page, 'session'):
+            translation_service = self.page.session.get('translation_service')
+
+        header_text = "Inquinamento dell'aria"
+        if translation_service:
+            header_text = TranslationService.translate_from_dict("air_pollution_items", "air_quality_index", self._current_language)
         
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Get theme mode using helper method
+        is_dark = self._get_theme_mode()
         
         return ft.Container(
             content=ft.Row([
                 ft.Icon(
                     ft.Icons.AIR_OUTLINED,
                     color=ft.Colors.GREEN_400 if not is_dark else ft.Colors.GREEN_300,
-                    size=24
+                    size=25
                 ),
-                ft.Container(width=12),  # Spacer
+                ft.Container(width=5),  # Spacer
                 ft.Text(
                     header_text,
-                    size=self._text_handler.get_size('axis_title') + 2,
+                    size=20,
                     weight=ft.FontWeight.BOLD,
                     color=self._current_text_color
                 ),
@@ -154,11 +177,11 @@ class AirPollutionDisplay(ft.Container):
         header_text = TranslationService.translate_from_dict("air_pollution_items", "air_quality_index", self._current_language)
         
         # Get AQI description and color
-        from utils.translations_data import TRANSLATIONS
         lang_code = TranslationService.normalize_lang_code(self._current_language)
         aqi_descriptions = TRANSLATIONS.get(lang_code, {}).get("air_pollution_items", {}).get("aqi_descriptions")
+        
         if not aqi_descriptions:
-            aqi_descriptions = TRANSLATIONS.get("en", {}).get("air_pollution_items", {}).get("aqi_descriptions", ["N/A"] * 6)
+            aqi_descriptions = TRANSLATIONS.get(self._current_language, {}).get("air_pollution_items", {}).get("aqi_descriptions", ["N/A"] * 6)
         aqi_idx = min(max(aqi, 0), 5)
         aqi_desc = aqi_descriptions[aqi_idx] if aqi_idx < len(aqi_descriptions) else "N/A"
         
@@ -167,23 +190,28 @@ class AirPollutionDisplay(ft.Container):
         aqi_color_idx = max(0, min(aqi, len(aqi_colors) - 1))
         aqi_color = aqi_colors[aqi_color_idx]
         
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         
         return ft.Container(
             content=ft.Row([
-                ft.Icon(
-                    ft.Icons.AIR_OUTLINED,
-                    color=ft.Colors.GREEN_400 if not is_dark else ft.Colors.GREEN_300,
-                    size=24
-                ),
-                ft.Container(width=12),  # Spacer
-                ft.Text(
-                    header_text,
-                    size=self._text_handler.get_size('axis_title') + 2,
-                    weight=ft.FontWeight.BOLD,
-                    color=self._current_text_color
-                ),
-                ft.Container(
+                ft.Row([
+                    ft.Icon(
+                        ft.Icons.AIR_OUTLINED,
+                        color=ft.Colors.GREEN_400 if not is_dark else ft.Colors.GREEN_300,
+                        size=24
+                    ),
+                    ft.Container(width=12),
+                    ft.Text(
+                        header_text,
+                        size=20,
+                        weight=ft.FontWeight.BOLD,
+                        color=self._current_text_color
+                    ),
+                    ft.Container(
                     content=ft.Text(
                         aqi_desc,
                         size=12,
@@ -200,6 +228,7 @@ class AirPollutionDisplay(ft.Container):
                         offset=ft.Offset(0, 2)
                     )
                 )
+                ], alignment=ft.MainAxisAlignment.START, expand=True),
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
             padding=ft.padding.only(left=20, right=20, top=20, bottom=10)
         )
@@ -270,30 +299,126 @@ class AirPollutionDisplay(ft.Container):
             )
         )
         
-        # Quality indicator based on value ranges (simplified)
+        # Quality indicator based on value ranges
         def get_quality_indicator(val, pollutant_key):
-            if pollutant_key in ["pm2_5", "pm10"]:
-                if val < 12:
-                    return ("Good", ft.Colors.GREEN_400)
-                elif val < 35:
-                    return ("Moderate", ft.Colors.ORANGE_400)
+            lang_code = TranslationService.normalize_lang_code(self._current_language)
+            aqi_descriptions = TRANSLATIONS.get(lang_code, {}).get("air_pollution_items", {}).get("aqi_descriptions")
+            #CO calculation ranges
+            if pollutant_key == "co":
+                if val < 0 or val is None:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[0], self._current_language), ft.Colors.GREY_400)
+                if val >= 0 and val < 4400:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[1], self._current_language), ft.Colors.GREEN_400)
+                elif val >= 4400 and val < 9400:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[2], self._current_language), ft.Colors.YELLOW_400)
+                elif val >= 9400 and val < 12400:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[3], self._current_language), ft.Colors.ORANGE_400)
+                if val >= 12400 and val < 15400:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[4], self._current_language), ft.Colors.RED_400)
                 else:
-                    return ("Poor", ft.Colors.RED_400)
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[5], self._current_language), ft.Colors.PURPLE_400)
+            #SO2 calculation ranges
+            elif pollutant_key == "so2":
+                if val < 0 or val is None:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[0], self._current_language), ft.Colors.GREY_400)
+                if val >= 0 and val < 20:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[1], self._current_language), ft.Colors.GREEN_400)
+                elif val >= 20 and val < 80:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[2], self._current_language), ft.Colors.YELLOW_400)
+                elif val >= 80 and val < 250:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[3], self._current_language), ft.Colors.ORANGE_400)
+                if val >= 250 and val < 350:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[4], self._current_language), ft.Colors.RED_400)
+                else:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[5], self._current_language), ft.Colors.PURPLE_400)                
+            #NO calculation ranges
+            elif pollutant_key == "no":
+                #if no data, return "N/A"
+                if val < 0 or val is None:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[0], self._current_language), ft.Colors.GREY_400)
+                if val >= 0 and val < 40:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[1], self._current_language), ft.Colors.GREEN_400)
+                elif val >= 40 and val < 70:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[2], self._current_language), ft.Colors.YELLOW_400)
+                elif val >= 70 and val < 150:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[3], self._current_language), ft.Colors.ORANGE_400)
+                if val >= 150 and val < 200:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[4], self._current_language), ft.Colors.RED_400)
+                else:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[5], self._current_language), ft.Colors.PURPLE_400)
+            #NO2 calculation ranges
+            elif pollutant_key == "no2":
+                #if no data, return "N/A"
+                if val < 0 or val is None:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[0], self._current_language), ft.Colors.GREY_400)
+                if val >= 0 and val < 40:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[1], self._current_language), ft.Colors.GREEN_400)
+                elif val >= 40 and val < 70:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[2], self._current_language), ft.Colors.YELLOW_400)
+                elif val >= 70 and val < 150:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[3], self._current_language), ft.Colors.ORANGE_400)
+                if val >= 150 and val < 200:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[4], self._current_language), ft.Colors.RED_400)
+                else:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[5], self._current_language), ft.Colors.PURPLE_400)
+            #PM2_5 calculation ranges
+            elif pollutant_key  == "pm2_5":
+                if val < 0 or val is None:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[0], self._current_language), ft.Colors.GREY_400)
+                if val >= 0 and val < 10:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[1], self._current_language), ft.Colors.GREEN_400)
+                elif val >= 10 and val < 25:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[2], self._current_language), ft.Colors.YELLOW_400)
+                elif val >= 25 and val < 50:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[3], self._current_language), ft.Colors.ORANGE_400)
+                if val >= 50 and val < 75:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[4], self._current_language), ft.Colors.RED_400)
+                else:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[5], self._current_language), ft.Colors.PURPLE_400)
+            #PM10 calculation ranges
+            if pollutant_key == "pm10":
+                if val < 0 or val is None:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[0], self._current_language), ft.Colors.GREY_400)
+                if val >= 0 and val < 20:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[1], self._current_language), ft.Colors.GREEN_400)
+                elif val >= 20 and val < 50:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[2], self._current_language), ft.Colors.YELLOW_400)
+                elif val >= 50 and val < 100:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[3], self._current_language), ft.Colors.ORANGE_400)
+                if val >= 100 and val < 200:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[4], self._current_language), ft.Colors.RED_400)
+                else:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[5], self._current_language), ft.Colors.PURPLE_400)
+            #O3 calculation ranges
             elif pollutant_key == "o3":
-                if val < 100:
-                    return ("Good", ft.Colors.GREEN_400)
-                elif val < 160:
-                    return ("Moderate", ft.Colors.ORANGE_400)
+                if val < 0 or val is None:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[0], self._current_language), ft.Colors.GREY_400)
+                if val >= 0 and val < 60:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[1], self._current_language), ft.Colors.GREEN_400)
+                elif val >= 60 and val < 100:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[2], self._current_language), ft.Colors.YELLOW_400)
+                elif val >= 100 and val < 140:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[3], self._current_language), ft.Colors.ORANGE_400)
+                if val >= 140 and val < 180:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[4], self._current_language), ft.Colors.RED_400)
                 else:
-                    return ("Poor", ft.Colors.RED_400)
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[5], self._current_language), ft.Colors.PURPLE_400)
+            #NH3 calculation ranges
+            elif pollutant_key == "nh3":
+                if val < 0 or val is None:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[0], self._current_language), ft.Colors.GREY_400)
+                if val >= 0 and val < 10:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[1], self._current_language), ft.Colors.GREEN_400)
+                elif val >= 10 and val < 20:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[2], self._current_language), ft.Colors.YELLOW_400)
+                elif val >= 20 and val < 50:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[3], self._current_language), ft.Colors.ORANGE_400)
+                if val >= 50 and val < 100:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[4], self._current_language), ft.Colors.RED_400)
+                else:
+                    return (TranslationService.translate_from_dict("air_pollution_items", aqi_descriptions[5], self._current_language), ft.Colors.PURPLE_400)
             else:
-                # Generic ranges for other pollutants
-                if val < 50:
-                    return ("Good", ft.Colors.GREEN_400)
-                elif val < 100:
-                    return ("Moderate", ft.Colors.ORANGE_400)
-                else:
-                    return ("Poor", ft.Colors.RED_400)
+                return ("", ft.Colors.TRANSPARENT)
         
         quality_text, quality_color = get_quality_indicator(value, symbol.lower().replace(".", "_"))
         
@@ -349,7 +474,11 @@ class AirPollutionDisplay(ft.Container):
         ], spacing=4)
         
         # Card container
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         
         return ft.Container(
             content=card_content,
@@ -384,52 +513,33 @@ class AirPollutionDisplay(ft.Container):
         # Take only first 8 cards to ensure 2x4 grid
         cards = cards[:8]
         
-        # Determine grid layout based on screen size
+        # Build grid layout with 2 columns (4 rows x 2 columns)
         grid_rows = []
         
-        # Check if small screen (less than 600px)
-        is_small_screen = (self.page.window.width < 600) if (self.page.window.width and self.page.window.width > 0) else False
-        
-        if is_small_screen:
-            # Single column layout for small screens (8 rows x 1 column)
-            for card in cards:
-                row = ft.Row(
-                    controls=[
-                        ft.Container(
-                            content=card,
-                            expand=True,
-                            alignment=ft.alignment.center
-                        )
-                    ],
-                    alignment=ft.MainAxisAlignment.CENTER
-                )
-                grid_rows.append(row)
-        else:
-            # Two-column layout for larger screens (4 rows x 2 columns)
-            for i in range(0, len(cards), 2):
-                row_cards = cards[i:i+2]
-                
-                # Create containers with equal width
-                row_controls = []
-                for card in row_cards:
-                    row_controls.append(
-                        ft.Container(
-                            content=card,
-                            expand=True,
-                            alignment=ft.alignment.center
-                        )
+        for i in range(0, len(cards), 2):
+            row_cards = cards[i:i+2]
+            
+            # Create containers with equal width
+            row_controls = []
+            for card in row_cards:
+                row_controls.append(
+                    ft.Container(
+                        content=card,
+                        expand=True,
+                        alignment=ft.alignment.center
                     )
-                
-                # Ensure we always have 2 cards per row (add empty container if needed)
-                while len(row_controls) < 2:
-                    row_controls.append(ft.Container(expand=True))
-                
-                row = ft.Row(
-                    controls=row_controls,
-                    alignment=ft.MainAxisAlignment.SPACE_EVENLY,
-                    spacing=16 if (self.page.window.width and self.page.window.width > 900) else 12
                 )
-                grid_rows.append(row)
+            
+            # Ensure we always have 2 cards per row (add empty container if needed)
+            while len(row_controls) < 2:
+                row_controls.append(ft.Container(expand=True))
+            
+            row = ft.Row(
+                controls=row_controls,
+                alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                spacing=16
+            )
+            grid_rows.append(row)
         
         return ft.Container(
             content=ft.Column(
@@ -438,7 +548,7 @@ class AirPollutionDisplay(ft.Container):
                 alignment=ft.MainAxisAlignment.START
             ),
             padding=ft.padding.symmetric(
-                horizontal=20 if (self.page.window.width and self.page.window.width > 600) else 15,
+                horizontal=20,
                 vertical=10
             )
         )

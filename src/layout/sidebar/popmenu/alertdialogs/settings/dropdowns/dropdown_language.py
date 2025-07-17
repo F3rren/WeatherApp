@@ -6,12 +6,11 @@ from services.translation_service import TranslationService
 
 class DropdownLanguage:
     
-    def __init__(self, page: ft.Page, state_manager, text_color: dict, language: str, text_handler_get_size):
+    def __init__(self, page: ft.Page, state_manager, text_color: dict, language: str):
         self.page = page
         self.state_manager = state_manager
         self.text_color = text_color
         self.current_language_display = language # For potential future use if this component had its own translatable text
-        self.text_handler_get_size = text_handler_get_size
         
         self.selected_language = None # This will be set from state_manager or during selection
         self.dropdown = None
@@ -41,33 +40,48 @@ class DropdownLanguage:
             new_language_code = event_data.get("language", None)
         if new_language_code:
             self.current_language_display = new_language_code
-            self.update_text_sizes(self.text_handler_get_size, self.text_color, new_language_code)
             self.notify_child_observers(new_language_code)
 
-    def update_text_sizes(self, text_handler_get_size, text_color: dict, language: str):
+    def update_text_sizes(self, text_color: dict, language: str):
         """Update text sizes and colors for the dropdown."""
-        self.text_handler_get_size = text_handler_get_size
         self.text_color = text_color
         self.current_language_display = language # Update if this component had its own text
 
         if self.dropdown:
             translated_hint_text = TranslationService.translate_from_dict("settings_alert_dialog_items", "language", self.current_language_display)
             self.dropdown.hint_text = translated_hint_text
-            self.dropdown.text_size = self.text_color['dropdown_text']
-            self.dropdown.color = self.text_color["TEXT"]
-            self.dropdown.border_color = self.text_color["BORDER"]
-            self.dropdown.focused_border_color = self.text_color["ACCENT"]
-            self.dropdown.bgcolor = self.text_color["CARD_BACKGROUND"]
+            
+            # Safe access to text_color properties
+            if isinstance(self.text_color, dict) and 'dropdown_text' in self.text_color:
+                self.dropdown.text_size = self.text_color['dropdown_text']
+            else:
+                self.dropdown.text_size = 14  # Default size
+                
+            if isinstance(self.text_color, dict):
+                self.dropdown.color = self.text_color.get("TEXT", ft.Colors.BLACK)
+                self.dropdown.border_color = self.text_color.get("BORDER", ft.Colors.GREY)
+                self.dropdown.focused_border_color = self.text_color.get("ACCENT", ft.Colors.BLUE)
+                self.dropdown.bgcolor = self.text_color.get("CARD_BACKGROUND", ft.Colors.WHITE)
+            else:
+                # Fallback if text_color is not a dict
+                self.dropdown.color = ft.Colors.BLACK
+                self.dropdown.border_color = ft.Colors.GREY
+                self.dropdown.focused_border_color = ft.Colors.BLUE
+                self.dropdown.bgcolor = ft.Colors.WHITE
 
             if self.dropdown.hint_style:
-                self.dropdown.hint_style.color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color["TEXT"]))
+                secondary_color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color.get("TEXT", ft.Colors.BLACK))) if isinstance(self.text_color, dict) else ft.Colors.GREY
+                self.dropdown.hint_style.color = secondary_color
             else:
-                self.dropdown.hint_style = ft.TextStyle(color=self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color["TEXT"])))
+                secondary_color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color.get("TEXT", ft.Colors.BLACK))) if isinstance(self.text_color, dict) else ft.Colors.GREY
+                self.dropdown.hint_style = ft.TextStyle(color=secondary_color)
             
             if self.dropdown.label_style: # Though label is not used in current createDropdown
-                self.dropdown.label_style.color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color["TEXT"]))
+                secondary_color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color.get("TEXT", ft.Colors.BLACK))) if isinstance(self.text_color, dict) else ft.Colors.GREY
+                self.dropdown.label_style.color = secondary_color
             else: # Though label is not used
-                self.dropdown.label_style = ft.TextStyle(color=self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color["TEXT"])))
+                secondary_color = self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color.get("TEXT", ft.Colors.BLACK))) if isinstance(self.text_color, dict) else ft.Colors.GREY
+                self.dropdown.label_style = ft.TextStyle(color=secondary_color)
 
             # Options might need re-styling if their text color is static; however, ft.Text defaults to inheriting.
             # If options had complex styling that doesn't inherit, they'd need updating here.
@@ -164,11 +178,10 @@ class DropdownLanguage:
         # Ottieni il valore corrente della lingua dallo state manager, se disponibile
         current_language_code = DEFAULT_LANGUAGE  # Valore predefinito
         if self.state_manager:
-            current_language_code = self.state_manager.get_state('language') or 'en'
+            current_language_code = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
             self.selected_language = current_language_code
             logging.info(f'Lingua corrente dallo state manager: {current_language_code}')
 
-        # Use the passed-in text_color (theme) and text_handler_get_size
         
         translated_hint_text = TranslationService.translate_from_dict("unit_items", "language", self.current_language_display)
         self.dropdown = ft.Dropdown(
@@ -184,7 +197,6 @@ class DropdownLanguage:
             bgcolor=self.text_color["CARD_BACKGROUND"],
             color=self.text_color["TEXT"],
             content_padding=ft.padding.symmetric(horizontal=10, vertical=8),
-            text_size=self.text_handler_get_size('dropdown_text'),
             hint_style=ft.TextStyle(color=self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color["TEXT"])))
         )
         

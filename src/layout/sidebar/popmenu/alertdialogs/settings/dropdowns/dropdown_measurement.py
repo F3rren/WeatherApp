@@ -5,21 +5,19 @@ from services.translation_service import TranslationService
 
 class DropdownMeasurement:
 
-    def __init__(self, page: ft.Page, state_manager, text_color: dict, language: str, text_handler_get_size):
+    def __init__(self, page: ft.Page, state_manager, text_color: dict, language: str):
         self.page = page
         self.state_manager = state_manager
         self.text_color = text_color
         self.current_language_display = language # Used for translating options
-        self.text_handler_get_size = text_handler_get_size
         
         self.selected_unit = None # This will be set from state_manager or during selection
         self.dropdown = None
         self.units = UNIT_SYSTEMS
         self.unit_name_keys = {code: details["name_key"] for code, details in UNIT_SYSTEMS.items()}
 
-    def update_text_sizes(self, text_handler_get_size, text_color: dict, language: str):
+    def update_text_sizes(self, text_color: dict, language: str):
         """Update text sizes, colors, and translated text for the dropdown."""
-        self.text_handler_get_size = text_handler_get_size
         self.text_color = text_color
         self.current_language_display = language # Update current language for translations
 
@@ -29,7 +27,6 @@ class DropdownMeasurement:
             current_unit_code = self.dropdown.value
             
             # Update dropdown styling
-            self.dropdown.text_size = self.text_handler_get_size('dropdown_text')
             self.dropdown.color = self.text_color["TEXT"]
             self.dropdown.border_color = self.text_color["BORDER"]
             self.dropdown.focused_border_color = self.text_color["ACCENT"]
@@ -128,7 +125,6 @@ class DropdownMeasurement:
             bgcolor=self.text_color["CARD_BACKGROUND"],
             color=self.text_color["TEXT"],
             content_padding=ft.padding.symmetric(horizontal=10, vertical=8),
-            text_size=self.text_handler_get_size('dropdown_text'),
             hint_style=ft.TextStyle(color=self.text_color.get("SECONDARY_TEXT", ft.Colors.with_opacity(0.5, self.text_color["TEXT"])))
         )
         return self.dropdown
@@ -238,11 +234,11 @@ class DropdownMeasurement:
                     logging.error(f"Error replacing dropdown: {e}")
                     # If failed, restore old dropdown and try simpler update
                     self.dropdown = old_dropdown
-                    self.update_text_sizes(self.text_handler_get_size, self.text_color, new_language_code)
+                    
             else:
                 # If no parent or controls, fallback to simpler update
                 self.dropdown = old_dropdown
-                self.update_text_sizes(self.text_handler_get_size, self.text_color, new_language_code)
+                
         else:
             # If dropdown doesn't exist yet, just update settings
-            self.update_text_sizes(self.text_handler_get_size, self.text_color, new_language_code)
+            pass

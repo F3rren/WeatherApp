@@ -84,15 +84,15 @@ class LocationToggleService:
         self.geolocation_service.set_location_callback(None)
         logging.info("Tracking della posizione disattivato")
 
-    async def handle_location_change(self, lat_lon: tuple) -> None:
+    async def handle_location_change(self, lat: float, lon: float) -> None:
         """
         Gestisce il cambio di posizione.
         
         Args:
-            lat_lon: Tupla (latitudine, longitudine)
+            lat: Latitudine
+            lon: Longitudine
         """
         try:
-            lat, lon = lat_lon
             await self.state_manager.update_state({
                 "current_lat": lat,
                 "current_lon": lon
@@ -116,12 +116,7 @@ class LocationToggleService:
         language = self.state_manager.get_state("language")
         unit = self.state_manager.get_state("unit")
         
-        await self.update_weather_callback(
-            lat=lat,
-            lon=lon,
-            language=language,
-            unit=unit
-        )
+        await self.update_weather_callback(lat, lon, language, unit)
         logging.info(f"Meteo aggiornato con coordinate: {lat}, {lon}")
 
     async def initialize_tracking(self) -> None:
@@ -129,20 +124,35 @@ class LocationToggleService:
         Inizializza il tracking della posizione all'avvio dell'applicazione.
         """
         try:
-            success = await self.geolocation_service.start_tracking(
-                page=self.page,
-                on_location_change=None
-            )
+            # Add timeout to prevent blocking the app startup
+            import asyncio
             
-            if success:
-                lat, lon = await self.geolocation_service.get_current_location(self.page)
-                if lat and lon:
-                    await self.state_manager.update_state({
-                        "current_lat": lat,
-                        "current_lon": lon
-                    })
-            else:
-                logging.warning("Failed to start location tracking")
+            async def _init_with_timeout():
+                success = await self.geolocation_service.start_tracking(
+                    page=self.page,
+                    on_location_change=None
+                )
+                
+                if success:
+                    lat, lon = await self.geolocation_service.get_current_location(self.page)
+                    if lat and lon:
+                        await self.state_manager.update_state({
+                            "current_lat": lat,
+                            "current_lon": lon
+                        })
+                else:
+                    logging.warning("Failed to start location tracking")
+                    
+                return success
+            
+            # Set timeout to 10 seconds for location initialization (increased from 5)
+            try:
+                await asyncio.wait_for(_init_with_timeout(), timeout=10.0)
+                logging.info("Location tracking initialized successfully")
+            except asyncio.TimeoutError:
+                logging.warning("Location tracking initialization timed out")
+            except Exception as e:
+                logging.error(f"Error starting location tracking: {e}")
                 
         except Exception as e:
             logging.error(f"Error initializing geolocation: {e}")

@@ -1,53 +1,66 @@
 import flet as ft
-from components.responsive_text_handler import ResponsiveTextHandler
+from components.adaptive_card import ResponsiveLayoutMixin
+from utils.responsive_utils import ResponsiveHelper
 
-class WeatherCard:
+class WeatherCard(ResponsiveLayoutMixin):
     """
-    A card displaying weather information.
+    A responsive card displaying weather information that adapts to different devices.
     """
     
     def __init__(self, page: ft.Page):
         self.page = page
-        # Remove gradient - background will be managed by the main containers in app.py
+        self.setup_responsive(page)
         
-        # Initialize ResponsiveTextHandler
-        self.text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'card_title': 18,    # Titolo della card
-                'card_text': 14,     # Testo normale nella card
-                'card_small': 12,    # Testo piccolo nella card
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
+    def build(self, content: ft.Control, card_type: str = "default") -> ft.Container:
+        """
+        Builds the weather card with responsive design based on device type.
         
-        # Dictionary to track text controls
-        self.text_controls = {}
-        
-        # Register as observer for responsive updates
-        self.text_handler.add_observer(self.update_text_controls)
-        
-    def update_text_controls(self):
-        """Update text sizes for all registered controls"""
-        for control, size_category in self.text_controls.items():
-            if hasattr(control, 'size'):
-                control.size = self.text_handler.get_size(size_category)
-        
-        # Request page update
-        if self.page:
-            self.page.update()
+        Args:
+            content: Content of the card
+            card_type: Type of card ("weather_info", "chart", "sidebar", "hourly")
+            
+        Returns:
+            ft.Container: Responsive card configured for the device
+        """
+        if card_type == "weather_info":
+            return self.adaptive_card.create_weather_info_card(content)
+        elif card_type == "chart":
+            return self.adaptive_card.create_chart_card(content)
+        elif card_type == "sidebar":
+            return self.adaptive_card.create_sidebar_card(content)
+        elif card_type == "hourly":
+            return self.adaptive_card.create_hourly_forecast_card(content)
+        else:
+            # Default responsive card
+            return self.adaptive_card.create_weather_info_card(content)
     
-    def build(self, content: ft.Control) -> ft.Container:
-        """Builds the weather card with the given content."""
-        return ft.Container(
-            content=content,
-            border_radius=15,
-            padding=10, # Reduced padding as inner components might have their own
-            margin=0, # LayoutManager handles margin for the main containers
-            expand=True # Ensure the card itself expands
-        )
+    def build_with_title(self, content: ft.Control, title: str, card_type: str = "default") -> ft.Container:
+        """
+        Builds the weather card with a title.
+        
+        Args:
+            content: Content of the card
+            title: Title of the card
+            card_type: Type of card
+            
+        Returns:
+            ft.Container: Responsive card with title
+        """
+        if card_type == "chart":
+            return self.adaptive_card.create_chart_card(content, title)
+        else:
+            return self.adaptive_card.create_weather_info_card(content, title)
+    
+    def _handle_responsive_resize(self, e):
+        """Handle responsive resize events."""
+        # Update card styling based on new device type
+        if self.page:
+            ResponsiveHelper.get_device_type(
+                self.page.width if hasattr(self.page, 'width') and self.page.width else 1200
+            )
+            # Card will automatically adapt on next build() call
+            self.page.update()
         
     def cleanup(self):
-        """Cleanup method to remove observers"""
-        if hasattr(self, 'text_handler') and self.text_handler:
-            self.text_handler.remove_observer(self.update_text_controls)
+        """Cleanup method for removing event handlers."""
+        pass

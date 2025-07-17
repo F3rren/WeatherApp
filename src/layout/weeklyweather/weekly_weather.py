@@ -3,9 +3,9 @@ import traceback
 import asyncio
 import logging
 from services.api_service import ApiService
-from components.responsive_text_handler import ResponsiveTextHandler
 from services.translation_service import TranslationService
-from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, LIGHT_THEME, DARK_THEME
+from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
+from services.theme_handler import ThemeHandler
 
 class WeeklyForecastDisplay(ft.Container):
     """
@@ -13,7 +13,7 @@ class WeeklyForecastDisplay(ft.Container):
     Fetches data and renders daily forecast items internally.
     """
 
-    def __init__(self, page: ft.Page, city: str, **kwargs):
+    def __init__(self, page: ft.Page, city: str, theme_handler: ThemeHandler = None, **kwargs):
         super().__init__()
         self.page = page
         self._city = city
@@ -21,46 +21,65 @@ class WeeklyForecastDisplay(ft.Container):
         self._state_manager = None
         self._current_language = DEFAULT_LANGUAGE
         self._current_unit_system = DEFAULT_UNIT_SYSTEM
-        self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
+        self.theme_handler = theme_handler or ThemeHandler(page)
+        self._current_text_color = self.theme_handler.get_text_color()
         self._forecast_data = []
 
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'header_title': 18,
-                'day_label': 16,
-                'temp_value': 15,
-                'weather_icon': 40,
-                'loading_text': 14
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
+
 
         if 'expand' not in kwargs:
             self.expand = True
         if 'padding' not in kwargs:
             self.padding = ft.padding.all(0)  # Remove default padding, handled by internal containers
         
-        if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
-            self._state_manager = self.page.session.get('state_manager')
-            self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("unit", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
+        if self.page and hasattr(self.page, 'session') and self.page.session and self.page.session.get('state_manager'):
+            try:
+                self._state_manager = self.page.session.get('state_manager')
+                # Register observers with try-catch protection for each one
+                try:
+                    self._state_manager.register_observer("language_event", self._safe_language_update)
+                except Exception as e:
+                    logging.warning(f"WeeklyForecastDisplay: Failed to register language observer: {e}")
+                try:
+                    self._state_manager.register_observer("unit", self._safe_unit_update)
+                except Exception as e:
+                    logging.warning(f"WeeklyForecastDisplay: Failed to register unit observer: {e}")
+                try:
+                    self._state_manager.register_observer("theme_event", self._safe_theme_update)
+                except Exception as e:
+                    logging.warning(f"WeeklyForecastDisplay: Failed to register theme observer: {e}")
+                logging.debug("WeeklyForecastDisplay: Successfully registered state observers")
+            except Exception as e:
+                logging.error(f"WeeklyForecastDisplay: Error registering observers: {e}")
+                self._state_manager = None
 
-        if self.page:
+        if self.page and hasattr(self.page, "on_resize"):
             original_on_resize = self.page.on_resize
             def resize_handler(e):
                 if original_on_resize:
                     original_on_resize(e)
-                if self._text_handler:
-                    self._text_handler._handle_resize(e)
                 if self.page:
                     self.page.run_task(self.update_ui)
             self.page.on_resize = resize_handler
         
         self.content = self.build()
+        # Schedule async UI update after the component is initialized, but don't block the constructor
         if self.page:
-            self.page.run_task(self.update_ui)
+            # Use a small delay to ensure the component is properly added to the page
+            def delayed_update():
+                try:
+                    if self.page and hasattr(self.page, 'run_task'):
+                        self.page.run_task(self.update_ui)
+                except Exception as e:
+                    logging.debug(f"WeeklyForecastDisplay: Failed to schedule initial update: {e}")
+            
+            # Try to schedule the update, but don't fail if it doesn't work
+            try:
+                import threading
+                timer = threading.Timer(0.1, delayed_update)
+                timer.start()
+            except Exception:
+                pass  # Ignore if threading is not available or fails
 
     async def update_ui(self, event_data=None):
         """Updates the UI based on state changes, fetching new data if necessary."""
@@ -83,49 +102,118 @@ class WeeklyForecastDisplay(ft.Container):
 
             if not self._forecast_data or data_changed:
                 if self._city:
-                    weather_data_payload = await asyncio.to_thread(
+                    weather_response = await asyncio.to_thread(
                         self._api_service.get_weather_data,
                         city=self._city, 
                         language=self._current_language, 
                         unit=self._current_unit_system
                     )
-                    self._forecast_data = self._api_service.get_weekly_forecast_data(weather_data_payload) if weather_data_payload else []
+                    
+                    # Check if API call was successful and extract data
+                    if weather_response and weather_response.get('success', False):
+                        weather_data_payload = weather_response.get('data', {})
+                        self._forecast_data = self._api_service.get_weekly_forecast_data(weather_data_payload) if weather_data_payload else []
+                    else:
+                        error_info = weather_response.get('error', {}) if weather_response else {}
+                        error_message = error_info.get('message', 'Failed to fetch weather data')
+                        logging.warning(f"WeeklyWeather: {error_message}")
+                        self._forecast_data = []
                 else:
                     self._forecast_data = []
 
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-            theme = DARK_THEME if is_dark else LIGHT_THEME
-            self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
+            # Safe theme detection with robust checking
+            self._current_text_color = self.theme_handler.get_text_color()
 
             self.content = self.build()
-            # Only update if this control is already in the page - use try/catch for safety
-            if self.page:
+            
+            # Robust update logic - check multiple conditions before updating
+            can_update = False
+            
+            # First check - basic page connection
+            if self.page and hasattr(self, 'page') and self.page is not None:
+                # Second check - check if this control has a parent (is in the widget tree)
+                if hasattr(self, 'parent') and self.parent is not None:
+                    # Third check - verify the parent is also connected to the page
+                    if hasattr(self.parent, 'page') and self.parent.page is not None:
+                        can_update = True
+                    else:
+                        # Alternative check - try to see if we can access page through control hierarchy
+                        try:
+                            current = self
+                            while current and hasattr(current, 'parent') and current.parent:
+                                current = current.parent
+                                if hasattr(current, 'page') and current.page is not None:
+                                    can_update = True
+                                    break
+                        except Exception:
+                            pass
+            
+            if can_update:
                 try:
                     self.update()
+                    logging.debug("WeeklyForecastDisplay: Successfully updated UI")
                 except (AssertionError, AttributeError) as update_error:
-                    # Control not yet added to page, skip update
-                    logging.debug(f"WeeklyForecastDisplay: Skipping update - control not in page yet: {update_error}")
+                    # Control not yet fully added to page, this is expected during initialization
+                    logging.debug(f"WeeklyForecastDisplay: Skipping update - control not fully initialized: {update_error}")
+                except RuntimeError as update_error:
+                    # Handle "Container Control must be added to the page first" error
+                    if "must be added to the page first" in str(update_error):
+                        logging.debug(f"WeeklyForecastDisplay: Skipping update - control not added to page: {update_error}")
+                    else:
+                        logging.warning(f"WeeklyForecastDisplay: Runtime error during update: {update_error}")
+                except Exception as update_error:
+                    logging.warning(f"WeeklyForecastDisplay: Unexpected error during update: {update_error}")
+            else:
+                logging.debug("WeeklyForecastDisplay: Control not ready for update (not properly connected to page)")
+                
         except Exception as e:
-            logging.error(f"WeeklyForecastDisplay: Error updating UI: {e}\n{traceback.format_exc()}")
+            # Only log actual errors, not expected initialization issues
+            error_msg = str(e)
+            if "must be added to the page first" in error_msg:
+                logging.debug(f"WeeklyForecastDisplay: Control not ready for update: {e}")
+            else:
+                logging.error(f"Error updating component WeeklyForecastDisplay: {e}")
+            
+            # Set fallback content on error only for actual errors
+            if "must be added to the page first" not in error_msg:
+                try:
+                    self.content = ft.Container(
+                        content=ft.Text(
+                            "Error loading weekly forecast",
+                            color=ft.Colors.RED_400,
+                            size=14
+                        ),
+                        alignment=ft.alignment.center,
+                        padding=20
+                    )
+                    # Only try to update if we're connected to the page
+                    if self.page and hasattr(self, 'parent') and self.parent is not None:
+                        try:
+                            self.update()
+                        except Exception:
+                            pass  # Ignore update errors in fallback
+                except Exception:
+                    pass  # Ignore errors in fallback
 
     def build(self):
         """Constructs the modern UI for the weekly forecast with header and styled cards."""
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        theme = DARK_THEME if is_dark else LIGHT_THEME
+        # Safe theme detection with robust checking
+        theme = self.theme_handler.get_theme()
         
         # Header section
         header_text = TranslationService.translate_from_dict("weekly_forecast_items", "header", self._current_language)
+        is_dark = theme == self.theme_handler.get_theme() and theme.get("BACKGROUND", "").lower() == "#0d1117"
         header = ft.Row(
             controls=[
                 ft.Icon(
                     name=ft.Icons.CALENDAR_MONTH,
-                    size=24,  # Dimensione fissa come gli altri componenti
+                    size=24,
                     color=ft.Colors.BLUE_400 if not is_dark else ft.Colors.BLUE_300
                 ),
-                ft.Container(width=12),  # Spacer
+                ft.Container(width=5),
                 ft.Text(
                     header_text,
-                    size=self._text_handler.get_size('axis_title') + 2,
+                    size=20,
                     weight=ft.FontWeight.BOLD,
                     color=self._current_text_color
                 )
@@ -146,7 +234,7 @@ class WeeklyForecastDisplay(ft.Container):
                     content=ft.Text(
                         loading_text,
                         color=self._current_text_color,
-                        size=self._text_handler.get_size('loading_text')
+                        size=14
                     ),
                     alignment=ft.alignment.center,
                     padding=ft.padding.all(20)
@@ -162,11 +250,12 @@ class WeeklyForecastDisplay(ft.Container):
                 
                 # Add divider between days (except for the last one)
                 if i < len(self._forecast_data) - 1:
+                    divider_color = "#404040" if is_dark else "#e0e0e0"
                     divider = ft.Container(
                         content=ft.Divider(
                             height=1,
                             thickness=1,
-                            color=theme.get("BORDER", "#e0e0e0" if self.page.theme_mode == ft.ThemeMode.LIGHT else "#404040")
+                            color=theme.get("BORDER", divider_color)
                         ),
                         padding=ft.padding.symmetric(horizontal=20)
                     )
@@ -208,15 +297,15 @@ class WeeklyForecastDisplay(ft.Container):
         # Weather icon - simplified without background
         weather_icon = ft.Image(
             src=f"https://openweathermap.org/img/wn/{day_data['icon']}@2x.png",
-            width=self._text_handler.get_size('weather_icon'),
-            height=self._text_handler.get_size('weather_icon'),
+            width=40,
+            height=40,
             fit=ft.ImageFit.CONTAIN
         )
         
         # Day label
         day_label = ft.Text(
             translated_day,
-            size=self._text_handler.get_size('day_label'),
+            size=16,
             weight=ft.FontWeight.W_600,
             color=self._current_text_color
         )
@@ -229,14 +318,14 @@ class WeeklyForecastDisplay(ft.Container):
                     ft.TextStyle(
                         weight=ft.FontWeight.W_600, 
                         color=ft.Colors.BLUE_400,
-                        size=self._text_handler.get_size('temp_value')
+                        size=15
                     )
                 ),
                 ft.TextSpan(
                     "\n", 
                     ft.TextStyle(
                         color=self._current_text_color, 
-                        size=self._text_handler.get_size('temp_value')
+                        size=15
                     )
                 ),
                 ft.TextSpan(
@@ -244,7 +333,7 @@ class WeeklyForecastDisplay(ft.Container):
                     ft.TextStyle(
                         weight=ft.FontWeight.W_600, 
                         color=ft.Colors.RED_400,
-                        size=self._text_handler.get_size('temp_value')
+                        size=15
                     )
                 )
             ]
@@ -347,8 +436,81 @@ class WeeklyForecastDisplay(ft.Container):
 
     def update_city(self, new_city: str):
         """Updates the city and triggers a UI refresh."""
-        if self._city != new_city:
-            self._city = new_city
-            self._forecast_data = []  # Clear cached data
-            if self.page:
-                self.page.run_task(self.update_ui)
+        try:
+            if self._city != new_city:
+                self._city = new_city
+                self._forecast_data = []  # Clear cached data
+                if self.page and hasattr(self.page, 'run_task'):
+                    self.page.run_task(self.update_ui)
+        except Exception as e:
+            logging.error(f"WeeklyForecastDisplay: Error updating city: {e}")
+
+    def _safe_language_update(self, e=None):
+        """Safely handle language change event."""
+        try:
+            # Check if component is still valid and connected
+            if not self.page or not hasattr(self, '_city') or not self._city:
+                logging.debug("WeeklyForecastDisplay: Skipping language update - component not ready")
+                return
+                
+            if self.page and hasattr(self.page, 'run_task') and callable(getattr(self.page, 'run_task', None)):
+                self.page.run_task(self.update_ui, e)
+            else:
+                logging.debug("WeeklyForecastDisplay: Cannot schedule language update - page.run_task not available")
+        except Exception as ex:
+            logging.error(f"WeeklyForecastDisplay: Error in safe language update: {ex}")
+    
+    def _safe_unit_update(self, e=None):
+        """Safely handle unit change event."""
+        try:
+            # Check if component is still valid and connected
+            if not self.page or not hasattr(self, '_city') or not self._city:
+                logging.debug("WeeklyForecastDisplay: Skipping unit update - component not ready")
+                return
+                
+            if self.page and hasattr(self.page, 'run_task') and callable(getattr(self.page, 'run_task', None)):
+                self.page.run_task(self.update_ui, e)
+            else:
+                logging.debug("WeeklyForecastDisplay: Cannot schedule unit update - page.run_task not available")
+        except Exception as ex:
+            logging.error(f"WeeklyForecastDisplay: Error in safe unit update: {ex}")
+    
+    def _safe_theme_update(self, e=None):
+        """Force a full rebuild of the component on theme change, but only update if attached to page."""
+        try:
+            if not self.page or not hasattr(self, '_city') or not self._city:
+                logging.debug("WeeklyForecastDisplay: Skipping theme update - component not ready")
+                return
+            self.content = self.build()
+            # Only call update if attached to page and parent
+            if getattr(self, 'page', None) and getattr(self, 'parent', None):
+                try:
+                    self.update()
+                except Exception as ex:
+                    logging.debug(f"WeeklyForecastDisplay: update() skipped (not attached yet): {ex}")
+            logging.debug("WeeklyForecastDisplay: Full rebuild triggered on theme change.")
+        except Exception as ex:
+            logging.error(f"WeeklyForecastDisplay: Error in safe theme update: {ex}")
+
+    def cleanup(self):
+        """Clean up observers and resources when component is destroyed."""
+        try:
+            if self._state_manager:
+                # Unregister all observers
+                try:
+                    self._state_manager.unregister_observer("language_event", self._safe_language_update)
+                except Exception as e:
+                    logging.debug(f"WeeklyForecastDisplay: Error unregistering language observer: {e}")
+                try:
+                    self._state_manager.unregister_observer("unit", self._safe_unit_update)
+                except Exception as e:
+                    logging.debug(f"WeeklyForecastDisplay: Error unregistering unit observer: {e}")
+                try:
+                    self._state_manager.unregister_observer("theme_event", self._safe_theme_update)
+                except Exception as e:
+                    logging.debug(f"WeeklyForecastDisplay: Error unregistering theme observer: {e}")
+                
+                logging.debug("WeeklyForecastDisplay: Successfully cleaned up observers")
+                self._state_manager = None
+        except Exception as e:
+            logging.error(f"WeeklyForecastDisplay: Error during cleanup: {e}")

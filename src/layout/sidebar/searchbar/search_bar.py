@@ -3,32 +3,32 @@ import flet as ft
 from typing import Callable, Optional, List
 from utils.config import DEFAULT_LANGUAGE
 
+
+from services.theme_handler import ThemeHandler
+
 class SearchBar:
 
     def __init__(
         self,
         page: ft.Page,
-        text_color: dict,  # text_color is a dict e.g. {"TEXT": "#000000", ...}
         cities: List[str] = None,
         on_city_selected: Optional[Callable] = None,
         language: str = DEFAULT_LANGUAGE,
         prefix_widget: Optional[ft.Control] = None,
         suffix_widget: Optional[ft.Control] = None,
-        text_handler_get_size: Optional[Callable] = None  # aggiunto parametro
+        theme_handler: ThemeHandler = None
     ):
         self.cities = cities or []
         self.on_city_selected = on_city_selected
         self.page = page
-        self.text_color = text_color
+        self.theme_handler = theme_handler or ThemeHandler(page)
         self.language = language
         self.prefix_widget = prefix_widget
         self.suffix_widget = suffix_widget
-        self.text_handler_get_size = text_handler_get_size  # salva funzione
         self.focused = False
         self.search_field = None
 
-    def update_text_sizes(self, get_size_func: Callable, text_color: dict, language: str):
-        # ...existing code...
+    def update_text_sizes(self, get_size_func: Callable, language: str):
         pass  # Non serve più, la gestione è locale
 
     def build(self, popmenu_widget=None, filter_widget=None, clear_icon_size=None) -> ft.Container:
@@ -54,14 +54,16 @@ class SearchBar:
 
         clear_btn = ft.IconButton(
             icon=ft.Icons.CLOSE,
-            icon_size=self.text_handler_get_size('icon'),
+            icon_size=14,
             on_click=clear_text,
             tooltip="Cancella",
             style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12))
         )
 
+        # Use theme_handler for text color if available
+        text_color = self.theme_handler.get_text_color() if self.theme_handler else self.text_color.get("TEXT", "#000000")
         self.search_field = ft.TextField(
-            text_style=ft.TextStyle(size=self.text_handler_get_size('body'), color=self.text_color.get("TEXT", "#000000")),
+            text_style=ft.TextStyle(size=14, color=text_color),
             border_radius=24,
             bgcolor="transparent",
             border_color="transparent",
@@ -90,11 +92,14 @@ class SearchBar:
             spacing=4
         )
 
+        # Use theme_handler for background and border if available
+        bg_color = self.theme_handler.get_background_color('sidebar_search') if self.theme_handler else ("#fafbfc" if self.page.theme_mode != ft.ThemeMode.DARK else "#2c2f33")
+        border_color = self.theme_handler.get_theme().get("BORDER", "#e0e0e0" if self.page.theme_mode != ft.ThemeMode.DARK else "#3c3f43") if self.theme_handler else ("#e0e0e0" if self.page.theme_mode != ft.ThemeMode.DARK else "#3c3f43")
         container = ft.Container(
             content=row,
             border_radius=32,
-            bgcolor="#fafbfc" if self.page.theme_mode != ft.ThemeMode.DARK else "#2c2f33",
-            border=ft.border.all(1, "#e0e0e0" if self.page.theme_mode != ft.ThemeMode.DARK else "#3c3f43"),
+            bgcolor=bg_color,
+            border=ft.border.all(1, border_color),
             shadow=ft.BoxShadow(blur_radius=4, color="#00000010"),
             padding=ft.padding.symmetric(horizontal=12, vertical=2),
             animate=ft.Animation(200, "decelerate"),

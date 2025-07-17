@@ -4,7 +4,7 @@ import logging
 from services.api_service import ApiService
 from services.translation_service import TranslationService
 from utils.config import LIGHT_THEME, DARK_THEME, DEFAULT_LANGUAGE
-from components.responsive_text_handler import ResponsiveTextHandler
+
 from typing import Optional
 
 class AirPollutionChartDisplay(ft.Container):
@@ -24,14 +24,11 @@ class AirPollutionChartDisplay(ft.Container):
         self._current_language = DEFAULT_LANGUAGE
         self._current_text_color = LIGHT_THEME.get("TEXT", ft.Colors.BLACK)
         self._pollution_data = {}
+        self._cached_header = None  # Cache for header to prevent unnecessary rebuilds
+        self._header_language = None  # Track which language the header was built for
+        self._last_theme_mode = None  # Track theme changes for header cache invalidation
 
-        self._text_handler = ResponsiveTextHandler(
-            page=self.page, 
-            base_sizes={
-                'axis_title': 14, 'label': 14, 'tooltip': 12
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
+
         
         if 'expand' not in kwargs:
             self.expand = True
@@ -40,20 +37,9 @@ class AirPollutionChartDisplay(ft.Container):
         
         if self.page and hasattr(self.page, 'session') and self.page.session.get('state_manager'):
             self._state_manager = self.page.session.get('state_manager')
-            self._state_manager.register_observer("language_event", lambda e=None: self.page.run_task(self.update_ui, e))
-            self._state_manager.register_observer("theme_event", lambda e=None: self.page.run_task(self.update_ui, e))
-        
-        if self.page:
-            original_on_resize = self.page.on_resize
-            def resize_handler(e):
-                if original_on_resize:
-                    original_on_resize(e)
-                if self._text_handler:
-                    self._text_handler._handle_resize(e)
-                if self.page:
-                    self.page.run_task(self.update_ui)
-            self.page.on_resize = resize_handler
-        
+            self._state_manager.register_observer("language_event", self._safe_language_update)
+            self._state_manager.register_observer("theme_event", self._safe_theme_update)
+          
         self.content = self.build()
         if self.page:
             self.page.run_task(self.update_ui)
@@ -68,6 +54,12 @@ class AirPollutionChartDisplay(ft.Container):
             if self._state_manager:
                 new_language = self._state_manager.get_state('language') or self._current_language
                 language_changed = self._current_language != new_language
+                
+                # Invalidate header cache when language changes
+                if language_changed:
+                    self._cached_header = None
+                    self._header_language = None
+                
                 self._current_language = new_language
                 data_changed = language_changed
 
@@ -77,7 +69,18 @@ class AirPollutionChartDisplay(ft.Container):
                 else:
                     self._pollution_data = {}
 
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            # Safe theme detection
+            if self.page and hasattr(self.page, 'theme_mode'):
+                is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+            else:
+                is_dark = False
+            
+            # Also invalidate header cache when theme changes
+            if hasattr(self, '_last_theme_mode') and self._last_theme_mode != is_dark:
+                self._cached_header = None
+                self._header_language = None
+            self._last_theme_mode = is_dark
+            
             theme = DARK_THEME if is_dark else LIGHT_THEME
             self._current_text_color = theme.get("TEXT", ft.Colors.BLACK)
 
@@ -101,7 +104,7 @@ class AirPollutionChartDisplay(ft.Container):
                     content=ft.Text(
                         TranslationService.translate_from_dict("air_pollution_chart_items", "no_air_pollution_data", self._current_language),
                         color=self._current_text_color,
-                        size=self._text_handler.get_size('label'),
+                        size=14,
                         text_align=ft.TextAlign.CENTER,
                     ),
                     alignment=ft.alignment.center,
@@ -194,13 +197,17 @@ class AirPollutionChartDisplay(ft.Container):
                     label=ft.Text(
                         label_text, 
                         color=self._current_text_color, 
-                        size=self._text_handler.get_size('label')
+                        size=14
                     )
                 )
             )
 
         # Determina il tema e i colori del background
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         
         # Background moderno simile al temperature chart
         if is_dark:
@@ -219,7 +226,7 @@ class AirPollutionChartDisplay(ft.Container):
             border=ft.border.all(1, border_color),  # Bordo più delicato
             bottom_axis=ft.ChartAxis(
                 labels=bottom_axis_labels,
-                labels_size=self._text_handler.get_size('label') * 3.5,
+                labels_size=14 * 3.5,
                 labels_interval=1,  # Mostra tutte le etichette
             ),
             horizontal_grid_lines=ft.ChartGridLines(
@@ -241,12 +248,20 @@ class AirPollutionChartDisplay(ft.Container):
         ], spacing=0, expand=True)
 
     def _build_header(self):
-        """Builds a modern header for air pollution chart section."""
+        """Builds a modern header for air pollution chart section with caching."""
+        # Check if we need to rebuild the header
+        if self._cached_header is not None and self._header_language == self._current_language:
+            return self._cached_header
+        
         header_text = TranslationService.translate_from_dict("air_pollution_chart_items", "air_pollution_title", self._current_language)
         
-        is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        # Safe theme detection
+        if self.page and hasattr(self.page, 'theme_mode'):
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        else:
+            is_dark = False
         
-        return ft.Container(
+        header = ft.Container(
             content=ft.Row([
                 ft.Icon(
                     ft.Icons.AIR_OUTLINED,  # Icona per la qualità dell'aria
@@ -256,13 +271,19 @@ class AirPollutionChartDisplay(ft.Container):
                 ft.Container(width=12),  # Spacer
                 ft.Text(
                     f"{header_text}" " (μg/m3)",
-                    size=self._text_handler.get_size('axis_title') + 2,
+                    size=25,
                     weight=ft.FontWeight.BOLD,
                     color=self._current_text_color
                 ),
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.only(left=20, top=16, bottom=8)
         )
+        
+        # Cache the header and language
+        self._cached_header = header
+        self._header_language = self._current_language
+        
+        return header
 
     def update_location(self, lat: float, lon: float):
         """Allows updating the location and refreshing the air pollution chart data."""
@@ -271,3 +292,13 @@ class AirPollutionChartDisplay(ft.Container):
             self._lon = lon
             if self.page:
                 self.page.run_task(self.update_ui)
+    
+    def _safe_language_update(self, e=None):
+        """Safely handle language change event."""
+        if self.page and hasattr(self.page, 'run_task'):
+            self.page.run_task(self.update_ui, e)
+    
+    def _safe_theme_update(self, e=None):
+        """Safely handle theme change event."""
+        if self.page and hasattr(self.page, 'run_task'):
+            self.page.run_task(self.update_ui, e)

@@ -1,6 +1,6 @@
 import flet as ft
 from services.api_service import ApiService
-from components.responsive_text_handler import ResponsiveTextHandler
+
 
 class DailyForecast:    
     def __init__(self, page, city, language, unit):
@@ -11,29 +11,7 @@ class DailyForecast:
         self.api = ApiService(page, self.city, self.language, self.unit)
         self.daily_forecast_items = []  # Inizializza la lista per memorizzare i riferimenti agli item
         
-        # Inizializzazione del ResponsiveTextHandler per gestire il testo responsive
-        self.text_handler = ResponsiveTextHandler(
-            page=self.page,
-            base_sizes={
-                'title': 24,
-                'subtitle': 18,
-                'label': 14,
-                'value': 16,
-                'icon': 200
-            },
-            breakpoints=[600, 900, 1200, 1600]
-        )
-        
-        # Dizionario per memorizzare i controlli di testo da aggiornare
-        self.text_controls = {}
-
-        # This Row will hold the dynamically loaded forecast items.
-        # self.api.getDailyForecast() is expected to return a single ft.Control (e.g., another ft.Row)
-        # that contains the actual hourly forecast elements.
         self.forecast_items_row = ft.Row(scroll=ft.ScrollMode.AUTO)
-        
-        # This is the main column for the hourly forecast content.
-        # Its structure is static; only the controls of self.forecast_items_row will change.
         self.hourly_forecast_content_column = ft.Column(
             alignment=ft.MainAxisAlignment.SPACE_EVENLY,
             horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
@@ -41,12 +19,7 @@ class DailyForecast:
                 self.forecast_items_row,
             ],
         )
-        
-        # Initial population of the forecast items
         self._populate_forecast_items()
-        
-        # Aggiungiamo un observer per il ridimensionamento
-        self.text_handler.add_observer(self._handle_text_resize)
 
     def _populate_forecast_items(self):
         """
@@ -101,13 +74,8 @@ class DailyForecast:
 
     def cleanup(self):
         """Release resources and perform cleanup."""
-        # Rimuove l'observer del text_handler
-        if hasattr(self, 'text_handler'):
-            self.text_handler.remove_observer(self._handle_text_resize)
-        
         # Rimuove gli handler dello StateManager
         self.unregister_state_handlers()
-            
         if self.forecast_items_row:
             # Call cleanup on each DailyForecastItems instance
             if self.daily_forecast_items:
@@ -121,11 +89,7 @@ class DailyForecast:
     def _handle_text_resize(self):
         """
         Aggiorna le dimensioni del testo quando cambia la dimensione della finestra.
-        Chiamato come observer dal ResponsiveTextHandler.
+        (Funzione mantenuta per compatibilità, ora non fa nulla)
         """
-        if self.text_controls:
-            self.text_handler.update_text_controls(self.text_controls)
-        for item in self.daily_forecast_items:
-            if hasattr(item, 'text_handler') and hasattr(item, '_update_text_elements'):
-                item._update_text_elements()
+        pass
 

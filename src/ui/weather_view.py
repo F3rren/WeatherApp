@@ -29,6 +29,7 @@ class WeatherView:
         self.api_service = api_service
         self.state_manager = self.page.session.get('state_manager')
         self.weather_data = None
+        self.current_weather_data = None  # For weather alerts service
         self.city_info = None
         self.current_lat = None
         self.current_lon = None
@@ -300,6 +301,7 @@ class WeatherView:
                     return False
                     
                 self.weather_data = weather_data
+                self.current_weather_data = weather_data  # For weather alerts service
                 self.city_info = city_info
                 logging.info(f"Weather data keys: {list(weather_data.keys()) if weather_data else 'None'}")
                 
@@ -343,6 +345,7 @@ class WeatherView:
             return
         
         self.weather_data = weather_response.get('data', {})
+        self.current_weather_data = self.weather_data  # For weather alerts service
         city = self.api_service.get_city_by_coordinates(lat, lon)
         await self._update_ui(city, is_current_location=True, lat=lat, lon=lon)
 

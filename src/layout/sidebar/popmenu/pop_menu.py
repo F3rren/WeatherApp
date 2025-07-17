@@ -42,7 +42,7 @@ class PopMenu(ft.Container):
         self.language = self.state_manager.get_state('language') if self.state_manager else DEFAULT_LANGUAGE
 
         # Update child dialogs, passing theme_handler for color logic
-        self.weather_alert = WeatherAlertDialog(page=self.page, state_manager=self.state_manager, theme_handler=self.theme_handler, language=self.language)
+        self.weather_alert = WeatherAlertDialog(page=self.page, state_manager=self.state_manager, language=self.language)
         
         self.map_alert = MapsAlertDialog(page=self.page, state_manager=self.state_manager)
         
@@ -69,7 +69,7 @@ class PopMenu(ft.Container):
                         ft.Icon(ft.Icons.SUNNY, color="#FF8C00", size=20),
                         self.pop_menu_items["weather"]
                     ]),
-                    on_click=lambda _, al=self.weather_alert: self.weather_alert.open_dialog(),
+                    on_click=lambda _, al=self.weather_alert: self.weather_alert.show_dialog(),
                 ),
                 ft.PopupMenuItem(
                     content=ft.Row([

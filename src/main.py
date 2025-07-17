@@ -29,6 +29,7 @@ from services.geolocation_service import GeolocationService
 from services.location_toggle_service import LocationToggleService
 from services.theme_toggle_service import ThemeToggleService
 from services.translation_service import TranslationService
+from services.weather_alerts_service import WeatherAlertsService
 
 # Local imports - State and Layout
 from state_manager import StateManager
@@ -80,6 +81,7 @@ class MeteoApp:
         self.location_toggle_service: LocationToggleService = None
         self.theme_toggle_service: ThemeToggleService = None
         self.translation_service: TranslationService = None
+        self.weather_alerts_service: WeatherAlertsService = None
         
         # UI Components
         self.weather_view_instance: WeatherView = None
@@ -141,6 +143,16 @@ class MeteoApp:
         # that might be initialized before the session is available
         if not hasattr(TranslationService, '_global_instance'):
             TranslationService._global_instance = self.translation_service
+        
+        # Initialize weather alerts service
+        self.weather_alerts_service = WeatherAlertsService(
+            page=self.page,
+            settings_service=self.settings_service,
+            translation_service=self.translation_service
+        )
+        
+        # Store weather alerts service in session for global access
+        self.page.session.set('weather_alerts_service', self.weather_alerts_service)
         
         # Initialize weather view
         self.weather_view_instance = WeatherView(self.page, self.api_service)
@@ -217,6 +229,11 @@ class MeteoApp:
                 
                 if self.weather_view_instance:
                     self.weather_view_instance.cleanup()
+                
+                # Cleanup weather alerts service
+                if self.weather_alerts_service:
+                    self.weather_alerts_service.cleanup()
+                
                 logger.info("Cleanup completed successfully")
             except Exception as cleanup_error:
                 logger.error(f"Error during cleanup: {cleanup_error}")
@@ -810,6 +827,20 @@ class MeteoApp:
                 except Exception as e:
                     logger.warning(f"Failed to update sidebar: {e}")
             
+            # Check for weather alerts
+            if self.weather_alerts_service:
+                try:
+                    # Get current weather data from the updated view
+                    if hasattr(self.weather_view_instance, 'current_weather_data'):
+                        weather_data = self.weather_view_instance.current_weather_data
+                        if weather_data:
+                            await self.weather_alerts_service.check_real_weather_conditions(
+                                weather_data, self.api_service
+                            )
+                            logger.info("Weather alerts checked successfully")
+                except Exception as e:
+                    logger.warning(f"Failed to check weather alerts: {e}")
+            
             return True
             
         except Exception as e:
@@ -842,6 +873,20 @@ class MeteoApp:
             if city:
                 await self.state_manager.set_state("city", city)
                 self.sidebar_manager.update_weekly_forecast(city)
+        
+        # Check for weather alerts
+        if self.weather_alerts_service:
+            try:
+                # Get current weather data from the updated view
+                if hasattr(self.weather_view_instance, 'current_weather_data'):
+                    weather_data = self.weather_view_instance.current_weather_data
+                    if weather_data:
+                        await self.weather_alerts_service.check_real_weather_conditions(
+                            weather_data, self.api_service
+                        )
+                        logger.info("Weather alerts checked successfully")
+            except Exception as e:
+                logger.warning(f"Failed to check weather alerts: {e}")
         
         logging.info("Weather updated successfully with coordinates")
 

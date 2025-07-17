@@ -1,6 +1,6 @@
 """
 Layout Manager per MeteoApp.
-Centralizza la gestione del layout dell'applicazione.
+Centralizza la gestione del layout dell'applicazione con supporto responsive migliorato.
 """
 
 import flet as ft
@@ -10,7 +10,6 @@ from typing import Dict
 from layout.layout_builder import LayoutBuilder
 from utils.config import LIGHT_THEME, DARK_THEME
 
-
 class LayoutManager:
     """
     Layout manager class for the MeteoApp.
@@ -19,7 +18,7 @@ class LayoutManager:
     
     def __init__(self, page: ft.Page):
         """
-        Inizializza il gestore del layout.
+        Inizializza il gestore del layout con supporto responsive.
         
         Args:
             page: Flet page object
@@ -28,10 +27,15 @@ class LayoutManager:
         self.containers = {}
         self.layout = None
         
-
-    
-
-    
+        # Inizializza helper responsive
+        try:
+            from utils.responsive_utils import ResponsivePageHelper
+            self.responsive_helper = ResponsivePageHelper(page)
+            logging.info("Responsive helper initialized successfully")
+        except ImportError:
+            logging.warning("ResponsivePageHelper not available, using default layout")
+            self.responsive_helper = None
+        
     def create_containers(self, sidebar_content, info_content, hourly_content, chart_content,
         precipitation_chart_content, air_pollution_content, animation_duration=500, animation_curve=ft.AnimationCurve.EASE_IN_OUT) -> None:
         """

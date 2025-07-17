@@ -295,15 +295,10 @@ class TemperatureChartDisplay(ft.Container):
             content=chart_control,
             height=300,
             padding=ft.padding.symmetric(horizontal=20, vertical=15),
-            border_radius=16,
-            bgcolor=chart_bgcolor,
-            border=ft.border.all(1, ft.Colors.with_opacity(0.08, ft.Colors.GREY_400)),
-            shadow=ft.BoxShadow(
-                spread_radius=0,
-                blur_radius=12,
-                color=ft.Colors.with_opacity(0.06, ft.Colors.BLACK),
-                offset=ft.Offset(0, 4)
-            )
+            #border_radius=16,
+            #bgcolor=chart_bgcolor,
+            #border=ft.border.all(1, ft.Colors.with_opacity(0.08, ft.Colors.GREY_400)),
+            
         )
     
     def _build_legend(self):

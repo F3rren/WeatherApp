@@ -210,7 +210,7 @@ class WeeklyForecastDisplay(ft.Container):
                     size=24,
                     color=ft.Colors.BLUE_400 if not is_dark else ft.Colors.BLUE_300
                 ),
-                ft.Container(width=12),
+                ft.Container(width=5),
                 ft.Text(
                     header_text,
                     size=20,

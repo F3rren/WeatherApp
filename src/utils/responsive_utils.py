@@ -108,10 +108,10 @@ class ResponsiveHelper:
         """
         if device_type == DeviceType.MOBILE:
             paddings = {
-                "container": ft.padding.all(8),
-                "card": ft.padding.all(12),
-                "sidebar": ft.padding.all(12),
-                "default": ft.padding.all(8)
+                "container": ft.padding.all(6),   # Ridotto da 8 a 6
+                "card": ft.padding.all(8),        # Ridotto da 12 a 8
+                "sidebar": ft.padding.all(8),     # Ridotto da 12 a 8
+                "default": ft.padding.all(6)      # Ridotto da 8 a 6
             }
         elif device_type == DeviceType.TABLET:
             paddings = {
@@ -142,8 +142,8 @@ class ResponsiveHelper:
             int: Spacing in pixel
         """
         spacing_map = {
-            DeviceType.MOBILE: 8,
-            DeviceType.TABLET: 12,
+            DeviceType.MOBILE: 6,              # Ridotto da 8 a 6
+            DeviceType.TABLET: 10,             # Ridotto da 12 a 10
             DeviceType.DESKTOP: 16,
             DeviceType.LARGE_DESKTOP: 20
         }
@@ -207,8 +207,8 @@ class ResponsiveHelper:
             int: Altezza in pixel
         """
         height_map = {
-            DeviceType.MOBILE: 200,
-            DeviceType.TABLET: 250,
+            DeviceType.MOBILE: 180,            # Ridotto da 200 a 180
+            DeviceType.TABLET: 220,            # Ridotto da 250 a 220
             DeviceType.DESKTOP: 300,
             DeviceType.LARGE_DESKTOP: 350
         }

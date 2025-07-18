@@ -1,0 +1,3 @@
+"""
+Sidebar components and functionality
+"""

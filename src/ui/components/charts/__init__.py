@@ -1,0 +1,3 @@
+"""
+Chart and visualization components
+"""

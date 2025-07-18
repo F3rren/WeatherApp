@@ -1,3 +1,3 @@
 """
-Services package for the MeteoApp.
+Services package initialization
 """

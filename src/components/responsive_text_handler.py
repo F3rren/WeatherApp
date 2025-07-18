@@ -26,20 +26,20 @@ class ResponsiveTextHandler:
         self.page = page
         self.observers = []  # Lista di callback da chiamare quando le dimensioni cambiano
         
-        # Dimensioni predefinite ottimizzate per dispositivi mobili
+        # Dimensioni predefinite ottimizzate per dispositivi mobili (ridotte ulteriormente)
         self.base_sizes = base_sizes or {
-            'title': 24,       # Titoli principali (ridotto per mobile)
-            'subtitle': 16,    # Sottotitoli (ottimizzato)
-            'label': 12,       # Etichette (ridotto per mobile)
-            'body': 12,        # Testo normale (ridotto per mobile)
-            'caption': 10,     # Testo piccolo/caption (ridotto)
-            'value': 14,       # Valori (temperature, percentuali)
-            'sidebar_icon': 24,# Icone (ridotto per mobile)
-            'legend': 11,      # Per legende dei grafici (ridotto)
-            'axis_title': 20,  # Per titoli degli assi dei grafici (ridotto)
-            'card_title': 18,  # Titoli delle card (nuovo)
-            'temperature': 28, # Temperature principali (nuovo)
-            'small_temp': 12,  # Temperature piccole (nuovo)
+            'title': 20,       # Titoli principali (ridotto ulteriormente)
+            'subtitle': 14,    # Sottotitoli (ridotto)
+            'label': 10,       # Etichette (ridotto ulteriormente)
+            'body': 10,        # Testo normale (ridotto ulteriormente)
+            'caption': 8,      # Testo piccolo/caption (ridotto)
+            'value': 12,       # Valori (temperature, percentuali)
+            'sidebar_icon': 20,# Icone (ridotto)
+            'legend': 9,       # Per legende dei grafici (ridotto)
+            'axis_title': 16,  # Per titoli degli assi dei grafici (ridotto)
+            'card_title': 16,  # Titoli delle card (ridotto)
+            'temperature': 24, # Temperature principali (ridotto)
+            'small_temp': 10,  # Temperature piccole (ridotto)
         }
         
         # Breakpoint ottimizzati per dispositivi moderni
@@ -80,11 +80,11 @@ class ResponsiveTextHandler:
         
         # Calcola il fattore di scala in base alla larghezza con curve più aggressive per mobile
         if width < self.breakpoints[0]:  # xs (mobile)
-            scale_factor = 0.75  # Riduce del 25% per mobile
+            scale_factor = 0.65  # Riduce del 35% per mobile (era 0.75)
         elif width < self.breakpoints[1]:  # sm (tablet portrait)
-            scale_factor = 0.85  # Riduce del 15% per tablet
+            scale_factor = 0.80  # Riduce del 20% per tablet (era 0.85)
         elif width < self.breakpoints[2]:  # md (tablet landscape)
-            scale_factor = 0.95  # Riduce del 5%
+            scale_factor = 0.90  # Riduce del 10% (era 0.95)
         elif width < self.breakpoints[3]:  # lg (desktop)
             scale_factor = 1.0   # Dimensione base
         else:  # xl (large desktop)

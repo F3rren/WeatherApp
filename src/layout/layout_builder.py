@@ -96,9 +96,7 @@ class LayoutBuilder:
                         "lg": 3,     # Desktop: 25% (più spazio per content)
                         "xl": 3      # Large desktop: 25%
                     },
-                    padding=ft.padding.only(
-                        left=8, top=8, bottom=8, right=8
-                    ),
+                    # padding=ft.padding.only(left=8, top=8, bottom=8, right=8),
                 ),
                 
                 # Area contenuto principale - responsive migliorato
@@ -120,9 +118,7 @@ class LayoutBuilder:
                         "lg": 9,     # Desktop: 75%
                         "xl": 9      # Large desktop: 75%
                     },
-                    padding=ft.padding.only(
-                        left=8, top=8, bottom=8, right=8
-                    ),
+                    # padding=ft.padding.only(left=8, top=8, bottom=8, right=8),
                 )
             ], spacing=0),
             
@@ -147,7 +143,7 @@ class LayoutBuilder:
                         "lg": 4,     # Desktop: 33%
                         "xl": 4      # Large desktop: 33%
                     },
-                    padding=ft.padding.symmetric(vertical=4, horizontal=4),
+                    # padding=ft.padding.symmetric(vertical=4, horizontal=4),
                 ),
                 
                 # Grafico precipitazioni
@@ -160,7 +156,7 @@ class LayoutBuilder:
                         "lg": 4,     # Desktop: 33%
                         "xl": 4      # Large desktop: 33%
                     },
-                    padding=ft.padding.symmetric(vertical=4, horizontal=4),
+                    # padding=ft.padding.symmetric(vertical=4, horizontal=4),
                 ),
                 
                 # Grafico inquinamento aria
@@ -173,7 +169,7 @@ class LayoutBuilder:
                         "lg": 4,     # Desktop: 33%
                         "xl": 4      # Large desktop: 33%
                     },
-                    padding=ft.padding.symmetric(vertical=4, horizontal=4),
+                    # padding=ft.padding.symmetric(vertical=4, horizontal=4),
                 )
             ])
         ], 
@@ -185,5 +181,5 @@ class LayoutBuilder:
         return ft.Container(
             content=main_content,
             expand=True,
-            padding=ft.padding.symmetric(horizontal=4, vertical=4),  # Padding minimale per mobile
+            # padding=ft.padding.symmetric(horizontal=4, vertical=4),  # Padding minimale per mobile
         )

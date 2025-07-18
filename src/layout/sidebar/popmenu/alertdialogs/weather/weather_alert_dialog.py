@@ -55,49 +55,124 @@ class WeatherAlertDialog:
         """Build the weather alerts dialog."""
         self._update_theme_colors()
         
+        # Ensure weather alerts service is available
+        if not self.weather_alerts_service:
+            # Try to get it from session again
+            self.weather_alerts_service = self.page.session.get('weather_alerts_service') if self.page and self.page.session else None
+        
+        # If still not available, show error dialog
+        if not self.weather_alerts_service:
+            return self._build_error_dialog("Servizio allerte meteo non disponibile")
+        
+        try:
+            return ft.AlertDialog(
+                title=self._build_header(),
+                bgcolor=self.colors["bg"],
+                content=ft.Container(
+                    width=600,
+                    height=500,
+                    bgcolor=self.colors["bg"],
+                    content=ft.Column(
+                        controls=[
+                            # Alert statistics
+                            self._build_alert_statistics(),
+                            ft.Divider(color=self.colors["border"], height=1),
+                            
+                            # Active alerts list
+                            self._build_alerts_list(),
+                            ft.Divider(color=self.colors["border"], height=1),
+                            
+                            # Alert configuration
+                            self._build_alert_configuration(),
+                        ],
+                        spacing=15,
+                        scroll=ft.ScrollMode.AUTO
+                    )
+                ),
+                actions=[
+                    ft.Row(
+                        controls=[
+                            ft.TextButton(
+                                text=self._get_translation("test_real_data"),
+                                icon=ft.Icons.SENSORS,
+                                on_click=self._test_real_data,
+                                style=ft.ButtonStyle(color=self.colors["accent"])
+                            ),
+                            ft.TextButton(
+                                text=self._get_translation("clear_all"),
+                                icon=ft.Icons.CLEAR_ALL,
+                                on_click=self._clear_all_alerts,
+                                style=ft.ButtonStyle(color=self.colors["warning"])
+                            ),
+                            ft.TextButton(
+                                text=self._get_translation("close"),
+                                on_click=lambda e: self.close_dialog(),
+                                style=ft.ButtonStyle(color=self.colors["accent"])
+                            )
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                    )
+                ],
+                modal=False
+            )
+        except Exception as e:
+            print(f"Error building weather alert dialog: {e}")
+            return self._build_error_dialog(f"Errore nella creazione del dialogo: {str(e)}")
+
+    def _build_error_dialog(self, message: str):
+        """Build an error dialog when the main dialog cannot be created."""
         return ft.AlertDialog(
-            title=self._build_header(),
+            title=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.ERROR_OUTLINE, color=self.colors["error"], size=24),
+                    ft.Text(
+                        "Errore Allerte Meteo",
+                        size=18,
+                        weight=ft.FontWeight.BOLD,
+                        color=self.colors["text"]
+                    )
+                ],
+                spacing=10
+            ),
             bgcolor=self.colors["bg"],
             content=ft.Container(
-                width=600,
-                height=500,
+                width=400,
+                height=200,
                 bgcolor=self.colors["bg"],
                 content=ft.Column(
                     controls=[
-                        # Alert statistics
-                        self._build_alert_statistics(),
-                        ft.Divider(color=self.colors["border"], height=1),
-                        
-                        # Active alerts list
-                        self._build_alerts_list(),
-                        ft.Divider(color=self.colors["border"], height=1),
-                        
-                        # Alert configuration
-                        self._build_alert_configuration(),
+                        ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED, size=48, color=self.colors["warning"]),
+                        ft.Text(
+                            message,
+                            size=14,
+                            color=self.colors["text"],
+                            text_align=ft.TextAlign.CENTER
+                        ),
+                        ft.Text(
+                            "Riprova più tardi o riavvia l'applicazione",
+                            size=12,
+                            color=self.colors["text_secondary"],
+                            text_align=ft.TextAlign.CENTER
+                        )
                     ],
                     spacing=15,
-                    scroll=ft.ScrollMode.AUTO
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment=ft.MainAxisAlignment.CENTER
                 )
             ),
             actions=[
                 ft.Row(
                     controls=[
                         ft.TextButton(
-                            text=self._get_translation("test_real_data"),
-                            icon=ft.Icons.SENSORS,
-                            on_click=self._test_real_data,
+                            text="Riprova",
+                            icon=ft.Icons.REFRESH,
+                            on_click=lambda e: self._retry_dialog(),
                             style=ft.ButtonStyle(color=self.colors["accent"])
                         ),
                         ft.TextButton(
-                            text=self._get_translation("clear_all"),
-                            icon=ft.Icons.CLEAR_ALL,
-                            on_click=self._clear_all_alerts,
-                            style=ft.ButtonStyle(color=self.colors["warning"])
-                        ),
-                        ft.TextButton(
-                            text=self._get_translation("close"),
+                            text="Chiudi",
                             on_click=lambda e: self.close_dialog(),
-                            style=ft.ButtonStyle(color=self.colors["accent"])
+                            style=ft.ButtonStyle(color=self.colors["text_secondary"])
                         )
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN
@@ -105,6 +180,24 @@ class WeatherAlertDialog:
             ],
             modal=False
         )
+
+    def _retry_dialog(self):
+        """Retry building and showing the dialog."""
+        try:
+            # Try to get weather alerts service again
+            self.weather_alerts_service = self.page.session.get('weather_alerts_service') if self.page and self.page.session else None
+            
+            if self.weather_alerts_service:
+                # Close current error dialog
+                self.close_dialog()
+                # Show the proper dialog
+                self.show_dialog()
+            else:
+                # Show snackbar message
+                self._show_snackbar("Servizio allerte ancora non disponibile", self.colors["error"])
+        except Exception as e:
+            print(f"Error retrying dialog: {e}")
+            self._show_snackbar(f"Errore nel riprovare: {str(e)}", self.colors["error"])
 
     def _build_header(self):
         """Build dialog header with title and status."""
@@ -626,10 +719,6 @@ class WeatherAlertDialog:
     def show_dialog(self):
         """Show the weather alerts dialog."""
         try:
-            # Close any existing dialog first
-            if self.dialog and self.dialog in self.page.overlay:
-                self.close_dialog()
-                
             # Build new dialog
             self.dialog = self.build()
             

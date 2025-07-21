@@ -1,6 +1,7 @@
 import asyncio
 import flet as ft
 from services.alerts.weather_alerts_service import AlertSeverity, AlertType
+from services.ui.translation_service import TranslationService
 
 class WeatherAlertDialog:
     """Dialog dedicato esclusivamente alla gestione delle allerte meteo."""
@@ -8,7 +9,7 @@ class WeatherAlertDialog:
     def __init__(self, page: ft.Page, state_manager=None, language: str = "en"):
         self.page = page
         self.state_manager = state_manager
-        self.current_language = language
+        self.language = language
         self.dialog = None
         self._original_on_click = None
         
@@ -62,12 +63,13 @@ class WeatherAlertDialog:
         
         # If still not available, show error dialog
         if not self.weather_alerts_service:
-            return self._build_error_dialog("Servizio allerte meteo non disponibile")
+            return self._build_error_dialog(TranslationService.translate_from_dict("weather_alert_dialog_items", "service_unavailable", self.language))
         
         try:
             return ft.AlertDialog(
+                modal=False,
                 title=self._build_header(),
-                scrollable=True,  # Make dialog scrollable
+                #scrollable=True,  # Make dialog scrollable
                 bgcolor=self.colors["bg"],
                 content=ft.Container(
                     width=600,
@@ -93,28 +95,40 @@ class WeatherAlertDialog:
                 actions=[
                     ft.Row(
                         controls=[
-                            ft.TextButton(
-                                text=self._get_translation("test_real_data"),
+                            ft.FilledButton(
                                 icon=ft.Icons.SENSORS,
+                                text=TranslationService.translate_from_dict("weather_alert_dialog_items", "test_real_data", self.language),
                                 on_click=self._test_real_data,
-                                style=ft.ButtonStyle(color=self.colors["accent"])
+                                style=ft.ButtonStyle(
+                                    bgcolor=self.colors["accent"],
+                                    color=ft.Colors.WHITE,
+                                    shape=ft.RoundedRectangleBorder(radius=8)
+                                )
                             ),
-                            ft.TextButton(
-                                text=self._get_translation("clear_all"),
+                            ft.FilledButton(
                                 icon=ft.Icons.CLEAR_ALL,
-                                on_click=self._clear_all_alerts,
-                                style=ft.ButtonStyle(color=self.colors["warning"])
+                                text=TranslationService.translate_from_dict("weather_alert_dialog_items", "clear_all", self.language),
+                                on_click=self._clear_all_alerts,                               
+                                style=ft.ButtonStyle(
+                                    bgcolor=self.colors["warning"],
+                                    color=ft.Colors.WHITE,
+                                    shape=ft.RoundedRectangleBorder(radius=8)
+                                )
                             ),
-                            ft.TextButton(
-                                text=self._get_translation("close"),
+                            ft.FilledButton(
+                                icon=ft.Icons.CLOSE,
+                                text=TranslationService.translate_from_dict("dialog_buttons", "close", self.language),
                                 on_click=lambda e: self.close_dialog(),
-                                style=ft.ButtonStyle(color=self.colors["accent"])
-                            )
+                                style=ft.ButtonStyle(
+                                    bgcolor=self.colors["accent"],
+                                    color=ft.Colors.WHITE,
+                                    shape=ft.RoundedRectangleBorder(radius=8)
+                                )
+                            ),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                     )
                 ],
-                modal=False
             )
         except Exception as e:
             print(f"Error building weather alert dialog: {e}")
@@ -123,6 +137,7 @@ class WeatherAlertDialog:
     def _build_error_dialog(self, message: str):
         """Build an error dialog when the main dialog cannot be created."""
         return ft.AlertDialog(
+            modal=False,
             title=ft.Row(
                 controls=[
                     ft.Icon(ft.Icons.ERROR_OUTLINE, color=self.colors["error"], size=24),
@@ -135,7 +150,7 @@ class WeatherAlertDialog:
                 ],
                 spacing=10
             ),
-            scrollable=True,  # Make dialog scrollable
+            #scrollable=True,  # Make dialog scrollable
             bgcolor=self.colors["bg"],
             content=ft.Container(
                 width=400,
@@ -166,21 +181,24 @@ class WeatherAlertDialog:
                 ft.Row(
                     controls=[
                         ft.TextButton(
-                            text="Riprova",
+                            text=TranslationService.translate_from_dict("dialog_buttons", "retry", self.language),
                             icon=ft.Icons.REFRESH,
                             on_click=lambda e: self._retry_dialog(),
                             style=ft.ButtonStyle(color=self.colors["accent"])
                         ),
-                        ft.TextButton(
-                            text="Chiudi",
+                        ft.FilledButton(
+                            text=TranslationService.translate_from_dict("dialog_buttons", "close", self.language),
                             on_click=lambda e: self.close_dialog(),
-                            style=ft.ButtonStyle(color=self.colors["text_secondary"])
+                            style=ft.ButtonStyle(
+                                bgcolor=self.colors.get("accent", ft.Colors.BLUE),
+                                color=ft.Colors.WHITE,
+                                shape=ft.RoundedRectangleBorder(radius=8)
+                            )
                         )
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                 )
             ],
-            modal=False
         )
 
     def _retry_dialog(self):
@@ -196,7 +214,7 @@ class WeatherAlertDialog:
                 self.show_dialog()
             else:
                 # Show snackbar message
-                self._show_snackbar("Servizio allerte ancora non disponibile", self.colors["error"])
+                self._show_snackbar(TranslationService.translate_from_dict("weather_alert_dialog_items", "service_unavailable", self.language), self.colors["error"])
         except Exception as e:
             print(f"Error retrying dialog: {e}")
             self._show_snackbar(f"Errore nel riprovare: {str(e)}", self.colors["error"])
@@ -211,13 +229,13 @@ class WeatherAlertDialog:
                 ft.Column(
                     controls=[
                         ft.Text(
-                            self._get_translation("weather_alerts"),
+                            TranslationService.translate_from_dict("weather_alert_dialog_items", "weather_alerts", self.language),
                             size=18,
                             weight=ft.FontWeight.BOLD,
                             color=self.colors["text"]
                         ),
                         ft.Text(
-                            f"{active_count} " + self._get_translation("active_alerts_count"),
+                            f"{active_count} " + TranslationService.translate_from_dict("weather_alert_dialog_items", "active_alerts_count", self.language),
                             size=12,
                             color=self.colors["text_secondary"]
                         )
@@ -227,7 +245,7 @@ class WeatherAlertDialog:
                 ),
                 ft.IconButton(
                     icon=ft.Icons.REFRESH,
-                    tooltip=self._get_translation("refresh"),
+                    tooltip=TranslationService.translate_from_dict("weather_alert_dialog_items", "refresh", self.language),
                     on_click=self._refresh_alerts,
                     icon_color=self.colors["accent"]
                 )
@@ -516,43 +534,8 @@ class WeatherAlertDialog:
         )
 
     def _get_translation(self, key: str) -> str:
-        """Get translation for a key."""
-        # Mock translations for development
-        translations = {
-            "weather_alerts": "Allerte Meteo",
-            "active_alerts_count": "allerte attive",
-            "refresh": "Aggiorna",
-            "alert_statistics": "Statistiche Allerte",
-            "severity_low": "Basso",
-            "severity_moderate": "Moderato", 
-            "severity_high": "Alto",
-            "severity_extreme": "Estremo",
-            "service_unavailable": "Servizio allerte meteo non disponibile",
-            "no_active_alerts": "Nessuna Allerta Attiva",
-            "all_clear": "Le condizioni meteo sono normali",
-            "active_alerts": "Allerte Attive",
-            "acknowledge_all": "Conferma Tutte",
-            "more_alerts": "altre allerte",
-            "acknowledge": "Conferma",
-            "alert_types": "Tipi di Allerta",
-            "temp_high": "Temperatura Alta",
-            "temp_low": "Temperatura Bassa",
-            "wind_strong": "Vento Forte",
-            "rain_heavy": "Pioggia Intensa",
-            "uv_high": "Indice UV Alto",
-            "air_quality": "Qualità dell'Aria",
-            "test_real_data": "Test Dati Reali",
-            "clear_all": "Cancella Tutto",
-            "close": "Chiudi",
-            "alert_settings": "Impostazioni Allerte",
-            "configure_thresholds": "Configura Soglie",
-            "enable_notifications": "Abilita Notifiche",
-            "notification_sound": "Suono Notifica",
-            "auto_acknowledge": "Conferma Automatica",
-            "alert_history": "Cronologia Allerte",
-            "export_logs": "Esporta Log"
-        }
-        return translations.get(key, key)
+        """Get translation for a key using the centralized translation service."""
+        return TranslationService.translate_from_dict("weather_alert_dialog_items", key, self.language)
 
     def _show_snackbar(self, message: str, bgcolor: str = None):
         """Helper method to show snackbar with proper error handling."""
@@ -588,7 +571,7 @@ class WeatherAlertDialog:
                 main_app = self.page.session.get('main_app')
                 if not main_app:
                     self._show_snackbar(
-                        "Impossibile accedere ai dati meteo",
+                        TranslationService.translate_from_dict("weather_alert_dialog_items", "error_test_data", self.language),
                         self.colors["error"]
                     )
                     return
@@ -598,7 +581,7 @@ class WeatherAlertDialog:
                 
                 if not weather_view or not hasattr(weather_view, 'current_weather_data'):
                     self._show_snackbar(
-                        "Nessun dato meteo disponibile",
+                        TranslationService.translate_from_dict("weather_alert_dialog_items", "no_weather_data", self.language),
                         self.colors["error"]
                     )
                     return
@@ -606,7 +589,7 @@ class WeatherAlertDialog:
                 weather_data = weather_view.current_weather_data
                 if not weather_data:
                     self._show_snackbar(
-                        "Dati meteo non caricati",
+                        TranslationService.translate_from_dict("weather_alert_dialog_items", "weather_data_not_loaded", self.language),
                         self.colors["error"]
                     )
                     return
@@ -620,12 +603,12 @@ class WeatherAlertDialog:
                 
                 if len(alerts) == 0:
                     self._show_snackbar(
-                        "Nessuna allerta generata - condizioni meteo normali",
+                        TranslationService.translate_from_dict("weather_alert_dialog_items", "no_alerts_generated", self.language),
                         self.colors["success"]
                     )
                 else:
                     self._show_snackbar(
-                        f"Generati {len(alerts)} allerte dai dati reali",
+                        f"{len(alerts)} " + TranslationService.translate_from_dict("weather_alert_dialog_items", "alerts_generated", self.language),
                         self.colors["warning"]
                     )
                 
@@ -636,7 +619,7 @@ class WeatherAlertDialog:
             except Exception as ex:
                 print(f"Error in test_real_data: {ex}")
                 self._show_snackbar(
-                    f"Errore test dati reali: {str(ex)}",
+                    TranslationService.translate_from_dict("weather_alert_dialog_items", "error_real_data", self.language) + f": {str(ex)}",
                     self.colors["error"]
                 )
 
@@ -648,7 +631,7 @@ class WeatherAlertDialog:
                 self.weather_alerts_service.acknowledge_alert(alert.id)
             
             self._show_snackbar(
-                "Tutte le allerte sono state cancellate",
+                TranslationService.translate_from_dict("weather_alert_dialog_items", "all_alerts_cleared", self.language),
                 self.colors["success"]
             )
             await self._refresh_alerts(None)
@@ -689,7 +672,7 @@ class WeatherAlertDialog:
             success = self.weather_alerts_service.acknowledge_alert(alert_id)
             if success:
                 self._show_snackbar(
-                    "Allerta confermata",
+                    TranslationService.translate_from_dict("weather_alert_dialog_items", "alert_acknowledged", self.language),
                     self.colors["success"]
                 )
                 # Refresh the display
@@ -703,7 +686,7 @@ class WeatherAlertDialog:
                 self.weather_alerts_service.acknowledge_alert(alert.id)
             
             self._show_snackbar(
-                f"Confermate {len(active_alerts)} allerte",
+                f"{len(active_alerts)} " + TranslationService.translate_from_dict("weather_alert_dialog_items", "alerts_acknowledged", self.language),
                 self.colors["success"]
             )
             await self._refresh_alerts(None)
@@ -712,9 +695,9 @@ class WeatherAlertDialog:
         """Toggle an alert type on/off."""
         if self.weather_alerts_service:
             self.weather_alerts_service.toggle_alert_type(alert_type, enabled)
-            status = "abilitato" if enabled else "disabilitato"
+            status_key = "alert_type_enabled" if enabled else "alert_type_disabled"
             self._show_snackbar(
-                f"Tipo allerta {alert_type.value} {status}",
+                f"{alert_type.value} - " + TranslationService.translate_from_dict("weather_alert_dialog_items", status_key, self.language),
                 self.colors["success"] if enabled else self.colors["warning"]
             )
 

@@ -142,6 +142,7 @@ class SettingsAlertDialog:
                 return 20
             return 14
         self.dialog = ft.AlertDialog(
+            modal=False,
             title=ft.Text(
                 TranslationService.translate_from_dict("settings_alert_dialog_items", "settings_alert_dialog_title", self.language),
                 size=get_size('title'),
@@ -249,10 +250,16 @@ class SettingsAlertDialog:
                 padding=ft.padding.all(20),
             ),
             actions=[                
-                ft.TextButton(
-                    content=ft.Text(TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language), size=14, color=text_color.get("ACCENT", ft.Colors.BLUE)),
-                    on_click=lambda e: self._close_dialog(e)
-                )
+                ft.FilledButton(
+                    icon=ft.Icons.CLOSE,
+                    text=TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language),
+                    on_click=lambda e: self._close_dialog(e),
+                    style=ft.ButtonStyle(
+                        bgcolor="#3F51B5",
+                        color=ft.Colors.WHITE,
+                        shape=ft.RoundedRectangleBorder(radius=8)
+                    )
+                ),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
             open=False,
@@ -328,16 +335,23 @@ class SettingsAlertDialog:
         # Update action buttons with current language and theme
         if self.dialog.actions and len(self.dialog.actions) > 0:
             action_button = self.dialog.actions[0]
-            if isinstance(action_button, ft.TextButton) and hasattr(action_button, 'content') and isinstance(action_button.content, ft.Text):
+            if isinstance(action_button, ft.FilledButton):
+                action_button.text = TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language)
+                action_button.style = ft.ButtonStyle(
+                    bgcolor=self.text_color.get("ACCENT", ft.Colors.BLUE),
+                    color=ft.Colors.WHITE,
+                    shape=ft.RoundedRectangleBorder(radius=8)
+                )
+            elif isinstance(action_button, ft.TextButton) and hasattr(action_button, 'content') and isinstance(action_button.content, ft.Text):
                 action_button.content.value = TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language)
                 action_button.content.size = 14
                 action_button.content.color = self.text_color.get("ACCENT", ft.Colors.BLUE)
             
-            # Update button style with theme colors
-            action_button.style = ft.ButtonStyle(
-                color=self.text_color.get("ACCENT", "#0078d4"),
-                overlay_color=ft.Colors.with_opacity(0.1, self.text_color.get("ACCENT", "#0078d4")),
-            )
+                # Update button style with theme colors
+                action_button.style = ft.ButtonStyle(
+                    color=self.text_color.get("ACCENT", "#0078d4"),
+                    overlay_color=ft.Colors.with_opacity(0.1, self.text_color.get("ACCENT", "#0078d4")),
+                )
             
         # Update theme switch colors and value
         if self.theme_toggle_control:
@@ -793,6 +807,7 @@ class SettingsAlertDialog:
                 self.page.update()
 
             confirmation_dialog = ft.AlertDialog(
+                modal=False,
                 title=ft.Text(self._get_translation_local("reset_confirmation")),
                 scrollable=True,  # Make dialog scrollable
                 content=ft.Text(self._get_translation_local("confirm_reset")),
@@ -883,6 +898,7 @@ class SettingsAlertDialog:
             )
 
             about_dialog = ft.AlertDialog(
+                modal=False,
                 title=ft.Text(self._get_translation_local("about_title")),
                 scrollable=True,  # Make dialog scrollable
                 content=ft.Container(

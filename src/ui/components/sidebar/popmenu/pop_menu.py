@@ -4,11 +4,14 @@ from services.ui.theme_handler import ThemeHandler
 from ui.components.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from ui.components.sidebar.popmenu.alertdialogs.maps.advanced_maps_alert_dialog import AdvancedMapsAlertDialog
 from ui.components.sidebar.popmenu.alertdialogs.maps.interactive.interactive_maps_alert_dialog import InteractiveMapAlertDialog
+from ui.components.sidebar.popmenu.alertdialogs.maps.satellite_view_dialog import SatelliteViewDialog
+from ui.components.sidebar.popmenu.alertdialogs.maps.radar_live_dialog import RadarLiveDialog
 from ui.components.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
-from ui.components.sidebar.popmenu.placeholders.placeholder_dialogs import (
-    SatelliteViewDialog, RadarLiveDialog, WeatherTrendsDialog, 
-    HistoricalDataDialog, PushNotificationsDialog, LocationManagerDialog, ExportDataDialog
-)
+from ui.components.sidebar.popmenu.alertdialogs.analytics.weather_trends_dialog import WeatherTrendsDialog
+from ui.components.sidebar.popmenu.alertdialogs.analytics.historical_data_dialog import HistoricalDataDialog
+from ui.components.sidebar.popmenu.alertdialogs.alerts.push_notifications_dialog import PushNotificationsDialog
+from ui.components.sidebar.popmenu.alertdialogs.tools.location_manager_dialog import LocationManagerDialog
+from ui.components.sidebar.popmenu.alertdialogs.tools.export_data_dialog import ExportDataDialog
 import flet as ft
 
 
@@ -63,14 +66,14 @@ class PopMenu(ft.Container):
         
         self.interactive_maps_alert = InteractiveMapAlertDialog(page=self.page, state_manager=self.state_manager, language=self.language, theme_handler=self.theme_handler)
         
-        # Initialize placeholder dialogs
+        # Initialize all dialogs
         self.satellite_view_dialog = SatelliteViewDialog(page=self.page, state_manager=self.state_manager, language=self.language)
         self.radar_live_dialog = RadarLiveDialog(page=self.page, state_manager=self.state_manager, language=self.language)
-        self.weather_trends_dialog = WeatherTrendsDialog(page=self.page, state_manager=self.state_manager, language=self.language)
-        self.historical_data_dialog = HistoricalDataDialog(page=self.page, state_manager=self.state_manager, language=self.language)
-        self.push_notifications_dialog = PushNotificationsDialog(page=self.page, state_manager=self.state_manager, language=self.language)
-        self.location_manager_dialog = LocationManagerDialog(page=self.page, state_manager=self.state_manager, language=self.language)
-        self.export_data_dialog = ExportDataDialog(page=self.page, state_manager=self.state_manager, language=self.language)
+        self.weather_trends_dialog = WeatherTrendsDialog(page=self.page)
+        self.historical_data_dialog = HistoricalDataDialog(page=self.page)
+        self.push_notifications_dialog = PushNotificationsDialog(page=self.page)
+        self.location_manager_dialog = LocationManagerDialog(page=self.page)
+        self.export_data_dialog = ExportDataDialog(page=self.page)
         self.setting_alert = SettingsAlertDialog(page=self.page, state_manager=self.state_manager, language=self.language, theme_handler=self.theme_handler, handle_location_toggle=self.handle_location_toggle, handle_theme_toggle=self.handle_theme_toggle)
 
         # Create popup menu items text
@@ -128,6 +131,16 @@ class PopMenu(ft.Container):
                                     content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "interactive_maps", self.language)),
                                     leading=ft.Icon(ft.Icons.MAP, color="#2196F3", size=20),
                                     on_click=lambda _: self.interactive_maps_alert.open_dialog() if self.interactive_maps_alert else None,
+                                ),
+                                ft.MenuItemButton(
+                                    content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "satellite_view", self.language)),
+                                    leading=ft.Icon(ft.Icons.SATELLITE_ALT, color="#607D8B", size=20),
+                                    on_click=lambda _: self.satellite_view_dialog.show_dialog() if self.satellite_view_dialog else None,
+                                ),
+                                ft.MenuItemButton(
+                                    content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "radar_live", self.language)),
+                                    leading=ft.Icon(ft.Icons.RADAR, color="#E91E63", size=20),
+                                    on_click=lambda _: self.radar_live_dialog.show_dialog() if self.radar_live_dialog else None,
                                 ),
                             ],
                         ),

@@ -257,7 +257,16 @@ class InteractiveMapAlertDialog:
             ], spacing=10),
             content=content,
             actions=[
-                ft.TextButton(texts['close'], on_click=self._close_dialog, style=ft.ButtonStyle(color=accent_color))
+                ft.FilledButton(
+                    icon=ft.Icons.CLOSE,
+                    text=texts['close'], 
+                    on_click=self._close_dialog, 
+                    style=ft.ButtonStyle(
+                        bgcolor=accent_color,
+                        color=ft.Colors.WHITE,
+                        shape=ft.RoundedRectangleBorder(radius=8)
+                    )
+                )
             ],
             actions_alignment=ft.MainAxisAlignment.END,
             bgcolor=dialog_bg,

@@ -19,6 +19,7 @@ TRANSLATIONS = {
         "popup_menu_items": {
             "weather" : "Weather",
             "map" : "Map",
+            "advanced_maps" : "Advanced Maps",
             "settings" : "Settings"
         },
         "air_condition_items": {
@@ -1417,6 +1418,7 @@ TRANSLATIONS = {
         "popup_menu_items": {
             "weather": "Meteo",
             "map": "Mappa",
+            "advanced_maps": "Mappe Avanzate",
             "settings": "Impostazioni"
         },
         "air_condition_items": {

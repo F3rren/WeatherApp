@@ -3,7 +3,7 @@ from services.ui.translation_service import TranslationService
 from utils.config import DEFAULT_LANGUAGE
 from services.ui.theme_handler import ThemeHandler
 from ui.components.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
-from ui.components.sidebar.popmenu.alertdialogs.maps.maps_alert_dialog import MapsAlertDialog
+from ui.components.sidebar.popmenu.alertdialogs.maps.advanced_maps_alert_dialog import AdvancedMapsAlertDialog
 from ui.components.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
 import flet as ft
 
@@ -24,7 +24,7 @@ class PopMenu(ft.Container):
         self.theme_handler = theme_handler or ThemeHandler(page)
         self.language = language if language else DEFAULT_LANGUAGE
         self.weather_alert = None
-        self.map_alert = None
+        self.advanced_maps_alert = None
         self.setting_alert = None
         self.pop_menu_items = None
         self.popup_menu_button_icon = None
@@ -44,7 +44,7 @@ class PopMenu(ft.Container):
         # Update child dialogs, passing theme_handler for color logic
         self.weather_alert = WeatherAlertDialog(page=self.page, state_manager=self.state_manager, language=self.language)
         
-        self.map_alert = MapsAlertDialog(page=self.page, state_manager=self.state_manager)
+        self.advanced_maps_alert = AdvancedMapsAlertDialog(page=self.page, state_manager=self.state_manager, language=self.language, theme_handler=self.theme_handler)
         
         self.setting_alert = SettingsAlertDialog(
             page=self.page, state_manager=self.state_manager,
@@ -55,7 +55,7 @@ class PopMenu(ft.Container):
         # Update popup menu items using translation keys from TRANSLATIONS
         self.pop_menu_items = {
             "weather": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "weather", self.language), color=self._current_text_color),
-            "map": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "map", self.language), color=self._current_text_color),
+            "advanced_maps": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "advanced_maps", self.language), color=self._current_text_color),
             "settings": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "settings", self.language), color=self._current_text_color)
         }
         self.popup_menu_button_icon = ft.Icon(ft.Icons.FILTER_ALT_OUTLINED, color=self._current_text_color)
@@ -73,10 +73,10 @@ class PopMenu(ft.Container):
                 ),
                 ft.PopupMenuItem(
                     content=ft.Row([
-                        ft.Icon(ft.Icons.MAP_OUTLINED, color="#0000FF", size=20),
-                        self.pop_menu_items["map"]
+                        ft.Icon(ft.Icons.LAYERS_OUTLINED, color="#4CAF50", size=20),
+                        self.pop_menu_items["advanced_maps"]
                     ]),
-                    on_click=lambda _, al=self.map_alert: self.map_alert.open_dialog(),
+                    on_click=lambda _, al=self.advanced_maps_alert: self.advanced_maps_alert.open_dialog(),
                 ),
                 ft.PopupMenuItem(
                     content=ft.Row([

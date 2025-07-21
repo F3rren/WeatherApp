@@ -18,8 +18,20 @@ TRANSLATIONS = {
     "en": {
         "popup_menu_items": {
             "weather" : "Weather",
-            "map" : "Map",
+            "maps" : "Maps",
             "advanced_maps" : "Advanced Maps",
+            "interactive_maps" : "Interactive Maps",
+            "satellite_view" : "Satellite View",
+            "radar_live" : "Live Radar",
+            "analytics" : "Analytics",
+            "weather_trends" : "Weather Trends",
+            "historical_data" : "Historical Data",
+            "alerts_notifications" : "Alerts & Notifications",
+            "weather_alerts" : "Weather Alerts",
+            "push_notifications" : "Push Notifications",
+            "tools" : "Tools",
+            "location_manager" : "Location Manager",
+            "export_data" : "Export Data",
             "settings" : "Settings"
         },
         "air_condition_items": {
@@ -1417,8 +1429,20 @@ TRANSLATIONS = {
     "it": {
         "popup_menu_items": {
             "weather": "Meteo",
-            "map": "Mappa",
+            "maps": "Mappe",
             "advanced_maps": "Mappe Avanzate",
+            "interactive_maps": "Mappe Interattive",
+            "satellite_view": "Vista Satellitare",
+            "radar_live": "Radar Live",
+            "analytics": "Analisi",
+            "weather_trends": "Tendenze Meteo",
+            "historical_data": "Dati Storici",
+            "alerts_notifications": "Allerte e Notifiche",
+            "weather_alerts": "Allerte Meteo",
+            "push_notifications": "Notifiche Push",
+            "tools": "Strumenti",
+            "location_manager": "Gestione Località",
+            "export_data": "Esporta Dati",
             "settings": "Impostazioni"
         },
         "air_condition_items": {

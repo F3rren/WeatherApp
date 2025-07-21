@@ -67,6 +67,7 @@ class WeatherAlertDialog:
         try:
             return ft.AlertDialog(
                 title=self._build_header(),
+                scrollable=True,  # Make dialog scrollable
                 bgcolor=self.colors["bg"],
                 content=ft.Container(
                     width=600,
@@ -134,6 +135,7 @@ class WeatherAlertDialog:
                 ],
                 spacing=10
             ),
+            scrollable=True,  # Make dialog scrollable
             bgcolor=self.colors["bg"],
             content=ft.Container(
                 width=400,

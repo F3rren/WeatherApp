@@ -758,6 +758,7 @@ class WeatherView:
         
         error_dialog = ft.AlertDialog(
             modal=True,
+            scrollable=True,  # Make dialog scrollable
             title=ft.Text(
                 translations.get('error_title', 'Error'),
                 weight=ft.FontWeight.BOLD,
@@ -842,6 +843,7 @@ class WeatherView:
         
         error_dialog = ft.AlertDialog(
             modal=True,
+            scrollable=True,  # Make dialog scrollable
             title=ft.Text(
                 translations.get('network_error_title', 'Network Error'),
                 weight=ft.FontWeight.BOLD,
@@ -926,6 +928,7 @@ class WeatherView:
         
         error_dialog = ft.AlertDialog(
             modal=True,
+            scrollable=True,  # Make dialog scrollable
             title=ft.Text(
                 translations.get('api_error_title', 'API Error'),
                 weight=ft.FontWeight.BOLD,
@@ -996,6 +999,7 @@ class WeatherView:
         
         error_dialog = ft.AlertDialog(
             modal=True,
+            scrollable=True,  # Make dialog scrollable
             title=ft.Text(
                 translations.get('generic_error_title', 'Error'),
                 weight=ft.FontWeight.BOLD,

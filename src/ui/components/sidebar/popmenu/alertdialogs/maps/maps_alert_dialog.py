@@ -147,6 +147,7 @@ class MapsAlertDialog:
             # Create dialog with enhanced styling
             dialog = ft.AlertDialog(
                 modal=True,
+                scrollable=True,  # Make dialog scrollable
                 title=title_content,
                 bgcolor=dialog_bg,
                 surface_tint_color=button_color,
@@ -169,6 +170,7 @@ class MapsAlertDialog:
         translations = self._get_translations()
         return ft.AlertDialog(
             modal=True,
+            scrollable=True,  # Make dialog scrollable
             title=ft.Text(translations['weather_map_title']),
             content=ft.Text(translations['error']),
             actions=[
@@ -205,6 +207,7 @@ class MapsAlertDialog:
             try:
                 error_dialog = ft.AlertDialog(
                     title=ft.Text("Errore Mappa"),
+                    scrollable=True,  # Make dialog scrollable
                     content=ft.Text(f"Impossibile aprire Windy: {str(e)}"),
                     actions=[
                         ft.TextButton("Chiudi", on_click=lambda e: self._close_error_dialog(e, error_dialog))

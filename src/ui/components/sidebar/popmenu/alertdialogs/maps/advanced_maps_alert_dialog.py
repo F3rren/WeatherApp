@@ -147,6 +147,7 @@ class AdvancedMapsAlertDialog:
         
         return ft.AlertDialog(
             modal=False,  # Allow clicking outside to close
+            scrollable=True,  # Make dialog scrollable
             title=ft.Row([
                 ft.Icon(ft.Icons.LAYERS_OUTLINED, color=accent_color, size=24),
                 ft.Text(texts['dialog_title'], weight=ft.FontWeight.BOLD, color=text_color)

@@ -794,6 +794,7 @@ class SettingsAlertDialog:
 
             confirmation_dialog = ft.AlertDialog(
                 title=ft.Text(self._get_translation_local("reset_confirmation")),
+                scrollable=True,  # Make dialog scrollable
                 content=ft.Text(self._get_translation_local("confirm_reset")),
                 actions=[
                     ft.TextButton(
@@ -883,6 +884,7 @@ class SettingsAlertDialog:
 
             about_dialog = ft.AlertDialog(
                 title=ft.Text(self._get_translation_local("about_title")),
+                scrollable=True,  # Make dialog scrollable
                 content=ft.Container(
                     content=about_content,
                     width=400,

@@ -26,6 +26,7 @@ TRANSLATIONS = {
             "analytics" : "Analytics",
             "weather_trends" : "Weather Trends",
             "historical_data" : "Historical Data",
+            "alerts" : "Alerts",
             "alerts_notifications" : "Alerts & Notifications",
             "weather_alerts" : "Weather Alerts",
             "push_notifications" : "Push Notifications",
@@ -281,7 +282,21 @@ TRANSLATIONS = {
     "zh_cn": {
         "popup_menu_items": {
             "weather": "天气",
-            "map": "地图",
+            "maps": "地图",
+            "advanced_maps": "高级地图",
+            "interactive_maps": "交互式地图",
+            "satellite_view": "卫星视图",
+            "radar_live": "实时雷达",
+            "analytics": "分析",
+            "weather_trends": "天气趋势",
+            "historical_data": "历史数据",
+            "alerts": "警报",
+            "alerts_notifications": "警报与通知",
+            "weather_alerts": "天气警报",
+            "push_notifications": "推送通知",
+            "tools": "工具",
+            "location_manager": "位置管理器",
+            "export_data": "导出数据",
             "settings": "设置"
         },
         "air_condition_items": {
@@ -470,7 +485,21 @@ TRANSLATIONS = {
     "hi": {
         "popup_menu_items": {
             "weather": "मौसम",
-            "map": "नक्शा",
+            "maps": "नक्शे",
+            "advanced_maps": "उन्नत नक्शे",
+            "interactive_maps": "इंटरैक्टिव नक्शे",
+            "satellite_view": "उपग्रह दृश्य",
+            "radar_live": "लाइव रडार",
+            "analytics": "विश्लेषण",
+            "weather_trends": "मौसम के रुझान",
+            "historical_data": "ऐतिहासिक डेटा",
+            "alerts": "अलर्ट",
+            "alerts_notifications": "अलर्ट और सूचनाएं",
+            "weather_alerts": "मौसम अलर्ट",
+            "push_notifications": "पुश सूचनाएं",
+            "tools": "उपकरण",
+            "location_manager": "स्थान प्रबंधक",
+            "export_data": "डेटा निर्यात करें",
             "settings": "सेटिंग्स"
         },
         "air_condition_items": {
@@ -658,7 +687,21 @@ TRANSLATIONS = {
     "es": {
         "popup_menu_items": {
             "weather": "Clima",
-            "map": "Mapa",
+            "maps": "Mapas",
+            "advanced_maps": "Mapas Avanzados",
+            "interactive_maps": "Mapas Interactivos",
+            "satellite_view": "Vista Satelital",
+            "radar_live": "Radar en Vivo",
+            "analytics": "Análisis",
+            "weather_trends": "Tendencias Meteorológicas",
+            "historical_data": "Datos Históricos",
+            "alerts": "Alertas",
+            "alerts_notifications": "Alertas y Notificaciones",
+            "weather_alerts": "Alertas Meteorológicas",
+            "push_notifications": "Notificaciones Push",
+            "tools": "Herramientas",
+            "location_manager": "Gestor de Ubicación",
+            "export_data": "Exportar Datos",
             "settings": "Configuración"
         },
         "air_condition_items": {
@@ -868,7 +911,21 @@ TRANSLATIONS = {
     "ar": {
         "popup_menu_items": {
             "weather": "الطقس",
-            "map": "الخريطة",
+            "maps": "الخرائط",
+            "advanced_maps": "خرائط متقدمة",
+            "interactive_maps": "خرائط تفاعلية",
+            "satellite_view": "عرض الأقمار الصناعية",
+            "radar_live": "رادار مباشر",
+            "analytics": "التحليلات",
+            "weather_trends": "اتجاهات الطقس",
+            "historical_data": "البيانات التاريخية",
+            "alerts": "التنبيهات",
+            "alerts_notifications": "التنبيهات والإشعارات",
+            "weather_alerts": "تنبيهات الطقس",
+            "push_notifications": "إشعارات الدفع",
+            "tools": "الأدوات",
+            "location_manager": "مدير المواقع",
+            "export_data": "تصدير البيانات",
             "settings": "الإعدادات"
         },
         "air_condition_items": {
@@ -1055,7 +1112,21 @@ TRANSLATIONS = {
     "id": {
         "popup_menu_items": {
             "weather": "Cuaca",
-            "map": "Peta",
+            "maps": "Peta",
+            "advanced_maps": "Peta Lanjutan",
+            "interactive_maps": "Peta Interaktif",
+            "satellite_view": "Tampilan Satelit",
+            "radar_live": "Radar Langsung",
+            "analytics": "Analitik",
+            "weather_trends": "Tren Cuaca",
+            "historical_data": "Data Historis",
+            "alerts": "Peringatan",
+            "alerts_notifications": "Peringatan & Notifikasi",
+            "weather_alerts": "Peringatan Cuaca",
+            "push_notifications": "Notifikasi Push",
+            "tools": "Alat",
+            "location_manager": "Pengelola Lokasi",
+            "export_data": "Ekspor Data",
             "settings": "Pengaturan"
         },
         "air_condition_items": {
@@ -1242,7 +1313,21 @@ TRANSLATIONS = {
     "ja": {
         "popup_menu_items": {
             "weather": "天気",
-            "map": "地図",
+            "maps": "地図",
+            "advanced_maps": "高度な地図",
+            "interactive_maps": "インタラクティブ地図",
+            "satellite_view": "衛星画像",
+            "radar_live": "ライブレーダー",
+            "analytics": "分析",
+            "weather_trends": "天気の傾向",
+            "historical_data": "過去のデータ",
+            "alerts": "警報",
+            "alerts_notifications": "警報と通知",
+            "weather_alerts": "気象警報",
+            "push_notifications": "プッシュ通知",
+            "tools": "ツール",
+            "location_manager": "位置マネージャー",
+            "export_data": "データエクスポート",
             "settings": "設定"
         },
         "air_condition_items": {
@@ -1437,6 +1522,7 @@ TRANSLATIONS = {
             "analytics": "Analisi",
             "weather_trends": "Tendenze Meteo",
             "historical_data": "Dati Storici",
+            "alerts": "Allerte",
             "alerts_notifications": "Allerte e Notifiche",
             "weather_alerts": "Allerte Meteo",
             "push_notifications": "Notifiche Push",
@@ -1690,7 +1776,21 @@ TRANSLATIONS = {
     "de": {
         "popup_menu_items": {
             "weather": "Wetter",
-            "map": "Karte",
+            "maps": "Karten",
+            "advanced_maps": "Erweiterte Karten",
+            "interactive_maps": "Interaktive Karten",
+            "satellite_view": "Satellitenansicht",
+            "radar_live": "Live-Radar",
+            "analytics": "Analysen",
+            "weather_trends": "Wettertrends",
+            "historical_data": "Historische Daten",
+            "alerts": "Warnungen",
+            "alerts_notifications": "Warnungen & Benachrichtigungen",
+            "weather_alerts": "Wetterwarnungen",
+            "push_notifications": "Push-Benachrichtigungen",
+            "tools": "Werkzeuge",
+            "location_manager": "Standortverwaltung",
+            "export_data": "Daten Exportieren",
             "settings": "Einstellungen"
         },
         "air_condition_items": {
@@ -1938,7 +2038,21 @@ TRANSLATIONS = {
     "fr": {
         "popup_menu_items": {
             "weather": "Météo",
-            "map": "Carte",
+            "maps": "Cartes",
+            "advanced_maps": "Cartes Avancées",
+            "interactive_maps": "Cartes Interactives",
+            "satellite_view": "Vue Satellite",
+            "radar_live": "Radar en Direct",
+            "analytics": "Analyses",
+            "weather_trends": "Tendances Météo",
+            "historical_data": "Données Historiques",
+            "alerts": "Alertes",
+            "alerts_notifications": "Alertes et Notifications",
+            "weather_alerts": "Alertes Météo",
+            "push_notifications": "Notifications Push",
+            "tools": "Outils",
+            "location_manager": "Gestionnaire de Localisation",
+            "export_data": "Exporter les Données",
             "settings": "Paramètres"
         },
         "air_condition_items": {
@@ -2186,7 +2300,21 @@ TRANSLATIONS = {
     "pt": {
         "popup_menu_items": {
             "weather": "Tempo",
-            "map": "Mapa",
+            "maps": "Mapas",
+            "advanced_maps": "Mapas Avançados",
+            "interactive_maps": "Mapas Interativos",
+            "satellite_view": "Vista Satélite",
+            "radar_live": "Radar ao Vivo",
+            "analytics": "Análises",
+            "weather_trends": "Tendências Meteorológicas",
+            "historical_data": "Dados Históricos",
+            "alerts": "Alertas",
+            "alerts_notifications": "Alertas e Notificações",
+            "weather_alerts": "Alertas Meteorológicos",
+            "push_notifications": "Notificações Push",
+            "tools": "Ferramentas",
+            "location_manager": "Gerenciador de Localização",
+            "export_data": "Exportar Dados",
             "settings": "Configurações"
         },
         "air_condition_items": {
@@ -2373,7 +2501,21 @@ TRANSLATIONS = {
     "ru": {
         "popup_menu_items": {
             "weather": "Погода",
-            "map": "Карта",
+            "maps": "Карты",
+            "advanced_maps": "Расширенные Карты",
+            "interactive_maps": "Интерактивные Карты",
+            "satellite_view": "Спутниковый Вид",
+            "radar_live": "Живой Радар",
+            "analytics": "Аналитика",
+            "weather_trends": "Тенденции Погоды",
+            "historical_data": "Исторические Данные",
+            "alerts": "Оповещения",
+            "alerts_notifications": "Оповещения и Уведомления",
+            "weather_alerts": "Погодные Оповещения",
+            "push_notifications": "Push-уведомления",
+            "tools": "Инструменты",
+            "location_manager": "Менеджер Местоположения",
+            "export_data": "Экспорт Данных",
             "settings": "Настройки"
         },
         "air_condition_items": {

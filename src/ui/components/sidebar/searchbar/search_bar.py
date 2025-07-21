@@ -72,11 +72,8 @@ class SearchBar:
         )
 
         row_children = []
-        #popmenu alert dialog
-        if popmenu_widget:
-            row_children.append(ft.Container(content=popmenu_widget, margin=ft.margin.only(right=4)))
-
-        #searchbar field
+        
+        #searchbar field - ora prende più spazio
         row_children.append(self.search_field)
         #clear button 
         row_children.append(clear_btn)

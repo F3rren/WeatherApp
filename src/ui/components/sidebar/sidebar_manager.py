@@ -386,18 +386,26 @@ class SidebarManager(ft.Container):
         """
         Costruisce una moderna sidebar con previsioni giornaliere simile al design mostrato.
         """
-        # Header della sidebar con controlli
+        # Header della sidebar con controlli in riga
         header_section = ft.Container(
             content=ft.Row([
-                # Search bar compatta
+                # PopMenu a sinistra
+                ft.Container(
+                    content=self.pop_menu,
+                    margin=ft.margin.only(right=8),  # Spazio tra PopMenu e SearchBar
+                ),
+                # SearchBar allargata a destra
                 ft.Container(
                     content=self.search_bar.build(
-                        popmenu_widget=self.pop_menu,  # Use the PopMenu container directly
-                clear_icon_size=25,
+                        popmenu_widget=None,  # Non più necessario
+                        clear_icon_size=25,
                     ),
-                    expand=True,
+                    expand=True,  # Prende tutto lo spazio rimanente
                 ),
-            ]),
+            ], 
+            alignment=ft.MainAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=0),
             padding=ft.padding.all(15),
             margin=ft.margin.only(bottom=10)
         )

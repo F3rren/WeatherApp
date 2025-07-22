@@ -125,12 +125,12 @@ class PopMenu(ft.Container):
                                 ft.MenuItemButton(
                                     content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "advanced_maps", self.language)),
                                     leading=ft.Icon(ft.Icons.LAYERS_OUTLINED, color="#4CAF50", size=20),
-                                    on_click=lambda _: self.advanced_maps_alert.open_dialog() if self.advanced_maps_alert else None,
+                                    on_click=lambda _: self.advanced_maps_alert.show_dialog() if self.advanced_maps_alert else None,
                                 ),
                                 ft.MenuItemButton(
                                     content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "interactive_maps", self.language)),
                                     leading=ft.Icon(ft.Icons.MAP, color="#2196F3", size=20),
-                                    on_click=lambda _: self.interactive_maps_alert.open_dialog() if self.interactive_maps_alert else None,
+                                    on_click=lambda _: self.interactive_maps_alert.show_dialog() if self.interactive_maps_alert else None,
                                 ),
                                 ft.MenuItemButton(
                                     content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "satellite_view", self.language)),

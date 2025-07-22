@@ -1,5 +1,5 @@
 import flet as ft
-from core.state_manager import StateManager
+from src.core.state_manager import StateManager
 
 
 class LocationManagerDialog:
@@ -128,7 +128,7 @@ class LocationManagerDialog:
     
     def create_locations_list(self):
         """Create the list of saved locations."""
-        locations_column = ft.Column([], spacing=5, scroll=ft.ScrollMode.AUTO)
+        locations_column = ft.Column([], spacing=5)
         
         for location in self.sample_locations:
             location_row = ft.Container(
@@ -167,11 +167,8 @@ class LocationManagerDialog:
         
         return ft.Container(
             content=locations_column,
-            height=180,
-            padding=5,
-            border=ft.border.all(1, self.colors["border"]),
-            border_radius=8,
-            bgcolor=self.colors["bg"]
+            height=150,
+            padding=5
         )
     
     def get_texts(self):
@@ -276,12 +273,9 @@ class LocationManagerDialog:
     
     def close_dialog(self, e=None):
         """Close the dialog."""
-        if self.dialog and self.dialog.open:
-            self.dialog.open = False
-            if self.page:
-                self.page.update()
-            if self.dialog in self.page.overlay:
-                self.page.overlay.remove(self.dialog)
+        if self.page and hasattr(self.page, 'dialog') and self.page.dialog:
+            self.page.dialog.open = False
+            self.page.update()
 
     def cleanup(self):
         """Cleanup method to unregister observers."""

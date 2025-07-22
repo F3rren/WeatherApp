@@ -1,14 +1,13 @@
 import flet as ft
-from core.state_manager import StateManager
+from src.core.state_manager import StateManager
 
 
 class ExportDataDialog:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.state_manager = StateManager(page)
-        theme_mode = self.state_manager.get_state("theme_mode")
-        self.theme = "dark" if theme_mode == ft.ThemeMode.DARK else "light"
-        self.language = self.state_manager.get_state("language") or "italian"
+        self.state_manager = StateManager()
+        self.theme = self.state_manager.get_state("theme", "light")
+        self.language = self.state_manager.get_state("language", "italian")
         
         # Centralized color management  
         self.colors = {}
@@ -195,12 +194,9 @@ class ExportDataDialog:
     
     def close_dialog(self, e=None):
         """Close the dialog."""
-        if self.dialog and self.dialog.open:
-            self.dialog.open = False
-            if self.page:
-                self.page.update()
-            if self.dialog in self.page.overlay:
-                self.page.overlay.remove(self.dialog)
+        if self.page and hasattr(self.page, 'dialog') and self.page.dialog:
+            self.page.dialog.open = False
+            self.page.update()
 
     def cleanup(self):
         """Cleanup method to unregister observers."""

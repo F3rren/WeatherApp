@@ -1,14 +1,13 @@
 import flet as ft
-from core.state_manager import StateManager
+from src.core.state_manager import StateManager
 
 
 class LocationManagerDialog:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.state_manager = StateManager(page)
-        theme_mode = self.state_manager.get_state("theme_mode")
-        self.theme = "dark" if theme_mode == ft.ThemeMode.DARK else "light"
-        self.language = self.state_manager.get_state("language") or "italian"
+        self.state_manager = StateManager()
+        self.theme = self.state_manager.get_state("theme", "light")
+        self.language = self.state_manager.get_state("language", "italian")
         
         # Sample locations for demonstration
         self.sample_locations = [
@@ -45,8 +44,7 @@ class LocationManagerDialog:
     def update_ui(self, event=None):
         """Update UI when theme or language changes."""
         if event and event.get("type") == "theme_event":
-            theme_mode = event.get("data")
-            self.theme = "dark" if theme_mode == ft.ThemeMode.DARK else "light"
+            self.theme = event.get("data", "light")
             self.update_theme_colors()
         elif event and event.get("type") == "language_event":
             self.language = event.get("data", "italian")
@@ -128,7 +126,7 @@ class LocationManagerDialog:
     
     def create_locations_list(self):
         """Create the list of saved locations."""
-        locations_column = ft.Column([], spacing=5, scroll=ft.ScrollMode.AUTO)
+        locations_column = ft.Column([], spacing=5)
         
         for location in self.sample_locations:
             location_row = ft.Container(
@@ -167,11 +165,8 @@ class LocationManagerDialog:
         
         return ft.Container(
             content=locations_column,
-            height=180,
-            padding=5,
-            border=ft.border.all(1, self.colors["border"]),
-            border_radius=8,
-            bgcolor=self.colors["bg"]
+            height=150,
+            padding=5
         )
     
     def get_texts(self):
@@ -276,12 +271,9 @@ class LocationManagerDialog:
     
     def close_dialog(self, e=None):
         """Close the dialog."""
-        if self.dialog and self.dialog.open:
-            self.dialog.open = False
-            if self.page:
-                self.page.update()
-            if self.dialog in self.page.overlay:
-                self.page.overlay.remove(self.dialog)
+        if self.page and hasattr(self.page, 'dialog') and self.page.dialog:
+            self.page.dialog.open = False
+            self.page.update()
 
     def cleanup(self):
         """Cleanup method to unregister observers."""

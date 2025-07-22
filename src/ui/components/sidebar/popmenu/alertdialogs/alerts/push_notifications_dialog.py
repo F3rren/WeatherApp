@@ -139,8 +139,8 @@ class PushNotificationsDialog:
         content = ft.Container(
             content=ft.Column([
                 scrollable_content
-            ], scroll=ft.ScrollMode.AUTO),
-            padding=20, width=450, height=400, bgcolor=self.colors["bg"]
+            ], tight=True),
+            padding=20, width=min(400, self.page.width * 0.9), bgcolor=self.colors["bg"]
         )
         
         return ft.AlertDialog(

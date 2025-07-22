@@ -53,18 +53,43 @@ class WeatherAlertDialog:
                 title=self.create_header(),
                 bgcolor=self.colors["bg"],
                 content=ft.Container(
-                    width=600,
-                    height=500,
+                    width=min(400, self.page.width * 0.9),
                     bgcolor=self.colors["bg"],
+                    padding=20,
                     content=ft.Column([
-                        self.create_statistics(),
-                        ft.Divider(color=self.colors["border"], height=1),
-                        self.create_alerts_list(),
-                        ft.Divider(color=self.colors["border"], height=1),
-                        self.create_configuration(),
-                    ], spacing=15, scroll=ft.ScrollMode.AUTO)
+                        # Titolo principale
+                        ft.Text("⚠️ Allerte Meteo Attive", size=20, weight=ft.FontWeight.BOLD,
+                               text_align=ft.TextAlign.CENTER, color=self.colors["text"]),
+                        ft.Divider(color=ft.Colors.with_opacity(0.3, self.colors["text"])),
+                        
+                        # Statistiche compatte
+                        self.create_compact_statistics(),
+                        ft.Container(height=15),
+                        
+                        # Lista allerte semplificata
+                        self.create_compact_alerts_list(),
+                        ft.Container(height=15),
+                        
+                        # Azioni principali
+                        ft.Column([
+                            ft.ElevatedButton(
+                                "🔔 Gestisci Notifiche", on_click=lambda _: self.open_notifications(),
+                                bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
+                                width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                            ),
+                            ft.ElevatedButton(
+                                "📊 Visualizza Dettagli", on_click=lambda _: self.open_details(),
+                                bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
+                                width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                            )
+                        ], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                    ], spacing=10, tight=True)
                 ),
-                actions=[self.create_actions()]
+                actions=[self.create_actions()],
+                actions_alignment=ft.MainAxisAlignment.END,
+                title_text_style=ft.TextStyle(size=18, weight=ft.FontWeight.BOLD, color=self.colors["text"]),
+                content_text_style=ft.TextStyle(size=14, color=self.colors["text"]),
+                inset_padding=ft.padding.all(20)
             )
         except Exception as e:
             print(f"Error building weather alert dialog: {e}")
@@ -80,7 +105,8 @@ class WeatherAlertDialog:
             ], spacing=10),
             bgcolor=self.colors["bg"],
             content=ft.Container(
-                width=400, height=200, bgcolor=self.colors["bg"],
+                width=min(400, self.page.width * 0.9), bgcolor=self.colors["bg"],
+                padding=ft.padding.all(20),
                 content=ft.Column([
                     ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED, size=48, color=self.colors["warning"]),
                     ft.Text(message, size=14, color=self.colors["text"], text_align=ft.TextAlign.CENTER),
@@ -155,15 +181,15 @@ class WeatherAlertDialog:
                 content=ft.Column([
                     ft.Text(str(count), size=20, weight=ft.FontWeight.BOLD, color=color),
                     ft.Text(label, size=10, color=self.colors["text_secondary"])
-                ], spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                padding=ft.padding.all(8), bgcolor=ft.Colors.with_opacity(0.1, color),
+                ], spacing=3, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                padding=ft.padding.all(12), bgcolor=ft.Colors.with_opacity(0.1, color),
                 border_radius=8, width=80
             ))
         
         return ft.Column([
             ft.Text(self.get_translation("alert_statistics"), size=14, weight=ft.FontWeight.W_600, color=self.colors["text"]),
             ft.Row(cards, spacing=10, alignment=ft.MainAxisAlignment.SPACE_AROUND)
-        ], spacing=8)
+        ], spacing=10)
 
     def create_alerts_list(self):
         """Create active alerts list."""
@@ -196,7 +222,7 @@ class WeatherAlertDialog:
                 ft.TextButton(text=self.get_translation("acknowledge_all"), icon=ft.Icons.DONE_ALL,
                              on_click=self.acknowledge_all_alerts, style=ft.ButtonStyle(color=self.colors["accent"])) if active_alerts else ft.Container()
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-            ft.Column(alert_cards, spacing=8, scroll=ft.ScrollMode.AUTO, height=200)
+            ft.Column(alert_cards, spacing=8, tight=True)
         ], spacing=8)
 
     def create_alert_card(self, alert):
@@ -345,14 +371,115 @@ class WeatherAlertDialog:
             self.update_theme_colors()
             self.dialog.title = self.create_header()
             self.dialog.content = ft.Container(
-                width=600, height=500, bgcolor=self.colors["bg"],
+                width=min(400, self.page.width * 0.9), bgcolor=self.colors["bg"],
+                padding=20,
                 content=ft.Column([
-                    self.create_statistics(), ft.Divider(color=self.colors["border"], height=1),
-                    self.create_alerts_list(), ft.Divider(color=self.colors["border"], height=1),
-                    self.create_configuration(),
-                ], spacing=15, scroll=ft.ScrollMode.AUTO)
+                    # Titolo principale
+                    ft.Text("⚠️ Allerte Meteo Attive", size=20, weight=ft.FontWeight.BOLD,
+                           text_align=ft.TextAlign.CENTER, color=self.colors["text"]),
+                    ft.Divider(color=ft.Colors.with_opacity(0.3, self.colors["text"])),
+                    
+                    # Statistiche compatte
+                    self.create_compact_statistics(),
+                    ft.Container(height=10),
+                    
+                    # Lista allerte semplificata
+                    self.create_compact_alerts_list(),
+                    ft.Container(height=10),
+                    
+                    # Azioni principali
+                    ft.Column([
+                        ft.ElevatedButton(
+                            "🔔 Gestisci Notifiche", on_click=lambda _: self.open_notifications(),
+                            bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
+                            width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                        ),
+                        ft.ElevatedButton(
+                            "📊 Visualizza Dettagli", on_click=lambda _: self.open_details(),
+                            bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
+                            width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                        )
+                    ], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                ], spacing=10, tight=True)
             )
             self.page.update()
+
+    def create_compact_statistics(self):
+        """Create compact statistics display."""
+        if not self.weather_alerts_service:
+            return ft.Text("Servizio non disponibile", color=self.colors["text_secondary"], text_align=ft.TextAlign.CENTER)
+        
+        active_alerts = self.weather_alerts_service.get_active_alerts()
+        total_alerts = len(active_alerts)
+        
+        if total_alerts == 0:
+            return ft.Column([
+                ft.Icon(ft.Icons.CHECK_CIRCLE, color=self.colors["success"], size=32),
+                ft.Text("Nessuna allerta attiva", size=14, color=self.colors["success"], text_align=ft.TextAlign.CENTER)
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8)
+        
+        return ft.Column([
+            ft.Text(f"{total_alerts} allerte attive", size=16, weight=ft.FontWeight.W_600, 
+                    color=self.colors["warning"], text_align=ft.TextAlign.CENTER),
+            ft.Text("Controlla i dettagli per maggiori informazioni", size=12, 
+                    color=self.colors["text_secondary"], text_align=ft.TextAlign.CENTER)
+        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=6)
+
+    def create_compact_alerts_list(self):
+        """Create compact alerts list."""
+        if not self.weather_alerts_service:
+            return ft.Container()
+        
+        active_alerts = self.weather_alerts_service.get_active_alerts()
+        if not active_alerts:
+            return ft.Container()
+        
+        # Mostra solo le prime 2-3 allerte più importanti
+        top_alerts = sorted(active_alerts, key=lambda x: x.severity.value, reverse=True)[:3]
+        
+        alert_items = []
+        for alert in top_alerts:
+            severity_colors = {
+                AlertSeverity.LOW: self.colors["success"], 
+                AlertSeverity.MODERATE: self.colors["warning"],
+                AlertSeverity.HIGH: self.colors["error"], 
+                AlertSeverity.EXTREME: "#9C27B0"
+            }
+            color = severity_colors.get(alert.severity, self.colors["warning"])
+            
+            alert_items.append(
+                ft.Container(
+                    content=ft.Row([
+                        ft.Container(width=4, height=24, bgcolor=color, border_radius=2),
+                        ft.Column([
+                            ft.Text(alert.title, size=12, weight=ft.FontWeight.W_500, color=self.colors["text"]),
+                            ft.Text(alert.message[:50] + "..." if len(alert.message) > 50 else alert.message, 
+                                    size=10, color=self.colors["text_secondary"])
+                        ], spacing=2, expand=True)
+                    ], spacing=8),
+                    padding=ft.padding.all(8),
+                    bgcolor=ft.Colors.with_opacity(0.05, self.colors["text"]),
+                    border_radius=8
+                )
+            )
+        
+        if len(active_alerts) > 3:
+            alert_items.append(
+                ft.Text(f"... e altre {len(active_alerts) - 3} allerte", 
+                       size=10, color=self.colors["text_secondary"], text_align=ft.TextAlign.CENTER)
+            )
+        
+        return ft.Column(alert_items, spacing=8)
+
+    def open_notifications(self):
+        """Open notifications management."""
+        # Qui possiamo integrare con il push_notifications_dialog
+        print("Opening notifications management...")
+        
+    def open_details(self):
+        """Open detailed alerts view."""
+        # Qui possiamo aprire una vista dettagliata delle allerte
+        print("Opening detailed alerts view...")
 
     def acknowledge_alert(self, alert_id: str):
         """Acknowledge a specific alert."""

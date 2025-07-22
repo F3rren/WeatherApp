@@ -92,48 +92,67 @@ class InteractiveMapAlertDialog:
     def create_dialog(self) -> ft.AlertDialog:
         """Create the interactive maps alert dialog."""
         texts = self.get_texts()
-        quick_options = self.maps_service.get_quick_map_options()
         
         content = ft.Container(
             content=ft.Column([
-                ft.Text(f"🗺️ {texts['title']}", size=20, weight=ft.FontWeight.BOLD,
+                ft.Icon(ft.Icons.MAP_OUTLINED, size=24, color=self.colors["accent"]),
+                ft.Text(f"{texts['title']}", size=20, weight=ft.FontWeight.BOLD,
                        text_align=ft.TextAlign.CENTER, color=self.colors["text"]),
                 ft.Divider(color=ft.Colors.with_opacity(0.3, self.colors["text"])),
-                ft.Text(texts['description'], size=14, color=self.colors["text"], text_align=ft.TextAlign.CENTER),
+                ft.Text(texts['description'], size=14, color=self.colors["text"]),
                 ft.Container(height=10),
                 
-                # Quick Access Section
-                ft.Text(texts['quick_access'], size=16, weight=ft.FontWeight.BOLD, color=self.colors["text"]),
-                self.create_quick_access_buttons(quick_options),
-                
-                ft.Divider(color=ft.Colors.with_opacity(0.3, self.colors["text"])),
-                
-                # Layer Configuration Section
-                ft.Text(texts['layer_config'], size=16, weight=ft.FontWeight.BOLD, color=self.colors["text"]),
-                self.create_layer_controls(),
-                
-                ft.Container(height=10),
-                
-                # Advanced Options
-                ft.Row([
+                # Opzioni principali semplificate
+                ft.Column([
                     ft.ElevatedButton(
-                        text=texts['settings'], icon=ft.Icons.SETTINGS, on_click=self.open_map_settings,
-                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
+                        content=ft.Row([
+                            ft.Icon(ft.Icons.DEVICE_THERMOSTAT, color=ft.Colors.ORANGE_400, size=20),
+                            ft.Text(f"{texts['temperature_map']}", color=self.colors["accent"], weight=ft.FontWeight.W_500)
+                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+                        on_click=lambda _: self.open_temperature_map(),
+                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), 
+                        width=300, 
                         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
                     ),
                     ft.ElevatedButton(
-                        text=texts['custom_map'], icon=ft.Icons.MAP, on_click=self.open_custom_map,
-                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
+                        content=ft.Row([
+                            ft.Icon(ft.Icons.WATER_DROP, color=ft.Colors.BLUE_400, size=20),
+                            ft.Text(f"{texts['precipitation_map']}", color=self.colors["accent"], weight=ft.FontWeight.W_500)
+                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+                        on_click=lambda _: self.open_precipitation_map(),
+                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), 
+                        width=300, 
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                    ),
+                    ft.ElevatedButton(
+                        content=ft.Row([
+                            ft.Icon(ft.Icons.WIND_POWER, color=ft.Colors.GREEN_400, size=20),
+                            ft.Text(f"{texts['wind_map']}", color=self.colors["accent"], weight=ft.FontWeight.W_500)
+                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+                        on_click=lambda _: self.open_wind_map(),
+                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), 
+                        width=300, 
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                    ),
+                    ft.ElevatedButton(
+                        content=ft.Row([
+                            ft.Icon(ft.Icons.LAYERS_OUTLINED, color=ft.Colors.PURPLE_400, size=20),
+                            ft.Text(f"{texts['advanced_settings']}", color=self.colors["accent"], weight=ft.FontWeight.W_500)
+                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+                        on_click=lambda _: self.open_advanced_settings(),
+                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), 
+                        width=300, 
                         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
                     )
-                ], spacing=10, alignment=ft.MainAxisAlignment.CENTER)
+                ], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                 
-            ], spacing=15, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-            padding=20, width=600, height=500, bgcolor=self.colors["bg"]
+            ], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            padding=20, width=min(400, self.page.width * 0.9), bgcolor=self.colors["bg"]
         )
         
         self.dialog = ft.AlertDialog(
-            modal=False, scrollable=True,
+            modal=False, 
+            scrollable=True,
             title=ft.Row([
                 ft.Icon(ft.Icons.MAP, color=self.colors["accent"], size=24),
                 ft.Text(texts['dialog_title'], weight=ft.FontWeight.BOLD, color=self.colors["text"])
@@ -239,21 +258,40 @@ class InteractiveMapAlertDialog:
             snackbar.open = True
             self.page.update()
 
+    def open_temperature_map(self):
+        """Open temperature map."""
+        self.maps_service.open_interactive_map(['temperature'])
+        self.show_snackbar("Apertura mappa temperatura...")
+
+    def open_precipitation_map(self):
+        """Open precipitation map."""
+        self.maps_service.open_radar_map()
+        self.show_snackbar("Apertura mappa precipitazioni...")
+
+    def open_wind_map(self):
+        """Open wind map."""
+        self.maps_service.open_interactive_map(['wind'])
+        self.show_snackbar("Apertura mappa venti...")
+
+    def open_advanced_settings(self):
+        """Open advanced map settings."""
+        self.show_snackbar("Impostazioni avanzate - In sviluppo")
+
     def get_texts(self):
         """Get localized texts based on current language."""
         if self.language == "en":
             return {
                 "title": "Interactive Weather Maps", "dialog_title": "Interactive Maps",
-                "description": "Access interactive weather maps with real-time data and multiple layers",
-                "quick_access": "Quick Access", "layer_config": "Layer Configuration",
-                "settings": "Settings", "custom_map": "Custom Map", "close": "Close"
+                "description": "Access interactive weather maps with real-time data:",
+                "temperature_map": "Temperature Map", "precipitation_map": "Precipitation Map",
+                "wind_map": "Wind Map", "advanced_settings": "Advanced Settings", "close": "Close"
             }
         else:  # Italian (default)
             return {
                 "title": "Mappe Meteo Interattive", "dialog_title": "Mappe Interattive",
-                "description": "Accedi a mappe meteo interattive con dati in tempo reale e layer multipli",
-                "quick_access": "Accesso Rapido", "layer_config": "Configurazione Layer",
-                "settings": "Impostazioni", "custom_map": "Mappa Personalizzata", "close": "Chiudi"
+                "description": "Accedi a mappe meteo interattive con dati in tempo reale:",
+                "temperature_map": "Mappa Temperature", "precipitation_map": "Mappa Precipitazioni",
+                "wind_map": "Mappa Venti", "advanced_settings": "Impostazioni Avanzate", "close": "Chiudi"
             }
 
     def close_dialog(self, e=None):

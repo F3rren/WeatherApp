@@ -106,8 +106,7 @@ class MapsAlertDialog:
             # Create map container with enhanced styling
             map_container = ft.Container(
                 content=self.map_view_instance.build(),
-                width=600,  # Reduced width since we're showing confirmation instead of map
-                height=400, # Reduced height since we're showing confirmation instead of map
+                width=min(600, self.page.width * 0.9),  # Responsive width
                 bgcolor=content_bg,
                 border_radius=12,
                 border=ft.border.all(1, border_color),
@@ -154,10 +153,13 @@ class MapsAlertDialog:
                 surface_tint_color=button_color,
                 content=map_container,
                 actions=[fullscreen_btn, close_btn],
-                actions_alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                actions_alignment=ft.MainAxisAlignment.END,
                 on_dismiss=lambda e: self.close_dialog(e),
                 shape=ft.RoundedRectangleBorder(radius=16),
-                elevation=8
+                elevation=8,
+                title_text_style=ft.TextStyle(size=18, weight=ft.FontWeight.BOLD),
+                content_text_style=ft.TextStyle(size=14),
+                inset_padding=ft.padding.all(20)
             )
             
             return dialog
@@ -188,7 +190,11 @@ class MapsAlertDialog:
                         shape=ft.RoundedRectangleBorder(radius=8)
                     )
                 )
-            ]
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            title_text_style=ft.TextStyle(size=18, weight=ft.FontWeight.BOLD),
+            content_text_style=ft.TextStyle(size=14),
+            inset_padding=ft.padding.all(20)
         )
 
     def open_dialog(self):

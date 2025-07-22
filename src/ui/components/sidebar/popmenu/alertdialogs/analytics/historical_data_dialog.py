@@ -113,7 +113,7 @@ class HistoricalDataDialog:
                 )
                 
             ], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-            padding=20, width=400, height=380, bgcolor=self.colors["bg"]
+            padding=20, width=min(400, self.page.width * 0.9), bgcolor=self.colors["bg"]
         )
         
         return ft.AlertDialog(

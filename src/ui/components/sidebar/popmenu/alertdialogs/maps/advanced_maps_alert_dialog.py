@@ -76,35 +76,55 @@ class AdvancedMapsAlertDialog:
         
         content = ft.Container(
             content=ft.Column([
-                ft.Text(f"🗺️ {texts['title']}", size=20, weight=ft.FontWeight.BOLD,
+                ft.Text(f"{texts['title']}", size=20, weight=ft.FontWeight.BOLD,
                        text_align=ft.TextAlign.CENTER, color=self.colors["text"]),
                 ft.Divider(color=ft.Colors.with_opacity(0.3, self.colors["text"])),
                 ft.Text(texts['description'], size=14, color=self.colors["text"]),
                 ft.Container(height=10),
                 ft.Column([
                     ft.ElevatedButton(
-                        f"🌀 {texts['windy']}", on_click=lambda _: self.open_windy(),
-                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
-                        width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                        content=ft.Row([
+                            ft.Icon(ft.Icons.AIR, color=ft.Colors.BLUE_400, size=20),
+                            ft.Text(f"{texts['windy']}", color=self.colors["accent"], weight=ft.FontWeight.W_500)
+                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+                        on_click=lambda _: self.open_windy(),
+                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), 
+                        width=300, 
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
                     ),
                     ft.ElevatedButton(
-                        f"🗺️ {texts['openweather']}", on_click=lambda _: self.open_openweather(),
-                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
-                        width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                        content=ft.Row([
+                            ft.Icon(ft.Icons.MAP_OUTLINED, color=ft.Colors.GREEN_400, size=20),
+                            ft.Text(f"{texts['openweather']}", color=self.colors["accent"], weight=ft.FontWeight.W_500)
+                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+                        on_click=lambda _: self.open_openweather(),
+                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), 
+                        width=300, 
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
                     ),
                     ft.ElevatedButton(
-                        f"⛈️ {texts['meteoblue']}", on_click=lambda _: self.open_meteoblue(),
-                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
-                        width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                        content=ft.Row([
+                            ft.Icon(ft.Icons.THUNDERSTORM, color=ft.Colors.PURPLE_400, size=20),
+                            ft.Text(f"{texts['meteoblue']}", color=self.colors["accent"], weight=ft.FontWeight.W_500)
+                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+                        on_click=lambda _: self.open_meteoblue(),
+                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), 
+                        width=300, 
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
                     ),
                     ft.ElevatedButton(
-                        f"🌍 {texts['earth']}", on_click=lambda _: self.open_earth(),
-                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
-                        width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                        content=ft.Row([
+                            ft.Icon(ft.Icons.PUBLIC, color=ft.Colors.CYAN_400, size=20),
+                            ft.Text(f"{texts['earth']}", color=self.colors["accent"], weight=ft.FontWeight.W_500)
+                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+                        on_click=lambda _: self.open_earth(),
+                        bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), 
+                        width=300, 
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
                     )
                 ], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
             ], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-            padding=20, width=400, height=350, bgcolor=self.colors["bg"]
+            padding=20, width=min(400, self.page.width * 0.9), bgcolor=self.colors["bg"]
         )
         
         return ft.AlertDialog(

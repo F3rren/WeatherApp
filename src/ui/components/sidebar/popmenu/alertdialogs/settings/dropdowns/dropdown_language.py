@@ -267,7 +267,7 @@ class DropdownLanguage:
             hint_text=translated_hint_text,
             options=self.get_options(),
             on_change=dropdown_changed,
-            width=200, 
+            width=120, 
             value=current_language_code,
             border_width=2,
             border_color=self.text_color["BORDER"],

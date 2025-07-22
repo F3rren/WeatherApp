@@ -999,7 +999,8 @@ def run() -> None:
         ft.app(
             target=app.main,
             assets_dir="assets",
-            view=ft.AppView.FLET_APP
+            view=ft.AppView.WEB_BROWSER,
+            
         )
     except Exception as e:
         logger.error(f"Failed to start MeteoApp: {e}")

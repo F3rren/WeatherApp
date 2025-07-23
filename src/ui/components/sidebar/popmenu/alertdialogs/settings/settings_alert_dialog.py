@@ -1,6 +1,7 @@
 import logging
 import flet as ft
-
+from utils.config import DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
+                    
 from services.ui.translation_service import TranslationService
 from ui.components.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
 from ui.components.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
@@ -779,7 +780,6 @@ class SettingsAlertDialog:
                 
                 # Perform the reset
                 if self.state_manager:
-                    from utils.config import DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
                     
                     async def do_reset():
                         await self.state_manager.update_state({

@@ -510,19 +510,31 @@ class WeatherAlertDialog:
     def show_dialog(self):
         """Show the weather alerts dialog."""
         try:
+            # Chiudi eventuali dialog esistenti usando il metodo corretto
+            if self.dialog:
+                self.page.close(self.dialog)
+                self.dialog = None
+            
+            # Crea e mostra il nuovo dialog usando page.open()
             self.dialog = self.create_dialog()
-            if self.dialog not in self.page.overlay:
-                self.page.overlay.append(self.dialog)
-            self.dialog.open = True
-            self.page.update()
+            self.page.open(self.dialog)
+            
         except Exception as e:
             print(f"Error showing dialog: {e}")
 
     def close_dialog(self):
-        """Close the weather alerts dialog."""
+        """Close the weather alerts dialog using page.close()."""
         try:
-            if self.dialog:
-                self.dialog.open = False
-                self.page.update()
+            if self.dialog and self.page:
+                self.page.close(self.dialog)
+                self.dialog = None
+                
         except Exception as e:
             print(f"Error closing dialog: {e}")
+            # Fallback: prova a chiudere forzatamente
+            if self.dialog and self.page:
+                try:
+                    self.page.close(self.dialog)
+                    self.dialog = None
+                except Exception:
+                    pass

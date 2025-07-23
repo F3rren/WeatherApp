@@ -50,13 +50,11 @@ class ExportDataDialog:
     
     def show_dialog(self):
         """Show the export data dialog."""
-        if self.dialog and self.dialog in self.page.overlay:
-            self.page.overlay.remove(self.dialog)
+        if self.dialog:
+            self.page.close(self.dialog)
         
         self.dialog = self.create_dialog()
-        self.page.overlay.append(self.dialog)
-        self.dialog.open = True
-        self.page.update()
+        self.page.open(self.dialog)
     
     def create_dialog(self):
         """Create the export data dialog."""
@@ -194,13 +192,23 @@ class ExportDataDialog:
         self.close_dialog()
     
     def close_dialog(self, e=None):
-        """Close the dialog."""
-        if self.dialog and self.dialog.open:
-            self.dialog.open = False
-            if self.page:
-                self.page.update()
-            if self.dialog in self.page.overlay:
-                self.page.overlay.remove(self.dialog)
+        """Close the dialog using page.close()."""
+        try:
+            if self.dialog and self.page:
+                self.page.close(self.dialog)
+                self.dialog = None
+                
+        except Exception as ex:
+            print(f"Error closing export dialog: {ex}")
+            # Fallback: prova a chiudere forzatamente
+            if self.dialog and self.page:
+                try:
+                    self.page.close(self.dialog)
+                    self.dialog = None
+                except Exception:
+                    pass
+                except Exception:
+                    pass
 
     def cleanup(self):
         """Cleanup method to unregister observers."""

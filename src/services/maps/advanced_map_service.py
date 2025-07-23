@@ -30,6 +30,9 @@ class WeatherLayer(Enum):
     HUMIDITY = "humidity"
     RADAR = "radar"
     SATELLITE = "satellite"
+    SATELLITE_VISIBLE = "satellite_visible"
+    SATELLITE_INFRARED = "satellite_infrared"
+    SATELLITE_WATER_VAPOR = "satellite_water_vapor"
     LIGHTNING = "lightning"
     UV_INDEX = "uvi"
     SNOW = "snow"
@@ -70,6 +73,9 @@ class AdvancedMapService:
                     WeatherLayer.HUMIDITY: "rh",
                     WeatherLayer.RADAR: "radar",
                     WeatherLayer.SATELLITE: "satellite",
+                    WeatherLayer.SATELLITE_VISIBLE: "satellite",
+                    WeatherLayer.SATELLITE_INFRARED: "satellite",
+                    WeatherLayer.SATELLITE_WATER_VAPOR: "satellite",
                     WeatherLayer.LIGHTNING: "lightning",
                     WeatherLayer.UV_INDEX: "uvi",
                     WeatherLayer.SNOW: "snow",

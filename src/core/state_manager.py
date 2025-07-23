@@ -52,6 +52,18 @@ class StateManager:
         if notify and old_value != value:
             await self._notify_observers(key, {"old_value": old_value, "new_value": value})
     
+    def set_state_sync(self, key: str, value: Any) -> None:
+        """Set a state value synchronously without notifying observers.
+        
+        Use this method when you need to update state from non-async contexts
+        and don't need immediate observer notification.
+        
+        Args:
+            key: State key
+            value: State value
+        """
+        self._state[key] = value
+    
     async def update_state(self, updates: Dict[str, Any]) -> None:
         """Update multiple state values at once"""
         changed_keys = []

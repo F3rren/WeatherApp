@@ -6,6 +6,11 @@ Refactored for better structure, modularity and robustness.
 # Standard library imports
 import logging
 import asyncio
+import sys
+import os
+
+# Add the src directory to the path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Third-party imports
 import flet as ft

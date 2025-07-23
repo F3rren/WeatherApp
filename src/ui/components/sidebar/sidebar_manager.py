@@ -102,7 +102,8 @@ class SidebarManager(ft.Container):
             theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
             location_toggle_value=self.state_manager.get_state("using_location") or False,
             language=language,
-            theme_handler=self.theme_handler
+            theme_handler=self.theme_handler,
+            update_weather_callback=self.update_weather_callback
         )
 
         # Initialize search bar with theme_handler
@@ -162,7 +163,8 @@ class SidebarManager(ft.Container):
                 theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
                 location_toggle_value=self.state_manager.get_state("using_location") or False,
                 language=language,
-                theme_handler=self.theme_handler
+                theme_handler=self.theme_handler,
+                update_weather_callback=self.update_weather_callback
             )
 
             # Reinitialize search bar with new theme_handler
@@ -243,7 +245,8 @@ class SidebarManager(ft.Container):
                 theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
                 location_toggle_value=self.state_manager.get_state("using_location") or False,
                 language=language,
-                theme_handler=self.theme_handler
+                theme_handler=self.theme_handler,
+                update_weather_callback=self.update_weather_callback
             )
 
             # Reinitialize search bar with new language and theme_handler

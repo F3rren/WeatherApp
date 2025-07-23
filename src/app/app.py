@@ -50,10 +50,6 @@ class MeteoApp:
         load_dotenv()
         self.settings_service = SettingsService()
         
-        # Debug: Log settings file location
-        logger.info(f"Settings file location: {self.settings_service.settings_file}")
-        logger.info(f"Current settings: {self.settings_service.get_all_settings()}")
-        
         # Load saved settings
         self.language = self.settings_service.get_setting('language', os.getenv("DEFAULT_LANGUAGE"))
         self.unit_system = self.settings_service.get_setting('unit_system', os.getenv("DEFAULT_UNIT_SYSTEM"))
@@ -280,7 +276,7 @@ class MeteoApp:
                             if not hasattr(safe_update_container, '_not_ready_count'):
                                 safe_update_container._not_ready_count = {}
                             safe_update_container._not_ready_count[color_key] = safe_update_container._not_ready_count.get(color_key, 0) + 1
-                            if safe_update_container._not_ready_count[color_key] % 20 == 1:  # Log every 20th occurrence
+                            if safe_update_container._not_ready_count[color_key] % 50 == 1:  # Log every 50th occurrence
                                 logging.debug(f"Container ({color_key}) not ready for color update - not connected to page")
                     except (AssertionError, AttributeError) as e:
                         # Reduce log noise - only log once every 10 attempts
@@ -480,10 +476,6 @@ class MeteoApp:
                     self.page.session.set('theme_mode', self.page.theme_mode)
                 
                 logger.info(f"Theme setting saved successfully: {theme_mode}")
-                
-                # Debug: Log current settings
-                current_settings = self.settings_service.get_all_settings()
-                logger.debug(f"Current all settings after theme save: {current_settings}")
         except Exception as e:
             logger.error(f"Error saving theme setting: {e}")
 
@@ -495,10 +487,6 @@ class MeteoApp:
                 logger.info(f"Saving language setting: {language}")
                 self.settings_service.set_setting('language', language)
                 logger.info(f"Language setting saved successfully: {language}")
-                
-                # Debug: Log current settings
-                current_settings = self.settings_service.get_all_settings()
-                logger.debug(f"Current all settings after language save: {current_settings}")
         except Exception as e:
             logger.error(f"Error saving language setting: {e}")
 
@@ -510,10 +498,6 @@ class MeteoApp:
                 logger.info(f"Saving unit setting: {unit}")
                 self.settings_service.set_setting('unit_system', unit)
                 logger.info(f"Unit setting saved successfully: {unit}")
-                
-                # Debug: Log current settings
-                current_settings = self.settings_service.get_all_settings()
-                logger.debug(f"Current all settings after unit save: {current_settings}")
         except Exception as e:
             logger.error(f"Error saving unit setting: {e}")
 
@@ -626,9 +610,6 @@ class MeteoApp:
             # Phase 10: Initialize background services
             await self._initialize_background_services()
             
-            # Phase 11: Test settings persistence (debug)
-            await self._test_settings_persistence()
-            
             logger.info("Layout building completed successfully")
             
             # Log startup completion with version info
@@ -730,48 +711,6 @@ class MeteoApp:
         except Exception as e:
             logger.error(f"Error applying saved language to UI: {e}")
 
-    async def _test_settings_persistence(self) -> None:
-        """Test settings persistence functionality for debugging."""
-        try:
-            logger.info("Testing settings persistence...")
-            
-            # Get current state
-            current_language = self.state_manager.get_state('language')
-            current_theme = "dark" if self.page.theme_mode == ft.ThemeMode.DARK else "light"
-            current_unit = self.state_manager.get_state('unit')
-            
-            # Force save current settings
-            test_settings = {
-                'language': current_language,
-                'theme_mode': current_theme,
-                'unit_system': current_unit,
-                'last_test_timestamp': int(asyncio.get_event_loop().time())
-            }
-            
-            logger.info(f"Current state - Language: {current_language}, Theme: {current_theme}, Unit: {current_unit}")
-            
-            # Save settings
-            self.settings_service.update_settings(test_settings, auto_save=True)
-            
-            # Verify they were saved by reloading
-            self.settings_service.load_settings()
-            loaded_language = self.settings_service.get_setting('language')
-            loaded_theme = self.settings_service.get_setting('theme_mode')
-            loaded_unit = self.settings_service.get_setting('unit_system')
-            
-            logger.info(f"Loaded state - Language: {loaded_language}, Theme: {loaded_theme}, Unit: {loaded_unit}")
-            
-            # Check if they match
-            if (loaded_language == current_language and 
-                loaded_theme == current_theme and 
-                loaded_unit == current_unit):
-                logger.info("✅ Settings persistence test PASSED")
-            else:
-                logger.warning("❌ Settings persistence test FAILED - values don't match")
-                
-        except Exception as e:
-            logger.error(f"Error testing settings persistence: {e}")
-
     async def update_weather_with_sidebar(self, city: str, language: str, unit: str) -> bool:
         """
         Update both main weather view and sidebar weekly forecast.
@@ -788,9 +727,9 @@ class MeteoApp:
         
         try:
             # Update state with batch update to avoid multiple notifications
+            # NON aggiornare la lingua quando cambi solo la città
             await self.state_manager.update_state({
                 "city": city,
-                "language": language,
                 "unit": unit
             })
             

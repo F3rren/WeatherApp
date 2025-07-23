@@ -1813,6 +1813,7 @@ TRANSLATIONS = {
             "precipitation_mm": "Precipitazioni (mm)",
             "probability_percent": "Probabilità (%)",
             "no_data": "Dati precipitazioni non disponibili",
+            "no_significant_precipitation": "Nessuna precipitazione significativa prevista",
             "loading": "Caricamento dati precipitazioni...",
             "time_hours": "Tempo (Ore)",
             "total_precipitation": "Totale",

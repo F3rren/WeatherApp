@@ -4,6 +4,7 @@ Handles the display of weather information.
 """
 
 import os
+import asyncio
 import flet as ft
 import logging # Add logging import
 from ui.themes.themes import LIGHT_THEME, DARK_THEME
@@ -569,6 +570,30 @@ class WeatherView:
     async def _update_precipitation_chart(self, forecast_data: dict) -> None:
         """Frontend: Updates precipitation chart UI using PrecipitationChartDisplay."""
         logging.info(f"DEBUG: _update_precipitation_chart called with forecast_data keys: {list(forecast_data.keys()) if forecast_data else 'None'}")
+
+        # Get hourly forecast data specifically for precipitation
+        try:
+            # Fetch forecast data if we don't have the right structure
+            if forecast_data and 'list' not in forecast_data:
+                logging.info("DEBUG: Current weather data doesn't have forecast list, fetching forecast data...")
+                language = self.state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE") 
+                unit = self.state_manager.get_state('unit') or os.getenv("DEFAULT_UNIT_SYSTEM")
+                
+                # Use the city to get forecast data
+                if self.current_city:
+                    forecast_response = await asyncio.to_thread(
+                        self.api_service.get_forecast_data,
+                        city=self.current_city,
+                        language=language,
+                        unit=unit
+                    )
+                    if forecast_response and forecast_response.get('success'):
+                        forecast_data = forecast_response.get('data', {})
+                        logging.info(f"DEBUG: Fetched forecast data with keys: {list(forecast_data.keys())}")
+                else:
+                    logging.warning("DEBUG: No current city available for forecast data")
+        except Exception as e:
+            logging.error(f"DEBUG: Error fetching forecast data: {e}")
 
         # Always create a new instance to ensure proper updates
         self.precipitation_chart_instance = PrecipitationChartDisplay(

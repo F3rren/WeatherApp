@@ -1,5 +1,6 @@
+import os
+from services.api.api_service import load_dotenv
 from services.ui.translation_service import TranslationService
-from utils.config import DEFAULT_LANGUAGE
 from services.ui.theme_handler import ThemeHandler
 from ui.components.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from ui.components.sidebar.popmenu.alertdialogs.maps.radar_live_dialog import RadarLiveDialog
@@ -18,7 +19,7 @@ class PopMenu(ft.Container):
                  language: str = None, theme_handler: ThemeHandler = None,
                  update_weather_callback=None, **kwargs):
         super().__init__(**kwargs)
-        print(f"DEBUG: PopMenu.__init__ chiamato con page={page}")
+        load_dotenv()
         self.page = page
         self.state_manager = state_manager
         self.handle_location_toggle = handle_location_toggle
@@ -26,7 +27,7 @@ class PopMenu(ft.Container):
         self.theme_toggle_value = theme_toggle_value
         self.location_toggle_value = location_toggle_value
         self.theme_handler = theme_handler or ThemeHandler(page)
-        self.language = language if language else DEFAULT_LANGUAGE
+        self.language = language if language else os.getenv("DEFAULT_LANGUAGE")
         self.update_weather_callback = update_weather_callback
         self.weather_alert = None
         # Dialog rimossi - ora apriamo direttamente servizi esterni:
@@ -56,7 +57,7 @@ class PopMenu(ft.Container):
         """Update theme, language, text sizes, and rebuild UI."""
         print(f"DEBUG: update_ui chiamato, self.page={self.page}")
         self._current_text_color = self.theme_handler.get_text_color() if self.theme_handler else "black"
-        self.language = self.state_manager.get_state('language') if self.state_manager else DEFAULT_LANGUAGE
+        self.language = self.state_manager.get_state('language') if self.state_manager else os.getenv("DEFAULT_LANGUAGE")
 
         # Update child dialogs, passing theme_handler for color logic
         self.weather_alert = WeatherAlertDialog(page=self.page, state_manager=self.state_manager, language=self.language)

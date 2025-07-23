@@ -1,12 +1,16 @@
-﻿import flet as ft
+﻿import os
+from dotenv import load_dotenv
+import flet as ft
 import logging
-from utils.config import DEFAULT_LANGUAGE
+
 from utils.translations_data import LANGUAGES 
 from services.ui.translation_service import TranslationService
+from ui.themes.themes import DARK_THEME, LIGHT_THEME
 
 class DropdownLanguage:
     
     def __init__(self, page: ft.Page, state_manager, text_color: dict, language: str):
+        load_dotenv()
         self.page = page
         self.state_manager = state_manager
         self.text_color = text_color
@@ -218,7 +222,6 @@ class DropdownLanguage:
 
     def createDropdown(self):
         # Always set self.text_color based on current theme
-        from utils.config import DARK_THEME, LIGHT_THEME
         if self.page and hasattr(self.page, 'theme_mode'):
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             self.text_color = DARK_THEME if is_dark else LIGHT_THEME
@@ -255,9 +258,9 @@ class DropdownLanguage:
                 self.parent.update()
 
         # Ottieni il valore corrente della lingua dallo state manager, se disponibile
-        current_language_code = DEFAULT_LANGUAGE  # Valore predefinito
+        current_language_code = os.getenv("DEFAULT_LANGUAGE")  # Valore predefinito
         if self.state_manager:
-            current_language_code = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
+            current_language_code = self.state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE")
             self.selected_language = current_language_code
             logging.info(f'Lingua corrente dallo state manager: {current_language_code}')
 

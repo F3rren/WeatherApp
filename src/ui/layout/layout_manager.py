@@ -8,7 +8,7 @@ import logging
 from typing import Dict
 
 from ui.layout.layout_builder import LayoutBuilder
-from utils.config import LIGHT_THEME, DARK_THEME
+from ui.themes.themes import LIGHT_THEME, DARK_THEME
 
 class LayoutManager:
     """

@@ -1,7 +1,8 @@
 import logging
 import flet as ft
-from utils.config import DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
-                    
+import os
+               
+from services.api.api_service import load_dotenv
 from services.ui.translation_service import TranslationService
 from ui.components.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
 from ui.components.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
@@ -13,6 +14,7 @@ class SettingsAlertDialog:
     Refactored: exposes only __init__, update_ui, build as public methods.
     """    
     def __init__(self, page, theme_handler, language, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None):
+        load_dotenv()
         self.page = page
         self.theme_handler = theme_handler
         self.language = language
@@ -783,9 +785,9 @@ class SettingsAlertDialog:
                     
                     async def do_reset():
                         await self.state_manager.update_state({
-                            "city": DEFAULT_CITY,
-                            "language": DEFAULT_LANGUAGE,
-                            "unit": DEFAULT_UNIT_SYSTEM,
+                            "city": os.getenv("DEFAULT_CITY"),
+                            "language": os.getenv("DEFAULT_LANGUAGE"),
+                            "unit": os.getenv("DEFAULT_UNIT_SYSTEM"),
                             "using_location": False
                         })
                     

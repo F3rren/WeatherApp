@@ -1,26 +1,21 @@
 import logging
 import flet as ft
+import os
 from typing import Callable, Optional, List
-from utils.config import DEFAULT_LANGUAGE
+
 from services.ui.theme_handler import ThemeHandler
 
 class SearchBar:
 
-    def __init__(
-        self,
-        page: ft.Page,
-        cities: List[str] = None,
-        on_city_selected: Optional[Callable] = None,
-        language: str = DEFAULT_LANGUAGE,
-        prefix_widget: Optional[ft.Control] = None,
-        suffix_widget: Optional[ft.Control] = None,
+    def __init__(self, page: ft.Page, cities: List[str] = None, on_city_selected: Optional[Callable] = None,
+        language: str = None, prefix_widget: Optional[ft.Control] = None, suffix_widget: Optional[ft.Control] = None,
         theme_handler: ThemeHandler = None
     ):
         self.cities = cities or []
         self.on_city_selected = on_city_selected
         self.page = page
         self.theme_handler = theme_handler or ThemeHandler(page)
-        self.language = language
+        self.language = language or os.getenv("DEFAULT_LANGUAGE")
         self.prefix_widget = prefix_widget
         self.suffix_widget = suffix_widget
         self.focused = False

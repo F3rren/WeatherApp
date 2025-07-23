@@ -6,27 +6,15 @@ Refactored for better structure, modularity and robustness.
 # Standard library imports
 import logging
 import asyncio
-import sys
 import os
 
-# Add the src directory to the path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 # Third-party imports
+from dotenv import load_dotenv
 import flet as ft
 
 # Local imports - Config
 from services.ui.theme_handler import ThemeHandler
 from services.settings_service import SettingsService
-
-from utils.config import (
-    DARK_THEME, 
-    LIGHT_THEME,
-    DEFAULT_CITY, 
-    DEFAULT_LANGUAGE, 
-    DEFAULT_UNIT_SYSTEM, 
-    DEFAULT_THEME_MODE
-)
 
 # Local imports - Core services
 from services.api.api_service import ApiService
@@ -41,6 +29,7 @@ from core.state_manager import StateManager
 from ui.layout.layout_manager import LayoutManager
 from ui.components.sidebar.sidebar_manager import SidebarManager
 from ui.views.weather_view import WeatherView
+from ui.themes.themes import DARK_THEME, LIGHT_THEME
 
 # Configure logging
 logging.basicConfig(
@@ -58,6 +47,7 @@ class MeteoApp:
     def __init__(self):
         """Initialize the MeteoApp with default values."""
         # Initialize settings service first
+        load_dotenv()
         self.settings_service = SettingsService()
         
         # Debug: Log settings file location
@@ -65,10 +55,10 @@ class MeteoApp:
         logger.info(f"Current settings: {self.settings_service.get_all_settings()}")
         
         # Load saved settings
-        self.language = self.settings_service.get_setting('language', DEFAULT_LANGUAGE)
-        self.unit_system = self.settings_service.get_setting('unit_system', DEFAULT_UNIT_SYSTEM)
-        theme_mode = self.settings_service.get_setting('theme_mode', DEFAULT_THEME_MODE)
-        
+        self.language = self.settings_service.get_setting('language', os.getenv("DEFAULT_LANGUAGE"))
+        self.unit_system = self.settings_service.get_setting('unit_system', os.getenv("DEFAULT_UNIT_SYSTEM"))
+        theme_mode = self.settings_service.get_setting('theme_mode', os.getenv("DEFAULT_THEME_MODE"))
+
         # Core references
         self.page: ft.Page = None
         self.theme_handler = ThemeHandler(self.page)
@@ -140,7 +130,7 @@ class MeteoApp:
         self.page.session.set('translation_service', self.translation_service)
         
         # Set the saved language in session for translation service
-        saved_language = self.settings_service.get_setting('language', DEFAULT_LANGUAGE)
+        saved_language = self.settings_service.get_setting('language', os.getenv("DEFAULT_LANGUAGE"))
         self.page.session.set('current_language', saved_language)
         logger.info(f"Translation service initialized with language: {saved_language}")
         
@@ -184,7 +174,7 @@ class MeteoApp:
             theme_toggle_service=self.theme_toggle_service,
             update_weather_callback=self.update_weather_with_sidebar,
             language=saved_language, 
-            unit=self.settings_service.get_setting('unit_system', DEFAULT_UNIT_SYSTEM)
+            unit=self.settings_service.get_setting('unit_system', os.getenv("DEFAULT_UNIT_SYSTEM"))
         )
         
         # Initialize layout manager
@@ -532,10 +522,10 @@ class MeteoApp:
         logger.info("Initializing default application state")
         
         # Load settings from persistence
-        saved_language = self.settings_service.get_setting('language', DEFAULT_LANGUAGE)
-        saved_unit = self.settings_service.get_setting('unit_system', DEFAULT_UNIT_SYSTEM)
-        saved_city = self.settings_service.get_setting('last_city', DEFAULT_CITY)
-        
+        saved_language = self.settings_service.get_setting('language', os.getenv("DEFAULT_LANGUAGE"))
+        saved_unit = self.settings_service.get_setting('unit_system', os.getenv("DEFAULT_UNIT_SYSTEM"))
+        saved_city = self.settings_service.get_setting('last_city', os.getenv("DEFAULT_CITY"))
+
         # Set state without triggering observers yet (we'll do it after UI is built)
         await self.state_manager.set_state("language", saved_language, notify=False)
         await self.state_manager.set_state("unit", saved_unit, notify=False)
@@ -549,9 +539,9 @@ class MeteoApp:
         
         try:
             success = await self.update_weather_with_sidebar(
-                city=self.state_manager.get_state("city") or DEFAULT_CITY,
-                language=self.state_manager.get_state("language") or DEFAULT_LANGUAGE,
-                unit=self.state_manager.get_state("unit") or DEFAULT_UNIT_SYSTEM
+                city=self.state_manager.get_state("city") or os.getenv("DEFAULT_CITY"),
+                language=self.state_manager.get_state("language") or os.getenv("DEFAULT_LANGUAGE"),
+                unit=self.state_manager.get_state("unit") or os.getenv("DEFAULT_UNIT_SYSTEM")
             )
             
             if success:
@@ -656,7 +646,7 @@ class MeteoApp:
     async def _apply_saved_theme_to_ui(self) -> None:
         """Apply saved theme to all UI elements after layout is built."""
         try:
-            saved_theme_mode = self.settings_service.get_setting('theme_mode', DEFAULT_THEME_MODE)
+            saved_theme_mode = self.settings_service.get_setting('theme_mode', os.getenv("DEFAULT_THEME_MODE"))
             logger.info(f"Applying saved theme to UI: {saved_theme_mode}")
             
             # Update the state manager with current theme
@@ -702,7 +692,7 @@ class MeteoApp:
     async def _apply_saved_language_to_ui(self) -> None:
         """Apply saved language to all UI elements after layout is built."""
         try:
-            saved_language = self.settings_service.get_setting('language', DEFAULT_LANGUAGE)
+            saved_language = self.settings_service.get_setting('language', os.getenv("DEFAULT_LANGUAGE"))
             logger.info(f"Applying saved language to UI: {saved_language}")
             
             # Update the session language as well
@@ -907,8 +897,8 @@ class MeteoApp:
                 return
                 
             # Get current location context
-            language = state_manager.get_state('language') or DEFAULT_LANGUAGE
-            unit = state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
+            language = state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE")
+            unit = state_manager.get_state('unit') or os.getenv("DEFAULT_UNIT_SYSTEM")
             using_location = state_manager.get_state('using_location')
             current_lat = state_manager.get_state('current_lat')
             current_lon = state_manager.get_state('current_lon')
@@ -971,8 +961,8 @@ class MeteoApp:
                 return
                 
             # Get current location context
-            language = state_manager.get_state('language') or DEFAULT_LANGUAGE
-            unit = state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
+            language = state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE")
+            unit = state_manager.get_state('unit') or os.getenv("DEFAULT_UNIT_SYSTEM")
             using_location = state_manager.get_state('using_location')
             current_lat = state_manager.get_state('current_lat')
             current_lon = state_manager.get_state('current_lon')

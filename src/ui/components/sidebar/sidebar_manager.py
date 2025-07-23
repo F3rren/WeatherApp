@@ -5,6 +5,8 @@ Refactored for better robustness and consistency.
 """
 
 import logging
+import os
+from dotenv import load_dotenv
 import flet as ft
 from typing import Callable, Optional
 
@@ -15,7 +17,6 @@ from core.state_manager import StateManager
 from services.location.location_toggle_service import LocationToggleService
 from services.ui.theme_toggle_service import ThemeToggleService
 from services.ui.theme_handler import ThemeHandler
-from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ class SidebarManager(ft.Container):
                  update_weather_callback: Optional[Callable] = None,
                  language=None, unit=None,
                  **kwargs):
+        load_dotenv()
         super().__init__(**kwargs)
         # Core references
         self.page = page
@@ -53,9 +55,9 @@ class SidebarManager(ft.Container):
         self.pop_menu = None
         self.search_bar = None
         self.weekly_forecast_display = None
-        
-        self.current_language = language or DEFAULT_LANGUAGE
-        self.current_unit_system = unit or DEFAULT_UNIT_SYSTEM
+
+        self.current_language = language or os.getenv("DEFAULT_LANGUAGE")
+        self.current_unit_system = unit or os.getenv("DEFAULT_UNIT_SYSTEM")
         self.current_text_color = self.theme_handler.get_text_color()
 
 

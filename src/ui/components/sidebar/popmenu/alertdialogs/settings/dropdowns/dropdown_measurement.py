@@ -2,6 +2,7 @@ import flet as ft
 import logging
 from utils.config import UNIT_SYSTEMS
 from services.ui.translation_service import TranslationService
+from ui.themes.themes import DARK_THEME, LIGHT_THEME
 
 class DropdownMeasurement:
 
@@ -92,7 +93,6 @@ class DropdownMeasurement:
         """Get translated dropdown options based on the current language."""
         # Defensive: ensure self.text_color is a dict, not a string
         if isinstance(self.text_color, str):
-            from utils.config import DARK_THEME, LIGHT_THEME
             if self.text_color.lower() in ("#fff", "#ffffff", "white"):
                 self.text_color = LIGHT_THEME
             else:
@@ -115,7 +115,6 @@ class DropdownMeasurement:
     def createDropdown(self):
         """Create a new dropdown with the current settings."""
         # Always set self.text_color based on current theme
-        from utils.config import DARK_THEME, LIGHT_THEME
         if self.page and hasattr(self.page, 'theme_mode'):
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
             self.text_color = DARK_THEME if is_dark else LIGHT_THEME

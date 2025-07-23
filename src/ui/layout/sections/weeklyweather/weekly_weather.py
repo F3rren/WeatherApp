@@ -1,10 +1,10 @@
+import os
 import flet as ft
 import traceback
 import asyncio
 import logging
-from services.api.api_service import ApiService
+from services.api.api_service import ApiService, load_dotenv
 from services.ui.translation_service import TranslationService
-from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 from services.ui.theme_handler import ThemeHandler
 
 class WeeklyForecastDisplay(ft.Container):
@@ -14,13 +14,14 @@ class WeeklyForecastDisplay(ft.Container):
     """
 
     def __init__(self, page: ft.Page, city: str, theme_handler: ThemeHandler = None, **kwargs):
+        load_dotenv()
         super().__init__()
         self.page = page
         self._city = city
         self._api_service = ApiService()
         self._state_manager = None
-        self._current_language = DEFAULT_LANGUAGE
-        self._current_unit_system = DEFAULT_UNIT_SYSTEM
+        self._current_language = os.getenv("DEFAULT_LANGUAGE")
+        self._current_unit_system = os.getenv("DEFAULT_UNIT_SYSTEM")
         self.theme_handler = theme_handler or ThemeHandler(page)
         self._current_text_color = self.theme_handler.get_text_color()
         self._forecast_data = []

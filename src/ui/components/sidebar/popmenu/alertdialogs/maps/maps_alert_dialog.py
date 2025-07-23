@@ -106,8 +106,7 @@ class MapsAlertDialog:
             # Create map container with enhanced styling
             map_container = ft.Container(
                 content=self.map_view_instance.build(),
-                width=600,  # Reduced width since we're showing confirmation instead of map
-                height=400, # Reduced height since we're showing confirmation instead of map
+                width=min(600, self.page.width * 0.9),  # Responsive width
                 bgcolor=content_bg,
                 border_radius=12,
                 border=ft.border.all(1, border_color),
@@ -134,28 +133,33 @@ class MapsAlertDialog:
                 )
             )
             
-            close_btn = ft.TextButton(
+            close_btn = ft.FilledButton(
                 text=translations['close'],
                 icon=ft.Icons.CLOSE,
                 on_click=self.close_dialog,
                 style=ft.ButtonStyle(
-                    color=text_color,
-                    overlay_color=ft.Colors.with_opacity(0.1, button_color)
+                    bgcolor=button_color,
+                    color=ft.Colors.WHITE,
+                    shape=ft.RoundedRectangleBorder(radius=8)
                 )
             )
 
             # Create dialog with enhanced styling
             dialog = ft.AlertDialog(
-                modal=True,
+                modal=False,
+                scrollable=True,  # Make dialog scrollable
                 title=title_content,
                 bgcolor=dialog_bg,
                 surface_tint_color=button_color,
                 content=map_container,
                 actions=[fullscreen_btn, close_btn],
-                actions_alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                actions_alignment=ft.MainAxisAlignment.END,
                 on_dismiss=lambda e: self.close_dialog(e),
                 shape=ft.RoundedRectangleBorder(radius=16),
-                elevation=8
+                elevation=8,
+                title_text_style=ft.TextStyle(size=18, weight=ft.FontWeight.BOLD),
+                content_text_style=ft.TextStyle(size=14),
+                inset_padding=ft.padding.all(20)
             )
             
             return dialog
@@ -167,13 +171,30 @@ class MapsAlertDialog:
     def _build_error_dialog(self):
         """Build a simple error dialog if main build fails."""
         translations = self._get_translations()
+        text_color = self.theme_handler.get_text_color() if self.theme_handler else {"ACCENT": ft.Colors.BLUE}
+        if isinstance(text_color, str):
+            text_color = {"ACCENT": ft.Colors.BLUE}
+        
         return ft.AlertDialog(
-            modal=True,
+            modal=False,
+            scrollable=True,  # Make dialog scrollable
             title=ft.Text(translations['weather_map_title']),
             content=ft.Text(translations['error']),
             actions=[
-                ft.TextButton(translations['close'], on_click=self.close_dialog)
-            ]
+                ft.FilledButton(
+                    text=translations['close'], 
+                    on_click=self.close_dialog,
+                    style=ft.ButtonStyle(
+                        bgcolor=text_color.get("ACCENT", ft.Colors.BLUE),
+                        color=ft.Colors.WHITE,
+                        shape=ft.RoundedRectangleBorder(radius=8)
+                    )
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            title_text_style=ft.TextStyle(size=18, weight=ft.FontWeight.BOLD),
+            content_text_style=ft.TextStyle(size=14),
+            inset_padding=ft.padding.all(20)
         )
 
     def open_dialog(self):
@@ -203,11 +224,26 @@ class MapsAlertDialog:
             logging.error(f"Error opening Windy: {e}")
             # Show fallback error dialog only if direct opening fails
             try:
+                text_color = self.theme_handler.get_text_color() if self.theme_handler else {"ACCENT": ft.Colors.BLUE}
+                if isinstance(text_color, str):
+                    text_color = {"ACCENT": ft.Colors.BLUE}
+                    
                 error_dialog = ft.AlertDialog(
+                    modal=False,
                     title=ft.Text("Errore Mappa"),
+                    scrollable=True,  # Make dialog scrollable
                     content=ft.Text(f"Impossibile aprire Windy: {str(e)}"),
                     actions=[
-                        ft.TextButton("Chiudi", on_click=lambda e: self._close_error_dialog(e, error_dialog))
+                        ft.FilledButton(
+                            icon=ft.Icons.CLOSE,
+                            text="Chiudi", 
+                            on_click=lambda e: self._close_error_dialog(e, error_dialog),
+                            style=ft.ButtonStyle(
+                                bgcolor=text_color.get("ACCENT", ft.Colors.BLUE),
+                                color=ft.Colors.WHITE,
+                                shape=ft.RoundedRectangleBorder(radius=8)
+                            )
+                        )
                     ]
                 )
                 if self.page:

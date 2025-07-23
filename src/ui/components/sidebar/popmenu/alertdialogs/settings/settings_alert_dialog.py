@@ -1,6 +1,8 @@
 import logging
 import flet as ft
-
+import os
+               
+from services.api.api_service import load_dotenv
 from services.ui.translation_service import TranslationService
 from ui.components.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
 from ui.components.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
@@ -12,6 +14,7 @@ class SettingsAlertDialog:
     Refactored: exposes only __init__, update_ui, build as public methods.
     """    
     def __init__(self, page, theme_handler, language, state_manager=None, handle_location_toggle=None, handle_theme_toggle=None):
+        load_dotenv()
         self.page = page
         self.theme_handler = theme_handler
         self.language = language
@@ -131,74 +134,76 @@ class SettingsAlertDialog:
 
         language_dropdown_control = self.language_dropdown.build()
         measurement_dropdown_control = self.measurement_dropdown.build()
-        def get_size(k):
-            if k == 'title':
-                return 20
-            elif k == 'label':
-                return 16
-            elif k == 'body':
-                return 14
-            elif k == 'icon':
-                return 20
-            return 14
+
         self.dialog = ft.AlertDialog(
-            title=ft.Text(
-                TranslationService.translate_from_dict("settings_alert_dialog_items", "settings_alert_dialog_title", self.language),
-                size=get_size('title'),
-                weight=ft.FontWeight.BOLD,
-                color=text_color["TEXT"]
-            ),
+            modal=False,
+            title=ft.Row([
+                ft.Icon(ft.Icons.SETTINGS, size=24, color=text_color.get("ACCENT", "#0078d4")),
+                ft.Text(TranslationService.translate_from_dict("settings_alert_dialog_items", "settings_alert_dialog_title", self.language),
+                    size=20, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER, color=text_color["TEXT"]),
+                ft.Divider(color=ft.Colors.with_opacity(0.3, text_color["TEXT"])),
+            ], spacing=12, alignment=ft.MainAxisAlignment.START),
             scrollable=True,
             bgcolor=dialog_bg,
             content=ft.Container(
-                width=500,
-                bgcolor=dialog_bg,  # Usa il colore dinamico in base al tema
-                opacity=1.0,
+                width=min(450, self.page.width * 0.9) if self.page else 400,  # Responsive width
                 content=ft.Column(
                     controls=[
-                        # Language settings row
-                        ft.Row(
-                            controls=[
-                                ft.Row(
-                                    controls=[
-                                        ft.Icon(ft.Icons.LANGUAGE, size=16, color="#ff6b35"),
-                                        ft.Text(TranslationService.translate_from_dict("settings_alert_dialog_items", "language", self.language), size=16, weight=ft.FontWeight.W_500, color=text_color["TEXT"]),
-                                    ], spacing=10),
-                                language_dropdown_control,
-                            ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                        # Language settings section
+                        ft.Row([
+                            ft.Icon(ft.Icons.LANGUAGE, size=20, color="#ff6b35"),
+                            ft.Text(
+                                TranslationService.translate_from_dict("settings_alert_dialog_items", "language", self.language), 
+                                size=15, weight=ft.FontWeight.W_600, color=text_color["TEXT"]
+                            ),
+                            ft.Container(expand=True),
+                            ft.Container(
+                                content=language_dropdown_control,
+                                width=120,  # Fixed smaller width
+                            ),
+                        ], spacing=10),
                         
-                        # Unit measurement row
-                        ft.Row(
-                            controls=[
-                                ft.Row(
-                                    controls=[
-                                        ft.Icon(ft.Icons.STRAIGHTEN, size=16, color="#22c55e"),
-                                        ft.Text(TranslationService.translate_from_dict("settings_alert_dialog_items", "measurement", self.language), size=16, weight=ft.FontWeight.W_500, color=text_color["TEXT"]),
-                                    ], spacing=10),
-                                measurement_dropdown_control,
-                            ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                        # Unit measurement section
+                        ft.Row([
+                            ft.Icon(ft.Icons.STRAIGHTEN, size=20, color="#22c55e"),
+                            ft.Text(
+                                TranslationService.translate_from_dict("settings_alert_dialog_items", "measurement", self.language), 
+                                size=15, weight=ft.FontWeight.W_600, color=text_color["TEXT"]
+                            ),
+                            ft.Container(expand=True),
+                            ft.Container(
+                                content=measurement_dropdown_control,
+                                width=120,  # Fixed smaller width
+                            ),
+                        ], spacing=10),
                         
-                        # Location toggle row
-                        ft.Row(
-                            controls=[
-                                ft.Row(
-                                    controls=[
-                                        ft.Icon(ft.Icons.LOCATION_ON, size=16, color="#ef4444"),
-                                        ft.Text(TranslationService.translate_from_dict("settings_alert_dialog_items", "use_current_location", self.language), size=16, weight=ft.FontWeight.W_500, color=text_color["TEXT"]),
-                                    ], spacing=10),
-                                self._create_location_button_instance(text_color),
-                            ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                        # Location toggle section
+                        ft.Row([
+                            ft.Icon(ft.Icons.LOCATION_ON, size=20, color="#ef4444"),
+                            ft.Text(
+                                TranslationService.translate_from_dict("settings_alert_dialog_items", "use_current_location", self.language), 
+                                size=15, weight=ft.FontWeight.W_600, color=text_color["TEXT"]
+                            ),
+                            ft.Container(expand=True),
+                            ft.Container(
+                                content=self._create_location_button_instance(text_color),
+                                width=80,  # Fixed smaller width for button
+                            ),
+                        ], spacing=10),
                         
-                        # Theme toggle row
-                        ft.Row(
-                            controls=[
-                                ft.Row(
-                                    controls=[
-                                        ft.Icon(ft.Icons.DARK_MODE, size=16, color="#3b82f6"),
-                                        ft.Text(TranslationService.translate_from_dict("settings_alert_dialog_items", "dark_theme", self.language), size=16, weight=ft.FontWeight.W_500, color=text_color["TEXT"]),
-                                    ], spacing=10),
-                                self._create_theme_toggle_instance(),
-                            ], spacing=10, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                        # Theme toggle section
+                        ft.Row([
+                            ft.Icon(ft.Icons.DARK_MODE, size=20, color="#3b82f6"),
+                            ft.Text(
+                                TranslationService.translate_from_dict("settings_alert_dialog_items", "dark_theme", self.language), 
+                                size=15, weight=ft.FontWeight.W_600, color=text_color["TEXT"]
+                            ),
+                            ft.Container(expand=True),
+                            ft.Container(
+                                content=self._create_theme_toggle_instance(),
+                                width=80,  # Fixed smaller width for toggle
+                            ),
+                        ], spacing=10),
                         
                         # Divider
                         ft.Divider(color=ft.Colors.with_opacity(0.2, text_color["TEXT"])),
@@ -206,55 +211,64 @@ class SettingsAlertDialog:
                         # App information section
                         self._build_app_info_section(text_color),
                         
-                        # Quick actions section
-                        ft.Row(
-                            controls=[
-                                ft.ElevatedButton(
-                                    text=self._get_translation_local("refresh_data"),
-                                    icon=ft.Icons.REFRESH,
-                                    on_click=self._refresh_weather_data,
-                                    bgcolor=ft.Colors.with_opacity(0.1, text_color.get("ACCENT", "#0078d4")),
+                        # Quick actions section - Mobile optimized
+                        ft.Column([
+                            ft.ElevatedButton(
+                                text=self._get_translation_local("refresh_data"),
+                                icon=ft.Icons.REFRESH,
+                                on_click=self._refresh_weather_data,
+                                bgcolor=ft.Colors.with_opacity(0.1, text_color.get("ACCENT", "#0078d4")),
+                                color=text_color.get("ACCENT", "#0078d4"),
+                                style=ft.ButtonStyle(
+                                    shape=ft.RoundedRectangleBorder(radius=8)
+                                ),
+                                expand=True
+                            ),
+                            ft.ElevatedButton(
+                                text=self._get_translation_local("reset_settings"),
+                                icon=ft.Icons.RESTORE,
+                                on_click=self._reset_settings,
+                                bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.ORANGE),
+                                color=ft.Colors.ORANGE_700,
+                                style=ft.ButtonStyle(
+                                    shape=ft.RoundedRectangleBorder(radius=8)
+                                ),
+                                expand=True
+                            ),
+                            ft.OutlinedButton(
+                                text=self._get_translation_local("about_app"),
+                                icon=ft.Icons.INFO_OUTLINE,
+                                on_click=self._show_about_dialog,
+                                style=ft.ButtonStyle(
                                     color=text_color.get("ACCENT", "#0078d4"),
-                                    style=ft.ButtonStyle(
-                                        shape=ft.RoundedRectangleBorder(radius=8)
-                                    )
+                                    side=ft.BorderSide(1, text_color.get("ACCENT", "#0078d4")),
+                                    shape=ft.RoundedRectangleBorder(radius=8)
                                 ),
-                                ft.ElevatedButton(
-                                    text=self._get_translation_local("reset_settings"),
-                                    icon=ft.Icons.RESTORE,
-                                    on_click=self._reset_settings,
-                                    bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.ORANGE),
-                                    color=ft.Colors.ORANGE_700,
-                                    style=ft.ButtonStyle(
-                                        shape=ft.RoundedRectangleBorder(radius=8)
-                                    )
-                                ),
-                                ft.OutlinedButton(
-                                    text=self._get_translation_local("about_app"),
-                                    icon=ft.Icons.INFO_OUTLINE,
-                                    on_click=self._show_about_dialog,
-                                    style=ft.ButtonStyle(
-                                        color=text_color.get("ACCENT", "#0078d4"),
-                                        side=ft.BorderSide(1, text_color.get("ACCENT", "#0078d4")),
-                                        shape=ft.RoundedRectangleBorder(radius=8)
-                                    )
-                                ),
-                            ],
-                            spacing=10,
-                            alignment=ft.MainAxisAlignment.CENTER
-                        ),
+                                expand=True
+                            ),
+                        ], spacing=12),
                     ],
-                    spacing=20,
+                    spacing=24,
+                    scroll=ft.ScrollMode.AUTO,
                 ),
-                padding=ft.padding.all(20),
+                padding=ft.padding.all(16),
             ),
             actions=[                
-                ft.TextButton(
-                    content=ft.Text(TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language), size=14, color=text_color.get("ACCENT", ft.Colors.BLUE)),
-                    on_click=lambda e: self._close_dialog(e)
-                )
+                ft.FilledButton(
+                    icon=ft.Icons.CLOSE,
+                    text=TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language),
+                    on_click=lambda e: self._close_dialog(e),
+                    style=ft.ButtonStyle(
+                        bgcolor="#3F51B5",
+                        color=ft.Colors.WHITE,
+                        shape=ft.RoundedRectangleBorder(radius=12),
+                        padding=ft.padding.symmetric(horizontal=24, vertical=12)
+                    )
+                ),
             ],
-            actions_alignment=ft.MainAxisAlignment.END,
+            actions_alignment=ft.MainAxisAlignment.CENTER,  # Center on mobile
+            content_padding=ft.padding.all(8),  # Reduce padding for mobile
+            title_padding=ft.padding.all(16),
             open=False,
         )
         return self.dialog
@@ -328,16 +342,23 @@ class SettingsAlertDialog:
         # Update action buttons with current language and theme
         if self.dialog.actions and len(self.dialog.actions) > 0:
             action_button = self.dialog.actions[0]
-            if isinstance(action_button, ft.TextButton) and hasattr(action_button, 'content') and isinstance(action_button.content, ft.Text):
+            if isinstance(action_button, ft.FilledButton):
+                action_button.text = TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language)
+                action_button.style = ft.ButtonStyle(
+                    bgcolor=self.text_color.get("ACCENT", ft.Colors.BLUE),
+                    color=ft.Colors.WHITE,
+                    shape=ft.RoundedRectangleBorder(radius=8)
+                )
+            elif isinstance(action_button, ft.TextButton) and hasattr(action_button, 'content') and isinstance(action_button.content, ft.Text):
                 action_button.content.value = TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language)
                 action_button.content.size = 14
                 action_button.content.color = self.text_color.get("ACCENT", ft.Colors.BLUE)
             
-            # Update button style with theme colors
-            action_button.style = ft.ButtonStyle(
-                color=self.text_color.get("ACCENT", "#0078d4"),
-                overlay_color=ft.Colors.with_opacity(0.1, self.text_color.get("ACCENT", "#0078d4")),
-            )
+                # Update button style with theme colors
+                action_button.style = ft.ButtonStyle(
+                    color=self.text_color.get("ACCENT", "#0078d4"),
+                    overlay_color=ft.Colors.with_opacity(0.1, self.text_color.get("ACCENT", "#0078d4")),
+                )
             
         # Update theme switch colors and value
         if self.theme_toggle_control:
@@ -573,12 +594,10 @@ class SettingsAlertDialog:
             is_dark = self.page.theme_mode == ft.ThemeMode.DARK
         
         if using_location:
-            button_text = self._get_translation_local("location_enabled")
             button_icon = ft.Icons.GPS_FIXED
             button_color = ft.Colors.GREEN_700 if not is_dark else ft.Colors.GREEN_400
             button_bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.GREEN)
         else:
-            button_text = self._get_translation_local("location_disabled")
             button_icon = ft.Icons.GPS_OFF
             button_color = ft.Colors.GREY_700 if not is_dark else ft.Colors.GREY_400
             button_bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.GREY)
@@ -604,12 +623,11 @@ class SettingsAlertDialog:
             except Exception as ex:
                 logging.error(f"Error toggling location: {ex}")
         
-        return ft.ElevatedButton(
-            text=button_text,
+        return ft.IconButton(
             icon=button_icon,
             on_click=on_location_click,
             bgcolor=button_bgcolor,
-            color=button_color,
+            #color=button_color,
             style=ft.ButtonStyle(
                 shape=ft.RoundedRectangleBorder(radius=6),
                 padding=ft.padding.symmetric(horizontal=12, vertical=8),
@@ -695,7 +713,7 @@ class SettingsAlertDialog:
                     controls=[
                         ft.Text(
                             self._get_translation_local("app_status"),
-                            size=14,
+                            size=15,
                             weight=ft.FontWeight.W_600,
                             color=info_color
                         ),
@@ -704,21 +722,21 @@ class SettingsAlertDialog:
                                 ft.Icon(ft.Icons.LOCATION_CITY, size=14, color="#f59e0b"),
                                 ft.Text(f"{self._get_translation_local('current_city')}: {current_city}", size=12, color=info_color),
                             ],
-                            spacing=5
+                            spacing=2
                         ),
                         ft.Row(
                             controls=[
                                 ft.Icon(ft.Icons.LANGUAGE, size=14, color="#ff6b35"),
                                 ft.Text(f"{self._get_translation_local('active_language')}: {current_language.upper()}", size=12, color=info_color),
                             ],
-                            spacing=5
+                            spacing=2
                         ),
                         ft.Row(
                             controls=[
                                 ft.Icon(ft.Icons.STRAIGHTEN, size=14, color="#22c55e"),
                                 ft.Text(f"{self._get_translation_local('unit_system')}: {current_unit.title()}", size=12, color=info_color),
                             ],
-                            spacing=5
+                            spacing=2
                         ),
                         # App version info
                         ft.Row(
@@ -726,7 +744,7 @@ class SettingsAlertDialog:
                                 ft.Icon(ft.Icons.INFO, size=14, color=accent_color),
                                 ft.Text("MeteoApp v1.0.0", size=10, color=ft.Colors.with_opacity(0.7, info_color)),
                             ],
-                            spacing=5
+                            spacing=2
                         ),
                     ],
                     spacing=5
@@ -764,13 +782,12 @@ class SettingsAlertDialog:
                 
                 # Perform the reset
                 if self.state_manager:
-                    from utils.config import DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
                     
                     async def do_reset():
                         await self.state_manager.update_state({
-                            "city": DEFAULT_CITY,
-                            "language": DEFAULT_LANGUAGE,
-                            "unit": DEFAULT_UNIT_SYSTEM,
+                            "city": os.getenv("DEFAULT_CITY"),
+                            "language": os.getenv("DEFAULT_LANGUAGE"),
+                            "unit": os.getenv("DEFAULT_UNIT_SYSTEM"),
                             "using_location": False
                         })
                     
@@ -793,7 +810,9 @@ class SettingsAlertDialog:
                 self.page.update()
 
             confirmation_dialog = ft.AlertDialog(
+                modal=False,
                 title=ft.Text(self._get_translation_local("reset_confirmation")),
+                scrollable=True,  # Make dialog scrollable
                 content=ft.Text(self._get_translation_local("confirm_reset")),
                 actions=[
                     ft.TextButton(
@@ -882,7 +901,9 @@ class SettingsAlertDialog:
             )
 
             about_dialog = ft.AlertDialog(
+                modal=False,
                 title=ft.Text(self._get_translation_local("about_title")),
+                scrollable=True,  # Make dialog scrollable
                 content=ft.Container(
                     content=about_content,
                     width=400,

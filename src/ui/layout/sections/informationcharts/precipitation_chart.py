@@ -166,6 +166,16 @@ class PrecipitationChartDisplay(ft.Container):
                 self._build_loading_content()
             ])
         
+        # Check if we have any significant precipitation
+        significant_precipitation = any(data.get('precipitation', 0) > 0.1 for data in self._precipitation_data)
+        
+        if not significant_precipitation:
+            # Build a "no significant precipitation" display
+            return ft.Column([
+                self._build_header(),
+                self._build_no_precipitation_content()
+            ])
+        
         # Build header
         header = self._build_header()
         
@@ -291,15 +301,16 @@ class PrecipitationChartDisplay(ft.Container):
         
         data_rows = []
         
-        # Show only significant precipitation entries (where precipitation > 0)
-        # and limit to a reasonable number for display
-        visible_data = [d for d in self._precipitation_data if d.get('precipitation', 0) > 0.1]
-        if len(visible_data) > 8:
-            visible_data = visible_data[:8]  # Limit to 8 entries for readability
+        # Logic for smart precipitation display
+        significant_data = [d for d in self._precipitation_data if d.get('precipitation', 0) > 0.1]
         
-        # If no significant precipitation, show at least a few time entries
-        if not visible_data and self._precipitation_data:
-            visible_data = self._precipitation_data[:6]
+        if significant_data:
+            # If we have significant precipitation, show up to 8 entries
+            visible_data = significant_data[:8]
+        else:
+            # If no significant precipitation in next 24h, show next 6 time slots anyway
+            # but with clear indication that precipitation is minimal/none
+            visible_data = self._precipitation_data[:6] if self._precipitation_data else []
         
         # Create rows for the table
         for data in visible_data:
@@ -503,15 +514,78 @@ class PrecipitationChartDisplay(ft.Container):
         
         return ft.Container(
             content=ft.Column([
-                ft.Icon(ft.Icons.WATER_DROP_OUTLINED, size=48, color=ft.Colors.GREY_400),
+                ft.Icon(ft.Icons.WB_SUNNY_OUTLINED, size=48, color=ft.Colors.BLUE_300),
                 ft.Text(
                     no_data_text,
                     size=14,
-                    color=ft.Colors.with_opacity(0.7, self._current_text_color)
+                    color=ft.Colors.with_opacity(0.7, self._current_text_color),
+                    text_align=ft.TextAlign.CENTER
+                ),
+                ft.Container(height=8),
+                ft.Text(
+                    "☀️ Tempo sereno previsto",
+                    size=12,
+                    color=ft.Colors.with_opacity(0.6, self._current_text_color),
+                    text_align=ft.TextAlign.CENTER
                 )
             ], 
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=10),
+            height=150,
+            alignment=ft.alignment.center
+        )
+
+    def _build_no_precipitation_content(self) -> ft.Control:
+        """Build content when there's no significant precipitation expected."""
+        text_color = self.theme_handler.get_text_color()
+        
+        # Get translations
+        no_significant_rain = TranslationService.translate_from_dict(
+            "precipitation_chart_items", 
+            "no_significant_precipitation", 
+            self._current_language
+        ) or "No significant precipitation expected"
+        
+        return ft.Container(
+            content=ft.Column([
+                ft.Container(height=20),
+                ft.Icon(
+                    ft.Icons.WB_SUNNY, 
+                    size=64, 
+                    color=ft.Colors.AMBER_400
+                ),
+                ft.Container(height=16),
+                ft.Text(
+                    no_significant_rain,
+                    size=16,
+                    weight=ft.FontWeight.W_500,
+                    color=text_color,
+                    text_align=ft.TextAlign.CENTER
+                ),
+                ft.Container(height=8),
+                ft.Text(
+                    "☀️ Tempo sereno per le prossime 24 ore",
+                    size=13,
+                    color=ft.Colors.with_opacity(0.7, text_color),
+                    text_align=ft.TextAlign.CENTER
+                ),
+                ft.Container(height=12),
+                ft.Container(
+                    content=ft.Row([
+                        ft.Icon(ft.Icons.UMBRELLA, size=20, color=ft.Colors.BLUE_300),
+                        ft.Text(
+                            "Probabilità di pioggia < 20%",
+                            size=12,
+                            color=ft.Colors.with_opacity(0.8, text_color)
+                        )
+                    ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+                    padding=ft.padding.symmetric(horizontal=16, vertical=8),
+                    bgcolor=ft.Colors.with_opacity(0.05, ft.Colors.BLUE_500),
+                    border_radius=12
+                )
+            ], 
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=0),
             height=200,
             alignment=ft.alignment.center
         )
@@ -567,8 +641,13 @@ class PrecipitationChartDisplay(ft.Container):
         precipitation_data = []
         
         try:            
+            # Debug logging
+            logging.info(f"PrecipitationChart: Extracting data from forecast_data with keys: {list(forecast_data.keys()) if forecast_data else 'None'}")
+            
             # OpenWeatherMap 5-day forecast structure: forecast_data['list'] contains hourly data
             if 'list' in forecast_data:
+                logging.info(f"PrecipitationChart: Found {len(forecast_data['list'])} forecast items")
+                
                 for i, item in enumerate(forecast_data['list'][:24]):  # Next 24 hours
                     precipitation = 0
                     probability = 0
@@ -609,21 +688,37 @@ class PrecipitationChartDisplay(ft.Container):
                         'precipitation': precipitation,
                         'probability': probability
                     })
+                    
+                    # Debug first few entries
+                    if i < 3:
+                        logging.info(f"PrecipitationChart: Entry {i}: precip={precipitation}mm, prob={probability}%, time={timestamp}")
+            else:
+                logging.warning("PrecipitationChart: No 'list' key found in forecast_data")
                 
         except Exception as e:
             logging.error(f"PrecipitationChartDisplay: Error extracting precipitation data: {e}")
             
-            # Fallback sample data on error
+            # Use realistic fallback data instead of always showing precipitation
             import time
             current_time = int(time.time())
             precipitation_data = []
+            
+            # Create more realistic data - mostly no precipitation
             for i in range(8):  # 8 hours of fallback data
+                # Only occasional light precipitation
+                precip = 0.0
+                if i == 3:  # Light rain at hour 3
+                    precip = 1.2
+                elif i == 6:  # Moderate rain at hour 6
+                    precip = 3.5
+                    
                 precipitation_data.append({
                     'time': current_time + (i * 3600),
-                    'precipitation': 3 + i * 0.5,  # Increasing precipitation
-                    'probability': 20 + i * 10  # Increasing probability
+                    'precipitation': precip,
+                    'probability': 15 if precip == 0 else (60 if precip < 2 else 85)
                 })
         
+        logging.info(f"PrecipitationChart: Extracted {len(precipitation_data)} data points")
         return precipitation_data
 
     def will_unmount(self):

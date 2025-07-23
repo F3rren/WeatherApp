@@ -3,10 +3,12 @@ Weather View for the MeteoApp.
 Handles the display of weather information.
 """
 
+import os
+import asyncio
 import flet as ft
 import logging # Add logging import
-from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM, LIGHT_THEME, DARK_THEME
-from services.api.api_service import ApiService
+from ui.themes.themes import LIGHT_THEME, DARK_THEME
+from services.api.api_service import ApiService, load_dotenv
 from services.ui.translation_service import TranslationService # Import TranslationService
 from services.ui.theme_handler import ThemeHandler
 
@@ -25,6 +27,7 @@ class WeatherView:
     """
     
     def __init__(self, page: ft.Page, api_service: ApiService):
+        load_dotenv()
         self.page = page
         self.api_service = api_service
         self.state_manager = self.page.session.get('state_manager')
@@ -131,8 +134,8 @@ class WeatherView:
     def handle_language_or_unit_change(self, event_data=None):
         logging.info(f"WeatherView: Handling language/unit change. Event: {event_data}")
         # Always get the latest state from state_manager
-        language = self.state_manager.get_state('language') or DEFAULT_LANGUAGE
-        unit = self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
+        language = self.state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE")
+        unit = self.state_manager.get_state('unit') or os.getenv("DEFAULT_UNIT_SYSTEM")
         using_location = self.state_manager.get_state('using_location')
         current_lat = self.state_manager.get_state('current_lat')
         current_lon = self.state_manager.get_state('current_lon')
@@ -202,9 +205,9 @@ class WeatherView:
         # Then handle data re-fetching for a full update if needed
         state_manager = self.page.session.get('state_manager')
         if state_manager:
-            language = state_manager.get_state('language') or DEFAULT_LANGUAGE
-            unit = state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
-            
+            language = state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE")
+            unit = state_manager.get_state('unit') or os.getenv("DEFAULT_UNIT_SYSTEM")
+
             # Check if we're using current location
             using_location = state_manager.get_state('using_location')
             
@@ -230,7 +233,7 @@ class WeatherView:
         if not state_manager:
             return
 
-        language = state_manager.get_state('language') or DEFAULT_LANGUAGE
+        language = state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE")
         # Get current location context from state_manager if possible, otherwise use WeatherView's last known
         using_location = state_manager.get_state('using_location')
         current_lat_from_state = state_manager.get_state('current_lat')
@@ -411,7 +414,7 @@ class WeatherView:
         """Frontend: Updates main weather info UI (robust, always creates new instance)."""
         # Determine display location and translated city name
         if is_current_location:
-            location_str = TranslationService.translate_from_dict('main_information_items', 'current_location', self.state_manager.get_state('language') or DEFAULT_LANGUAGE)
+            location_str = TranslationService.translate_from_dict('main_information_items', 'current_location', self.state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE"))
             location = f"{location_str}"
             translated_city = location_str
         elif self.weather_data and self.weather_data.get("city"):
@@ -444,8 +447,8 @@ class WeatherView:
             temp_max=temp_max,
             temperature=self.api_service.get_current_temperature(self.weather_data),
             weather_icon=self.api_service.get_weather_icon_code(self.weather_data),
-            language=self.state_manager.get_state('language') or DEFAULT_LANGUAGE,
-            unit=self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM,
+            language=self.state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE"),
+            unit=self.state_manager.get_state('unit') or os.getenv("DEFAULT_UNIT_SYSTEM"),
             weather_description=self.api_service.get_weather_description(self.weather_data),
             feels_like=self.api_service.get_feels_like_temperature(self.weather_data),
             page=self.page,
@@ -503,8 +506,8 @@ class WeatherView:
             days=days,
             temp_min=forecast_data["temp_min"],
             temp_max=forecast_data["temp_max"],
-            language=self.state_manager.get_state('language') or DEFAULT_LANGUAGE,
-            unit=self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM,
+            language=self.state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE"),
+            unit=self.state_manager.get_state('unit') or os.getenv("DEFAULT_UNIT_SYSTEM"),
             theme_handler=self.theme_handler
         )
         try:
@@ -530,8 +533,8 @@ class WeatherView:
         self.hourly_forecast_instance = HourlyForecastDisplay(
             page=self.page,
             city=self.current_city,
-            language=self.state_manager.get_state('language') or DEFAULT_LANGUAGE,
-            unit=self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM,
+            language=self.state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE"),
+            unit=self.state_manager.get_state('unit') or os.getenv("DEFAULT_UNIT_SYSTEM"),
             theme_handler=self.theme_handler
         )
 
@@ -568,11 +571,35 @@ class WeatherView:
         """Frontend: Updates precipitation chart UI using PrecipitationChartDisplay."""
         logging.info(f"DEBUG: _update_precipitation_chart called with forecast_data keys: {list(forecast_data.keys()) if forecast_data else 'None'}")
 
+        # Get hourly forecast data specifically for precipitation
+        try:
+            # Fetch forecast data if we don't have the right structure
+            if forecast_data and 'list' not in forecast_data:
+                logging.info("DEBUG: Current weather data doesn't have forecast list, fetching forecast data...")
+                language = self.state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE") 
+                unit = self.state_manager.get_state('unit') or os.getenv("DEFAULT_UNIT_SYSTEM")
+                
+                # Use the city to get forecast data
+                if self.current_city:
+                    forecast_response = await asyncio.to_thread(
+                        self.api_service.get_forecast_data,
+                        city=self.current_city,
+                        language=language,
+                        unit=unit
+                    )
+                    if forecast_response and forecast_response.get('success'):
+                        forecast_data = forecast_response.get('data', {})
+                        logging.info(f"DEBUG: Fetched forecast data with keys: {list(forecast_data.keys())}")
+                else:
+                    logging.warning("DEBUG: No current city available for forecast data")
+        except Exception as e:
+            logging.error(f"DEBUG: Error fetching forecast data: {e}")
+
         # Always create a new instance to ensure proper updates
         self.precipitation_chart_instance = PrecipitationChartDisplay(
             page=self.page,
-            language=self.state_manager.get_state('language') or DEFAULT_LANGUAGE,
-            unit=self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM,
+            language=self.state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE"),
+            unit=self.state_manager.get_state('unit') or os.getenv("DEFAULT_UNIT_SYSTEM"),
             theme_handler=self.theme_handler
         )
         logging.info("DEBUG: Created new PrecipitationChartDisplay instance")
@@ -621,8 +648,8 @@ class WeatherView:
             cloud_coverage=self.api_service.get_cloud_coverage(self.weather_data),
             page=self.page,
             theme_handler=self.theme_handler,
-            language=self.state_manager.get_state('language') or DEFAULT_LANGUAGE,
-            unit=self.state_manager.get_state('unit') or DEFAULT_UNIT_SYSTEM
+            language=self.state_manager.get_state('language') or os.getenv("DEFAULT_LANGUAGE"),
+            unit=self.state_manager.get_state('unit') or os.getenv("DEFAULT_UNIT_SYSTEM")
         )
 
     def _set_loading(self, value: bool):
@@ -758,6 +785,7 @@ class WeatherView:
         
         error_dialog = ft.AlertDialog(
             modal=True,
+            scrollable=True,  # Make dialog scrollable
             title=ft.Text(
                 translations.get('error_title', 'Error'),
                 weight=ft.FontWeight.BOLD,
@@ -842,6 +870,7 @@ class WeatherView:
         
         error_dialog = ft.AlertDialog(
             modal=True,
+            scrollable=True,  # Make dialog scrollable
             title=ft.Text(
                 translations.get('network_error_title', 'Network Error'),
                 weight=ft.FontWeight.BOLD,
@@ -926,6 +955,7 @@ class WeatherView:
         
         error_dialog = ft.AlertDialog(
             modal=True,
+            scrollable=True,  # Make dialog scrollable
             title=ft.Text(
                 translations.get('api_error_title', 'API Error'),
                 weight=ft.FontWeight.BOLD,
@@ -996,6 +1026,7 @@ class WeatherView:
         
         error_dialog = ft.AlertDialog(
             modal=True,
+            scrollable=True,  # Make dialog scrollable
             title=ft.Text(
                 translations.get('generic_error_title', 'Error'),
                 weight=ft.FontWeight.BOLD,

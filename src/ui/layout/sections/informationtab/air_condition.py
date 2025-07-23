@@ -1,11 +1,11 @@
+import os
 import flet as ft
-from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 from utils.translations_data import AIR_QUALITY_INDICATORS
-from utils.responsive_utils import ResponsiveComponentMixin, ResponsiveHelper, DeviceType
+from utils.responsive_utils import ResponsiveComponentMixin, DeviceType
 
 from services.ui.theme_handler import ThemeHandler
 from services.ui.translation_service import TranslationService
-from services.api.api_service import ApiService
+from services.api.api_service import ApiService, load_dotenv
 import asyncio
 import logging
 
@@ -19,13 +19,14 @@ class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
     def __init__(self, city, feels_like, humidity, wind_speed, pressure, wind_direction=None, wind_gust=None,
                  visibility=None, uv_index=None, dew_point=None, cloud_coverage=None, page=None, theme_handler=None,
                  language=None, unit=None, **kwargs):
+        load_dotenv()
         super().__init__(**kwargs)
         self.page = page
         self.theme_handler = theme_handler if theme_handler else ThemeHandler(self.page)
         self._api_service = ApiService()
         self._state_manager = page.session.get('state_manager') if page and hasattr(page, 'session') else None
-        self._current_language = language or DEFAULT_LANGUAGE
-        self._current_unit_system = unit or DEFAULT_UNIT_SYSTEM
+        self._current_language = language or os.getenv("DEFAULT_LANGUAGE")
+        self._current_unit_system = unit or os.getenv("DEFAULT_UNIT_SYSTEM")
         self._current_text_color = self.theme_handler.get_text_color()
         self._city = city
         self._data = {

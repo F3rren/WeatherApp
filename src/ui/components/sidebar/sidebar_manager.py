@@ -5,6 +5,8 @@ Refactored for better robustness and consistency.
 """
 
 import logging
+import os
+from dotenv import load_dotenv
 import flet as ft
 from typing import Callable, Optional
 
@@ -15,7 +17,6 @@ from core.state_manager import StateManager
 from services.location.location_toggle_service import LocationToggleService
 from services.ui.theme_toggle_service import ThemeToggleService
 from services.ui.theme_handler import ThemeHandler
-from utils.config import DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ class SidebarManager(ft.Container):
                  update_weather_callback: Optional[Callable] = None,
                  language=None, unit=None,
                  **kwargs):
+        load_dotenv()
         super().__init__(**kwargs)
         # Core references
         self.page = page
@@ -53,9 +55,9 @@ class SidebarManager(ft.Container):
         self.pop_menu = None
         self.search_bar = None
         self.weekly_forecast_display = None
-        
-        self.current_language = language or DEFAULT_LANGUAGE
-        self.current_unit_system = unit or DEFAULT_UNIT_SYSTEM
+
+        self.current_language = language or os.getenv("DEFAULT_LANGUAGE")
+        self.current_unit_system = unit or os.getenv("DEFAULT_UNIT_SYSTEM")
         self.current_text_color = self.theme_handler.get_text_color()
 
 
@@ -102,7 +104,8 @@ class SidebarManager(ft.Container):
             theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
             location_toggle_value=self.state_manager.get_state("using_location") or False,
             language=language,
-            theme_handler=self.theme_handler
+            theme_handler=self.theme_handler,
+            update_weather_callback=self.update_weather_callback
         )
 
         # Initialize search bar with theme_handler
@@ -162,7 +165,8 @@ class SidebarManager(ft.Container):
                 theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
                 location_toggle_value=self.state_manager.get_state("using_location") or False,
                 language=language,
-                theme_handler=self.theme_handler
+                theme_handler=self.theme_handler,
+                update_weather_callback=self.update_weather_callback
             )
 
             # Reinitialize search bar with new theme_handler
@@ -243,7 +247,8 @@ class SidebarManager(ft.Container):
                 theme_toggle_value=(self.page.theme_mode == ft.ThemeMode.DARK),
                 location_toggle_value=self.state_manager.get_state("using_location") or False,
                 language=language,
-                theme_handler=self.theme_handler
+                theme_handler=self.theme_handler,
+                update_weather_callback=self.update_weather_callback
             )
 
             # Reinitialize search bar with new language and theme_handler
@@ -386,18 +391,26 @@ class SidebarManager(ft.Container):
         """
         Costruisce una moderna sidebar con previsioni giornaliere simile al design mostrato.
         """
-        # Header della sidebar con controlli
+        # Header della sidebar con controlli in riga
         header_section = ft.Container(
             content=ft.Row([
-                # Search bar compatta
+                # PopMenu a sinistra
+                ft.Container(
+                    content=self.pop_menu,
+                    margin=ft.margin.only(right=8),  # Spazio tra PopMenu e SearchBar
+                ),
+                # SearchBar allargata a destra
                 ft.Container(
                     content=self.search_bar.build(
-                        popmenu_widget=self.pop_menu,  # Use the PopMenu container directly
-                clear_icon_size=25,
+                        popmenu_widget=None,  # Non più necessario
+                        clear_icon_size=25,
                     ),
-                    expand=True,
+                    expand=True,  # Prende tutto lo spazio rimanente
                 ),
-            ]),
+            ], 
+            alignment=ft.MainAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=0),
             padding=ft.padding.all(15),
             margin=ft.margin.only(bottom=10)
         )

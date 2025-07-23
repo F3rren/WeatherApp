@@ -1,9 +1,9 @@
+import os
 import flet as ft
 import logging
 import traceback
-from services.api.api_service import ApiService
+from services.api.api_service import ApiService, load_dotenv
 from services.ui.translation_service import TranslationService
-from utils.config import DEFAULT_LANGUAGE
 from services.ui.theme_handler import ThemeHandler
 
 from utils.translations_data import TRANSLATIONS
@@ -16,6 +16,7 @@ class AirPollutionDisplay(ft.Container):
     """
     
     def __init__(self, page: ft.Page, lat: float = None, lon: float = None, theme_handler: ThemeHandler = None, **kwargs):
+        load_dotenv()
         super().__init__(**kwargs)
         self.page = page
         self.theme_handler = theme_handler or ThemeHandler(self.page)
@@ -24,7 +25,7 @@ class AirPollutionDisplay(ft.Container):
 
         self._api_service = ApiService()
         self._state_manager = None
-        self._current_language = DEFAULT_LANGUAGE
+        self._current_language = os.getenv("DEFAULT_LANGUAGE")
         self._current_text_color = self.theme_handler.get_text_color()
         self._pollution_data = {}
 

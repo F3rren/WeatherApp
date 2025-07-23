@@ -4,11 +4,12 @@ Centralizes all application state and provides methods to update it.
 """
 
 import logging
+import os
 import flet as ft
 from typing import Callable, Dict, Any, List
 import asyncio
 
-from utils.config import DEFAULT_CITY, DEFAULT_LANGUAGE, DEFAULT_UNIT_SYSTEM
+from services.api.api_service import load_dotenv
 
 class StateManager:
     """
@@ -17,13 +18,13 @@ class StateManager:
     """
     
     def __init__(self, page: ft.Page):
+        load_dotenv()
         self.page = page
-        
         # Application state
         self._state = {
-            "city": DEFAULT_CITY,
-            "language": DEFAULT_LANGUAGE,
-            "unit": DEFAULT_UNIT_SYSTEM,
+            "city": os.getenv("DEFAULT_CITY"),
+            "language": os.getenv("DEFAULT_LANGUAGE"),
+            "unit": os.getenv("DEFAULT_UNIT_SYSTEM"),
             "using_location": False,
             "current_lat": None,
             "current_lon": None,
@@ -51,6 +52,18 @@ class StateManager:
         
         if notify and old_value != value:
             await self._notify_observers(key, {"old_value": old_value, "new_value": value})
+    
+    def set_state_sync(self, key: str, value: Any) -> None:
+        """Set a state value synchronously without notifying observers.
+        
+        Use this method when you need to update state from non-async contexts
+        and don't need immediate observer notification.
+        
+        Args:
+            key: State key
+            value: State value
+        """
+        self._state[key] = value
     
     async def update_state(self, updates: Dict[str, Any]) -> None:
         """Update multiple state values at once"""

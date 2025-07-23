@@ -86,20 +86,19 @@ class LayoutBuilder:
         main_content = ft.Column([
             # Layout orizzontale principale (sidebar + info)
             ft.ResponsiveRow([
-                # Sidebar - layout responsive migliorato
+                # Sidebar - allargata per più spazio alla ricerca
                 ft.Container(
                     content=sidebar,
                     col={
                         "xs": 12,    # Mobile: full width, sidebar in alto
                         "sm": 12,    # Tablet portrait: full width 
-                        "md": 4,     # Tablet landscape: 33%
-                        "lg": 3,     # Desktop: 25% (più spazio per content)
-                        "xl": 3      # Large desktop: 25%
+                        "md": 5,     # Tablet landscape: 42% (era 33%)
+                        "lg": 4,     # Desktop: 33% (era 25%) - più spazio per search
+                        "xl": 4      # Large desktop: 33% (era 25%) - più spazio per search
                     },
-                    # padding=ft.padding.only(left=8, top=8, bottom=8, right=8),
                 ),
                 
-                # Area contenuto principale - responsive migliorato
+                # Area contenuto principale - ridotta per compensare sidebar più larga
                 ft.Container(
                     content=ft.Column([
                         # Header principale con info meteo
@@ -114,9 +113,9 @@ class LayoutBuilder:
                     col={
                         "xs": 12,    # Mobile: full width sotto sidebar
                         "sm": 12,    # Tablet portrait: full width sotto sidebar
-                        "md": 8,     # Tablet landscape: 67%
-                        "lg": 9,     # Desktop: 75%
-                        "xl": 9      # Large desktop: 75%
+                        "md": 7,     # Tablet landscape: 58% (era 67%) - compensato sidebar
+                        "lg": 8,     # Desktop: 67% (era 75%) - compensato sidebar
+                        "xl": 8      # Large desktop: 67% (era 75%) - compensato sidebar
                     },
                     # padding=ft.padding.only(left=8, top=8, bottom=8, right=8),
                 )

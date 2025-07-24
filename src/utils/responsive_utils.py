@@ -28,6 +28,102 @@ class ResponsiveBreakpoints:
     MEDIUM_HEIGHT = 800
     TALL_HEIGHT = 1000
 
+class FontSizeConfig:
+    """Configurazione centralizzata delle dimensioni dei font per tutti i dispositivi."""
+    
+    # Configurazione base delle dimensioni font per dispositivi
+    FONT_SIZES = {
+        DeviceType.MOBILE: {
+            "title_main": 20,       # Titolo principale dell'app
+            "title_section": 16,    # Titoli delle sezioni
+            "title_card": 12,       # Titoli delle card
+            "subtitle": 11,         # Sottotitoli
+            "body_primary": 15,     # Testo principale
+            "body_secondary": 9,    # Testo secondario
+            "caption": 8,           # Didascalie
+            "label": 9,             # Etichette
+            "button": 10,           # Testo pulsanti
+            "micro": 7,             # Testo molto piccolo
+            "tiny": 14,              # Testo molto piccolo
+            "nano": 6               # Testo microscopico
+        },
+        DeviceType.TABLET: {
+            "title_main": 28,
+            "title_section": 22,
+            "title_card": 18,
+            "subtitle": 16,
+            "body_primary": 16,
+            "body_secondary": 14,
+            "caption": 12,
+            "label": 13,
+            "button": 14,
+            "micro": 11,
+            "tiny": 10,
+            "nano": 9
+        },
+        DeviceType.DESKTOP: {
+            "title_main": 32,
+            "title_section": 26,
+            "title_card": 20,
+            "subtitle": 18,
+            "body_primary": 16,
+            "body_secondary": 14,
+            "caption": 12,
+            "label": 13,
+            "button": 14,
+            "micro": 11,
+            "tiny": 10,
+            "nano": 9
+        },
+        DeviceType.LARGE_DESKTOP: {
+            "title_main": 36,
+            "title_section": 30,
+            "title_card": 24,
+            "subtitle": 20,
+            "body_primary": 18,
+            "body_secondary": 16,
+            "caption": 14,
+            "label": 15,
+            "button": 16,
+            "micro": 13,
+            "tiny": 12,
+            "nano": 11
+        }
+    }
+    
+    @staticmethod
+    def get_font_size(device_type: DeviceType, text_type: str) -> int:
+        """
+        Ottieni la dimensione del font per un dispositivo e tipo di testo specifici.
+        
+        Args:
+            device_type: Tipo di dispositivo
+            text_type: Tipo di testo
+            
+        Returns:
+            int: Dimensione font in px
+        """
+        device_sizes = FontSizeConfig.FONT_SIZES.get(device_type, FontSizeConfig.FONT_SIZES[DeviceType.DESKTOP])
+        return device_sizes.get(text_type, device_sizes.get("body_primary", 16))
+    
+    @staticmethod
+    def update_mobile_font_size(text_type: str, size: int):
+        """
+        Aggiorna dinamicamente la dimensione di un font per mobile.
+        
+        Args:
+            text_type: Tipo di testo da modificare
+            size: Nuova dimensione in px
+        """
+        if text_type in FontSizeConfig.FONT_SIZES[DeviceType.MOBILE]:
+            FontSizeConfig.FONT_SIZES[DeviceType.MOBILE][text_type] = size
+    
+    @staticmethod
+    def get_all_text_types() -> list:
+        """Restituisce tutti i tipi di testo disponibili."""
+        return list(FontSizeConfig.FONT_SIZES[DeviceType.MOBILE].keys())
+
+
 class ResponsiveHelper:
     """Helper class per gestire layout responsive."""
     
@@ -156,43 +252,25 @@ class ResponsiveHelper:
         
         Args:
             device_type: Tipo di dispositivo
-            text_type: Tipo di testo ("title", "subtitle", "heading", "body", "caption", "small")
+            text_type: Tipo di testo
             
         Returns:
             int: Dimensione font in px
         """
-        if device_type == DeviceType.MOBILE:
-            font_sizes = {
-                "title": 18,        # Drasticamente ridotto da ~24
-                "subtitle": 15,     # Drasticamente ridotto da ~20  
-                "heading": 14,      # Drasticamente ridotto da ~18
-                "body": 12,         # Drasticamente ridotto da ~16
-                "caption": 10,      # Drasticamente ridotto da ~14
-                "small": 9,         # Drasticamente ridotto da ~12
-                "tiny": 8           # Nuovo per testi molto piccoli
-            }
-        elif device_type == DeviceType.TABLET:
-            font_sizes = {
-                "title": 22,
-                "subtitle": 18,
-                "heading": 16,
-                "body": 14,
-                "caption": 12,
-                "small": 11,
-                "tiny": 10
-            }
-        else:  # Desktop e Large Desktop
-            font_sizes = {
-                "title": 28,
-                "subtitle": 22,
-                "heading": 18,
-                "body": 16,
-                "caption": 14,
-                "small": 12,
-                "tiny": 11
-            }
+        # Mappa i tipi legacy ai nuovi tipi
+        legacy_mapping = {
+            "title": "title_main",
+            "subtitle": "title_section",
+            "heading": "title_card",
+            "body": "body_primary",
+            "caption": "caption",
+            "small": "tiny"
+        }
         
-        return font_sizes.get(text_type, font_sizes["body"])
+        # Usa il mapping se è un tipo legacy, altrimenti usa il tipo direttamente
+        mapped_type = legacy_mapping.get(text_type, text_type)
+        
+        return FontSizeConfig.get_font_size(device_type, mapped_type)
     
     @staticmethod
     def get_responsive_text_style(device_type: DeviceType, text_type: str = "body") -> ft.TextStyle:
@@ -636,21 +714,6 @@ class ResponsiveComponentMixin:
 class MobileTextHelper:
     """Helper specializzato per la gestione del testo su dispositivi mobili."""
     
-    # Dimensioni di testo estremamente ridotte per mobile
-    MOBILE_FONT_SIZES = {
-        "title_main": 16,       # Titolo principale dell'app
-        "title_section": 14,    # Titoli delle sezioni
-        "title_card": 12,       # Titoli delle card
-        "subtitle": 11,         # Sottotitoli
-        "body_primary": 10,     # Testo principale
-        "body_secondary": 9,    # Testo secondario
-        "caption": 8,           # Didascalie
-        "label": 9,             # Etichette
-        "button": 10,           # Testo pulsanti
-        "micro": 7,             # Testo molto piccolo
-        "nano": 6               # Testo microscopico
-    }
-    
     @staticmethod
     def get_mobile_font_size(text_type: str) -> int:
         """
@@ -662,7 +725,7 @@ class MobileTextHelper:
         Returns:
             int: Dimensione font in px
         """
-        return MobileTextHelper.MOBILE_FONT_SIZES.get(text_type, 9)
+        return FontSizeConfig.get_font_size(DeviceType.MOBILE, text_type)
     
     @staticmethod
     def create_mobile_text(
@@ -677,7 +740,7 @@ class MobileTextHelper:
         
         Args:
             text: Testo da visualizzare
-            text_type: Tipo di testo (vedi MOBILE_FONT_SIZES)
+            text_type: Tipo di testo (vedi FontSizeConfig.FONT_SIZES)
             color: Colore del testo
             weight: Peso del font
             **kwargs: Altri parametri per ft.Text
@@ -772,7 +835,7 @@ class ResponsiveTextFactory:
     def create_adaptive_text(
         page: ft.Page,
         text: str,
-        text_type: str = "body",
+        text_type,
         color: str = None,
         **kwargs
     ) -> ft.Text:
@@ -790,31 +853,109 @@ class ResponsiveTextFactory:
             ft.Text: Componente Text responsive
         """
         device_type = ResponsiveHelper.get_device_type_smart(page)
+        font_size = FontSizeConfig.get_font_size(device_type, text_type)
         
-        if device_type == DeviceType.MOBILE:
-            # Usa il mapping ottimizzato per mobile
-            mobile_type_mapping = {
-                "title": "title_section",
-                "subtitle": "subtitle", 
-                "heading": "title_card",
-                "body": "body_primary",
-                "caption": "caption",
-                "small": "body_secondary"
-            }
+        return ft.Text(
+            text,
+            size=font_size,
+            color=color,
+            **kwargs
+        )
+    
+    @staticmethod
+    def create_text_for_device(
+        device_type: DeviceType,
+        text: str,
+        text_type: str,
+        color: str = None,
+        **kwargs
+    ) -> ft.Text:
+        """
+        Crea un componente Text per un dispositivo specifico.
+        
+        Args:
+            device_type: Tipo di dispositivo specifico
+            text: Testo da visualizzare
+            text_type: Tipo di testo
+            color: Colore del testo
+            **kwargs: Altri parametri per ft.Text
             
-            mobile_text_type = mobile_type_mapping.get(text_type, "body_primary")
-            return MobileTextHelper.create_mobile_text(
-                text=text,
-                text_type=mobile_text_type,
-                color=color,
-                **kwargs
-            )
-        else:
-            # Usa dimensioni normali per tablet/desktop
-            return ResponsiveHelper.create_responsive_text(
-                text=text,
-                device_type=device_type,
-                text_type=text_type,
-                color=color,
-                **kwargs
-            )
+        Returns:
+            ft.Text: Componente Text configurato
+        """
+        font_size = FontSizeConfig.get_font_size(device_type, text_type)
+        
+        return ft.Text(
+            text,
+            size=font_size,
+            color=color,
+            **kwargs
+        )
+
+
+class FontSizeManager:
+    """Manager per modificare dinamicamente le configurazioni dei font."""
+    
+    @staticmethod
+    def set_mobile_font_scale(scale_factor: float):
+        """
+        Scala tutte le dimensioni mobile di un fattore specifico.
+        
+        Args:
+            scale_factor: Fattore di scala (es: 0.8 per ridurre del 20%, 1.2 per aumentare del 20%)
+        """
+        mobile_sizes = FontSizeConfig.FONT_SIZES[DeviceType.MOBILE]
+        for text_type in mobile_sizes:
+            original_size = mobile_sizes[text_type]
+            new_size = max(6, int(original_size * scale_factor))  # Minimo 6px
+            mobile_sizes[text_type] = new_size
+    
+    @staticmethod
+    def reset_to_defaults():
+        """Ripristina le dimensioni di default."""
+        FontSizeConfig.FONT_SIZES[DeviceType.MOBILE] = {
+            "title_main": 20,
+            "title_section": 16,
+            "title_card": 12,
+            "subtitle": 11,
+            "body_primary": 15,
+            "body_secondary": 9,
+            "caption": 8,
+            "label": 9,
+            "button": 10,
+            "micro": 7,
+            "tiny": 8,
+            "nano": 6
+        }
+    
+    @staticmethod
+    def make_ultra_compact():
+        """Imposta dimensioni ultra-compatte per mobile."""
+        ultra_compact = {
+            "title_main": 16,
+            "title_section": 13,
+            "title_card": 10,
+            "subtitle": 9,
+            "body_primary": 12,
+            "body_secondary": 8,
+            "caption": 7,
+            "label": 8,
+            "button": 9,
+            "micro": 6,
+            "tiny": 6,
+            "nano": 5
+        }
+        FontSizeConfig.FONT_SIZES[DeviceType.MOBILE].update(ultra_compact)
+    
+    @staticmethod
+    def customize_font_size(device_type: DeviceType, text_type: str, size: int):
+        """
+        Personalizza la dimensione di un font specifico.
+        
+        Args:
+            device_type: Tipo di dispositivo
+            text_type: Tipo di testo
+            size: Nuova dimensione in px
+        """
+        if device_type in FontSizeConfig.FONT_SIZES:
+            FontSizeConfig.FONT_SIZES[device_type][text_type] = size

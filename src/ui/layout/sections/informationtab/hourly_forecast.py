@@ -8,6 +8,7 @@ import traceback
 
 from services.ui.theme_handler import ThemeHandler
 from translations import translation_manager  # New modular translation system
+from utils.responsive_utils import ResponsiveTextFactory
 
 class HourlyForecastDisplay(ft.Container):
     """
@@ -100,9 +101,10 @@ class HourlyForecastDisplay(ft.Container):
             )
             
             return ft.Container(
-                content=ft.Text(
-                    loading_text,
-                    size=16,
+                content=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=loading_text,
+                    text_type="body_primary",
                     color=self._text_color
                 ),
                 padding=ft.padding.all(20)
@@ -126,12 +128,13 @@ class HourlyForecastDisplay(ft.Container):
                     size=25
                 ),
                 ft.Container(width=5),  # Spacer
-                ft.Text(
-                    header_text,
-                    size=20,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=header_text,
+                    text_type="title_secondary",
                     weight=ft.FontWeight.BOLD,
                     color=self._text_color,
-                    font_family="system-ui",
+                    font_family="system-ui"
                 ),
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.only(left=20, top=16, bottom=12)  # Reduced padding
@@ -275,23 +278,25 @@ class HourlyForecastDisplay(ft.Container):
                     )
                 
                 # Professional hour display with better typography
-                time_text = ft.Text(
-                    hour,
-                    size=14,
+                time_text = ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=hour,
+                    text_type="body_secondary",
                     color=ft.Colors.with_opacity(0.7, self._text_color),
                     weight="w500",
                     text_align=ft.TextAlign.CENTER,
-                    font_family="system-ui",
+                    font_family="system-ui"
                 )
                 
                 # Professional temperature display with emphasis
-                temp_text = ft.Text(
-                    f"{temp_value}°",
-                    size=16,
+                temp_text = ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"{temp_value}°",
+                    text_type="body_primary",
                     weight="w600",
                     color=self._text_color,
                     text_align=ft.TextAlign.CENTER,
-                    font_family="system-ui",
+                    font_family="system-ui"
                 )
                 
                 # Additional weather info display (simplified)
@@ -299,12 +304,13 @@ class HourlyForecastDisplay(ft.Container):
                 rain_info = None
                 if rain_probability > 20:
                     rain_info = ft.Container(
-                        content=ft.Text(
-                            f"{rain_probability}%",
-                            size=9,
+                        content=ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=f"{rain_probability}%",
+                            text_type="caption",
                             color=ft.Colors.BLUE_400,
                             weight="w500",
-                            text_align=ft.TextAlign.CENTER,
+                            text_align=ft.TextAlign.CENTER
                         ),
                         height=12,
                         alignment=ft.alignment.center,

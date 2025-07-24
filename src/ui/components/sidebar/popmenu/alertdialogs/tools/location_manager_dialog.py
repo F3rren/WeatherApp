@@ -3,6 +3,7 @@ from core.state_manager import StateManager
 from services.location.location_manager_service import LocationManagerService
 from services.location.geocoding_service import GeocodingService
 from translations import translation_manager
+from utils.responsive_utils import ResponsiveHelper, ResponsiveTextFactory
 import logging
 from dataclasses import dataclass
 
@@ -314,7 +315,7 @@ class LocationManagerDialog:
         )
     
     def _create_dialog_title(self, texts):
-        """Create enhanced dialog title with better visual hierarchy."""
+        """Create enhanced dialog title with responsive mobile text sizing."""
         return ft.Row([
             ft.Container(
                 content=ft.Icon(
@@ -324,11 +325,12 @@ class LocationManagerDialog:
                 ),
                 padding=ft.padding.only(right=8)
             ),
-            ft.Text(
-                texts['dialog_title'], 
-                weight=ft.FontWeight.BOLD, 
-                color=self.colors.text,
-                size=18
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=texts['dialog_title'],
+                text_type="title_main",
+                weight=ft.FontWeight.BOLD,
+                color=self.colors.text
             )
         ], spacing=8)
     
@@ -396,7 +398,7 @@ class LocationManagerDialog:
         )
     
     def _create_search_section(self):
-        """Create enhanced search section with better visual organization."""
+        """Create enhanced search section with responsive mobile text sizing."""
         return ft.Column([
             # Section header with icon and title
             ft.Row([
@@ -405,11 +407,12 @@ class LocationManagerDialog:
                     size=self.ui_constants.ICON_SIZE_MEDIUM, 
                     color=self.colors.accent
                 ),
-                ft.Text(
-                    self.get_translation("location_manager_dialog.search_new_location"), 
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("location_manager_dialog.search_new_location"),
+                    text_type="title_secondary",
                     weight=ft.FontWeight.W_600,
-                    color=self.colors.text, 
-                    size=16
+                    color=self.colors.text
                 ),
             ], spacing=8),
             
@@ -426,18 +429,19 @@ class LocationManagerDialog:
         ], spacing=12)
     
     def _create_saved_locations_section(self, texts):
-        """Create enhanced saved locations header with action buttons."""
+        """Create enhanced saved locations header with responsive mobile text sizing."""
         return ft.Row([
             ft.Icon(
                 ft.Icons.BOOKMARK_OUTLINE, 
                 size=self.ui_constants.ICON_SIZE_MEDIUM, 
                 color=self.colors.success
             ),
-            ft.Text(
-                texts['saved_locations'], 
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=texts['saved_locations'],
+                text_type="title_secondary",
                 weight=ft.FontWeight.W_600,
-                color=self.colors.text, 
-                size=16
+                color=self.colors.text
             ),
             ft.Container(expand=True),
             
@@ -635,17 +639,19 @@ class LocationManagerDialog:
         )
     
     def _create_location_info(self, location):
-        """Create enhanced location information display."""
+        """Create enhanced location information display with responsive mobile text sizing."""
         info_items = [
-            ft.Text(
-                location["name"], 
-                weight=ft.FontWeight.BOLD, 
-                size=14,
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=location["name"],
+                text_type="body_primary",
+                weight=ft.FontWeight.BOLD,
                 color=self.colors.text
             ),
-            ft.Text(
-                f"📍 {location['lat']:.4f}, {location['lon']:.4f}", 
-                size=11, 
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=f"📍 {location['lat']:.4f}, {location['lon']:.4f}",
+                text_type="caption",
                 color=self.colors.text_secondary
             )
         ]
@@ -655,9 +661,10 @@ class LocationManagerDialog:
         if country and country.lower() not in ["unknown", "sconosciuto", ""]:
             country_display = self._get_country_name(country) if len(country) <= 3 else country
             info_items.insert(1, 
-                ft.Text(
-                    f"🌍 {country_display}", 
-                    size=11, 
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"🌍 {country_display}",
+                    text_type="caption",
                     color=self.colors.text_secondary
                 )
             )
@@ -1033,11 +1040,12 @@ class LocationManagerDialog:
                     size=self.ui_constants.ICON_SIZE_MEDIUM,
                     color=self.colors.accent
                 ),
-                ft.Text(
-                    f"Trovati {len(results)} risultati:", 
-                    weight=ft.FontWeight.BOLD, 
-                    color=self.colors.text, 
-                    size=15
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"Trovati {len(results)} risultati:",
+                    text_type="body_secondary",
+                    weight=ft.FontWeight.BOLD,
+                    color=self.colors.text
                 )
             ], spacing=8),
             padding=ft.padding.only(bottom=8)
@@ -1057,9 +1065,10 @@ class LocationManagerDialog:
         # Add truncation notice if needed
         if len(results) > self.ui_constants.MAX_SEARCH_RESULTS:
             truncation_notice = ft.Container(
-                content=ft.Text(
-                    f"... e altri {len(results) - self.ui_constants.MAX_SEARCH_RESULTS} risultati. Affina la ricerca per risultati più precisi.",
-                    size=11,
+                content=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"... e altri {len(results) - self.ui_constants.MAX_SEARCH_RESULTS} risultati. Affina la ricerca per risultati più precisi.",
+                    text_type="small",
                     color=self.colors.text_secondary,
                     italic=True
                 ),
@@ -1084,22 +1093,25 @@ class LocationManagerDialog:
             content=ft.Row([
                 # Result information with enhanced layout
                 ft.Column([
-                    ft.Text(
-                        candidate.full_name, 
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=candidate.full_name,
+                        text_type="body_primary",
                         weight=ft.FontWeight.BOLD,
-                        size=14, 
                         color=self.colors.text
                     ),
                     ft.Row([
-                        ft.Text(
-                            f"📍 {candidate.lat:.4f}, {candidate.lon:.4f}", 
-                            size=11, 
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=f"📍 {candidate.lat:.4f}, {candidate.lon:.4f}",
+                            text_type="small",
                             color=self.colors.text_secondary
                         ),
                         ft.Container(width=8),
-                        ft.Text(
-                            f"� {candidate.country_code}", 
-                            size=11, 
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=f"🌍 {candidate.country_code}",
+                            text_type="small",
                             color=self.colors.text_secondary
                         )
                     ], spacing=0)
@@ -1110,7 +1122,11 @@ class LocationManagerDialog:
                     content=ft.ElevatedButton(
                         content=ft.Row([
                             ft.Icon(ft.Icons.ADD, size=16),
-                            ft.Text("Aggiungi", size=12)
+                            ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text="Aggiungi",
+                                text_type="small"
+                            )
                         ], spacing=4, tight=True),
                         on_click=lambda e, loc=candidate: self.add_location_from_search(loc),
                         bgcolor=ft.Colors.with_opacity(0.1, self.colors.success),
@@ -1155,11 +1171,12 @@ class LocationManagerDialog:
                 content=ft.Icon(icon, size=40, color=color),
                 padding=ft.padding.only(bottom=12)
             ),
-            ft.Text(
-                message, 
-                text_align=ft.TextAlign.CENTER, 
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=message,
+                text_type="body_secondary",
+                text_align=ft.TextAlign.CENTER,
                 color=color,
-                size=14,
                 weight=ft.FontWeight.W_500
             )
         ], 
@@ -1439,15 +1456,40 @@ class LocationManagerDialog:
             stats = self.location_service.get_statistics()
             
             stats_content = ft.Column([
-                ft.Text("Statistiche Località", weight=ft.FontWeight.BOLD, size=16),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="Statistiche Località",
+                    text_type="title_secondary",
+                    weight=ft.FontWeight.BOLD
+                ),
                 ft.Divider(),
-                ft.Text(f"📍 Totale località: {stats['total_locations']}"),
-                ft.Text(f"⭐ Località preferite: {stats['favorite_locations']}"),
-                ft.Text(f"🗂️ File storage: {stats['storage_size_bytes']} bytes"),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"📍 Totale località: {stats['total_locations']}",
+                    text_type="body_primary"
+                ),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"⭐ Località preferite: {stats['favorite_locations']}",
+                    text_type="body_primary"
+                ),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"🗂️ File storage: {stats['storage_size_bytes']} bytes",
+                    text_type="body_primary"
+                ),
                 
-                ft.Text("📊 Paesi rappresentati:", weight=ft.FontWeight.BOLD, size=14),
-                *[ft.Text(f"  🏳️ {country}: {count}") 
-                  for country, count in stats['countries'].items()],
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="📊 Paesi rappresentati:",
+                    text_type="body_secondary",
+                    weight=ft.FontWeight.BOLD
+                ),
+                *[ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"  🏳️ {country}: {count}",
+                    text_type="caption"
+                ) for country, count in stats['countries'].items()],
                 
             ], spacing=8)
             

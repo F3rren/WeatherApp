@@ -11,6 +11,7 @@ from ui.themes.themes import LIGHT_THEME, DARK_THEME
 from services.api.api_service import ApiService, load_dotenv
 from services.ui.translation_service import TranslationService # Import TranslationService
 from services.ui.theme_handler import ThemeHandler
+from utils.responsive_utils import ResponsiveTextFactory
 
 from ui.components.cards.weather_card import WeatherCard
 from ui.layout.sections.informationtab.hourly_forecast import HourlyForecastDisplay # Importa la nuova classe
@@ -479,7 +480,12 @@ class WeatherView:
 
         if not self.current_city:
             logging.warning("Weekly forecast update skipped: current_city is not set.")
-            self.weekly_container.content = ft.Text("City not selected for weekly forecast.", color=self.text_color)
+            self.weekly_container.content = ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text="City not selected for weekly forecast.",
+                text_type="body_primary",
+                color=self.text_color
+            )
             return
 
         # Always create a new instance to guarantee a full rebuild and color update
@@ -786,14 +792,17 @@ class WeatherView:
         error_dialog = ft.AlertDialog(
             modal=True,
             scrollable=True,  # Make dialog scrollable
-            title=ft.Text(
-                translations.get('error_title', 'Error'),
+            title=ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translations.get('error_title', 'Error'),
+                text_type="title_secondary",
                 weight=ft.FontWeight.BOLD,
                 color=ft.colors.RED_400
             ),
-            content=ft.Text(
-                translations.get('city_error_message', error_message),
-                size=14
+            content=ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translations.get('city_error_message', error_message),
+                text_type="body_primary"
             ),
             actions=[
                 ft.TextButton(
@@ -871,14 +880,17 @@ class WeatherView:
         error_dialog = ft.AlertDialog(
             modal=True,
             scrollable=True,  # Make dialog scrollable
-            title=ft.Text(
-                translations.get('network_error_title', 'Network Error'),
+            title=ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translations.get('network_error_title', 'Network Error'),
+                text_type="title_secondary",
                 weight=ft.FontWeight.BOLD,
                 color=ft.colors.ORANGE_400
             ),
-            content=ft.Text(
-                translations.get('network_error_message', error_message),
-                size=14
+            content=ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translations.get('network_error_message', error_message),
+                text_type="body_primary"
             ),
             actions=[
                 ft.TextButton(
@@ -956,14 +968,17 @@ class WeatherView:
         error_dialog = ft.AlertDialog(
             modal=True,
             scrollable=True,  # Make dialog scrollable
-            title=ft.Text(
-                translations.get('api_error_title', 'API Error'),
+            title=ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translations.get('api_error_title', 'API Error'),
+                text_type="title_secondary",
                 weight=ft.FontWeight.BOLD,
                 color=ft.colors.RED_600
             ),
-            content=ft.Text(
-                translations.get('api_error_message', error_message),
-                size=14
+            content=ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translations.get('api_error_message', error_message),
+                text_type="body_primary"
             ),
             actions=[
                 ft.TextButton(
@@ -1027,14 +1042,17 @@ class WeatherView:
         error_dialog = ft.AlertDialog(
             modal=True,
             scrollable=True,  # Make dialog scrollable
-            title=ft.Text(
-                translations.get('generic_error_title', 'Error'),
+            title=ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translations.get('generic_error_title', 'Error'),
+                text_type="title_secondary",
                 weight=ft.FontWeight.BOLD,
                 color=ft.colors.RED_500
             ),
-            content=ft.Text(
-                error_message,
-                size=14
+            content=ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=error_message,
+                text_type="body_primary"
             ),
             actions=[
                 ft.TextButton(

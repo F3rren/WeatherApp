@@ -60,31 +60,12 @@ class WeatherAlertDialog:
                     bgcolor=self.colors["bg"],
                     padding=20,
                     content=ft.Column([
-                        ft.Divider(color=ft.Colors.with_opacity(0.3, self.colors["text"])),
-                        
                         # Statistiche compatte
                         self.create_compact_statistics(),
-                        ft.Container(height=15),
-                        
+                        #ft.Container(height=15),
                         # Lista allerte semplificata
                         self.create_compact_alerts_list(),
-                        ft.Container(height=15),
-                        
-                        # Azioni principali
-                        ft.Column([
-                            ft.ElevatedButton(
-                                text=self.get_translation("manage_notifications"), on_click=lambda _: self.open_notifications(),
-                                icon=ft.Icons.SENSORS,
-                                bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
-                                width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
-                            ),
-                            ft.ElevatedButton(
-                                text=self.get_translation("view_details"), on_click=lambda _: self.open_details(),
-                                icon=ft.Icons.INFO,
-                                bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
-                                width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
-                            )
-                        ], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                        #ft.Container(height=15),
                     ], spacing=10, tight=True)
                 ),
                 actions=[self.create_actions()],
@@ -209,7 +190,7 @@ class WeatherAlertDialog:
         if not active_alerts:
             return ft.Container(
                 content=ft.Column([
-                    ft.Icon(ft.Icons.CHECK_CIRCLE_OUTLINE, size=48, color=self.colors["success"]),
+                    #ft.Icon(ft.Icons.CHECK_CIRCLE_OUTLINE, size=48, color=self.colors["success"]),
                     ft.Text(self.get_translation("no_active_alerts"), size=16, weight=ft.FontWeight.W_500, color=self.colors["success"]),
                     ft.Text(self.get_translation("all_clear"), size=12, color=self.colors["text_secondary"])
                 ], spacing=8, horizontal_alignment=ft.CrossAxisAlignment.CENTER), padding=20
@@ -386,70 +367,19 @@ class WeatherAlertDialog:
             self.update_theme_colors()
             self.dialog.title = self.create_header()
             self.dialog.content = ft.Container(
-                width=min(420, self.page.width * 0.9), 
+                width=min(400, self.page.width * 0.9), 
                 bgcolor=self.colors["bg"],
-                padding=ft.padding.all(24),
-                border_radius=16,
+                padding=20,
                 content=ft.Column([
                     # Header migliorato con icona e stile
-                    ft.Container(
-                        content=ft.Row([
-                            ft.Icon(ft.Icons.WARNING_AMBER, color=self.colors["warning"], size=28),
-                            ft.Text(
-                                self.get_translation("active_weather_alerts"), 
-                                size=18, weight=ft.FontWeight.BOLD,
-                                color=self.colors["text"]
-                            )
-                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=12),
-                        padding=ft.padding.only(bottom=10)
-                    ),
-                    ft.Divider(color=ft.Colors.with_opacity(0.2, self.colors["text"]), height=1),
-                    
                     # Statistiche compatte
                     self.create_compact_statistics(),
-                    ft.Container(height=10),
-                    
                     # Lista allerte semplificata
                     self.create_compact_alerts_list(),
-                    ft.Container(height=10),
                     
-                    # Azioni principali con design migliorato
-                    ft.Column([
-                        ft.Container(
-                            content=ft.ElevatedButton(
-                                content=ft.Row([
-                                    ft.Icon(ft.Icons.NOTIFICATIONS, size=18),
-                                    ft.Text(self.get_translation('manage_notifications'), size=14, weight=ft.FontWeight.W_500)
-                                ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
-                                on_click=lambda _: self.open_notifications(),
-                                bgcolor=ft.Colors.with_opacity(0.08, self.colors["accent"]), 
-                                color=self.colors["accent"],
-                                style=ft.ButtonStyle(
-                                    shape=ft.RoundedRectangleBorder(radius=12),
-                                    padding=ft.padding.symmetric(horizontal=20, vertical=12)
-                                )
-                            ),
-                            width=280
-                        ),
-                        ft.Container(
-                            content=ft.ElevatedButton(
-                                content=ft.Row([
-                                    ft.Icon(ft.Icons.INFO_OUTLINE, size=18),
-                                    ft.Text(self.get_translation('view_details'), size=14, weight=ft.FontWeight.W_500)
-                                ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
-                                on_click=lambda _: self.open_details(),
-                                bgcolor=ft.Colors.with_opacity(0.08, self.colors["accent"]), 
-                                color=self.colors["accent"],
-                                style=ft.ButtonStyle(
-                                    shape=ft.RoundedRectangleBorder(radius=12),
-                                    padding=ft.padding.symmetric(horizontal=20, vertical=12)
-                                )
-                            ),
-                            width=280
-                        )
-                    ], spacing=12, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                ], spacing=16, tight=True)
+                ], spacing=10, tight=True)
             )
+
             self.page.update()
 
     def create_compact_statistics(self):
@@ -597,16 +527,6 @@ class WeatherAlertDialog:
             border=ft.border.all(1, ft.Colors.with_opacity(0.1, self.colors["text"])),
             border_radius=12
         )
-
-    def open_notifications(self):
-        """Open notifications management."""
-        # Qui possiamo integrare con il push_notifications_dialog
-        print("Opening notifications management...")
-        
-    def open_details(self):
-        """Open detailed alerts view."""
-        # Qui possiamo aprire una vista dettagliata delle allerte
-        print("Opening detailed alerts view...")
 
     def acknowledge_alert(self, alert_id: str):
         """Acknowledge a specific alert."""

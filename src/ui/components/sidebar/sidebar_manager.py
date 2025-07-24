@@ -17,6 +17,7 @@ from core.state_manager import StateManager
 from services.location.location_toggle_service import LocationToggleService
 from services.ui.theme_toggle_service import ThemeToggleService
 from services.ui.theme_handler import ThemeHandler
+from utils.responsive_utils import ResponsiveTextFactory
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -377,9 +378,10 @@ class SidebarManager(ft.Container):
         else:
             # Placeholder when no city is selected
             return ft.Container(
-                content=ft.Text(
-                    "Select a city to view weekly forecast",
-                    size=14,
+                content=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="Select a city to view weekly forecast",
+                    text_type="body_primary",
                     color=self.current_text_color,
                     text_align=ft.TextAlign.CENTER
                 ),

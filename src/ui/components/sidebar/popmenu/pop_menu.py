@@ -64,10 +64,12 @@ class PopMenu(ft.Container):
         
         # Initialize dialogs (alcuni dialog rimossi - ora apriamo direttamente servizi esterni)
         self.radar_live_dialog = RadarLiveDialog(page=self.page, state_manager=self.state_manager, language=self.language)
-        self.push_notifications_dialog = PushNotificationsDialog(page=self.page)
+        self.push_notifications_dialog = PushNotificationsDialog(page=self.page, state_manager=self.state_manager, language=self.language)
         self.location_manager_dialog = LocationManagerDialog(
             page=self.page, 
-            update_weather_callback=self.update_weather_callback
+            update_weather_callback=self.update_weather_callback,
+            state_manager=self.state_manager,
+            language=self.language
         )
         self.export_data_dialog = ExportDataDialog(page=self.page)
         self.setting_alert = SettingsAlertDialog(page=self.page, state_manager=self.state_manager, language=self.language, theme_handler=self.theme_handler, handle_location_toggle=self.handle_location_toggle, handle_theme_toggle=self.handle_theme_toggle)

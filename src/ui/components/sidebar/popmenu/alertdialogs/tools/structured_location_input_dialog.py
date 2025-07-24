@@ -3,6 +3,7 @@
 import flet as ft
 from typing import Callable
 from services.location.geocoding_service import LocationCandidate
+from translations import translation_manager
 import logging
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,18 @@ class StructuredLocationInputDialog:
                 "success": "#4CAF50", "warning": "#FF9800", "error": "#F44336"
             }
     
+    def get_translation(self, key: str) -> str:
+        """Get translation for a key using the new modular translation system."""
+        # Get language from state manager if available, default to "it"
+        language = "it"  # Default fallback
+        try:
+            from core.state_manager import StateManager
+            state_manager = StateManager(self.page)
+            language = state_manager.get_state("language") or "it"
+        except Exception:
+            pass
+        return translation_manager.get_translation("weather", key, language)
+    
     def show(self):
         """Mostra il dialog di input strutturato."""
         self.dialog = self._create_dialog()
@@ -54,8 +67,8 @@ class StructuredLocationInputDialog:
         """Crea il dialog di input strutturato."""
         # Campi di input
         self.city_field = ft.TextField(
-            label="Città *",
-            hint_text="Es: Milano, London, New York, Tokyo",
+            label=self.get_translation("location_input_dialog.city_label"),
+            hint_text=self.get_translation("location_input_dialog.city_hint"),
             prefix_icon=ft.Icons.LOCATION_CITY,
             bgcolor=self.colors["surface"],
             color=self.colors["text"],
@@ -67,8 +80,8 @@ class StructuredLocationInputDialog:
         )
         
         self.state_field = ft.TextField(
-            label="Regione/Stato",
-            hint_text="Es: Lombardia, Texas, Bavaria",
+            label=self.get_translation("location_input_dialog.state_label"),
+            hint_text=self.get_translation("location_input_dialog.state_hint"),
             prefix_icon=ft.Icons.MAP,
             bgcolor=self.colors["surface"],
             color=self.colors["text"],
@@ -79,8 +92,8 @@ class StructuredLocationInputDialog:
         )
         
         self.country_field = ft.TextField(
-            label="Paese",
-            hint_text="Es: Italia, Francia, Germania",
+            label=self.get_translation("location_input_dialog.country_label"),
+            hint_text=self.get_translation("location_input_dialog.country_hint"),
             prefix_icon=ft.Icons.PUBLIC,
             bgcolor=self.colors["surface"],
             color=self.colors["text"],
@@ -92,7 +105,7 @@ class StructuredLocationInputDialog:
         
         # Pulsante di ricerca
         self.search_button = ft.ElevatedButton(
-            text="🔍 Cerca Località",
+            text=self.get_translation("location_input_dialog.search_button"),
             icon=ft.Icons.SEARCH,
             style=ft.ButtonStyle(
                 bgcolor=self.colors["accent"],
@@ -114,7 +127,7 @@ class StructuredLocationInputDialog:
                 ft.Container(
                     content=ft.Row([
                         ft.Icon(ft.Icons.ADD_LOCATION, color=self.colors["accent"], size=24),
-                        ft.Text("Aggiungi Nuova Località", 
+                        ft.Text(self.get_translation("location_input_dialog.dialog_title"), 
                                weight=ft.FontWeight.BOLD, 
                                color=self.colors["text"], size=18)
                     ], spacing=10),
@@ -123,9 +136,7 @@ class StructuredLocationInputDialog:
                 
                 # Descrizione
                 ft.Text(
-                    "🔍 Cerca città da tutto il mondo usando l'API di OpenWeatherMap!\n"
-                    "Digita il nome di una città e ottieni risultati precisi con coordinate geografiche.\n"
-                    "I campi Regione/Stato e Paese sono opzionali ma aiutano a restringere la ricerca.",
+                    self.get_translation("location_input_dialog.description"),
                     color=self.colors["text_secondary"], 
                     size=13, 
                     text_align=ft.TextAlign.LEFT
@@ -134,7 +145,7 @@ class StructuredLocationInputDialog:
                 ft.Divider(color=self.colors["border"]),
                 
                 # Campi di input
-                ft.Text("Informazioni Località", 
+                ft.Text(self.get_translation("location_input_dialog.location_info_title"), 
                        weight=ft.FontWeight.BOLD, 
                        color=self.colors["text"], size=16),
                 
@@ -153,7 +164,7 @@ class StructuredLocationInputDialog:
                 
                 # Risultati con indicatore scroll
                 ft.Row([
-                    ft.Text("Risultati Ricerca", 
+                    ft.Text(self.get_translation("search_results"), 
                            weight=ft.FontWeight.BOLD, 
                            color=self.colors["text"], size=16),
                     ft.Icon(ft.Icons.SWIPE_VERTICAL, 
@@ -189,7 +200,7 @@ class StructuredLocationInputDialog:
             actions=[
                 ft.TextButton(
                     icon=ft.Icons.CANCEL, 
-                    text="Annulla", 
+                    text=self.get_translation("location_input_dialog.cancel_button"), 
                     on_click=self._close_dialog,
                     style=ft.ButtonStyle(color=self.colors["text_secondary"])
                 )

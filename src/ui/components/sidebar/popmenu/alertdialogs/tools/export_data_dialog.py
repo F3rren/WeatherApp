@@ -1,5 +1,6 @@
 import flet as ft
 from core.state_manager import StateManager
+from translations import translation_manager
 
 
 class ExportDataDialog:
@@ -152,30 +153,31 @@ class ExportDataDialog:
             inset_padding=ft.padding.all(20)
         )
     
+    def get_translation(self, key: str) -> str:
+        """Get translation for a key using the new modular translation system."""
+        return translation_manager.get_translation("weather", key, self.language)
+    
     def get_texts(self):
-        """Get localized texts based on current language."""
-        if self.language == "en":
-            return {
-                "title": "Export Data", "dialog_title": "Export Data",
-                "description": "Export weather data in various formats",
-                "select_period": "Select Period:", "select_data": "Select Data:",
-                "select_format": "Export Format:", "week": "Last Week",
-                "month": "Last Month", "year": "Last Year", "custom": "Custom Period",
-                "temperature": "Temperature", "humidity": "Humidity",
-                "precipitation": "Precipitation", "wind": "Wind", "pressure": "Pressure",
-                "export": "Export", "close": "Close"
-            }
-        else:  # Italian (default)
-            return {
-                "title": "Esporta Dati", "dialog_title": "Esporta Dati",
-                "description": "Esporta i dati meteorologici in diversi formati",
-                "select_period": "Seleziona Periodo:", "select_data": "Seleziona Dati:",
-                "select_format": "Formato Esportazione:", "week": "Ultima Settimana",
-                "month": "Ultimo Mese", "year": "Ultimo Anno", "custom": "Periodo Personalizzato",
-                "temperature": "Temperature", "humidity": "Umidità",
-                "precipitation": "Precipitazioni", "wind": "Vento", "pressure": "Pressione",
-                "export": "Esporta", "close": "Chiudi"
-            }
+        """Get localized texts using the translation manager."""
+        return {
+            "title": self.get_translation("export_data_dialog.title"),
+            "dialog_title": self.get_translation("export_data_dialog.title"),
+            "description": self.get_translation("export_data_dialog.description"),
+            "select_period": self.get_translation("export_data_dialog.period_selection"),
+            "select_data": self.get_translation("export_data_dialog.data_types"),
+            "select_format": self.get_translation("export_data_dialog.format"),
+            "week": self.get_translation("export_data_dialog.week"),
+            "month": self.get_translation("export_data_dialog.month"),
+            "year": self.get_translation("export_data_dialog.year"),
+            "custom": self.get_translation("export_data_dialog.custom"),
+            "temperature": self.get_translation("export_data_dialog.temperature"),
+            "humidity": self.get_translation("export_data_dialog.humidity"),
+            "precipitation": self.get_translation("export_data_dialog.precipitation"),
+            "wind": self.get_translation("export_data_dialog.wind"),
+            "pressure": self.get_translation("export_data_dialog.pressure"),
+            "export": self.get_translation("export_data_dialog.export_button"),
+            "close": self.get_translation("dialog_buttons.close")
+        }
     
     def export_data(self, e=None):
         """Export the selected data."""

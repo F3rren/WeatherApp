@@ -698,6 +698,605 @@ WEATHER_TRANSLATIONS = {
         }
     },
     
+    # Location Input Dialog
+    "location_input_dialog": {
+        "city_label": {
+            "en": "City *", "it": "Città *", "fr": "Ville *", "de": "Stadt *",
+            "es": "Ciudad *", "pt": "Cidade *", "ru": "Город *", "zh": "城市 *",
+            "ja": "都市 *", "ko": "도시 *", "ar": "المدينة *", "hi": "शहर *", "id": "Kota *"
+        },
+        "city_hint": {
+            "en": "e.g: Milan, London, New York, Tokyo", "it": "Es: Milano, London, New York, Tokyo", 
+            "fr": "ex: Milan, Londres, New York, Tokyo", "de": "z.B: Mailand, London, New York, Tokyo",
+            "es": "ej: Milán, Londres, Nueva York, Tokio", "pt": "ex: Milão, Londres, Nova York, Tóquio", 
+            "ru": "напр: Милан, Лондон, Нью-Йорк, Токио", "zh": "例如：米兰，伦敦，纽约，东京",
+            "ja": "例：ミラノ、ロンドン、ニューヨーク、東京", "ko": "예: 밀라노, 런던, 뉴욕, 도쿄", 
+            "ar": "مثل: ميلان، لندن، نيويورك، طوكيو", "hi": "जैसे: मिलान, लंदन, न्यूयॉर्क, टोक्यो", 
+            "id": "mis: Milan, London, New York, Tokyo"
+        },
+        "state_label": {
+            "en": "Region/State", "it": "Regione/Stato", "fr": "Région/État", "de": "Region/Staat",
+            "es": "Región/Estado", "pt": "Região/Estado", "ru": "Регион/Штат", "zh": "地区/州",
+            "ja": "地域/州", "ko": "지역/주", "ar": "المنطقة/الولاية", "hi": "क्षेत्र/राज्य", "id": "Wilayah/Negara Bagian"
+        },
+        "state_hint": {
+            "en": "e.g: Lombardy, Texas, Bavaria", "it": "Es: Lombardia, Texas, Bavaria", 
+            "fr": "ex: Lombardie, Texas, Bavière", "de": "z.B: Lombardei, Texas, Bayern",
+            "es": "ej: Lombardía, Texas, Baviera", "pt": "ex: Lombardia, Texas, Baviera", 
+            "ru": "напр: Ломбардия, Техас, Бавария", "zh": "例如：伦巴第，德克萨斯，巴伐利亚",
+            "ja": "例：ロンバルディア、テキサス、バイエルン", "ko": "예: 롬바르디아, 텍사스, 바이에른", 
+            "ar": "مثل: لومبارديا، تكساس، بافاريا", "hi": "जैसे: लोम्बार्डी, टेक्सास, बावारिया", 
+            "id": "mis: Lombardy, Texas, Bavaria"
+        },
+        "country_label": {
+            "en": "Country", "it": "Paese", "fr": "Pays", "de": "Land",
+            "es": "País", "pt": "País", "ru": "Страна", "zh": "国家",
+            "ja": "国", "ko": "국가", "ar": "البلد", "hi": "देश", "id": "Negara"
+        },
+        "country_hint": {
+            "en": "e.g: Italy, France, Germany", "it": "Es: Italia, Francia, Germania", 
+            "fr": "ex: Italie, France, Allemagne", "de": "z.B: Italien, Frankreich, Deutschland",
+            "es": "ej: Italia, Francia, Alemania", "pt": "ex: Itália, França, Alemanha", 
+            "ru": "напр: Италия, Франция, Германия", "zh": "例如：意大利，法国，德国",
+            "ja": "例：イタリア、フランス、ドイツ", "ko": "예: 이탈리아, 프랑스, 독일", 
+            "ar": "مثل: إيطاليا، فرنسا، ألمانيا", "hi": "जैसे: इटली, फ्रांस, जर्मनी", 
+            "id": "mis: Italia, Prancis, Jerman"
+        },
+        "search_button": {
+            "en": "🔍 Search Location", "it": "🔍 Cerca Località", "fr": "🔍 Rechercher Lieu", "de": "🔍 Ort Suchen",
+            "es": "🔍 Buscar Ubicación", "pt": "🔍 Pesquisar Local", "ru": "🔍 Найти Место", "zh": "🔍 搜索位置",
+            "ja": "🔍 場所を検索", "ko": "🔍 위치 검색", "ar": "🔍 البحث عن الموقع", "hi": "🔍 स्थान खोजें", "id": "🔍 Cari Lokasi"
+        },
+        "dialog_title": {
+            "en": "Add New Location", "it": "Aggiungi Nuova Località", "fr": "Ajouter Nouveau Lieu", "de": "Neuen Ort Hinzufügen",
+            "es": "Agregar Nueva Ubicación", "pt": "Adicionar Nova Localização", "ru": "Добавить Новое Место", "zh": "添加新位置",
+            "ja": "新しい場所を追加", "ko": "새 위치 추가", "ar": "إضافة موقع جديد", "hi": "नया स्थान जोड़ें", "id": "Tambah Lokasi Baru"
+        },
+        "description": {
+            "en": "🔍 Search cities worldwide using OpenWeatherMap API!\nType a city name and get precise results with geographic coordinates.\nRegion/State and Country fields are optional but help narrow down the search.", 
+            "it": "🔍 Cerca città da tutto il mondo usando l'API di OpenWeatherMap!\nDigita il nome di una città e ottieni risultati precisi con coordinate geografiche.\nI campi Regione/Stato e Paese sono opzionali ma aiutano a restringere la ricerca.", 
+            "fr": "🔍 Recherchez des villes du monde entier en utilisant l'API OpenWeatherMap!\nTapez le nom d'une ville et obtenez des résultats précis avec les coordonnées géographiques.\nLes champs Région/État et Pays sont optionnels mais aident à affiner la recherche.", 
+            "de": "🔍 Suchen Sie Städte weltweit mit der OpenWeatherMap API!\nGeben Sie einen Stadtnamen ein und erhalten Sie präzise Ergebnisse mit geografischen Koordinaten.\nRegion/Staat und Land sind optional, helfen aber bei der Eingrenzung der Suche.", 
+            "es": "🔍 ¡Busca ciudades de todo el mundo usando la API de OpenWeatherMap!\nEscribe el nombre de una ciudad y obtén resultados precisos con coordenadas geográficas.\nLos campos Región/Estado y País son opcionales pero ayudan a reducir la búsqueda.", 
+            "pt": "🔍 Pesquise cidades em todo o mundo usando a API OpenWeatherMap!\nDigite o nome de uma cidade e obtenha resultados precisos com coordenadas geográficas.\nOs campos Região/Estado e País são opcionais mas ajudam a refinar a pesquisa.", 
+            "ru": "🔍 Ищите города по всему миру используя API OpenWeatherMap!\nВведите название города и получите точные результаты с географическими координатами.\nПоля Регион/Штат и Страна необязательны, но помогают сузить поиск.", 
+            "zh": "🔍 使用OpenWeatherMap API搜索全球城市！\n输入城市名称，获得带有地理坐标的精确结果。\n地区/州和国家字段是可选的，但有助于缩小搜索范围。", 
+            "ja": "🔍 OpenWeatherMap APIを使用して世界中の都市を検索！\n都市名を入力して、地理座標付きの正確な結果を取得します。\n地域/州と国のフィールドはオプションですが、検索を絞り込むのに役立ちます。", 
+            "ko": "🔍 OpenWeatherMap API를 사용하여 전 세계 도시 검색!\n도시 이름을 입력하고 지리적 좌표가 포함된 정확한 결과를 얻으세요.\n지역/주 및 국가 필드는 선택 사항이지만 검색 범위를 좁히는 데 도움이 됩니다.", 
+            "ar": "🔍 ابحث عن المدن في جميع أنحاء العالم باستخدام واجهة برمجة تطبيقات OpenWeatherMap!\nاكتب اسم المدينة واحصل على نتائج دقيقة مع الإحداثيات الجغرافية.\nحقول المنطقة/الولاية والبلد اختيارية ولكنها تساعد في تضييق نطاق البحث.", 
+            "hi": "🔍 OpenWeatherMap API का उपयोग करके दुनिया भर के शहरों की खोज करें!\nशहर का नाम टाइप करें और भौगोलिक निर्देशांकों के साथ सटीक परिणाम प्राप्त करें।\nक्षेत्र/राज्य और देश के फ़ील्ड वैकल्पिक हैं लेकिन खोज को सीमित करने में मदद करते हैं।", 
+            "id": "🔍 Cari kota di seluruh dunia menggunakan API OpenWeatherMap!\nKetik nama kota dan dapatkan hasil yang akurat dengan koordinat geografis.\nField Wilayah/Negara Bagian dan Negara adalah opsional tetapi membantu mempersempit pencarian."
+        },
+        "location_info_title": {
+            "en": "Location Information", "it": "Informazioni Località", "fr": "Informations de Lieu", "de": "Standortinformationen",
+            "es": "Información de Ubicación", "pt": "Informações do Local", "ru": "Информация о месте", "zh": "位置信息",
+            "ja": "場所情報", "ko": "위치 정보", "ar": "معلومات الموقع", "hi": "स्थान की जानकारी", "id": "Informasi Lokasi"
+        },
+        "cancel_button": {
+            "en": "Cancel", "it": "Annulla", "fr": "Annuler", "de": "Abbrechen",
+            "es": "Cancelar", "pt": "Cancelar", "ru": "Отмена", "zh": "取消",
+            "ja": "キャンセル", "ko": "取消", "ar": "إلغاء", "hi": "रद्द करें", "id": "Batal"
+        },
+        "search_results": {
+            "en": "Search Results", "it": "Risultati Ricerca", "fr": "Résultats de Recherche", "de": "Suchergebnisse",
+            "es": "Resultados de Búsqueda", "pt": "Resultados da Pesquisa", "ru": "Результаты Поиска", "zh": "搜索结果",
+            "ja": "検索結果", "ko": "검색 결과", "ar": "نتائج البحث", "hi": "खोज परिणाम", "id": "Hasil Pencarian"
+        }
+    },
+
+    # Location Manager Dialog
+    "location_manager_dialog": {
+        "title": {
+            "en": "Location Manager", "it": "Gestione Località", "fr": "Gestionnaire de Lieux", "de": "Standortverwaltung",
+            "es": "Gestor de Ubicaciones", "pt": "Gerenciador de Localização", "ru": "Менеджер Местоположений", "zh": "位置管理器",
+            "ja": "ロケーションマネージャー", "ko": "위치 관리자", "ar": "مدير المواقع", "hi": "स्थान प्रबंधक", "id": "Pengelola Lokasi"
+        },
+        "dialog_title": {
+            "en": "Professional Location Manager", "it": "Gestione Professionale Località", "fr": "Gestionnaire Professionnel de Lieux", "de": "Professionelle Standortverwaltung",
+            "es": "Gestor Profesional de Ubicaciones", "pt": "Gerenciador Profissional de Localização", "ru": "Профессиональный Менеджер Местоположений", "zh": "专业位置管理器",
+            "ja": "プロフェッショナルロケーションマネージャー", "ko": "전문 위치 관리자", "ar": "مدير المواقع المهني", "hi": "पेशेवर स्थान प्रबंधक", "id": "Pengelola Lokasi Profesional"
+        },
+        "description": {
+            "en": "Manage your saved weather locations with professional features", "it": "Gestisci le tue località meteo con funzionalità avanzate", 
+            "fr": "Gérez vos lieux météo sauvegardés avec des fonctionnalités professionnelles", "de": "Verwalten Sie Ihre gespeicherten Wetterstandorte mit professionellen Funktionen",
+            "es": "Gestiona tus ubicaciones meteorológicas guardadas con características profesionales", "pt": "Gerencie suas localizações meteorológicas salvas com recursos profissionais", 
+            "ru": "Управляйте сохраненными местоположениями погоды с профессиональными функциями", "zh": "使用专业功能管理您保存的天气位置",
+            "ja": "プロフェッショナル機能で保存された天気の場所を管理", "ko": "전문적인 기능으로 저장된 날씨 위치를 관리", 
+            "ar": "إدارة مواقع الطقس المحفوظة بميزات احترافية", "hi": "पेशेवर सुविधाओं के साथ अपने सहेजे गए मौसम स्थानों का प्रबंधन करें", 
+            "id": "Kelola lokasi cuaca tersimpan dengan fitur profesional"
+        },
+        "toggle_favorite": {
+            "en": "Toggle Favorite", "it": "Toggle Preferito", "fr": "Basculer Favori", "de": "Favorit Umschalten",
+            "es": "Alternar Favorito", "pt": "Alternar Favorito", "ru": "Переключить Избранное", "zh": "切换收藏",
+            "ja": "お気に入り切替", "ko": "즐겨찾기 전환", "ar": "تبديل المفضلة", "hi": "पसंदीदा टॉगल करें", "id": "Toggle Favorit"
+        },
+        "added_to_favorites": {
+            "en": "added to", "it": "aggiunto ai", "fr": "ajouté aux", "de": "hinzugefügt zu",
+            "es": "agregado a", "pt": "adicionado aos", "ru": "добавлено в", "zh": "已添加到",
+            "ja": "に追加", "ko": "에 추가됨", "ar": "مضاف إلى", "hi": "में जोड़ा गया", "id": "ditambahkan ke"
+        },
+        "removed_from_favorites": {
+            "en": "removed from", "it": "rimosso dai", "fr": "retiré des", "de": "entfernt von",
+            "es": "eliminado de", "pt": "removido dos", "ru": "удалено из", "zh": "已从中移除",
+            "ja": "から削除", "ko": "에서 제거됨", "ar": "إزالة من", "hi": "से हटाया गया", "id": "dihapus dari"
+        },
+        "favorites": {
+            "en": "favorites", "it": "preferiti", "fr": "favoris", "de": "Favoriten",
+            "es": "favoritos", "pt": "favoritos", "ru": "избранные", "zh": "收藏夹",
+            "ja": "お気に入り", "ko": "즐겨찾기", "ar": "المفضلة", "hi": "पसंदीदा", "id": "favorit"
+        },
+        "add_location": {
+            "en": "Add New Location", "it": "Aggiungi Nuova Località", "fr": "Ajouter Nouveau Lieu", "de": "Neuen Ort Hinzufügen",
+            "es": "Agregar Nueva Ubicación", "pt": "Adicionar Nova Localização", "ru": "Добавить Новое Место", "zh": "添加新位置",
+            "ja": "新しい場所を追加", "ko": "새 위치 추가", "ar": "إضافة موقع جديد", "hi": "नया स्थान जोड़ें", "id": "Tambah Lokasi Baru"
+        },
+        "saved_locations": {
+            "en": "Saved Locations", "it": "Località Salvate", "fr": "Lieux Sauvegardés", "de": "Gespeicherte Orte",
+            "es": "Ubicaciones Guardadas", "pt": "Localizações Salvas", "ru": "Сохраненные Места", "zh": "已保存位置",
+            "ja": "保存された場所", "ko": "저장된 위치", "ar": "المواقع المحفوظة", "hi": "सहेजे गए स्थान", "id": "Lokasi Tersimpan"
+        },
+        "open_location_input": {
+            "en": "Add New Location", "it": "Inserisci Località", "fr": "Saisir Lieu", "de": "Ort Eingeben",
+            "es": "Ingresar Ubicación", "pt": "Inserir Localização", "ru": "Ввести Место", "zh": "输入位置",
+            "ja": "場所を入力", "ko": "위치 입력", "ar": "إدخال الموقع", "hi": "स्थान दर्ज करें", "id": "Masukkan Lokasi"
+        },
+        "city_label": {
+            "en": "City *", "it": "Città *", "fr": "Ville *", "de": "Stadt *",
+            "es": "Ciudad *", "pt": "Cidade *", "ru": "Город *", "zh": "城市 *",
+            "ja": "都市 *", "ko": "도시 *", "ar": "المدينة *", "hi": "शहर *", "id": "Kota *"
+        },
+        "city_hint": {
+            "en": "e.g. Milan, Rome, Tokyo...", "it": "Es. Milano, Roma, Tokyo...", "fr": "ex. Milan, Rome, Tokyo...", "de": "z.B. Mailand, Rom, Tokio...",
+            "es": "ej. Milán, Roma, Tokio...", "pt": "ex. Milão, Roma, Tóquio...", "ru": "напр. Милан, Рим, Токио...", "zh": "例如 米兰，罗马，东京...",
+            "ja": "例 ミラノ、ローマ、東京...", "ko": "예 밀라노, 로마, 도쿄...", "ar": "مثل ميلان، روما، طوكيو...", "hi": "जैसे मिलान, रोम, टोक्यो...", "id": "mis. Milan, Roma, Tokyo..."
+        },
+        "search_button": {
+            "en": "🔍 Search", "it": "🔍 Cerca", "fr": "🔍 Rechercher", "de": "🔍 Suchen",
+            "es": "🔍 Buscar", "pt": "🔍 Pesquisar", "ru": "🔍 Поиск", "zh": "🔍 搜索",
+            "ja": "🔍 検索", "ko": "🔍 검색", "ar": "🔍 بحث", "hi": "🔍 खोजें", "id": "🔍 Cari"
+        },
+        "searching": {
+            "en": "🔍 Searching...", "it": "🔍 Ricerca...", "fr": "🔍 Recherche...", "de": "🔍 Suche...",
+            "es": "🔍 Buscando...", "pt": "🔍 Pesquisando...", "ru": "🔍 Поиск...", "zh": "🔍 搜索中...",
+            "ja": "🔍 検索中...", "ko": "🔍 검색 중...", "ar": "🔍 البحث...", "hi": "🔍 खोज रहे हैं...", "id": "🔍 Mencari..."
+        },
+        "add_button": {
+            "en": "Add", "it": "Aggiungi", "fr": "Ajouter", "de": "Hinzufügen",
+            "es": "Agregar", "pt": "Adicionar", "ru": "Добавить", "zh": "添加",
+            "ja": "追加", "ko": "추가", "ar": "إضافة", "hi": "जोड़ें", "id": "Tambah"
+        },
+        "use_current": {
+            "en": "Use Current Location", "it": "Usa Posizione Attuale", "fr": "Utiliser Position Actuelle", "de": "Aktuelle Position Verwenden",
+            "es": "Usar Ubicación Actual", "pt": "Usar Localização Atual", "ru": "Использовать Текущее Местоположение", "zh": "使用当前位置",
+            "ja": "現在の位置を使用", "ko": "현재 위치 사용", "ar": "استخدام الموقع الحالي", "hi": "वर्तमान स्थान का उपयोग करें", "id": "Gunakan Lokasi Saat Ini"
+        },
+        "stats": {
+            "en": "Statistics", "it": "Statistiche", "fr": "Statistiques", "de": "Statistiken",
+            "es": "Estadísticas", "pt": "Estatísticas", "ru": "Статистика", "zh": "统计",
+            "ja": "統計", "ko": "통계", "ar": "الإحصائيات", "hi": "आंकड़े", "id": "Statistik"
+        },
+        "export": {
+            "en": "Export", "it": "Esporta", "fr": "Exporter", "de": "Exportieren",
+            "es": "Exportar", "pt": "Exportar", "ru": "Экспорт", "zh": "导出",
+            "ja": "エクスポート", "ko": "내보내기", "ar": "تصدير", "hi": "निर्यात", "id": "Ekspor"
+        },
+        "import": {
+            "en": "Import", "it": "Importa", "fr": "Importer", "de": "Importieren",
+            "es": "Importar", "pt": "Importar", "ru": "Импорт", "zh": "导入",
+            "ja": "インポート", "ko": "가져오기", "ar": "استيراد", "hi": "आयात", "id": "Impor"
+        },
+        "enter_city_name": {
+            "en": "Please enter at least the city name", "it": "Inserisci almeno il nome della città", "fr": "Veuillez entrer au moins le nom de la ville", "de": "Bitte geben Sie mindestens den Stadtnamen ein",
+            "es": "Por favor ingrese al menos el nombre de la ciudad", "pt": "Por favor insira pelo menos o nome da cidade", "ru": "Пожалуйста, введите хотя бы название города", "zh": "请至少输入城市名称",
+            "ja": "少なくとも都市名を入力してください", "ko": "최소한 도시 이름을 입력하세요", "ar": "يرجى إدخال اسم المدينة على الأقل", "hi": "कृपया कम से कम शहर का नाम दर्ज करें", "id": "Silakan masukkan setidaknya nama kota"
+        },
+        "search_new_location": {
+            "en": "Search New Location", "it": "Cerca Nuova Località", "fr": "Rechercher Nouveau Lieu", "de": "Neuen Ort Suchen",
+            "es": "Buscar Nueva Ubicación", "pt": "Pesquisar Nova Localização", "ru": "Найти Новое Место", "zh": "搜索新位置",
+            "ja": "新しい場所を検索", "ko": "새 위치 검색", "ar": "البحث عن موقع جديد", "hi": "नया स्थान खोजें", "id": "Cari Lokasi Baru"
+        },
+        "no_saved_locations": {
+            "en": "No saved locations", "it": "Nessuna località salvata", "fr": "Aucun lieu sauvegardé", "de": "Keine gespeicherten Orte",
+            "es": "No hay ubicaciones guardadas", "pt": "Nenhuma localização salva", "ru": "Нет сохраненных мест", "zh": "没有保存的位置",
+            "ja": "保存された場所がありません", "ko": "저장된 위치가 없습니다", "ar": "لا توجد مواقع محفوظة", "hi": "कोई सहेजा गया स्थान नहीं", "id": "Tidak ada lokasi tersimpan"
+        },
+        "add_location_to_start": {
+            "en": "Add a location to get started", "it": "Aggiungi una località per iniziare", "fr": "Ajoutez un lieu pour commencer", "de": "Ort hinzufügen um zu beginnen",
+            "es": "Agrega una ubicación para comenzar", "pt": "Adicione uma localização para começar", "ru": "Добавьте место для начала", "zh": "添加位置开始使用",
+            "ja": "場所を追加して始める", "ko": "시작하려면 위치를 추가하세요", "ar": "أضف موقعاً للبدء", "hi": "शुरू करने के लिए एक स्थान जोड़ें", "id": "Tambah lokasi untuk memulai"
+        },
+        "no_locations_found": {
+            "en": "No locations found", "it": "Nessuna località trovata", "fr": "Aucun lieu trouvé", "de": "Keine Orte gefunden",
+            "es": "No se encontraron ubicaciones", "pt": "Nenhuma localização encontrada", "ru": "Места не найдены", "zh": "未找到位置",
+            "ja": "場所が見つかりません", "ko": "위치를 찾을 수 없습니다", "ar": "لم يتم العثور على مواقع", "hi": "कोई स्थान नहीं मिला", "id": "Tidak ada lokasi ditemukan"
+        },
+        "search_error": {
+            "en": "Search error", "it": "Errore nella ricerca", "fr": "Erreur de recherche", "de": "Suchfehler",
+            "es": "Error de búsqueda", "pt": "Erro de pesquisa", "ru": "Ошибка поиска", "zh": "搜索错误",
+            "ja": "検索エラー", "ko": "검색 오류", "ar": "خطأ في البحث", "hi": "खोज त्रुटि", "id": "Kesalahan pencarian"
+        },
+        "location_added_successfully": {
+            "en": "Location added successfully", "it": "Località aggiunta con successo", "fr": "Lieu ajouté avec succès", "de": "Ort erfolgreich hinzugefügt",
+            "es": "Ubicación agregada exitosamente", "pt": "Localização adicionada com sucesso", "ru": "Место успешно добавлено", "zh": "位置添加成功",
+            "ja": "場所が正常に追加されました", "ko": "위치가 성공적으로 추가되었습니다", "ar": "تم إضافة الموقع بنجاح", "hi": "स्थान सफलतापूर्वक जोड़ा गया", "id": "Lokasi berhasil ditambahkan"
+        },
+        "location_already_exists": {
+            "en": "Location already exists", "it": "La località esiste già", "fr": "Le lieu existe déjà", "de": "Ort existiert bereits",
+            "es": "La ubicación ya existe", "pt": "A localização já existe", "ru": "Место уже существует", "zh": "位置已存在",
+            "ja": "場所は既に存在します", "ko": "위치가 이미 존재합니다", "ar": "الموقع موجود بالفعل", "hi": "स्थान पहले से मौजूद है", "id": "Lokasi sudah ada"
+        },
+        "error_adding_location": {
+            "en": "Error adding location", "it": "Errore nell'aggiunta della località", "fr": "Erreur lors de l'ajout du lieu", "de": "Fehler beim Hinzufügen des Orts",
+            "es": "Error al agregar la ubicación", "pt": "Erro ao adicionar localização", "ru": "Ошибка добавления места", "zh": "添加位置时出错",
+            "ja": "場所の追加エラー", "ko": "위치 추가 오류", "ar": "خطأ في إضافة الموقع", "hi": "स्थान जोड़ने में त्रुटि", "id": "Kesalahan menambahkan lokasi"
+        },
+        "location_removed": {
+            "en": "Location removed", "it": "Località rimossa", "fr": "Lieu supprimé", "de": "Ort entfernt",
+            "es": "Ubicación eliminada", "pt": "Localização removida", "ru": "Место удалено", "zh": "位置已移除",
+            "ja": "場所を削除しました", "ko": "위치가 제거되었습니다", "ar": "تم حذف الموقع", "hi": "स्थान हटा दिया गया", "id": "Lokasi dihapus"
+        },
+        "confirm_delete": {
+            "en": "Are you sure you want to delete this location?", "it": "Sei sicuro di voler eliminare questa località?", "fr": "Êtes-vous sûr de vouloir supprimer ce lieu?", "de": "Sind Sie sicher, dass Sie diesen Ort löschen möchten?",
+            "es": "¿Está seguro de que desea eliminar esta ubicación?", "pt": "Tem certeza de que deseja excluir esta localização?", "ru": "Вы уверены, что хотите удалить это место?", "zh": "您确定要删除此位置吗？",
+            "ja": "この場所を削除してもよろしいですか？", "ko": "이 위치를 삭제하시겠습니까?", "ar": "هل أنت متأكد من أنك تريد حذف هذا الموقع؟", "hi": "क्या आप वाकई इस स्थान को हटाना चाहते हैं?", "id": "Apakah Anda yakin ingin menghapus lokasi ini?"
+        },
+        "delete_button": {
+            "en": "Delete", "it": "Elimina", "fr": "Supprimer", "de": "Löschen",
+            "es": "Eliminar", "pt": "Excluir", "ru": "Удалить", "zh": "删除",
+            "ja": "削除", "ko": "삭제", "ar": "حذف", "hi": "हटाएं", "id": "Hapus"
+        },
+        "select_button": {
+            "en": "Select", "it": "Seleziona", "fr": "Sélectionner", "de": "Auswählen",
+            "es": "Seleccionar", "pt": "Selecionar", "ru": "Выбрать", "zh": "选择",
+            "ja": "選択", "ko": "선택", "ar": "اختر", "hi": "चुनें", "id": "Pilih"
+        }
+    },
+
+    # Export Data Dialog
+    "export_data_dialog": {
+        "title": {
+            "en": "Export Weather Data", "it": "Esporta Dati Meteo", "fr": "Exporter Données Météo", "de": "Wetterdaten Exportieren",
+            "es": "Exportar Datos Meteorológicos", "pt": "Exportar Dados Meteorológicos", "ru": "Экспорт Данных Погоды", "zh": "导出天气数据",
+            "ja": "気象データをエクスポート", "ko": "날씨 데이터 내보내기", "ar": "تصدير بيانات الطقس", "hi": "मौसम डेटा निर्यात करें", "id": "Ekspor Data Cuaca"
+        },
+        "description": {
+            "en": "Select the time period, data types, and format for your weather data export", 
+            "it": "Seleziona il periodo, i tipi di dati e il formato per l'esportazione dei dati meteo", 
+            "fr": "Sélectionnez la période, les types de données et le format pour votre export de données météo", 
+            "de": "Wählen Sie den Zeitraum, Datentypen und das Format für Ihren Wetterdatenexport",
+            "es": "Selecciona el período, tipos de datos y formato para tu exportación de datos meteorológicos", 
+            "pt": "Selecione o período, tipos de dados e formato para sua exportação de dados meteorológicos", 
+            "ru": "Выберите период времени, типы данных и формат для экспорта погодных данных", 
+            "zh": "选择时间段、数据类型和导出天气数据的格式",
+            "ja": "気象データエクスポートの期間、データタイプ、フォーマットを選択", 
+            "ko": "날씨 데이터 내보내기를 위한 기간, 데이터 유형 및 형식을 선택하세요", 
+            "ar": "حدد الفترة الزمنية وأنواع البيانات والتنسيق لتصدير بيانات الطقس", 
+            "hi": "अपने मौसम डेटा निर्यात के लिए समय अवधि, डेटा प्रकार और प्रारूप का चयन करें", 
+            "id": "Pilih periode waktu, jenis data, dan format untuk ekspor data cuaca Anda"
+        },
+        "period_selection": {
+            "en": "Time Period", "it": "Periodo Temporale", "fr": "Période", "de": "Zeitraum",
+            "es": "Período de Tiempo", "pt": "Período de Tempo", "ru": "Временной Период", "zh": "时间段",
+            "ja": "期間", "ko": "기간", "ar": "الفترة الزمنية", "hi": "समय अवधि", "id": "Periode Waktu"
+        },
+        "week": {
+            "en": "Last Week", "it": "Ultima Settimana", "fr": "Semaine Dernière", "de": "Letzte Woche",
+            "es": "Última Semana", "pt": "Última Semana", "ru": "Последняя Неделя", "zh": "上周",
+            "ja": "先週", "ko": "지난 주", "ar": "الأسبوع الماضي", "hi": "पिछला सप्ताह", "id": "Minggu Lalu"
+        },
+        "month": {
+            "en": "Last Month", "it": "Ultimo Mese", "fr": "Mois Dernier", "de": "Letzter Monat",
+            "es": "Último Mes", "pt": "Último Mês", "ru": "Последний Месяц", "zh": "上月",
+            "ja": "先月", "ko": "지난 달", "ar": "الشهر الماضي", "hi": "पिछला महीना", "id": "Bulan Lalu"
+        },
+        "year": {
+            "en": "Last Year", "it": "Ultimo Anno", "fr": "Année Dernière", "de": "Letztes Jahr",
+            "es": "Último Año", "pt": "Último Ano", "ru": "Последний Год", "zh": "去年",
+            "ja": "昨年", "ko": "작년", "ar": "العام الماضي", "hi": "पिछला साल", "id": "Tahun Lalu"
+        },
+        "custom": {
+            "en": "Custom Range", "it": "Intervallo Personalizzato", "fr": "Plage Personnalisée", "de": "Benutzerdefiniert",
+            "es": "Rango Personalizado", "pt": "Intervalo Personalizado", "ru": "Пользовательский Диапазон", "zh": "自定义范围",
+            "ja": "カスタム範囲", "ko": "사용자 정의 범위", "ar": "نطاق مخصص", "hi": "कस्टम रेंज", "id": "Rentang Kustom"
+        },
+        "data_types": {
+            "en": "Data Types", "it": "Tipi di Dati", "fr": "Types de Données", "de": "Datentypen",
+            "es": "Tipos de Datos", "pt": "Tipos de Dados", "ru": "Типы Данных", "zh": "数据类型",
+            "ja": "データタイプ", "ko": "데이터 유형", "ar": "أنواع البيانات", "hi": "डेटा प्रकार", "id": "Jenis Data"
+        },
+        "temperature": {
+            "en": "Temperature", "it": "Temperatura", "fr": "Température", "de": "Temperatur",
+            "es": "Temperatura", "pt": "Temperatura", "ru": "Температура", "zh": "温度",
+            "ja": "気温", "ko": "기온", "ar": "درجة الحرارة", "hi": "तापमान", "id": "Suhu"
+        },
+        "humidity": {
+            "en": "Humidity", "it": "Umidità", "fr": "Humidité", "de": "Feuchtigkeit",
+            "es": "Humedad", "pt": "Umidade", "ru": "Влажность", "zh": "湿度",
+            "ja": "湿度", "ko": "습도", "ar": "الرطوبة", "hi": "आर्द्रता", "id": "Kelembaban"
+        },
+        "precipitation": {
+            "en": "Precipitation", "it": "Precipitazioni", "fr": "Précipitations", "de": "Niederschlag",
+            "es": "Precipitación", "pt": "Precipitação", "ru": "Осадки", "zh": "降水",
+            "ja": "降水量", "ko": "강수량", "ar": "الهطول", "hi": "वर्षा", "id": "Curah Hujan"
+        },
+        "wind": {
+            "en": "Wind", "it": "Vento", "fr": "Vent", "de": "Wind",
+            "es": "Viento", "pt": "Vento", "ru": "Ветер", "zh": "风",
+            "ja": "風", "ko": "바람", "ar": "الرياح", "hi": "हवा", "id": "Angin"
+        },
+        "pressure": {
+            "en": "Pressure", "it": "Pressione", "fr": "Pression", "de": "Druck",
+            "es": "Presión", "pt": "Pressão", "ru": "Давление", "zh": "气压",
+            "ja": "気圧", "ko": "기압", "ar": "الضغط", "hi": "दबाव", "id": "Tekanan"
+        },
+        "format": {
+            "en": "Export Format", "it": "Formato Esportazione", "fr": "Format d'Export", "de": "Exportformat",
+            "es": "Formato de Exportación", "pt": "Formato de Exportação", "ru": "Формат Экспорта", "zh": "导出格式",
+            "ja": "エクスポート形式", "ko": "내보내기 형식", "ar": "تنسيق التصدير", "hi": "निर्यात प्रारूप", "id": "Format Ekspor"
+        },
+        "export_button": {
+            "en": "📤 Export Data", "it": "📤 Esporta Dati", "fr": "📤 Exporter Données", "de": "📤 Daten Exportieren",
+            "es": "📤 Exportar Datos", "pt": "📤 Exportar Dados", "ru": "📤 Экспорт Данных", "zh": "📤 导出数据",
+            "ja": "📤 データをエクスポート", "ko": "📤 데이터 내보내기", "ar": "📤 تصدير البيانات", "hi": "📤 डेटा निर्यात करें", "id": "📤 Ekspor Data"
+        }
+    },
+
+    # UI Components Translations
+    "satellite_widget": {
+        "visible": {
+            "en": "Visible", "it": "Visibile", "fr": "Visible", "de": "Sichtbar",
+            "es": "Visible", "pt": "Visível", "ru": "Видимый", "zh": "可见光",
+            "ja": "可視", "ko": "가시광", "ar": "مرئي", "hi": "दृश्य", "id": "Terlihat"
+        },
+        "infrared": {
+            "en": "IR", "it": "IR", "fr": "IR", "de": "IR",
+            "es": "IR", "pt": "IR", "ru": "ИК", "zh": "红外",
+            "ja": "赤外", "ko": "적외선", "ar": "الأشعة تحت الحمراء", "hi": "आईआर", "id": "IR"
+        },
+        "water_vapor": {
+            "en": "Vapor", "it": "Vapore", "fr": "Vapeur", "de": "Wasserdampf",
+            "es": "Vapor", "pt": "Vapor", "ru": "Водяной пар", "zh": "水汽",
+            "ja": "水蒸気", "ko": "수증기", "ar": "بخار الماء", "hi": "वाष्प", "id": "Uap Air"
+        },
+        "satellite_view": {
+            "en": "Satellite View", "it": "Vista Satellitare", "fr": "Vue Satellite", "de": "Satellitenansicht",
+            "es": "Vista Satelital", "pt": "Vista Satelital", "ru": "Спутниковый вид", "zh": "卫星视图",
+            "ja": "衛星ビュー", "ko": "위성 보기", "ar": "عرض الأقمار الصناعية", "hi": "उपग्रह दृश्य", "id": "Tampilan Satelit"
+        },
+        "quick_view": {
+            "en": "Quick View", "it": "Vista Rapida", "fr": "Aperçu Rapide", "de": "Schnellansicht",
+            "es": "Vista Rápida", "pt": "Visualização Rápida", "ru": "Быстрый просмотр", "zh": "快速查看",
+            "ja": "クイックビュー", "ko": "빠른 보기", "ar": "عرض سريع", "hi": "त्वरित दृश्य", "id": "Tampilan Cepat"
+        }
+    },
+
+    "theme_toggle": {
+        "use_dark_theme": {
+            "en": "Use dark theme", "it": "Usa tema scuro", "fr": "Utiliser thème sombre", "de": "Dunkles Design verwenden",
+            "es": "Usar tema oscuro", "pt": "Usar tema escuro", "ru": "Использовать темную тему", "zh": "使用深色主题",
+            "ja": "ダークテーマを使用", "ko": "다크 테마 사용", "ar": "استخدام المظهر الداكن", "hi": "डार्क थीम का उपयोग करें", "id": "Gunakan tema gelap"
+        }
+    },
+
+    "location_toggle": {
+        "use_current_location": {
+            "en": "Use current location", "it": "Usa posizione attuale", "fr": "Utiliser position actuelle", "de": "Aktuelle Position verwenden",
+            "es": "Usar ubicación actual", "pt": "Usar localização atual", "ru": "Использовать текущее местоположение", "zh": "使用当前位置",
+            "ja": "現在位置を使用", "ko": "현재 위치 사용", "ar": "استخدام الموقع الحالي", "hi": "वर्तमान स्थान का उपयोग करें", "id": "Gunakan lokasi saat ini"
+        }
+    },
+
+    "settings_dialog": {
+        "refresh_data": {
+            "en": "Refresh Data", "it": "Aggiorna Dati", "fr": "Actualiser Données", "de": "Daten Aktualisieren",
+            "es": "Actualizar Datos", "pt": "Atualizar Dados", "ru": "Обновить Данные", "zh": "刷新数据",
+            "ja": "データ更新", "ko": "데이터 새로고침", "ar": "تحديث البيانات", "hi": "डेटा रीफ्रेश करें", "id": "Perbarui Data"
+        },
+        "reset_settings": {
+            "en": "Reset Settings", "it": "Ripristina Impostazioni", "fr": "Réinitialiser Paramètres", "de": "Einstellungen Zurücksetzen",
+            "es": "Restablecer Configuración", "pt": "Redefinir Configurações", "ru": "Сбросить Настройки", "zh": "重置设置",
+            "ja": "設定をリセット", "ko": "설정 초기화", "ar": "إعادة تعيين الإعدادات", "hi": "सेटिंग्स रीसेट करें", "id": "Reset Pengaturan"
+        },
+        "about_app": {
+            "en": "About App", "it": "Info App", "fr": "À Propos", "de": "Über App",
+            "es": "Acerca de la App", "pt": "Sobre o App", "ru": "О Приложении", "zh": "关于应用",
+            "ja": "アプリについて", "ko": "앱 정보", "ar": "حول التطبيق", "hi": "ऐप के बारे में", "id": "Tentang Aplikasi"
+        },
+        "app_status": {
+            "en": "App Status", "it": "Stato App", "fr": "État de l'App", "de": "App-Status",
+            "es": "Estado de la App", "pt": "Status do App", "ru": "Статус Приложения", "zh": "应用状态",
+            "ja": "アプリ状態", "ko": "앱 상태", "ar": "حالة التطبيق", "hi": "ऐप स्थिति", "id": "Status Aplikasi"
+        },
+        "current_city": {
+            "en": "Current City", "it": "Città Attuale", "fr": "Ville Actuelle", "de": "Aktuelle Stadt",
+            "es": "Ciudad Actual", "pt": "Cidade Atual", "ru": "Текущий Город", "zh": "当前城市",
+            "ja": "現在の都市", "ko": "현재 도시", "ar": "المدينة الحالية", "hi": "वर्तमान शहर", "id": "Kota Saat Ini"
+        },
+        "active_language": {
+            "en": "Active Language", "it": "Lingua Attiva", "fr": "Langue Active", "de": "Aktive Sprache",
+            "es": "Idioma Activo", "pt": "Idioma Ativo", "ru": "Активный Язык", "zh": "活动语言",
+            "ja": "アクティブ言語", "ko": "활성 언어", "ar": "اللغة النشطة", "hi": "सक्रिय भाषा", "id": "Bahasa Aktif"
+        },
+        "unit_system": {
+            "en": "Unit System", "it": "Sistema Unità", "fr": "Système d'Unités", "de": "Einheitensystem",
+            "es": "Sistema de Unidades", "pt": "Sistema de Unidades", "ru": "Система Единиц", "zh": "单位系统",
+            "ja": "単位システム", "ko": "단위 시스템", "ar": "نظام الوحدات", "hi": "इकाई प्रणाली", "id": "Sistem Unit"
+        },
+        "app_info_unavailable": {
+            "en": "App information unavailable", "it": "Informazioni app non disponibili", "fr": "Informations app indisponibles", "de": "App-Informationen nicht verfügbar",
+            "es": "Información de app no disponible", "pt": "Informações do app indisponíveis", "ru": "Информация о приложении недоступна", "zh": "应用信息不可用",
+            "ja": "アプリ情報が利用できません", "ko": "앱 정보를 사용할 수 없음", "ar": "معلومات التطبيق غير متوفرة", "hi": "ऐप जानकारी उपलब्ध नहीं", "id": "Informasi aplikasi tidak tersedia"
+        },
+        "settings_reset": {
+            "en": "Settings have been reset successfully", "it": "Impostazioni ripristinate con successo", "fr": "Paramètres réinitialisés avec succès", "de": "Einstellungen erfolgreich zurückgesetzt",
+            "es": "Configuración restablecida exitosamente", "pt": "Configurações redefinidas com sucesso", "ru": "Настройки успешно сброшены", "zh": "设置已成功重置",
+            "ja": "設定が正常にリセットされました", "ko": "설정이 성공적으로 초기화되었습니다", "ar": "تم إعادة تعيين الإعدادات بنجاح", "hi": "सेटिंग्स सफलतापूर्वक रीसेट हो गईं", "id": "Pengaturan berhasil direset"
+        },
+        "reset_confirmation": {
+            "en": "Reset Confirmation", "it": "Conferma Ripristino", "fr": "Confirmation de Réinitialisation", "de": "Zurücksetzungsbestätigung",
+            "es": "Confirmación de Restablecimiento", "pt": "Confirmação de Redefinição", "ru": "Подтверждение Сброса", "zh": "重置确认",
+            "ja": "リセット確認", "ko": "초기화 확인", "ar": "تأكيد إعادة التعيين", "hi": "रीसेट पुष्टि", "id": "Konfirmasi Reset"
+        },
+        "confirm_reset": {
+            "en": "Are you sure you want to reset all settings to default values?", "it": "Sei sicuro di voler ripristinare tutte le impostazioni ai valori predefiniti?", 
+            "fr": "Êtes-vous sûr de vouloir réinitialiser tous les paramètres aux valeurs par défaut?", "de": "Sind Sie sicher, dass Sie alle Einstellungen auf die Standardwerte zurücksetzen möchten?",
+            "es": "¿Está seguro de que desea restablecer todas las configuraciones a los valores predeterminados?", "pt": "Tem certeza de que deseja redefinir todas as configurações para os valores padrão?", 
+            "ru": "Вы уверены, что хотите сбросить все настройки к значениям по умолчанию?", "zh": "您确定要将所有设置重置为默认值吗？",
+            "ja": "すべての設定をデフォルト値にリセットしてもよろしいですか？", "ko": "모든 설정을 기본값으로 초기화하시겠습니까?", 
+            "ar": "هل أنت متأكد من أنك تريد إعادة تعيين جميع الإعدادات إلى القيم الافتراضية؟", "hi": "क्या आप वाकई सभी सेटिंग्स को डिफ़ॉल्ट मानों पर रीसेट करना चाहते हैं?", 
+            "id": "Apakah Anda yakin ingin mereset semua pengaturan ke nilai default?"
+        },
+        "cancel": {
+            "en": "Cancel", "it": "Annulla", "fr": "Annuler", "de": "Abbrechen",
+            "es": "Cancelar", "pt": "Cancelar", "ru": "Отмена", "zh": "取消",
+            "ja": "キャンセル", "ko": "취소", "ar": "إلغاء", "hi": "रद्द करें", "id": "Batal"
+        },
+        "confirm": {
+            "en": "Confirm", "it": "Conferma", "fr": "Confirmer", "de": "Bestätigen",
+            "es": "Confirmar", "pt": "Confirmar", "ru": "Подтвердить", "zh": "确认",
+            "ja": "確認", "ko": "확인", "ar": "تأكيد", "hi": "पुष्टि करें", "id": "Konfirmasi"
+        },
+        "refreshing_data": {
+            "en": "Refreshing data...", "it": "Aggiornamento dati...", "fr": "Actualisation des données...", "de": "Daten werden aktualisiert...",
+            "es": "Actualizando datos...", "pt": "Atualizando dados...", "ru": "Обновление данных...", "zh": "正在刷新数据...",
+            "ja": "データを更新中...", "ko": "데이터 새로고침 중...", "ar": "تحديث البيانات...", "hi": "डेटा रीफ्रेश हो रहा है...", "id": "Memperbarui data..."
+        },
+        "about_description": {
+            "en": "MeteoApp is a comprehensive weather application that provides real-time weather data, forecasts, and meteorological information for locations worldwide.",
+            "it": "MeteoApp è un'applicazione meteo completa che fornisce dati meteorologici in tempo reale, previsioni e informazioni meteorologiche per località in tutto il mondo.",
+            "fr": "MeteoApp est une application météo complète qui fournit des données météorologiques en temps réel, des prévisions et des informations météorologiques pour les emplacements du monde entier.",
+            "de": "MeteoApp ist eine umfassende Wetter-App, die Echtzeit-Wetterdaten, Prognosen und meteorologische Informationen für Standorte weltweit bereitstellt.",
+            "es": "MeteoApp es una aplicación meteorológica integral que proporciona datos meteorológicos en tiempo real, pronósticos e información meteorológica para ubicaciones en todo el mundo.",
+            "pt": "MeteoApp é um aplicativo meteorológico abrangente que fornece dados meteorológicos em tempo real, previsões e informações meteorológicas para locais em todo o mundo.",
+            "ru": "MeteoApp - это комплексное погодное приложение, которое предоставляет данные о погоде в реальном времени, прогнозы и метеорологическую информацию для мест по всему миру.",
+            "zh": "MeteoApp是一个综合性天气应用程序，为全球各地提供实时天气数据、预报和气象信息。",
+            "ja": "MeteoAppは、世界中の場所でリアルタイムの天気データ、予報、気象情報を提供する包括的な天気アプリケーションです。",
+            "ko": "MeteoApp은 전 세계 위치에 대한 실시간 날씨 데이터, 예보 및 기상 정보를 제공하는 종합 날씨 애플리케이션입니다.",
+            "ar": "MeteoApp هو تطبيق طقس شامل يوفر بيانات الطقس في الوقت الفعلي والتوقعات والمعلومات الجوية للمواقع في جميع أنحاء العالم.",
+            "hi": "MeteoApp एक व्यापक मौसम एप्लिकेशन है जो दुनिया भर के स्थानों के लिए वास्तविक समय मौसम डेटा, पूर्वानुमान और मौसम संबंधी जानकारी प्रदान करता है।",
+            "id": "MeteoApp adalah aplikasi cuaca komprehensif yang menyediakan data cuaca real-time, perkiraan, dan informasi meteorologi untuk lokasi di seluruh dunia."
+        },
+        "version": {
+            "en": "Version", "it": "Versione", "fr": "Version", "de": "Version",
+            "es": "Versión", "pt": "Versão", "ru": "Версия", "zh": "版本",
+            "ja": "バージョン", "ko": "버전", "ar": "الإصدار", "hi": "संस्करण", "id": "Versi"
+        },
+        "developer": {
+            "en": "Developer", "it": "Sviluppatore", "fr": "Développeur", "de": "Entwickler",
+            "es": "Desarrollador", "pt": "Desenvolvedor", "ru": "Разработчик", "zh": "开发者",
+            "ja": "開発者", "ko": "개발자", "ar": "المطور", "hi": "डेवलपर", "id": "Pengembang"
+        },
+        "features": {
+            "en": "Features:", "it": "Caratteristiche:", "fr": "Fonctionnalités:", "de": "Funktionen:",
+            "es": "Características:", "pt": "Recursos:", "ru": "Функции:", "zh": "功能：",
+            "ja": "機能：", "ko": "기능：", "ar": "الميزات：", "hi": "विशेषताएं：", "id": "Fitur："
+        },
+        "feature_list": {
+            "en": "• Real-time weather data\n• 5-day weather forecast\n• Interactive weather maps\n• Location management\n• Multi-language support\n• Customizable settings",
+            "it": "• Dati meteo in tempo reale\n• Previsioni meteo a 5 giorni\n• Mappe meteorologiche interattive\n• Gestione località\n• Supporto multi-lingua\n• Impostazioni personalizzabili",
+            "fr": "• Données météo en temps réel\n• Prévisions météo sur 5 jours\n• Cartes météo interactives\n• Gestion des emplacements\n• Support multi-langues\n• Paramètres personnalisables",
+            "de": "• Echtzeit-Wetterdaten\n• 5-Tage-Wettervorhersage\n• Interaktive Wetterkarten\n• Standortverwaltung\n• Mehrsprachige Unterstützung\n• Anpassbare Einstellungen",
+            "es": "• Datos meteorológicos en tiempo real\n• Pronóstico del tiempo de 5 días\n• Mapas meteorológicos interactivos\n• Gestión de ubicaciones\n• Soporte multiidioma\n• Configuraciones personalizables",
+            "pt": "• Dados meteorológicos em tempo real\n• Previsão do tempo de 5 dias\n• Mapas meteorológicos interativos\n• Gerenciamento de localização\n• Suporte multi-idioma\n• Configurações personalizáveis",
+            "ru": "• Данные о погоде в реальном времени\n• 5-дневный прогноз погоды\n• Интерактивные карты погоды\n• Управление местоположениями\n• Поддержка нескольких языков\n• Настраиваемые параметры",
+            "zh": "• 实时天气数据\n• 5天天气预报\n• 交互式天气地图\n• 位置管理\n• 多语言支持\n• 可自定义设置",
+            "ja": "• リアルタイム天気データ\n• 5日間天気予報\n• インタラクティブ天気マップ\n• ロケーション管理\n• 多言語サポート\n• カスタマイズ可能な設定",
+            "ko": "• 실시간 날씨 데이터\n• 5일 날씨 예보\n• 대화형 날씨 지도\n• 위치 관리\n• 다국어 지원\n• 사용자 정의 설정",
+            "ar": "• بيانات الطقس في الوقت الفعلي\n• توقعات الطقس لمدة 5 أيام\n• خرائط الطقس التفاعلية\n• إدارة المواقع\n• دعم متعدد اللغات\n• إعدادات قابلة للتخصيص",
+            "hi": "• वास्तविक समय मौसम डेटा\n• 5-दिन का मौसम पूर्वानुमान\n• इंटरैक्टिव मौसम मानचित्र\n• स्थान प्रबंधन\n• बहु-भाषा समर्थन\n• अनुकूलन योग्य सेटिंग्स",
+            "id": "• Data cuaca real-time\n• Prakiraan cuaca 5 hari\n• Peta cuaca interaktif\n• Manajemen lokasi\n• Dukungan multi-bahasa\n• Pengaturan yang dapat disesuaikan"
+        },
+        "about_title": {
+            "en": "About MeteoApp", "it": "Informazioni su MeteoApp", "fr": "À propos de MeteoApp", "de": "Über MeteoApp",
+            "es": "Acerca de MeteoApp", "pt": "Sobre MeteoApp", "ru": "О MeteoApp", "zh": "关于MeteoApp",
+            "ja": "MeteoAppについて", "ko": "MeteoApp 정보", "ar": "حول MeteoApp", "hi": "MeteoApp के बारे में", "id": "Tentang MeteoApp"
+        }
+    },
+
+    # Push Notifications Dialog
+    "push_notifications_dialog": {
+        "title": {
+            "en": "Push Notifications", "it": "Notifiche Push", "fr": "Notifications Push", "de": "Push-Benachrichtigungen",
+            "es": "Notificaciones Push", "pt": "Notificações Push", "ru": "Push-уведомления", "zh": "推送通知",
+            "ja": "プッシュ通知", "ko": "푸시 알림", "ar": "إشعارات الدفع", "hi": "पुश नोटिफिकेशन", "id": "Notifikasi Push"
+        },
+        "dialog_title": {
+            "en": "Push Notifications", "it": "Notifiche Push", "fr": "Notifications Push", "de": "Push-Benachrichtigungen",
+            "es": "Notificaciones Push", "pt": "Notificações Push", "ru": "Push-уведомления", "zh": "推送通知",
+            "ja": "プッシュ通知", "ko": "푸시 알림", "ar": "إشعارات الدفع", "hi": "पुश नोटिफिकेशन", "id": "Notifikasi Push"
+        },
+        "description": {
+            "en": "Configure push notifications to receive important weather updates", 
+            "it": "Configura le notifiche push per ricevere aggiornamenti meteo importanti", 
+            "fr": "Configurez les notifications push pour recevoir des mises à jour météo importantes", 
+            "de": "Konfigurieren Sie Push-Benachrichtigungen für wichtige Wetter-Updates",
+            "es": "Configure las notificaciones push para recibir actualizaciones meteorológicas importantes", 
+            "pt": "Configure as notificações push para receber atualizações meteorológicas importantes", 
+            "ru": "Настройте push-уведомления для получения важных обновлений погоды", 
+            "zh": "配置推送通知以接收重要的天气更新",
+            "ja": "重要な天気の更新を受け取るためにプッシュ通知を設定", 
+            "ko": "중요한 날씨 업데이트를 받기 위해 푸시 알림을 구성", 
+            "ar": "قم بتكوين إشعارات الدفع لتلقي تحديثات الطقس المهمة", 
+            "hi": "महत्वपूर्ण मौसम अपडेट प्राप्त करने के लिए पुश नोटिफिकेशन कॉन्फ़िगर करें", 
+            "id": "Konfigurasi notifikasi push untuk menerima pembaruan cuaca penting"
+        },
+        "notification_types": {
+            "en": "Notification Types", "it": "Tipi di Notifica", "fr": "Types de Notifications", "de": "Benachrichtigungstypen",
+            "es": "Tipos de Notificaciones", "pt": "Tipos de Notificações", "ru": "Типы Уведомлений", "zh": "通知类型",
+            "ja": "通知タイプ", "ko": "알림 유형", "ar": "أنواع الإشعارات", "hi": "नोटिफिकेशन प्रकार", "id": "Jenis Notifikasi"
+        },
+        "severe_alerts": {
+            "en": "Severe weather alerts", "it": "Allerte meteo severe", "fr": "Alertes météo sévères", "de": "Schwere Wetterwarnungen",
+            "es": "Alertas meteorológicas severas", "pt": "Alertas meteorológicos severos", "ru": "Суровые погодные предупреждения", "zh": "严重天气警报",
+            "ja": "深刻な気象警報", "ko": "심각한 날씨 경보", "ar": "تنبيهات الطقس الشديد", "hi": "गंभीर मौसम चेतावनी", "id": "Peringatan cuaca parah"
+        },
+        "morning_forecast": {
+            "en": "Morning forecasts", "it": "Previsioni mattutine", "fr": "Prévisions matinales", "de": "Morgenvorhersagen",
+            "es": "Pronósticos matutinos", "pt": "Previsões matinais", "ru": "Утренние прогнозы", "zh": "晨间预报",
+            "ja": "朝の予報", "ko": "아침 예보", "ar": "توقعات الصباح", "hi": "सुबह का पूर्वानुमान", "id": "Prakiraan pagi"
+        },
+        "hourly_updates": {
+            "en": "Hourly updates", "it": "Aggiornamenti orari", "fr": "Mises à jour horaires", "de": "Stündliche Updates",
+            "es": "Actualizaciones por hora", "pt": "Atualizações de hora em hora", "ru": "Почасовые обновления", "zh": "每小时更新",
+            "ja": "1時間ごとの更新", "ko": "시간별 업데이트", "ar": "التحديثات كل ساعة", "hi": "घंटे भर अपडेट", "id": "Pembaruan per jam"
+        },
+        "temperature_changes": {
+            "en": "Temperature changes", "it": "Cambiamenti di temperatura", "fr": "Changements de température", "de": "Temperaturänderungen",
+            "es": "Cambios de temperatura", "pt": "Mudanças de temperatura", "ru": "Изменения температуры", "zh": "温度变化",
+            "ja": "気温の変化", "ko": "온도 변화", "ar": "تغيرات درجة الحرارة", "hi": "तापमान में परिवर्तन", "id": "Perubahan suhu"
+        },
+        "rain_probability": {
+            "en": "Rain probability", "it": "Probabilità di pioggia", "fr": "Probabilité de pluie", "de": "Regenwahrscheinlichkeit",
+            "es": "Probabilidad de lluvia", "pt": "Probabilidade de chuva", "ru": "Вероятность дождя", "zh": "降雨概率",
+            "ja": "降雨確率", "ko": "강우 확률", "ar": "احتمالية المطر", "hi": "बारिश की संभावना", "id": "Probabilitas hujan"
+        },
+        "notification_time": {
+            "en": "Notification Time:", "it": "Orario Notifiche:", "fr": "Heure de Notification:", "de": "Benachrichtigungszeit:",
+            "es": "Hora de Notificación:", "pt": "Hora da Notificação:", "ru": "Время Уведомления:", "zh": "通知时间：",
+            "ja": "通知時間：", "ko": "알림 시간：", "ar": "وقت الإشعار：", "hi": "नोटिफिकेशन का समय：", "id": "Waktu Notifikasi："
+        },
+        "save_settings": {
+            "en": "Save Settings", "it": "Salva Impostazioni", "fr": "Enregistrer Paramètres", "de": "Einstellungen Speichern",
+            "es": "Guardar Configuración", "pt": "Salvar Configurações", "ru": "Сохранить Настройки", "zh": "保存设置",
+            "ja": "設定を保存", "ko": "설정 저장", "ar": "حفظ الإعدادات", "hi": "सेटिंग्स सेव करें", "id": "Simpan Pengaturan"
+        },
+        "settings_saved": {
+            "en": "Settings saved: {count} active notifications at {time}", 
+            "it": "Impostazioni salvate: {count} notifiche attive alle {time}", 
+            "fr": "Paramètres sauvegardés: {count} notifications actives à {time}", 
+            "de": "Einstellungen gespeichert: {count} aktive Benachrichtigungen um {time}",
+            "es": "Configuración guardada: {count} notificaciones activas a las {time}", 
+            "pt": "Configurações salvas: {count} notificações ativas às {time}", 
+            "ru": "Настройки сохранены: {count} активных уведомлений в {time}", 
+            "zh": "设置已保存：{count} 个活动通知在 {time}",
+            "ja": "設定が保存されました：{time}に{count}個のアクティブ通知", 
+            "ko": "설정이 저장되었습니다: {time}에 {count}개 활성 알림", 
+            "ar": "تم حفظ الإعدادات: {count} إشعارات نشطة في {time}", 
+            "hi": "सेटिंग्स सहेजी गईं: {time} पर {count} सक्रिय नोटिफिकेशन", 
+            "id": "Pengaturan tersimpan: {count} notifikasi aktif pada {time}"
+        }
+    },
+
     "dialog_buttons": {
         "close": {
             "en": "Close", "it": "Chiudi", "fr": "Fermer", "de": "Schließen",

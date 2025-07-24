@@ -541,9 +541,9 @@ class SettingsAlertDialog:
 
     def _get_translation(self, key, dict_key=None):
         if dict_key:
-            return translation_manager.get_translation("weather", dict_key, key, str(self.language))
+            return translation_manager.get_translation("weather", dict_key, key, self.language)
         # For simple translations, use weather module with a general section
-        return translation_manager.get_translation("weather", "general", key, str(self.language))
+        return translation_manager.get_translation("weather", "general", key, self.language)
 
     def _close_dialog(self, e=None):
         """Close the dialog when close button is clicked"""
@@ -766,9 +766,9 @@ class SettingsAlertDialog:
             )
 
     def _get_translation_local(self, key):
-        """Get translation using the standard translation service."""
+        """Get translation using the new modular translation system."""
         try:
-            return self._get_translation(key, "settings_alert_dialog_items")
+            return translation_manager.get_translation("weather", "settings_dialog", key, self.language)
         except Exception as e:
             logging.warning(f"Translation error for key '{key}': {e}")
             return key

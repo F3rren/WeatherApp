@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Callable, Any
 from enum import Enum
 import flet as ft
+from translations import translation_manager  # Import translation system
 
 logger = logging.getLogger(__name__)
 
@@ -93,10 +94,12 @@ class WeatherAlert:
 class WeatherAlertsService:
     """Service for managing weather alerts and notifications."""
     
-    def __init__(self, page: ft.Page, settings_service=None, translation_service=None):
+    def __init__(self, page: ft.Page, settings_service=None, translation_service=None, language: str = "en", temp_unit: str = "celsius"):
         self.page = page
         self.settings_service = settings_service
         self.translation_service = translation_service
+        self.language = language
+        self.temp_unit = temp_unit  # "celsius", "fahrenheit", "kelvin"
         
         # Alert configuration
         self.alert_thresholds = self._load_default_thresholds()
@@ -111,6 +114,71 @@ class WeatherAlertsService:
         self._load_alert_preferences()
         
         logger.info("Weather Alerts Service initialized")
+
+    def update_language_and_units(self, language: str, temp_unit: str):
+        """Update language and temperature unit settings."""
+        self.language = language
+        self.temp_unit = temp_unit
+        
+        # Update existing active alerts with new language
+        self._update_active_alerts_language()
+        
+    def _update_active_alerts_language(self):
+        """Update the title and message of existing active alerts with current language."""
+        updated_count = 0
+        for alert in self.active_alerts.values():
+            try:
+                # Check if this is a forecast alert from the ID
+                is_forecast = "forecast" in alert.id
+                
+                # Update title with current language
+                old_title = alert.title
+                alert.title = self._get_alert_title(alert.alert_type, is_forecast)
+                
+                # Update message with current language if we have the value
+                if alert.value is not None:
+                    alert.message = self._get_alert_message(alert.alert_type, alert.value, is_forecast)
+                    logger.debug(f"Updated alert {alert.id}: title '{old_title}' -> '{alert.title}', message updated")
+                else:
+                    logger.debug(f"Updated alert {alert.id}: title '{old_title}' -> '{alert.title}', no value for message update")
+                
+                updated_count += 1
+                    
+            except Exception as e:
+                logger.error(f"Error updating alert language for {alert.id}: {e}")
+                continue
+        
+        if updated_count > 0:
+            logger.info(f"Updated language for {updated_count} active alerts")
+
+    def _convert_temperature_to_celsius(self, temp: float, from_unit: str) -> float:
+        """Convert temperature from any unit to Celsius for threshold comparison."""
+        if from_unit == "celsius":
+            return temp
+        elif from_unit == "fahrenheit":
+            return (temp - 32) * 5/9
+        elif from_unit == "kelvin":
+            return temp - 273.15
+        return temp
+
+    def _convert_temperature_from_celsius(self, temp: float, to_unit: str) -> float:
+        """Convert temperature from Celsius to target unit for display."""
+        if to_unit == "celsius":
+            return temp
+        elif to_unit == "fahrenheit":
+            return temp * 9/5 + 32
+        elif to_unit == "kelvin":
+            return temp + 273.15
+        return temp
+
+    def _get_temperature_unit_symbol(self) -> str:
+        """Get temperature unit symbol for display."""
+        units = {
+            "celsius": "°C",
+            "fahrenheit": "°F", 
+            "kelvin": "K"
+        }
+        return units.get(self.temp_unit, "°C")
 
     def _load_default_thresholds(self) -> Dict[AlertType, Dict[str, Any]]:
         """Load default alert thresholds."""
@@ -308,39 +376,42 @@ class WeatherAlertsService:
         """Check for temperature-based alerts."""
         alerts = []
         
+        # Convert input temperature to Celsius for threshold comparison
+        temp_celsius = self._convert_temperature_to_celsius(temperature, self.temp_unit)
+        
         # High temperature alert
         if (AlertType.TEMPERATURE_HIGH in self.enabled_alerts and 
-            temperature > self.alert_thresholds[AlertType.TEMPERATURE_HIGH]['threshold']):
+            temp_celsius > self.alert_thresholds[AlertType.TEMPERATURE_HIGH]['threshold']):
             
             title = self._get_alert_title(AlertType.TEMPERATURE_HIGH)
-            message = self._get_alert_message(AlertType.TEMPERATURE_HIGH, temperature)
+            message = self._get_alert_message(AlertType.TEMPERATURE_HIGH, temp_celsius)
             
             alert = WeatherAlert(
                 alert_type=AlertType.TEMPERATURE_HIGH,
                 severity=self.alert_thresholds[AlertType.TEMPERATURE_HIGH]['severity'],
                 title=title,
                 message=message,
-                value=temperature,
+                value=temp_celsius,  # Store in Celsius
                 threshold=self.alert_thresholds[AlertType.TEMPERATURE_HIGH]['threshold'],
-                unit="°C"
+                unit=self._get_temperature_unit_symbol()
             )
             alerts.append(alert)
         
         # Low temperature alert
         if (AlertType.TEMPERATURE_LOW in self.enabled_alerts and 
-            temperature < self.alert_thresholds[AlertType.TEMPERATURE_LOW]['threshold']):
+            temp_celsius < self.alert_thresholds[AlertType.TEMPERATURE_LOW]['threshold']):
             
             title = self._get_alert_title(AlertType.TEMPERATURE_LOW)
-            message = self._get_alert_message(AlertType.TEMPERATURE_LOW, temperature)
+            message = self._get_alert_message(AlertType.TEMPERATURE_LOW, temp_celsius)
             
             alert = WeatherAlert(
                 alert_type=AlertType.TEMPERATURE_LOW,
                 severity=self.alert_thresholds[AlertType.TEMPERATURE_LOW]['severity'],
                 title=title,
                 message=message,
-                value=temperature,
+                value=temp_celsius,  # Store in Celsius
                 threshold=self.alert_thresholds[AlertType.TEMPERATURE_LOW]['threshold'],
-                unit="°C"
+                unit=self._get_temperature_unit_symbol()
             )
             alerts.append(alert)
         
@@ -459,48 +530,116 @@ class WeatherAlertsService:
 
     def _get_alert_title(self, alert_type: AlertType, is_forecast: bool = False) -> str:
         """Get localized alert title."""
-        if self.translation_service:
-            key = f"alert_{alert_type.value}_title"
-            if is_forecast:
-                key = f"alert_{alert_type.value}_forecast_title"
-            return self.translation_service.translate(key)
+        # Use translation_manager instead of translation_service
+        key = f"alert_{alert_type.value}_title"
+        if is_forecast:
+            key = f"alert_{alert_type.value}_forecast_title"
         
-        # Fallback titles
-        titles = {
-            AlertType.TEMPERATURE_HIGH: "High Temperature Alert" if not is_forecast else "High Temperature Forecast",
-            AlertType.TEMPERATURE_LOW: "Low Temperature Alert" if not is_forecast else "Low Temperature Forecast",
-            AlertType.RAIN_HEAVY: "Heavy Rain Alert" if not is_forecast else "Heavy Rain Expected",
-            AlertType.WIND_STRONG: "Strong Wind Alert" if not is_forecast else "Strong Wind Expected",
-            AlertType.UV_HIGH: "High UV Index Alert",
-            AlertType.AIR_QUALITY_POOR: "Poor Air Quality Alert",
-            AlertType.STORM: "Storm Alert" if not is_forecast else "Storm Warning"
-        }
-        return titles.get(alert_type, "Weather Alert")
+        logger.debug(f"Getting alert title for key: {key}, language: {self.language}, is_forecast: {is_forecast}")
+        
+        title = translation_manager.get_translation(
+            'weather', 'alert_messages', key, 
+            language=self.language
+        )
+        
+        logger.debug(f"Translation result: {title}")
+        
+        # If translation not found, try English fallback first, then hardcoded fallback
+        if title == key:  # Translation not found
+            logger.debug(f"Translation not found for {key}, trying English fallback")
+            # Try English fallback
+            english_title = translation_manager.get_translation(
+                'weather', 'alert_messages', key, 
+                language='en'
+            )
+            
+            # If English translation exists, use it
+            if english_title != key:
+                title = english_title
+                logger.debug(f"Using English fallback: {title}")
+            else:
+                # Use hardcoded fallbacks as last resort
+                titles = {
+                    AlertType.TEMPERATURE_HIGH: "High Temperature Alert" if not is_forecast else "High Temperature Forecast",
+                    AlertType.TEMPERATURE_LOW: "Low Temperature Alert" if not is_forecast else "Low Temperature Forecast",
+                    AlertType.RAIN_HEAVY: "Heavy Rain Alert" if not is_forecast else "Heavy Rain Expected",
+                    AlertType.WIND_STRONG: "Strong Wind Alert" if not is_forecast else "Strong Wind Expected",
+                    AlertType.UV_HIGH: "High UV Index Alert",
+                    AlertType.AIR_QUALITY_POOR: "Poor Air Quality Alert",
+                    AlertType.STORM: "Storm Alert" if not is_forecast else "Storm Warning"
+                }
+                title = titles.get(alert_type, "Weather Alert")
+                logger.debug(f"Using hardcoded fallback: {title}")
+        
+        logger.debug(f"Final title: {title}")
+        return title
 
     def _get_alert_message(self, alert_type: AlertType, value: float, is_forecast: bool = False) -> str:
         """Get localized alert message."""
-        if self.translation_service:
-            key = f"alert_{alert_type.value}_message"
-            return self.translation_service.translate(key, value=value)
+        # Use translation_manager instead of translation_service
+        key = f"alert_{alert_type.value}_message"
         
-        # Fallback messages
-        if alert_type == AlertType.TEMPERATURE_HIGH:
-            return f"Temperature has reached {value:.1f}°C. Stay hydrated and avoid prolonged sun exposure."
-        elif alert_type == AlertType.TEMPERATURE_LOW:
-            return f"Temperature has dropped to {value:.1f}°C. Dress warmly and be careful of icy conditions."
-        elif alert_type == AlertType.RAIN_HEAVY:
-            prefix = "Heavy rain expected" if is_forecast else "Heavy rain detected"
-            return f"{prefix}: {value:.1f}mm. Avoid driving if possible and stay indoors."
+        # For temperature alerts, convert value to display unit
+        display_value = value
+        unit_symbol = ""
+        
+        if alert_type in [AlertType.TEMPERATURE_HIGH, AlertType.TEMPERATURE_LOW]:
+            # Convert temperature to display unit
+            display_value = self._convert_temperature_from_celsius(value, self.temp_unit)
+            unit_symbol = self._get_temperature_unit_symbol()
         elif alert_type == AlertType.WIND_STRONG:
-            return f"Strong winds detected: {value:.1f}km/h. Secure loose objects and avoid outdoor activities."
+            unit_symbol = " km/h"
+        elif alert_type == AlertType.RAIN_HEAVY:
+            unit_symbol = "mm"
         elif alert_type == AlertType.UV_HIGH:
-            return f"UV Index is high: {value:.1f}. Use sunscreen and limit sun exposure."
+            unit_symbol = ""
         elif alert_type == AlertType.AIR_QUALITY_POOR:
-            return f"Air quality is poor (AQI: {value:.0f}). Limit outdoor activities."
-        elif alert_type == AlertType.STORM:
-            return "Severe weather conditions expected. Stay indoors and avoid travel."
+            unit_symbol = "m"  # For visibility
         
-        return f"Weather alert: {alert_type.value}"
+        # Format value with unit for message
+        formatted_value = f"{display_value:.1f}{unit_symbol}"
+        
+        message = translation_manager.get_translation(
+            'weather', 'alert_messages', key, 
+            language=self.language
+        )
+        
+        # Replace {value} placeholder with formatted value
+        if "{value}" in message:
+            message = message.replace("{value}", formatted_value)
+        
+        # If translation not found, try English fallback first, then hardcoded fallback
+        if message == key:  # Translation not found
+            # Try English fallback
+            english_message = translation_manager.get_translation(
+                'weather', 'alert_messages', key, 
+                language='en'
+            )
+            
+            # If English translation exists, use it with value replacement
+            if english_message != key and "{value}" in english_message:
+                message = english_message.replace("{value}", formatted_value)
+            else:
+                # Use hardcoded fallbacks as last resort
+                if alert_type == AlertType.TEMPERATURE_HIGH:
+                    message = f"Temperature has reached {formatted_value}. Stay hydrated and avoid prolonged sun exposure."
+                elif alert_type == AlertType.TEMPERATURE_LOW:
+                    message = f"Temperature has dropped to {formatted_value}. Dress warmly and be careful of icy conditions."
+                elif alert_type == AlertType.RAIN_HEAVY:
+                    prefix = "Heavy rain expected" if is_forecast else "Heavy rain detected"
+                    message = f"{prefix}: {formatted_value}. Avoid driving if possible and stay indoors."
+                elif alert_type == AlertType.WIND_STRONG:
+                    message = f"Strong winds detected: {formatted_value}. Secure loose objects and avoid outdoor activities."
+                elif alert_type == AlertType.UV_HIGH:
+                    message = f"UV Index is high: {value:.1f}. Use sunscreen and limit sun exposure."
+                elif alert_type == AlertType.AIR_QUALITY_POOR:
+                    message = f"Air quality is poor (AQI: {value:.0f}). Limit outdoor activities."
+                elif alert_type == AlertType.STORM:
+                    message = "Severe weather conditions expected. Stay indoors and avoid travel."
+                else:
+                    message = f"Weather alert: {alert_type.value}"
+        
+        return message if message != key else f"Weather alert: {alert_type.value}"
 
     def _is_duplicate_alert(self, new_alert: WeatherAlert) -> bool:
         """Check if this alert is a duplicate of an existing active alert."""
@@ -686,43 +825,52 @@ class WeatherAlertsService:
                     enabled = alert_type in self.enabled_alerts
                     logger.info(f"{alert_type.value}: threshold={threshold}, enabled={enabled}")
             
-            # Check temperature alerts
+            # Check temperature alerts (convert API temperature from Celsius to current unit, then back to Celsius for comparison)
             if current_temp is not None:
                 logger.info(f"Checking temperature alerts for {current_temp}°C")
                 
+                # current_temp from API is in Celsius, convert for threshold comparison
+                temp_celsius = current_temp  # API returns Celsius
+                
                 if AlertType.TEMPERATURE_HIGH in self.enabled_alerts:
                     threshold = self.alert_thresholds[AlertType.TEMPERATURE_HIGH]['threshold']
-                    logger.info(f"Temperature HIGH check: {current_temp} > {threshold} = {current_temp > threshold}")
-                    if current_temp > threshold:
-                        severity = self._get_temperature_severity(current_temp, threshold)
+                    logger.info(f"Temperature HIGH check: {temp_celsius} > {threshold} = {temp_celsius > threshold}")
+                    if temp_celsius > threshold:
+                        severity = self._get_temperature_severity(temp_celsius, threshold)
+                        title = self._get_alert_title(AlertType.TEMPERATURE_HIGH)
+                        message = self._get_alert_message(AlertType.TEMPERATURE_HIGH, temp_celsius)
+                        
                         alert = WeatherAlert(
                             alert_type=AlertType.TEMPERATURE_HIGH,
                             severity=severity,
-                            title="Temperatura Elevata Rilevata",
-                            message=f"La temperatura attuale di {current_temp}°C supera la soglia di {threshold}°C. Prestare attenzione agli sforzi fisici all'aperto.",
-                            value=current_temp,
+                            title=title,
+                            message=message,
+                            value=temp_celsius,
                             threshold=threshold,
-                            unit="°C"
+                            unit=self._get_temperature_unit_symbol()
                         )
                         new_alerts.append(alert)
-                        logger.info(f"Generated HIGH temperature alert: {current_temp}°C > {threshold}°C")
+                        logger.info(f"Generated HIGH temperature alert: {temp_celsius}°C > {threshold}°C")
                 
                 if AlertType.TEMPERATURE_LOW in self.enabled_alerts:
                     threshold = self.alert_thresholds[AlertType.TEMPERATURE_LOW]['threshold']
-                    logger.info(f"Temperature LOW check: {current_temp} < {threshold} = {current_temp < threshold}")
-                    if current_temp < threshold:
-                        severity = self._get_cold_severity(current_temp, threshold)
+                    logger.info(f"Temperature LOW check: {temp_celsius} < {threshold} = {temp_celsius < threshold}")
+                    if temp_celsius < threshold:
+                        severity = self._get_cold_severity(temp_celsius, threshold)
+                        title = self._get_alert_title(AlertType.TEMPERATURE_LOW)
+                        message = self._get_alert_message(AlertType.TEMPERATURE_LOW, temp_celsius)
+                        
                         alert = WeatherAlert(
                             alert_type=AlertType.TEMPERATURE_LOW,
                             severity=severity,
-                            title="Temperatura Bassa Rilevata",
-                            message=f"La temperatura attuale di {current_temp}°C è scesa sotto la soglia di {threshold}°C. Vestirsi adeguatamente.",
-                            value=current_temp,
+                            title=title,
+                            message=message,
+                            value=temp_celsius,
                             threshold=threshold,
-                            unit="°C"
+                            unit=self._get_temperature_unit_symbol()
                         )
                         new_alerts.append(alert)
-                        logger.info(f"Generated LOW temperature alert: {current_temp}°C < {threshold}°C")
+                        logger.info(f"Generated LOW temperature alert: {temp_celsius}°C < {threshold}°C")
             
             # Check wind alerts
             if wind_speed is not None and AlertType.WIND_STRONG in self.enabled_alerts:
@@ -730,11 +878,14 @@ class WeatherAlertsService:
                 logger.info(f"Wind check: {wind_speed} > {threshold} = {wind_speed > threshold}")
                 if wind_speed > threshold:
                     severity = self._get_wind_severity(wind_speed, threshold)
+                    title = self._get_alert_title(AlertType.WIND_STRONG)
+                    message = self._get_alert_message(AlertType.WIND_STRONG, wind_speed)
+                    
                     alert = WeatherAlert(
                         alert_type=AlertType.WIND_STRONG,
                         severity=severity,
-                        title="Vento Forte Rilevato",
-                        message=f"Velocità del vento attuale: {wind_speed} km/h (soglia: {threshold} km/h). Prestare attenzione negli spostamenti.",
+                        title=title,
+                        message=message,
                         value=wind_speed,
                         threshold=threshold,
                         unit="km/h"
@@ -748,11 +899,14 @@ class WeatherAlertsService:
                 logger.info(f"Precipitation check: {precipitation} > {threshold} = {precipitation > threshold}")
                 if precipitation > threshold:
                     severity = self._get_precipitation_severity(precipitation, threshold)
+                    title = self._get_alert_title(AlertType.RAIN_HEAVY)
+                    message = self._get_alert_message(AlertType.RAIN_HEAVY, precipitation)
+                    
                     alert = WeatherAlert(
                         alert_type=AlertType.RAIN_HEAVY,
                         severity=severity,
-                        title="Precipitazioni Intense",
-                        message=f"Precipitazioni rilevate: {precipitation:.1f}mm (soglia: {threshold}mm). Guidare con prudenza.",
+                        title=title,
+                        message=message,
                         value=precipitation,
                         threshold=threshold,
                         unit="mm"
@@ -771,11 +925,14 @@ class WeatherAlertsService:
                 
                 if pseudo_aqi > threshold or visibility < 1000:  # Less than 1km visibility
                     severity = AlertSeverity.MODERATE if visibility > 500 else AlertSeverity.HIGH
+                    title = self._get_alert_title(AlertType.AIR_QUALITY_POOR)
+                    message = self._get_alert_message(AlertType.AIR_QUALITY_POOR, visibility)
+                    
                     alert = WeatherAlert(
                         alert_type=AlertType.AIR_QUALITY_POOR,
                         severity=severity,
-                        title="Visibilità Ridotta",
-                        message=f"Visibilità limitata: {visibility}m. Potrebbero esserci condizioni di scarsa qualità dell'aria.",
+                        title=title,
+                        message=message,
                         value=visibility,
                         threshold=1000,
                         unit="m"

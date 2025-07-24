@@ -265,7 +265,7 @@ class DropdownLanguage:
             logging.info(f'Lingua corrente dallo state manager: {current_language_code}')
 
         
-        translated_hint_text = translation_manager.get_translation("units", "unit_items", "language", self.current_language_display)
+        translated_hint_text = translation_manager.get_translation("weather", "settings_alert_dialog_items", "language", self.current_language_display)
         self.dropdown = ft.Dropdown(
             hint_text=translated_hint_text,
             options=self.get_options(),

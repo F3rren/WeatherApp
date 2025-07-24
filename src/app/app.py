@@ -848,6 +848,11 @@ class MeteoApp:
                 self.page.session.set('current_language', language)
                 logging.debug(f"Session language updated to: {language}")
             
+            # Update weather alerts service with new language and units
+            if self.weather_alerts_service:
+                self.weather_alerts_service.update_language_and_units(language, unit)
+                logging.debug(f"Weather alerts service updated with language: {language}, unit: {unit}")
+            
             # Trigger weather update with new language
             if using_location and current_lat is not None and current_lon is not None:
                 # Use coordinates to get location name in new language

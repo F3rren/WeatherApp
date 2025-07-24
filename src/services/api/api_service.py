@@ -311,13 +311,26 @@ class ApiService:
     def get_feels_like_temperature(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract feels like temperature from weather data"""
         try:
+            # Handle None or empty data gracefully
+            if not data:
+                return None
+                
             # Handle both forecast format (list) and current weather format (direct)
             if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
-                return round(data["list"][0]["main"]["feels_like"])
+                first_item = data["list"][0]
+                if "main" in first_item and "feels_like" in first_item["main"]:
+                    return round(first_item["main"]["feels_like"])
+                else:
+                    # Only log warning if we have actual data but it's in wrong format
+                    if first_item:  # Don't warn for empty data
+                        logging.warning(f"Feels like temperature missing in forecast item main: {first_item.get('main', {}).keys() if 'main' in first_item else 'main key missing'}")
+                    return None
             elif "main" in data and "feels_like" in data["main"]:
                 return round(data["main"]["feels_like"])
             else:
-                logging.warning("Feels like temperature data not found in expected format")
+                # Only warn if we have substantial data but can't parse it
+                if data and len(data.keys()) > 1:  # More than just basic keys
+                    logging.warning("Feels like temperature data not found in expected format")
                 return None
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting feels like temperature: {e}")
@@ -345,13 +358,26 @@ class ApiService:
     def get_wind_speed(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract wind speed from weather data"""
         try:
+            # Handle None or empty data gracefully
+            if not data:
+                return None
+                
             # Handle both forecast format (list) and current weather format (direct)
             if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
-                return round(data["list"][0]["wind"]["speed"])
+                first_item = data["list"][0]
+                if "wind" in first_item and "speed" in first_item["wind"]:
+                    return round(first_item["wind"]["speed"])
+                else:
+                    # Only log warning if we have actual data but it's in wrong format
+                    if first_item:  # Don't warn for empty data
+                        logging.warning(f"Wind speed missing in forecast item: {first_item.get('wind', {}).keys() if 'wind' in first_item else 'wind key missing'}")
+                    return None
             elif "wind" in data and "speed" in data["wind"]:
                 return round(data["wind"]["speed"])
             else:
-                logging.warning("Wind speed data not found in expected format")
+                # Only warn if we have substantial data but can't parse it
+                if data and len(data.keys()) > 1:
+                    logging.warning("Wind speed data not found in expected format")
                 return None
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting wind speed: {e}")
@@ -388,13 +414,26 @@ class ApiService:
     def get_humidity(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract humidity from weather data"""
         try:
+            # Handle None or empty data gracefully
+            if not data:
+                return None
+                
             # Handle both forecast format (list) and current weather format (direct)
             if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
-                return data["list"][0]["main"]["humidity"]
+                first_item = data["list"][0]
+                if "main" in first_item and "humidity" in first_item["main"]:
+                    return first_item["main"]["humidity"]
+                else:
+                    # Only log warning if we have actual data but it's in wrong format
+                    if first_item:  # Don't warn for empty data
+                        logging.warning(f"Humidity missing in forecast item main: {first_item.get('main', {}).keys() if 'main' in first_item else 'main key missing'}")
+                    return None
             elif "main" in data and "humidity" in data["main"]:
                 return data["main"]["humidity"]
             else:
-                logging.warning("Humidity data not found in expected format")
+                # Only warn if we have substantial data but can't parse it
+                if data and len(data.keys()) > 1:
+                    logging.warning("Humidity data not found in expected format")
                 return None
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting humidity: {e}")
@@ -403,13 +442,26 @@ class ApiService:
     def get_pressure(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract pressure from weather data"""
         try:
+            # Handle None or empty data gracefully
+            if not data:
+                return None
+                
             # Handle both forecast format (list) and current weather format (direct)
             if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
-                return round(data["list"][0]["main"]["pressure"])
+                first_item = data["list"][0]
+                if "main" in first_item and "pressure" in first_item["main"]:
+                    return round(first_item["main"]["pressure"])
+                else:
+                    # Only log warning if we have actual data but it's in wrong format
+                    if first_item:  # Don't warn for empty data
+                        logging.warning(f"Pressure missing in forecast item main: {first_item.get('main', {}).keys() if 'main' in first_item else 'main key missing'}")
+                    return None
             elif "main" in data and "pressure" in data["main"]:
                 return round(data["main"]["pressure"])
             else:
-                logging.warning("Pressure data not found in expected format")
+                # Only warn if we have substantial data but can't parse it
+                if data and len(data.keys()) > 1:
+                    logging.warning("Pressure data not found in expected format")
                 return None
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting pressure: {e}")

@@ -3,7 +3,7 @@ import flet as ft
 import os
                
 from services.api.api_service import load_dotenv
-from services.ui.translation_service import TranslationService
+from translations import translation_manager  # New modular translation system
 from ui.components.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
 from ui.components.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
 
@@ -139,7 +139,7 @@ class SettingsAlertDialog:
             modal=False,
             title=ft.Row([
                 ft.Icon(ft.Icons.SETTINGS, size=24, color=text_color.get("ACCENT", "#0078d4")),
-                ft.Text(TranslationService.translate_from_dict("settings_alert_dialog_items", "settings_alert_dialog_title", self.language),
+                ft.Text(translation_manager.get_translation("weather", "settings_alert_dialog_items", "settings_alert_dialog_title", self.language),
                     size=20, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER, color=text_color["TEXT"]),
                 ft.Divider(color=ft.Colors.with_opacity(0.3, text_color["TEXT"])),
             ], spacing=12, alignment=ft.MainAxisAlignment.START),
@@ -153,7 +153,7 @@ class SettingsAlertDialog:
                         ft.Row([
                             ft.Icon(ft.Icons.LANGUAGE, size=20, color="#ff6b35"),
                             ft.Text(
-                                TranslationService.translate_from_dict("settings_alert_dialog_items", "language", self.language), 
+                                translation_manager.get_translation("weather", "settings_alert_dialog_items", "language", self.language), 
                                 size=15, weight=ft.FontWeight.W_600, color=text_color["TEXT"]
                             ),
                             ft.Container(expand=True),
@@ -167,7 +167,7 @@ class SettingsAlertDialog:
                         ft.Row([
                             ft.Icon(ft.Icons.STRAIGHTEN, size=20, color="#22c55e"),
                             ft.Text(
-                                TranslationService.translate_from_dict("settings_alert_dialog_items", "measurement", self.language), 
+                                translation_manager.get_translation("weather", "settings_alert_dialog_items", "measurement", self.language), 
                                 size=15, weight=ft.FontWeight.W_600, color=text_color["TEXT"]
                             ),
                             ft.Container(expand=True),
@@ -181,7 +181,7 @@ class SettingsAlertDialog:
                         ft.Row([
                             ft.Icon(ft.Icons.LOCATION_ON, size=20, color="#ef4444"),
                             ft.Text(
-                                TranslationService.translate_from_dict("settings_alert_dialog_items", "use_current_location", self.language), 
+                                translation_manager.get_translation("weather", "settings_alert_dialog_items", "use_current_location", self.language), 
                                 size=15, weight=ft.FontWeight.W_600, color=text_color["TEXT"]
                             ),
                             ft.Container(expand=True),
@@ -195,7 +195,7 @@ class SettingsAlertDialog:
                         ft.Row([
                             ft.Icon(ft.Icons.DARK_MODE, size=20, color="#3b82f6"),
                             ft.Text(
-                                TranslationService.translate_from_dict("settings_alert_dialog_items", "dark_theme", self.language), 
+                                translation_manager.get_translation("weather", "settings_alert_dialog_items", "dark_theme", self.language), 
                                 size=15, weight=ft.FontWeight.W_600, color=text_color["TEXT"]
                             ),
                             ft.Container(expand=True),
@@ -256,7 +256,7 @@ class SettingsAlertDialog:
             actions=[                
                 ft.FilledButton(
                     icon=ft.Icons.CLOSE,
-                    text=TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language),
+                    text=translation_manager.get_translation("weather", "dialog_buttons", "close", self.language),
                     on_click=lambda e: self._close_dialog(e),
                     style=ft.ButtonStyle(
                         bgcolor="#3F51B5",
@@ -307,7 +307,7 @@ class SettingsAlertDialog:
             
         # Update title with current language and theme
         if isinstance(self.dialog.title, ft.Text):
-            self.dialog.title.value = TranslationService.translate_from_dict("settings_alert_dialog_items", "settings_alert_dialog_title", self.language)
+            self.dialog.title.value = translation_manager.get_translation("weather", "settings_alert_dialog_items", "settings_alert_dialog_title", self.language)
             self.dialog.title.size = 20
             self.dialog.title.weight = ft.FontWeight.BOLD
             self.dialog.title.color = self.text_color["TEXT"]
@@ -334,7 +334,7 @@ class SettingsAlertDialog:
                         icon_control.color = icon_color_val
                     if isinstance(label_control, ft.Text):
                         # Update text with current language
-                        label_control.value = TranslationService.translate_from_dict("settings_alert_dialog_items", key, self.language)
+                        label_control.value = translation_manager.get_translation("weather", "settings_alert_dialog_items", key, self.language)
                         label_control.size = 16
                         label_control.weight = ft.FontWeight.W_500
                         label_control.color = self.text_color["TEXT"]
@@ -343,14 +343,14 @@ class SettingsAlertDialog:
         if self.dialog.actions and len(self.dialog.actions) > 0:
             action_button = self.dialog.actions[0]
             if isinstance(action_button, ft.FilledButton):
-                action_button.text = TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language)
+                action_button.text = translation_manager.get_translation("weather", "dialog_buttons", "close", self.language)
                 action_button.style = ft.ButtonStyle(
                     bgcolor=self.text_color.get("ACCENT", ft.Colors.BLUE),
                     color=ft.Colors.WHITE,
                     shape=ft.RoundedRectangleBorder(radius=8)
                 )
             elif isinstance(action_button, ft.TextButton) and hasattr(action_button, 'content') and isinstance(action_button.content, ft.Text):
-                action_button.content.value = TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language)
+                action_button.content.value = translation_manager.get_translation("weather", "dialog_buttons", "close", self.language)
                 action_button.content.size = 14
                 action_button.content.color = self.text_color.get("ACCENT", ft.Colors.BLUE)
             
@@ -541,8 +541,9 @@ class SettingsAlertDialog:
 
     def _get_translation(self, key, dict_key=None):
         if dict_key:
-            return TranslationService.translate_from_dict(dict_key, key, str(self.language))
-        return TranslationService.translate(key, str(self.language))
+            return translation_manager.get_translation("weather", dict_key, key, str(self.language))
+        # For simple translations, use weather module with a general section
+        return translation_manager.get_translation("weather", "general", key, str(self.language))
 
     def _close_dialog(self, e=None):
         """Close the dialog when close button is clicked"""

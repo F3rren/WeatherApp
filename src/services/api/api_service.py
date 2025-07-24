@@ -296,7 +296,14 @@ class ApiService:
     def get_current_temperature(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract current temperature from weather data"""
         try:
-            return round(data["list"][0]["main"]["temp"])
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
+                return round(data["list"][0]["main"]["temp"])
+            elif "main" in data and "temp" in data["main"]:
+                return round(data["main"]["temp"])
+            else:
+                logging.warning("Temperature data not found in expected format")
+                return None
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting current temperature: {e}")
             return None
@@ -304,7 +311,14 @@ class ApiService:
     def get_feels_like_temperature(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract feels like temperature from weather data"""
         try:
-            return round(data["list"][0]["main"]["feels_like"])
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
+                return round(data["list"][0]["main"]["feels_like"])
+            elif "main" in data and "feels_like" in data["main"]:
+                return round(data["main"]["feels_like"])
+            else:
+                logging.warning("Feels like temperature data not found in expected format")
+                return None
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting feels like temperature: {e}")
             return None
@@ -312,9 +326,18 @@ class ApiService:
     def get_min_max_temperature(self, data: Dict[str, Any]) -> Tuple[Optional[int], Optional[int]]:
         """Extract min and max temperature from weather data"""
         try:
-            temp_min = round(data["list"][0]["main"]["temp_min"])
-            temp_max = round(data["list"][0]["main"]["temp_max"])
-            return temp_min, temp_max
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
+                temp_min = round(data["list"][0]["main"]["temp_min"])
+                temp_max = round(data["list"][0]["main"]["temp_max"])
+                return temp_min, temp_max
+            elif "main" in data:
+                temp_min = round(data["main"].get("temp_min", data["main"]["temp"]))
+                temp_max = round(data["main"].get("temp_max", data["main"]["temp"]))
+                return temp_min, temp_max
+            else:
+                logging.warning("Min/max temperature data not found in expected format")
+                return None, None
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting min/max temperature: {e}")
             return None, None
@@ -322,7 +345,14 @@ class ApiService:
     def get_wind_speed(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract wind speed from weather data"""
         try:
-            return round(data["list"][0]["wind"]["speed"])
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
+                return round(data["list"][0]["wind"]["speed"])
+            elif "wind" in data and "speed" in data["wind"]:
+                return round(data["wind"]["speed"])
+            else:
+                logging.warning("Wind speed data not found in expected format")
+                return None
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting wind speed: {e}")
             return None
@@ -330,7 +360,13 @@ class ApiService:
     def get_wind_direction(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract wind direction from weather data"""
         try:
-            return data["list"][0]["wind"].get("deg", None)
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
+                return data["list"][0]["wind"].get("deg", None)
+            elif "wind" in data:
+                return data["wind"].get("deg", None)
+            else:
+                return None
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting wind direction: {e}")
             return None
@@ -338,7 +374,13 @@ class ApiService:
     def get_wind_gust(self, data: Dict[str, Any]) -> Optional[float]:
         """Extract wind gust speed from weather data"""
         try:
-            return data["list"][0]["wind"].get("gust", None)
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
+                return data["list"][0]["wind"].get("gust", None)
+            elif "wind" in data:
+                return data["wind"].get("gust", None)
+            else:
+                return None
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting wind gust: {e}")
             return None
@@ -346,7 +388,14 @@ class ApiService:
     def get_humidity(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract humidity from weather data"""
         try:
-            return data["list"][0]["main"]["humidity"]
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
+                return data["list"][0]["main"]["humidity"]
+            elif "main" in data and "humidity" in data["main"]:
+                return data["main"]["humidity"]
+            else:
+                logging.warning("Humidity data not found in expected format")
+                return None
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting humidity: {e}")
             return None
@@ -354,7 +403,14 @@ class ApiService:
     def get_pressure(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract pressure from weather data"""
         try:
-            return round(data["list"][0]["main"]["pressure"])
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
+                return round(data["list"][0]["main"]["pressure"])
+            elif "main" in data and "pressure" in data["main"]:
+                return round(data["main"]["pressure"])
+            else:
+                logging.warning("Pressure data not found in expected format")
+                return None
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting pressure: {e}")
             return None
@@ -362,7 +418,14 @@ class ApiService:
     def get_weather_icon_code(self, data: Dict[str, Any]) -> str:
         """Extract weather icon code from weather data"""
         try:
-            return data["list"][0]["weather"][0]["icon"]
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
+                return data["list"][0]["weather"][0]["icon"]
+            elif "weather" in data and isinstance(data["weather"], list) and len(data["weather"]) > 0:
+                return data["weather"][0]["icon"]
+            else:
+                logging.warning("Weather icon data not found in expected format")
+                return "01d"  # Default clear sky icon
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting weather icon: {e}")
             return "01d"  # Default clear sky icon
@@ -370,7 +433,14 @@ class ApiService:
     def get_weather_description(self, data: Dict[str, Any]) -> str:
         """Extract weather description from weather data"""
         try:
-            return data["list"][0]["weather"][0]["description"]
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
+                return data["list"][0]["weather"][0]["description"]
+            elif "weather" in data and isinstance(data["weather"], list) and len(data["weather"]) > 0:
+                return data["weather"][0]["description"]
+            else:
+                logging.warning("Weather description data not found in expected format")
+                return "Unknown"
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Error extracting weather description: {e}")
             return "Unknown"
@@ -609,28 +679,38 @@ class ApiService:
     def get_visibility(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract visibility data from weather data (in meters)."""
         try:
-            if "list" in data and len(data["list"]) > 0:
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
                 return data["list"][0].get("visibility", None)
-            return None
+            elif "visibility" in data:
+                return data["visibility"]
+            else:
+                return None
         except (KeyError, IndexError, TypeError):
             return None
 
     def get_dew_point(self, data: Dict[str, Any]) -> Optional[int]:
         """Calculate dew point from temperature and humidity."""
         try:
-            if "list" in data and len(data["list"]) > 0:
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
                 main_data = data["list"][0].get("main", {})
-                temp = main_data.get("temp")
-                humidity = main_data.get("humidity")
+            elif "main" in data:
+                main_data = data["main"]
+            else:
+                return None
                 
-                if temp is not None and humidity is not None:
-                    # Magnus formula for dew point calculation
-                    import math
-                    a = 17.27
-                    b = 237.7
-                    alpha = ((a * temp) / (b + temp)) + math.log(humidity / 100.0)
-                    dew_point = (b * alpha) / (a - alpha)
-                    return round(dew_point)
+            temp = main_data.get("temp")
+            humidity = main_data.get("humidity")
+            
+            if temp is not None and humidity is not None:
+                # Magnus formula for dew point calculation
+                import math
+                a = 17.27
+                b = 237.7
+                alpha = ((a * temp) / (b + temp)) + math.log(humidity / 100.0)
+                dew_point = (b * alpha) / (a - alpha)
+                return round(dew_point)
             return None
         except (KeyError, IndexError, TypeError, ValueError):
             return None
@@ -638,26 +718,31 @@ class ApiService:
     def get_uv_index(self, data: Dict[str, Any]) -> Optional[float]:
         """Extract UV index from weather data (if available)."""
         try:
-            # UV Index is not available in 5-day forecast API, but we can simulate based on weather conditions
-            if "list" in data and len(data["list"]) > 0:
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
                 weather_data = data["list"][0].get("weather", [])
-                if weather_data:
-                    weather_id = weather_data[0].get("id", 800)
-                    # Estimate UV based on weather conditions (this is a simulation)
-                    if weather_id < 300:  # Thunderstorm
-                        return 2.0
-                    elif weather_id < 400:  # Drizzle
-                        return 3.0
-                    elif weather_id < 600:  # Rain
-                        return 3.0
-                    elif weather_id < 700:  # Snow
-                        return 2.0
-                    elif weather_id < 800:  # Atmosphere (fog, etc.)
-                        return 4.0
-                    elif weather_id == 800:  # Clear sky
-                        return 8.0
-                    else:  # Cloudy
-                        return 6.0
+            elif "weather" in data and isinstance(data["weather"], list):
+                weather_data = data["weather"]
+            else:
+                return None
+                
+            if weather_data:
+                weather_id = weather_data[0].get("id", 800)
+                # Estimate UV based on weather conditions (this is a simulation)
+                if weather_id < 300:  # Thunderstorm
+                    return 2.0
+                elif weather_id < 400:  # Drizzle
+                    return 3.0
+                elif weather_id < 600:  # Rain
+                    return 3.0
+                elif weather_id < 700:  # Snow
+                    return 2.0
+                elif weather_id < 800:  # Atmosphere (fog, etc.)
+                    return 4.0
+                elif weather_id == 800:  # Clear sky
+                    return 8.0
+                else:  # Cloudy
+                    return 6.0
             return None
         except (KeyError, IndexError, TypeError):
             return None
@@ -665,9 +750,13 @@ class ApiService:
     def get_cloud_coverage(self, data: Dict[str, Any]) -> Optional[int]:
         """Extract cloud coverage percentage from weather data."""
         try:
-            if "list" in data and len(data["list"]) > 0:
+            # Handle both forecast format (list) and current weather format (direct)
+            if "list" in data and isinstance(data["list"], list) and len(data["list"]) > 0:
                 clouds_data = data["list"][0].get("clouds", {})
                 return clouds_data.get("all", None)
-            return None
+            elif "clouds" in data:
+                return data["clouds"].get("all", None)
+            else:
+                return None
         except (KeyError, IndexError, TypeError):
             return None

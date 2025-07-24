@@ -4,7 +4,8 @@ import traceback
 import asyncio
 import logging
 from services.api.api_service import ApiService, load_dotenv
-from services.ui.translation_service import TranslationService
+from translations import translation_manager
+from services.ui.translation_service import TranslationService  # For unit symbols
 from services.ui.theme_handler import ThemeHandler
 
 class WeeklyForecastDisplay(ft.Container):
@@ -202,7 +203,7 @@ class WeeklyForecastDisplay(ft.Container):
         theme = self.theme_handler.get_theme()
         
         # Header section
-        header_text = TranslationService.translate_from_dict("weekly_forecast_items", "header", self._current_language)
+        header_text = translation_manager.get_translation("weather", "weekly_forecast_items", "header", self._current_language)
         is_dark = theme == self.theme_handler.get_theme() and theme.get("BACKGROUND", "").lower() == "#0d1117"
         header = ft.Row(
             controls=[
@@ -225,7 +226,7 @@ class WeeklyForecastDisplay(ft.Container):
 
         
         if not self._forecast_data:
-            loading_text = TranslationService.translate_from_dict("weekly_forecast_items", "loading", self._current_language)
+            loading_text = translation_manager.get_translation("weather", "weekly_forecast_items", "loading", self._current_language)
             return ft.Column([
                 ft.Container(
                     content=header,
@@ -288,7 +289,7 @@ class WeeklyForecastDisplay(ft.Container):
 
     def _build_daily_card(self, day_data, theme):
         """Builds a clean styled row for a single day forecast with additional weather information."""
-        translated_day = TranslationService.translate_from_dict("weekly_forecast_items", day_data["day_key"], self._current_language)
+        translated_day = translation_manager.get_translation("weather", "weekly_forecast_items", day_data["day_key"], self._current_language)
         
         # Temperature data
         unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)

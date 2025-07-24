@@ -2,7 +2,8 @@ import traceback
 import flet as ft
 from typing import List, Optional
 import math
-from services.ui.translation_service import TranslationService
+from translations import translation_manager
+from services.ui.translation_service import TranslationService  # For unit symbols
 from services.ui.theme_handler import ThemeHandler
 import logging
 
@@ -151,7 +152,7 @@ class TemperatureChartDisplay(ft.Container):
 
     def _build_header(self):
         """Builds header - simple, no cache."""
-        header_text = TranslationService.translate_from_dict("temperature_chart_items", "temperature", self.current_language)
+        header_text = translation_manager.get_translation("charts", "temperature_chart_items", "temperature", self.current_language)
         unit_symbol = TranslationService.get_unit_symbol("temperature", self.current_unit_system)
         complete_title = f"{header_text} ({unit_symbol})"
         icon_color = ft.Colors.ORANGE_400
@@ -181,7 +182,7 @@ class TemperatureChartDisplay(ft.Container):
         max_color = "#ef4444"
         min_color = "#3b82f6"
         for i, day_label_key in enumerate(self.days):
-            day_display_name = TranslationService.translate_from_dict("temperature_chart_items", day_label_key, self.current_language)
+            day_display_name = translation_manager.get_translation("charts", "temperature_chart_items", day_label_key, self.current_language)
             data_points_min.append(
                 ft.LineChartDataPoint(
                     i, self.temp_min[i],
@@ -220,7 +221,7 @@ class TemperatureChartDisplay(ft.Container):
         )
         x_labels = []
         for i, day_label_key in enumerate(self.days):
-            day_display_name = TranslationService.translate_from_dict("temperature_chart_items", day_label_key, self.current_language)
+            day_display_name = translation_manager.get_translation("charts", "temperature_chart_items", day_label_key, self.current_language)
             if day_display_name and isinstance(day_display_name, str):
                 day_display_name = day_display_name[0].upper() + day_display_name[1:] if len(day_display_name) > 1 else day_display_name.upper()
             x_labels.append(
@@ -303,8 +304,8 @@ class TemperatureChartDisplay(ft.Container):
     
     def _build_legend(self):
         """Builds legend - simple version."""
-        legend_max_text = TranslationService.translate_from_dict("temperature_chart_items", "max", self.current_language)
-        legend_min_text = TranslationService.translate_from_dict("temperature_chart_items", "min", self.current_language)
+        legend_max_text = translation_manager.get_translation("charts", "temperature_chart_items", "max", self.current_language)
+        legend_min_text = translation_manager.get_translation("charts", "temperature_chart_items", "min", self.current_language)
         max_color = "#ef4444"
         min_color = "#3b82f6"
         max_item = ft.Container(
@@ -338,7 +339,7 @@ class TemperatureChartDisplay(ft.Container):
             self._build_header(),
             ft.Container(
                 content=ft.Text(
-                    TranslationService.translate_from_dict("temperature_chart_items", "no_temperature_data", self.current_language),
+                    translation_manager.get_translation("charts", "temperature_chart_items", "no_temperature_data", self.current_language),
                     color=self.current_text_color,
                     size=14
                 ),

@@ -5,6 +5,7 @@ from utils.responsive_utils import ResponsiveComponentMixin, DeviceType
 
 from services.ui.theme_handler import ThemeHandler
 from services.ui.translation_service import TranslationService
+from translations import translation_manager  # New modular translation system
 from services.api.api_service import ApiService, load_dotenv
 import asyncio
 import logging
@@ -137,14 +138,11 @@ class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
     
     def _build_header(self):
         """Builds a modern header for air condition section."""
-        # Get translation service
-        translation_service = None
-        if self.page and hasattr(self.page, 'session'):
-            translation_service = self.page.session.get('translation_service')
-        
-        header_text = "Condizioni dell'aria"
-        if translation_service:
-            header_text = translation_service.translate_from_dict("air_condition_items", "air_condition_title", self._current_language) or header_text
+        # Use new modular translation system
+        header_text = translation_manager.get_translation(
+            'air_quality', 'general', 'air_conditions_title', 
+            language=self._current_language
+        )
         
         # Get theme mode using helper method
         is_dark = self._get_theme_mode()
@@ -205,13 +203,30 @@ class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
             return ft.Icons.QUESTION_MARK, "N/A"
 
     def _build_metric_cards(self):
-        translation_service = self.page.session.get('translation_service') if self.page and hasattr(self.page, 'session') else None
+        # Function to get translated label using new system
+        def get_label(key):
+            # Map old keys to new modular system paths
+            key_mapping = {
+                'feels_like': ('air_quality', 'conditions', 'feels_like'),
+                'humidity': ('air_quality', 'conditions', 'humidity'),
+                'wind': ('air_quality', 'conditions', 'wind_speed'),
+                'pressure': ('air_quality', 'conditions', 'pressure'),
+                'visibility': ('air_quality', 'conditions', 'visibility'),
+                'uv_index': ('air_quality', 'conditions', 'uv_index'),
+                'dew_point': ('air_quality', 'conditions', 'dew_point'),
+                'cloud_coverage': ('air_quality', 'conditions', 'cloud_coverage')
+            }
+            
+            if key in key_mapping:
+                module, section, translation_key = key_mapping[key]
+                return translation_manager.get_translation(
+                    module, section, translation_key,
+                    language=self._current_language
+                )
+            else:
+                # Fallback to formatted key name
+                return key.replace('_', ' ').title()
         
-        # Funzione per ottenere l'etichetta tradotta invece di usare lambda
-        def get_label(k):
-            if translation_service:
-                return translation_service.translate_from_dict("air_condition_items", k, self._current_language) 
-            return k.replace('_', ' ').title()
         temp_unit = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
         wind_unit = TranslationService.get_unit_symbol("wind", self._current_unit_system)
         pressure_unit = TranslationService.get_unit_symbol("pressure", self._current_unit_system)

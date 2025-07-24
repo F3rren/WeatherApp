@@ -4,7 +4,7 @@ import flet as ft
 import logging
 
 from utils.translations_data import LANGUAGES 
-from services.ui.translation_service import TranslationService
+from translations import translation_manager  # New modular translation system
 from ui.themes.themes import DARK_THEME, LIGHT_THEME
 
 class DropdownLanguage:
@@ -76,7 +76,7 @@ class DropdownLanguage:
 
         if self.dropdown:
             # Update hint text with current language
-            translated_hint_text = TranslationService.translate_from_dict("settings_alert_dialog_items", "language", self.current_language_display)
+            translated_hint_text = translation_manager.get_translation("weather", "settings_alert_dialog_items", "language", self.current_language_display)
             self.dropdown.hint_text = translated_hint_text
             
             # Update dropdown value to match current language
@@ -265,7 +265,7 @@ class DropdownLanguage:
             logging.info(f'Lingua corrente dallo state manager: {current_language_code}')
 
         
-        translated_hint_text = TranslationService.translate_from_dict("unit_items", "language", self.current_language_display)
+        translated_hint_text = translation_manager.get_translation("units", "unit_items", "language", self.current_language_display)
         self.dropdown = ft.Dropdown(
             hint_text=translated_hint_text,
             options=self.get_options(),

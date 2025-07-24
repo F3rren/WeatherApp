@@ -2,6 +2,7 @@ import flet as ft
 from services.ui.theme_handler import ThemeHandler
 import logging
 from services.ui.translation_service import TranslationService
+from translations import translation_manager  # New modular translation system
 
 import traceback
 
@@ -147,18 +148,11 @@ class MainWeatherInfo(ft.Container):
             feels_like_str = ""
             if self.feels_like is not None:
                 # Get translation service from session for dynamic language updates
-                translation_service = None
-                if self.page and hasattr(self.page, 'session'):
-                    translation_service = self.page.session.get('translation_service')
-                
-                feels_like_label = "Feels like"  # Default fallback
-                if translation_service:
-                    feels_like_label = translation_service.translate_from_dict(
-                        "air_condition_items", "feels_like", self.current_language
-                    ) or "Feels like"
-                else:
-                    # Fallback to static method
-                    feels_like_label = TranslationService.translate_from_dict("air_condition_items", "feels_like", self.current_language)
+                # Get feels like translation using new modular system
+                feels_like_label = translation_manager.get_translation(
+                    'air_quality', 'conditions', 'feels_like', 
+                    language=self.current_language
+                )
                 
                 feels_like_str = f"{feels_like_label} {self.feels_like}{unit_symbol}"
 
@@ -301,7 +295,7 @@ class MainWeatherInfo(ft.Container):
                                 ),
                                 ft.Column([
                                     ft.Text(
-                                        TranslationService.translate_from_dict('main_information_items', 'high', self.current_language).upper(),
+                                        translation_manager.get_translation('weather', 'main_information_items', 'high', language=self.current_language).upper(),
                                         size=10,
                                         color=ft.Colors.with_opacity(0.6, self._current_text_color),
                                         weight="w500"
@@ -329,7 +323,7 @@ class MainWeatherInfo(ft.Container):
                                 ),
                                 ft.Column([
                                     ft.Text(
-                                        TranslationService.translate_from_dict('main_information_items', 'low', self.current_language).upper(),
+                                        translation_manager.get_translation('weather', 'main_information_items', 'low', language=self.current_language).upper(),
                                         size=10,
                                         color=ft.Colors.with_opacity(0.6, self._current_text_color),
                                         weight="w500"

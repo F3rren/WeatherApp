@@ -1,7 +1,7 @@
 import asyncio
 import flet as ft
 from services.alerts.weather_alerts_service import AlertSeverity, AlertType
-from services.ui.translation_service import TranslationService
+from translations import translation_manager  # New modular translation system
 
 class WeatherAlertDialog:
     """Dialog semplificato per la gestione delle allerte meteo."""
@@ -37,8 +37,11 @@ class WeatherAlertDialog:
             }
 
     def get_translation(self, key: str) -> str:
-        """Get translation for a key."""
-        return TranslationService.translate_from_dict("weather_alert_dialog_items", key, self.language)
+        """Get translation for a key using new modular translation system."""
+        return translation_manager.get_translation(
+            'weather', 'weather_alert_dialog_items', key, 
+            language=self.language
+        )
 
     def create_dialog(self):
         """Create the weather alerts dialog."""
@@ -117,12 +120,18 @@ class WeatherAlertDialog:
             ),
             actions=[ft.Row([
                 ft.TextButton(
-                    text=TranslationService.translate_from_dict("dialog_buttons", "retry", self.language),
+                    text=translation_manager.get_translation(
+                        'weather', 'dialog_buttons', 'retry', 
+                        language=self.language
+                    ),
                     icon=ft.Icons.REFRESH, on_click=lambda e: self.retry_dialog(),
                     style=ft.ButtonStyle(color=self.colors["accent"])
                 ),
                 ft.FilledButton(
-                    text=TranslationService.translate_from_dict("dialog_buttons", "close", self.language),
+                    text=translation_manager.get_translation(
+                        'weather', 'dialog_buttons', 'close', 
+                        language=self.language
+                    ),
                     on_click=lambda e: self.close_dialog(),
                     style=ft.ButtonStyle(bgcolor=self.colors["accent"], color=ft.Colors.WHITE,
                                        shape=ft.RoundedRectangleBorder(radius=8))
@@ -308,7 +317,10 @@ class WeatherAlertDialog:
                 style=ft.ButtonStyle(bgcolor=self.colors["warning"], color=ft.Colors.WHITE, shape=ft.RoundedRectangleBorder(radius=8))
             ),
             ft.FilledButton(
-                icon=ft.Icons.CLOSE, text=TranslationService.translate_from_dict("dialog_buttons", "close", self.language),
+                icon=ft.Icons.CLOSE, text=translation_manager.get_translation(
+                    'weather', 'dialog_buttons', 'close', 
+                    language=self.language
+                ),
                 on_click=lambda e: self.close_dialog(),
                 style=ft.ButtonStyle(bgcolor=self.colors["accent"], color=ft.Colors.WHITE, shape=ft.RoundedRectangleBorder(radius=8))
             ),

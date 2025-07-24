@@ -3,7 +3,10 @@ import os
 
 from dotenv import load_dotenv
 from utils.config import UNIT_SYSTEMS
+
+# Import both old and new translation systems for compatibility during transition
 from utils.translations_data import TRANSLATIONS
+from translations import translation_manager, translate_from_dict, get_air_quality_translation
 
 class TranslationService:
     _global_instance = None  # Class variable for global instance
@@ -164,8 +167,21 @@ class TranslationService:
         dict_key: es. 'main_information_items', 'weekly_forecast_items', ...
         key: la chiave da tradurre all'interno del sotto-dizionario
         language: codice lingua
+        
+        Now uses the new modular translation system with backward compatibility.
         """
-        from utils.translations_data import TRANSLATIONS
+        # Use new translation system with backward compatibility
+        from translations import translate_from_dict as new_translate_from_dict
+        
+        try:
+            # Try new system first
+            result = new_translate_from_dict(dict_key, key, language)
+            if result != key:  # If translation was found
+                return result
+        except Exception as e:
+            logging.debug(f"New translation system failed for {dict_key}.{key}: {e}")
+        
+        # Fallback to old system
         lang = cls.normalize_lang_code(language or os.getenv("DEFAULT_LANGUAGE"))
         if lang in TRANSLATIONS and dict_key in TRANSLATIONS[lang]:
             subdict = TRANSLATIONS[lang][dict_key]

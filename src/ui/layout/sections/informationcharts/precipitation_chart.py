@@ -9,7 +9,8 @@ from typing import Dict, List, Any
 import logging
 
 from services.api.api_service import ApiService
-from services.ui.translation_service import TranslationService
+from translations import translation_manager
+from services.ui.translation_service import TranslationService  # For unit symbols
 from services.ui.theme_handler import ThemeHandler
 
 
@@ -205,7 +206,7 @@ class PrecipitationChartDisplay(ft.Container):
             return self._cached_header
         
         # print(f"DEBUG: Building new header for language: {self._current_language}")
-        header_text = TranslationService.translate_from_dict("precipitation_chart_items", "precipitation_chart_title", self._current_language)
+        header_text = translation_manager.get_translation("charts", "precipitation_chart_items", "precipitation_chart_title", self._current_language)
         # print(f"DEBUG: header_text result: {header_text}")  # Debugging line to check header text
 
         is_dark = self.theme_handler.get_theme() != self.theme_handler.get_theme()  # Always False, but keep for logic symmetry
@@ -237,7 +238,8 @@ class PrecipitationChartDisplay(ft.Container):
 
     def _build_loading_content(self) -> ft.Control:
         """Build loading state content with translations."""
-        loading_text = TranslationService.translate_from_dict(
+        loading_text = translation_manager.get_translation(
+            "charts", 
             "precipitation_chart_items", 
             "loading",
             self._current_language
@@ -273,8 +275,8 @@ class PrecipitationChartDisplay(ft.Container):
         import datetime
         
         # Get translations
-        time_label = TranslationService.translate_from_dict("precipitation_chart_items", "time_hours", self._current_language) or "Time"
-        precip_label = TranslationService.translate_from_dict("precipitation_chart_items", "precipitation_mm", self._current_language) or "Precip. (mm)"
+        time_label = translation_manager.get_translation("charts", "precipitation_chart_items", "time_hours", self._current_language) or "Time"
+        precip_label = translation_manager.get_translation("charts", "precipitation_chart_items", "precipitation_mm", self._current_language) or "Precip. (mm)"
         
         # Table header row
         header_row = ft.DataRow(
@@ -384,7 +386,7 @@ class PrecipitationChartDisplay(ft.Container):
         accent_color = ft.Colors.BLUE_500 if not is_dark else ft.Colors.BLUE_400
         
         # Get translation
-        next_hours_label = TranslationService.translate_from_dict("precipitation_chart_items", "next_24h", self._current_language) or "Next 24 hours"
+        next_hours_label = translation_manager.get_translation("charts", "precipitation_chart_items", "next_24h", self._current_language) or "Next 24 hours"
         
         # Create a title for the forecast list - adjusted for direct display
         return ft.Container(
@@ -419,9 +421,9 @@ class PrecipitationChartDisplay(ft.Container):
         text_color = self.theme_handler.get_text_color()
         
         # Get translations
-        total_label = TranslationService.translate_from_dict("precipitation_chart_items", "total_precipitation", self._current_language) or "Totale"
-        max_label = TranslationService.translate_from_dict("precipitation_chart_items", "max_intensity", self._current_language) or "Picco"
-        hours_label = TranslationService.translate_from_dict("precipitation_chart_items", "rainy_hours", self._current_language) or "Ore di pioggia"
+        total_label = translation_manager.get_translation("charts", "precipitation_chart_items", "total_precipitation", self._current_language) or "Totale"
+        max_label = translation_manager.get_translation("charts", "precipitation_chart_items", "max_intensity", self._current_language) or "Picco"
+        hours_label = translation_manager.get_translation("charts", "precipitation_chart_items", "rainy_hours", self._current_language) or "Ore di pioggia"
         
         # Create compact statistics cards
         stats_cards = []
@@ -506,7 +508,8 @@ class PrecipitationChartDisplay(ft.Container):
     def _build_no_data_content(self) -> ft.Control:
         """Build content when no data is available with translations."""
         # Get translated text
-        no_data_text = TranslationService.translate_from_dict(
+        no_data_text = translation_manager.get_translation(
+            "charts",
             "precipitation_chart_items",
             "no_data",
             self._current_language
@@ -540,7 +543,8 @@ class PrecipitationChartDisplay(ft.Container):
         text_color = self.theme_handler.get_text_color()
         
         # Get translations
-        no_significant_rain = TranslationService.translate_from_dict(
+        no_significant_rain = translation_manager.get_translation(
+            "charts", 
             "precipitation_chart_items", 
             "no_significant_precipitation", 
             self._current_language
@@ -779,13 +783,13 @@ class PrecipitationChartDisplay(ft.Container):
     def _get_precipitation_intensity(self, precipitation: float) -> str:
         """Get precipitation intensity description based on amount."""
         if precipitation <= 0.1:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "intensity_light", self._current_language) or "Light"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "intensity_light", self._current_language) or "Light"
         elif precipitation <= 2.5:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "intensity_moderate", self._current_language) or "Moderate"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "intensity_moderate", self._current_language) or "Moderate"
         elif precipitation <= 10:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "intensity_heavy", self._current_language) or "Heavy"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "intensity_heavy", self._current_language) or "Heavy"
         else:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "intensity_very_heavy", self._current_language) or "Very heavy"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "intensity_very_heavy", self._current_language) or "Very heavy"
             
     def _get_intensity_color(self, precipitation: float, is_dark: bool) -> str:
         """Get color for precipitation intensity badge based on amount."""
@@ -808,11 +812,11 @@ class PrecipitationChartDisplay(ft.Container):
         has_rain = any(data.get('rain', 0) > 0 for data in self._precipitation_data if isinstance(data, dict))
         
         if has_snow and has_rain:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "mixed", self._current_language) or "Mixed"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "mixed", self._current_language) or "Mixed"
         elif has_snow:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "snow", self._current_language) or "Snow"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "snow", self._current_language) or "Snow"
         else:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "rain", self._current_language) or "Rain"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "rain", self._current_language) or "Rain"
 
     def _find_peak_precipitation_time(self) -> str:
         """Find when peak precipitation is expected."""

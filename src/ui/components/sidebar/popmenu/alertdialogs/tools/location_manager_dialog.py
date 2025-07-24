@@ -2,7 +2,7 @@ import flet as ft
 from core.state_manager import StateManager
 from services.location.location_manager_service import LocationManagerService
 from services.location.geocoding_service import GeocodingService
-from services.ui.translation_service import TranslationService
+from translations import translation_manager  # New modular translation system
 import logging
 
 logger = logging.getLogger(__name__)
@@ -208,7 +208,7 @@ class LocationManagerDialog:
             actions=[
                 ft.FilledButton(
                     icon=ft.Icons.CLOSE,
-                    text=TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language),
+                    text=translation_manager.get_translation("weather", "dialog_buttons", "close", self.language),
                     on_click=lambda e: self.close_dialog(e),
                     style=ft.ButtonStyle(
                         bgcolor="#3F51B5",

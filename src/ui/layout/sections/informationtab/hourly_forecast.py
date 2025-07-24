@@ -7,6 +7,7 @@ import asyncio
 import traceback
 
 from services.ui.theme_handler import ThemeHandler
+from translations import translation_manager  # New modular translation system
 
 class HourlyForecastDisplay(ft.Container):
     """
@@ -92,18 +93,11 @@ class HourlyForecastDisplay(ft.Container):
     def build(self):
         """Constructs a clean, minimal UI for the hourly forecast exactly like the design shown."""
         if not self._hourly_data_list:
-            # Get translation service for loading message
-            translation_service = None
-            if self.page and hasattr(self.page, 'session'):
-                translation_service = self.page.session.get('translation_service')
-            
-            loading_text = "Loading 24-hour forecast..."
-            if translation_service:
-                loading_text = translation_service.translate_from_dict(
-                    "hourly_forecast_items", 
-                    "loading_forecast",
-                    self._language
-                ) or loading_text
+            # Get loading text using new modular translation system
+            loading_text = translation_manager.get_translation(
+                'weather', 'hourly_forecast_items', 'loading_forecast',
+                language=self._language
+            )
             
             return ft.Container(
                 content=ft.Text(
@@ -114,18 +108,11 @@ class HourlyForecastDisplay(ft.Container):
                 padding=ft.padding.all(20)
             )
 
-        # Get translation service for header
-        translation_service = None
-        if self.page and hasattr(self.page, 'session'):
-            translation_service = self.page.session.get('translation_service')
-        
-        header_text = "Hourly Forecast"
-        if translation_service:
-            header_text = translation_service.translate_from_dict(
-                "hourly_forecast_items", 
-                "hourly_forecast",
-                self._language
-            ) or header_text
+        # Get header text using new modular translation system
+        header_text = translation_manager.get_translation(
+            'weather', 'hourly_forecast_items', 'hourly_forecast',
+            language=self._language
+        )
 
         # Professional header with enhanced typography and subtle accent
         is_dark = False

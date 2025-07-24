@@ -1,7 +1,7 @@
 import flet as ft
 import logging
 from utils.config import UNIT_SYSTEMS
-from services.ui.translation_service import TranslationService
+from translations import translation_manager  # New modular translation system
 from ui.themes.themes import DARK_THEME, LIGHT_THEME
 
 class DropdownMeasurement:
@@ -34,7 +34,7 @@ class DropdownMeasurement:
             self.dropdown.bgcolor = self.text_color["CARD_BACKGROUND"]
             
             # Update hint text with translation
-            translated_hint_text = TranslationService.translate_from_dict("unit_items", "measurement", self.current_language_display)
+            translated_hint_text = translation_manager.get_translation("units", "unit_items", "measurement", self.current_language_display)
             self.dropdown.hint_text = translated_hint_text
             
             # Update dropdown options with new translations
@@ -99,7 +99,7 @@ class DropdownMeasurement:
                 self.text_color = DARK_THEME
         options = []
         for unit_system_code, name_key in self.unit_name_keys.items():
-            translated_name = TranslationService.translate_from_dict("unit_items", name_key, self.current_language_display)
+            translated_name = translation_manager.get_translation("units", "unit_items", name_key, self.current_language_display)
             options.append(
                 ft.dropdown.Option(
                     key=unit_system_code,
@@ -157,7 +157,7 @@ class DropdownMeasurement:
             self.selected_unit = current_unit
         
         # Get translated text for the dropdown hint
-        translated_hint_text = TranslationService.translate_from_dict("unit_items", "measurement", self.current_language_display)
+        translated_hint_text = translation_manager.get_translation("units", "unit_items", "measurement", self.current_language_display)
 
         # Create the dropdown with translated options
         self.dropdown = ft.Dropdown(
@@ -199,7 +199,7 @@ class DropdownMeasurement:
             self.dropdown.color = self.text_color.get("TEXT", ft.Colors.BLACK)
             
             # Update translations
-            translated_hint_text = TranslationService.translate_from_dict("unit_items", "measurement", self.current_language_display)
+            translated_hint_text = translation_manager.get_translation("units", "unit_items", "measurement", self.current_language_display)
             self.dropdown.hint_text = translated_hint_text
 
             # Update styles

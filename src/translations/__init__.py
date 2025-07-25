@@ -18,7 +18,7 @@ from .modules.charts import CHARTS_TRANSLATIONS
 from .modules.alerts import ALERTS_TRANSLATIONS
 from .modules.popup_menu import POPUP_MENU_TRANSLATIONS
 from .modules.maps import maps_alert_dialog_items
-from .modules.units import unit_items
+from .modules.units import TRANSLATIONS as UNITS_TRANSLATIONS
 
 
 class TranslationManager:
@@ -46,7 +46,7 @@ class TranslationManager:
                 "alerts": ALERTS_TRANSLATIONS,
                 "popup_menu": POPUP_MENU_TRANSLATIONS,
                 "maps": {"maps_alert_dialog_items": maps_alert_dialog_items},
-                "units": {"unit_items": unit_items}
+                "units": UNITS_TRANSLATIONS
             })
             
             # Build unified translation cache for faster access
@@ -71,9 +71,18 @@ class TranslationManager:
                     for section_key, section_data in module_data.items():
                         self._translations_cache[lang_code][module_name][section_key] = {}
                         
-                        for text_key, text_data in section_data.items():
-                            if isinstance(text_data, dict) and lang_code in text_data:
-                                self._translations_cache[lang_code][module_name][section_key][text_key] = text_data[lang_code]
+                        # Handle different data structures
+                        if isinstance(section_data, dict):
+                            # Check if this is a language-first structure (like units module)
+                            if lang_code in section_data and isinstance(section_data[lang_code], dict):
+                                # Language-first: {"en": {"key1": "value1"}, "it": {"key1": "value1"}}
+                                for text_key, text_value in section_data[lang_code].items():
+                                    self._translations_cache[lang_code][module_name][section_key][text_key] = text_value
+                            else:
+                                # Key-first: {"key1": {"en": "value1", "it": "value1"}}
+                                for text_key, text_data in section_data.items():
+                                    if isinstance(text_data, dict) and lang_code in text_data:
+                                        self._translations_cache[lang_code][module_name][section_key][text_key] = text_data[lang_code]
                                 
         except Exception as e:
             logging.error(f"TranslationManager: Error building translation cache: {e}")

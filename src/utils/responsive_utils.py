@@ -33,61 +33,70 @@ class FontSizeConfig:
     
     # Configurazione base delle dimensioni font per dispositivi
     FONT_SIZES = {
+        #Modifica qui le varie grandezze
         DeviceType.MOBILE: {
-            "title_main": 20,       # Titolo principale dell'app
-            "title_section": 16,    # Titoli delle sezioni
+            "temperature": 60,        # Dimensione per la temperatura
+            "title_main": 18,       # Titolo principale dell'app
+            "title_section": 17,    # Titoli delle sezioni
+            "air_condition_title_card": 14,
             "title_card": 12,       # Titoli delle card
             "subtitle": 11,         # Sottotitoli
             "body_primary": 15,     # Testo principale
-            "body_secondary": 9,    # Testo secondario
-            "caption": 8,           # Didascalie
-            "label": 9,             # Etichette
             "button": 10,           # Testo pulsanti
+            "body_secondary": 9,    # Testo secondario
+            "label": 9,             # Etichette
+            "caption": 8,           # Didascalie
             "micro": 7,             # Testo molto piccolo
-            "tiny": 14,              # Testo molto piccolo
+            "tiny": 8,              # Testo molto piccolo
             "nano": 6               # Testo microscopico
         },
         DeviceType.TABLET: {
-            "title_main": 28,
-            "title_section": 22,
-            "title_card": 18,
-            "subtitle": 16,
-            "body_primary": 16,
-            "body_secondary": 14,
-            "caption": 12,
-            "label": 13,
-            "button": 14,
-            "micro": 11,
-            "tiny": 10,
-            "nano": 9
+            "temperature": 80,        # Dimensione per la temperatura
+            "title_main": 50,         # Titolo principale dell'app
+            "title_section": 22,      # Titoli delle sezioni
+            "air_condition_title_card": 18,
+            "title_card": 18,         # Titoli delle card
+            "subtitle": 12,           # Sottotitoli
+            "body_primary": 16,       # Testo principale
+            "button": 11,             # Testo pulsanti
+            "body_secondary": 14,     # Testo secondario
+            "label": 11,              # Etichette
+            "caption": 12,            # Didascalie
+            "micro": 11,              # Testo molto piccolo
+            "tiny": 10,               # Testo molto piccolo
+            "nano": 9                 # Testo microscopico
         },
         DeviceType.DESKTOP: {
-            "title_main": 32,
-            "title_section": 26,
-            "title_card": 20,
-            "subtitle": 18,
-            "body_primary": 16,
-            "body_secondary": 14,
-            "caption": 12,
-            "label": 13,
-            "button": 14,
-            "micro": 11,
-            "tiny": 10,
-            "nano": 9
+            "temperature": 70,       # Dimensione per la temperatura
+            "title_main": 22,         # Titolo principale dell'app
+            "title_section": 20,      # Titoli delle sezioni
+            "air_condition_title_card": 20,
+            "title_card": 20,         # Titoli delle card
+            "subtitle": 14,           # Sottotitoli
+            "body_primary": 16,       # Testo principale
+            "button": 14,             # Testo pulsanti
+            "body_secondary": 14,     # Testo secondario
+            "label": 13,              # Etichette
+            "caption": 12,            # Didascalie
+            "micro": 11,              # Testo molto piccolo
+            "tiny": 10,               # Testo molto piccolo
+            "nano": 9                 # Testo microscopico
         },
         DeviceType.LARGE_DESKTOP: {
-            "title_main": 36,
-            "title_section": 30,
-            "title_card": 24,
-            "subtitle": 20,
-            "body_primary": 18,
-            "body_secondary": 16,
-            "caption": 14,
-            "label": 15,
-            "button": 16,
-            "micro": 13,
-            "tiny": 12,
-            "nano": 11
+            "temperature": 120,       # Dimensione per la temperatura
+            "title_main": 36,         # Titolo principale dell'app
+            "title_section": 30,      # Titoli delle sezioni
+            "air_condition_title_card": 26,
+            "title_card": 24,         # Titoli delle card
+            "subtitle": 20,           # Sottotitoli
+            "body_primary": 18,       # Testo principale
+            "button": 16,             # Testo pulsanti
+            "body_secondary": 16,     # Testo secondario
+            "label": 15,              # Etichette
+            "caption": 14,            # Didascalie
+            "micro": 13,              # Testo molto piccolo
+            "tiny": 12,               # Testo molto piccolo
+            "nano": 11                # Testo microscopico
         }
     }
     

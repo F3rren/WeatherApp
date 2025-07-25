@@ -319,14 +319,14 @@ WEATHER_TRANSLATIONS = {
             "ja": "更新", "ko": "새로고침", "ar": "تحديث", "hi": "रीफ्रेश", "id": "Segarkan"
         },
         "test_real_data": {
-            "en": "Test with Real Data", "it": "Test con Dati Reali", "fr": "Test avec Données Réelles", "de": "Test mit echten Daten",
-            "es": "Probar con Datos Reales", "pt": "Testar com Dados Reais", "ru": "Тест с реальными данными", "zh": "使用真实数据测试",
-            "ja": "実データでテスト", "ko": "실제 데이터로 테스트", "ar": "اختبار بالبيانات الحقيقية", "hi": "वास्तविक डेटा के साथ परीक्षण", "id": "Uji dengan Data Nyata"
+            "en": "Refresh", "it": "Aggiorna", "fr": "Actualiser", "de": "Aktualisieren",
+            "es": "Actualizar", "pt": "Atualizar", "ru": "Обновить", "zh": "刷新",
+            "ja": "更新", "ko": "새로고침", "ar": "تحديث", "hi": "रीफ्रेश", "id": "Segarkan"
         },
         "clear_all": {
-            "en": "Clear All", "it": "Cancella Tutto", "fr": "Effacer Tout", "de": "Alle Löschen",
-            "es": "Borrar Todo", "pt": "Limpar Tudo", "ru": "Очистить всё", "zh": "清除全部",
-            "ja": "すべてクリア", "ko": "모두 지우기", "ar": "مسح الكل", "hi": "सभी साफ़ करें", "id": "Hapus Semua"
+            "en": "Clear", "it": "Cancella", "fr": "Effacer", "de": "Löschen",
+            "es": "Borrar", "pt": "Limpar", "ru": "Очистить", "zh": "清除",
+            "ja": "クリア", "ko": "지우기", "ar": "مسح", "hi": "साफ़ करें", "id": "Hapus"
         },
         "no_active_alerts": {
             "en": "No active alerts", "it": "Nessuna allerta attiva", "fr": "Aucune alerte active", "de": "Keine aktiven Warnungen",
@@ -343,10 +343,20 @@ WEATHER_TRANSLATIONS = {
             "es": "Medio", "pt": "Médio", "ru": "Средний", "zh": "中",
             "ja": "中", "ko": "보통", "ar": "متوسط", "hi": "मध्यम", "id": "Sedang"
         },
+        "alert_severity_moderate": {
+            "en": "Moderate", "it": "Moderato", "fr": "Modéré", "de": "Mäßig",
+            "es": "Moderado", "pt": "Moderado", "ru": "Умеренный", "zh": "中等",
+            "ja": "中程度", "ko": "보통", "ar": "متوسط", "hi": "मध्यम", "id": "Sedang"
+        },
         "alert_severity_low": {
             "en": "Low", "it": "Basso", "fr": "Faible", "de": "Niedrig",
             "es": "Bajo", "pt": "Baixo", "ru": "Низкий", "zh": "低",
             "ja": "低", "ko": "낮음", "ar": "منخفض", "hi": "कम", "id": "Rendah"
+        },
+        "alert_severity_extreme": {
+            "en": "Extreme", "it": "Estremo", "fr": "Extrême", "de": "Extrem",
+            "es": "Extremo", "pt": "Extremo", "ru": "Экстремальный", "zh": "极端",
+            "ja": "極端", "ko": "극한", "ar": "شديد", "hi": "अत्यधिक", "id": "Ekstrem"
         },
         "storm_alert": {
             "en": "Storm", "it": "Tempesta", "fr": "Tempête", "de": "Sturm",
@@ -452,6 +462,31 @@ WEATHER_TRANSLATIONS = {
             "en": "alerts", "it": "allerte", "fr": "alertes", "de": "Warnungen",
             "es": "alertas", "pt": "alertas", "ru": "предупреждений", "zh": "警报",
             "ja": "警報", "ko": "경보", "ar": "تنبيهات", "hi": "चेतावनी", "id": "peringatan"
+        },
+        "alert_acknowledged": {
+            "en": "Alert acknowledged", "it": "Allerta confermata", "fr": "Alerte confirmée", "de": "Warnung bestätigt",
+            "es": "Alerta confirmada", "pt": "Alerta confirmado", "ru": "Предупреждение подтверждено", "zh": "警报已确认",
+            "ja": "警報を確認しました", "ko": "경보 확인됨", "ar": "تم تأكيد التنبيه", "hi": "चेतावनी स्वीकार की गई", "id": "Peringatan dikonfirmasi"
+        },
+        "alerts_acknowledged": {
+            "en": "alerts acknowledged", "it": "allerte confermate", "fr": "alertes confirmées", "de": "Warnungen bestätigt",
+            "es": "alertas confirmadas", "pt": "alertas confirmados", "ru": "предупреждения подтверждены", "zh": "警报已确认",
+            "ja": "警報が確認されました", "ko": "경보 확인됨", "ar": "تم تأكيد التنبيهات", "hi": "चेतावनी स्वीकार की गईं", "id": "peringatan dikonfirmasi"
+        },
+        "error_test_data": {
+            "en": "Error testing with real data", "it": "Errore nel test con dati reali", "fr": "Erreur lors du test avec des données réelles", "de": "Fehler beim Testen mit echten Daten",
+            "es": "Error al probar con datos reales", "pt": "Erro ao testar com dados reais", "ru": "Ошибка при тестировании с реальными данными", "zh": "使用真实数据测试时出错",
+            "ja": "実データでのテスト中にエラーが発生しました", "ko": "실제 데이터로 테스트 중 오류", "ar": "خطأ في الاختبار بالبيانات الحقيقية", "hi": "वास्तविक डेटा से परीक्षण में त्रुटि", "id": "Error saat menguji dengan data nyata"
+        },
+        "no_weather_data": {
+            "en": "No weather data available", "it": "Nessun dato meteo disponibile", "fr": "Aucune donnée météo disponible", "de": "Keine Wetterdaten verfügbar",
+            "es": "No hay datos meteorológicos disponibles", "pt": "Nenhum dado meteorológico disponível", "ru": "Нет доступных данных о погоде", "zh": "无可用天气数据",
+            "ja": "天気データが利用できません", "ko": "날씨 데이터가 없습니다", "ar": "لا توجد بيانات طقس متاحة", "hi": "कोई मौसम डेटा उपलब्ध नहीं", "id": "Tidak ada data cuaca tersedia"
+        },
+        "error_real_data": {
+            "en": "Error with real data", "it": "Errore con dati reali", "fr": "Erreur avec des données réelles", "de": "Fehler mit echten Daten",
+            "es": "Error con datos reales", "pt": "Erro com dados reais", "ru": "Ошибка с реальными данными", "zh": "真实数据错误",
+            "ja": "実データでエラー", "ko": "실제 데이터 오류", "ar": "خطأ في البيانات الحقيقية", "hi": "वास्तविक डेटा में त्रुटि", "id": "Error dengan data nyata"
         }
     },
     
@@ -792,10 +827,11 @@ WEATHER_TRANSLATIONS = {
             "ja": "ロケーションマネージャー", "ko": "위치 관리자", "ar": "مدير المواقع", "hi": "स्थान प्रबंधक", "id": "Pengelola Lokasi"
         },
         "dialog_title": {
-            "en": "Professional Location Manager", "it": "Gestione Professionale Località", "fr": "Gestionnaire Professionnel de Lieux", "de": "Professionelle Standortverwaltung",
-            "es": "Gestor Profesional de Ubicaciones", "pt": "Gerenciador Profissional de Localização", "ru": "Профессиональный Менеджер Местоположений", "zh": "专业位置管理器",
-            "ja": "プロフェッショナルロケーションマネージャー", "ko": "전문 위치 관리자", "ar": "مدير المواقع المهني", "hi": "पेशेवर स्थान प्रबंधक", "id": "Pengelola Lokasi Profesional"
+            "en": "Location Management", "it": "Gestione Località", "fr": "Gestion des Lieux", "de": "Standortverwaltung",
+            "es": "Gestión de Ubicaciones", "pt": "Gerenciamento de Localização", "ru": "Управление местоположениями", "zh": "位置管理",
+            "ja": "ロケーション管理", "ko": "위치 관리", "ar": "إدارة المواقع", "hi": "स्थान प्रबंधन", "id": "Manajemen Lokasi"
         },
+
         "description": {
             "en": "Manage your saved weather locations with professional features", "it": "Gestisci le tue località meteo con funzionalità avanzate", 
             "fr": "Gérez vos lieux météo sauvegardés avec des fonctionnalités professionnelles", "de": "Verwalten Sie Ihre gespeicherten Wetterstandorte mit professionellen Funktionen",
@@ -874,16 +910,6 @@ WEATHER_TRANSLATIONS = {
             "en": "Statistics", "it": "Statistiche", "fr": "Statistiques", "de": "Statistiken",
             "es": "Estadísticas", "pt": "Estatísticas", "ru": "Статистика", "zh": "统计",
             "ja": "統計", "ko": "통계", "ar": "الإحصائيات", "hi": "आंकड़े", "id": "Statistik"
-        },
-        "export": {
-            "en": "Export", "it": "Esporta", "fr": "Exporter", "de": "Exportieren",
-            "es": "Exportar", "pt": "Exportar", "ru": "Экспорт", "zh": "导出",
-            "ja": "エクスポート", "ko": "내보내기", "ar": "تصدير", "hi": "निर्यात", "id": "Ekspor"
-        },
-        "import": {
-            "en": "Import", "it": "Importa", "fr": "Importer", "de": "Importieren",
-            "es": "Importar", "pt": "Importar", "ru": "Импорт", "zh": "导入",
-            "ja": "インポート", "ko": "가져오기", "ar": "استيراد", "hi": "आयात", "id": "Impor"
         },
         "enter_city_name": {
             "en": "Please enter at least the city name", "it": "Inserisci almeno il nome della città", "fr": "Veuillez entrer au moins le nom de la ville", "de": "Bitte geben Sie mindestens den Stadtnamen ein",

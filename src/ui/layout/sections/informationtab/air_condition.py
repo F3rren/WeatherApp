@@ -1,7 +1,7 @@
 import os
 import flet as ft
 from utils.translations_data import AIR_QUALITY_INDICATORS
-from utils.responsive_utils import ResponsiveComponentMixin, DeviceType
+from utils.responsive_utils import ResponsiveComponentMixin, DeviceType, ResponsiveTextFactory
 
 from services.ui.theme_handler import ThemeHandler
 from services.ui.translation_service import TranslationService
@@ -119,10 +119,11 @@ class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
             return ft.Column([
                 self._build_header(),
                 ft.Container(
-                    content=ft.Text(
-                        loading_text,
-                        color=self.theme_handler.get_text_color() if self.theme_handler else ft.Colors.BLACK,
-                        size=16
+                    content=ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=loading_text,
+                        text_type="body_primary",
+                        color=self.theme_handler.get_text_color() if self.theme_handler else ft.Colors.BLACK
                     ),
                     alignment=ft.alignment.center,
                     padding=ft.padding.all(20)
@@ -137,7 +138,7 @@ class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
         ], spacing=8)
     
     def _build_header(self):
-        """Builds a modern header for air condition section."""
+        """Builds a modern header for air condition section with improved text visibility."""
         # Use new modular translation system
         header_text = translation_manager.get_translation(
             'air_quality', 'general', 'air_conditions_title', 
@@ -152,17 +153,18 @@ class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
                 ft.Icon(
                     ft.Icons.AIR_OUTLINED,
                     color=ft.Colors.BLUE_400 if not is_dark else ft.Colors.BLUE_300,
-                    size=25
+                    size=28  # Slightly increased icon size
                 ),
-                ft.Container(width=5),  # Spacer
-                ft.Text(
-                    header_text,
-                    size=20,
-                    weight=ft.FontWeight.BOLD,
-                    color=self._current_text_color
+                ft.Container(width=8),  # Increased spacer
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=header_text,
+                    text_type="title_main",
+                    color=self._current_text_color,
+                    weight=ft.FontWeight.BOLD
                 ),
             ], alignment=ft.MainAxisAlignment.START),
-            padding=ft.padding.only(left=20, top=20, bottom=10)
+            padding=ft.padding.only(left=20, top=20, bottom=15)  # Increased bottom padding
         )
     
     def get_wind_direction_icon(self, wind_direction_deg):
@@ -245,13 +247,13 @@ class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
             value = self._data.get(key)
             if value is None:
                 continue
-            value_text = f"{value}{unit}"
+            value_text = f"{value} {unit}"
             wind_desc = None
             # Sigla direzione vento sempre visibile se disponibile
-            if key == "wind":
-                wind_direction = self._data.get("wind_direction")
-                if wind_direction is not None:
-                    wind_desc = self.get_wind_direction_icon(wind_direction)
+            # if key == "wind":
+            #     wind_direction = self._data.get("wind_direction")
+            #     if wind_direction is not None:
+            #         wind_desc = self.get_wind_direction_icon(wind_direction)
             if key == "visibility":
                 value_text = f"{value/1000:.1f} km"
             if key == "uv_index":
@@ -279,27 +281,21 @@ class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
         
         scheme = color_schemes.get(color_scheme, color_schemes["blue"])
         
-        # Responsive sizing
+        # Responsive sizing - improved for better text visibility
         if is_mobile:
             icon_size = 18
             icon_container_size = 36
-            value_text_size = 13
-            name_text_size = 10
-            quality_text_size = 9
-            card_height = 90
-            padding = 10
+            card_height = 110  # Increased height for better badge visibility
+            padding = 12  # Increased padding
             border_radius = 12
         else:
             icon_size = 20
             icon_container_size = 40
-            value_text_size = 14
-            name_text_size = 11
-            quality_text_size = 10
-            card_height = 100
-            padding = 14
+            card_height = 120  # Increased height for better badge visibility
+            padding = 16  # Increased padding
             border_radius = 14
         
-        # Icon container
+        # Icon container with improved shadow and positioning
         icon_container = ft.Container(
             content=ft.Icon(
                 icon,
@@ -313,9 +309,9 @@ class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
             alignment=ft.alignment.center,
             shadow=ft.BoxShadow(
                 spread_radius=0,
-                blur_radius=6,
-                color=ft.Colors.with_opacity(0.25, scheme["bg"]),
-                offset=ft.Offset(0, 2)
+                blur_radius=8,  # Increased shadow blur
+                color=ft.Colors.with_opacity(0.3, scheme["bg"]),  # Increased shadow opacity
+                offset=ft.Offset(0, 3)  # Slightly more vertical offset
             )
         )
         
@@ -465,26 +461,28 @@ class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
         quality_text, quality_color = get_quality_indicator(raw_value, metric_key)
         
         quality_badge = ft.Container(
-            content=ft.Text(
-                quality_text,
-                size=quality_text_size,
+            content=ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=quality_text,
+                text_type="subtitle",  # Changed from "subtitle" to "label" for better readability
                 color=ft.Colors.WHITE,
                 weight=ft.FontWeight.W_600
             ),
             bgcolor=quality_color,
-            padding=ft.padding.symmetric(horizontal=4 if is_mobile else 6, vertical=1 if is_mobile else 2),
-            border_radius=6 if is_mobile else 8,
+            padding=ft.padding.symmetric(horizontal=8 if is_mobile else 10, vertical=3 if is_mobile else 4),  # Increased padding
+            border_radius=8 if is_mobile else 10,  # Slightly increased border radius
             visible=bool(quality_text)
         )
         
         # Card content with improved mobile layout
         # Value row with wind direction info
         value_row = [
-            ft.Text(
-                value_text,
-                size=value_text_size,
-                weight=ft.FontWeight.BOLD,
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=value_text,
+                text_type="air_condition_title_card",
                 color=self._current_text_color,
+                weight=ft.FontWeight.BOLD,
                 max_lines=1,
                 overflow=ft.TextOverflow.ELLIPSIS
             )
@@ -501,9 +499,10 @@ class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
             ))
             # Wind direction text
             value_row.append(ft.Container(
-                content=ft.Text(
-                    wind_direction_text,
-                    size=11 if is_mobile else 13,
+                content=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=wind_direction_text,
+                    text_type="title_card",
                     color=ft.Colors.with_opacity(0.85, self._current_text_color),
                     weight=ft.FontWeight.W_700,
                     max_lines=1,
@@ -513,54 +512,59 @@ class AirConditionInfo(ft.Container, ResponsiveComponentMixin):
                 alignment=ft.alignment.center
             ))
 
-        # Mobile optimized layout
+        # Mobile optimized layout - improved text visibility
         if is_mobile:
             card_content = ft.Column([
                 # Top row: icon and value
                 ft.Row([
                     icon_container,
-                    ft.Container(width=6),
+                    ft.Container(width=1),  # Reduced spacing to bring text closer to icon
                     ft.Column([
                         ft.Row(value_row, spacing=3, alignment=ft.MainAxisAlignment.START),
-                        ft.Container(height=2),
-                        ft.Text(
-                            name,
-                            size=name_text_size,
+                        #ft.Container(height=3),  # Increased spacing
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=name,
+                            text_type="label",
                             color=ft.Colors.with_opacity(0.7, self._current_text_color),
-                            max_lines=1,
-                            overflow=ft.TextOverflow.ELLIPSIS
-                        )
-                    ], spacing=1, alignment=ft.MainAxisAlignment.CENTER, expand=True)
-                ], alignment=ft.MainAxisAlignment.START),
-                # Bottom: quality badge
-                ft.Container(height=2),
-                ft.Row([
-                    quality_badge
-                ], alignment=ft.MainAxisAlignment.CENTER) if quality_text else ft.Container(height=12)
-            ], spacing=3)
-        else:
-            # Desktop layout (original)
-            card_content = ft.Column([
-                ft.Row([
-                    icon_container,
-                    ft.Container(width=8),
-                    ft.Column([
-                        ft.Row(value_row, spacing=4, alignment=ft.MainAxisAlignment.START),
-                        ft.Text(
-                            name,
-                            size=name_text_size,
-                            color=ft.Colors.with_opacity(0.7, self._current_text_color),
-                            max_lines=1,
-                            overflow=ft.TextOverflow.ELLIPSIS
+                            max_lines=2,  # Allow text to wrap to 2 lines
+                            overflow=ft.TextOverflow.ELLIPSIS,
+                            text_align=ft.TextAlign.LEFT  # Center align the title
                         )
                     ], spacing=2, alignment=ft.MainAxisAlignment.CENTER, expand=True)
                 ], alignment=ft.MainAxisAlignment.START),
-                ft.Container(height=4),  # Spacer
+                # Bottom: quality badge with more space
+                ft.Container(height=4),  # Increased spacing
+                ft.Row([
+                    quality_badge
+                ], alignment=ft.MainAxisAlignment.CENTER) if quality_text else ft.Container(height=16)
+            ], spacing=4)  # Increased overall spacing
+        else:
+            # Desktop layout - improved text visibility
+            card_content = ft.Column([
+                ft.Row([
+                    icon_container,
+                    ft.Container(width=6),  # Reduced spacing to bring text closer to icon
+                    ft.Column([
+                        ft.Row(value_row, spacing=4, alignment=ft.MainAxisAlignment.START),
+                        ft.Container(height=3),  # Increased spacing
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=name,
+                            text_type="button",
+                            color=ft.Colors.with_opacity(0.7, self._current_text_color),
+                            max_lines=2,  # Allow text to wrap to 2 lines
+                            overflow=ft.TextOverflow.ELLIPSIS,
+                            text_align=ft.TextAlign.LEFT  # Left align for desktop
+                        )
+                    ], spacing=3, alignment=ft.MainAxisAlignment.CENTER, expand=True)
+                ], alignment=ft.MainAxisAlignment.START),
+                ft.Container(height=6),  # Increased spacer
                 ft.Row([
                     ft.Container(expand=True),
                     quality_badge
-                ], alignment=ft.MainAxisAlignment.END) if quality_text else ft.Container(height=18)
-            ], spacing=4)
+                ], alignment=ft.MainAxisAlignment.END) if quality_text else ft.Container(height=22)  # Increased empty space
+            ], spacing=5)  # Increased overall spacing
         
         # Card container
         is_dark = self._get_theme_mode()

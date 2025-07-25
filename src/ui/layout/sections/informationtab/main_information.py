@@ -211,7 +211,7 @@ class MainWeatherInfo(ft.Container):
                     ResponsiveTextFactory.create_adaptive_text(
                         page=self.page,
                         text=f"{self.city_data.split(', ')[0]}",
-                        text_type="title_secondary",
+                        text_type="title_section",
                         color=self._current_text_color,
                         weight="w500"
                     ),
@@ -219,7 +219,7 @@ class MainWeatherInfo(ft.Container):
                         content=ResponsiveTextFactory.create_adaptive_text(
                             page=self.page,
                             text=self.location_data,
-                            text_type="body_secondary",
+                            text_type="title_section",
                             color=ft.Colors.with_opacity(0.7, self._current_text_color),
                             weight="w400"
                         ),
@@ -237,7 +237,7 @@ class MainWeatherInfo(ft.Container):
                         ResponsiveTextFactory.create_adaptive_text(
                             page=self.page,
                             text=str(self.temperature_data),
-                            text_type="title",  # Usa il tipo più grande per la temperatura
+                            text_type="temperature",  # Usa il tipo più grande per la temperatura
                             weight="w200",
                             color=self._current_text_color,
                         ),
@@ -245,7 +245,7 @@ class MainWeatherInfo(ft.Container):
                             content=ResponsiveTextFactory.create_adaptive_text(
                                 page=self.page,
                                 text=unit_symbol,
-                                text_type="title_secondary",
+                                text_type="title_main",
                                 weight="w300",
                                 color=ft.Colors.with_opacity(0.8, self._current_text_color),
                             ),
@@ -287,7 +287,7 @@ class MainWeatherInfo(ft.Container):
                         content=ResponsiveTextFactory.create_adaptive_text(
                             page=self.page,
                             text=description_line,
-                            text_type="body_primary",
+                            text_type="title_section",
                             color=ft.Colors.with_opacity(0.85, self._current_text_color),
                             weight="w400"
                         ),
@@ -300,21 +300,21 @@ class MainWeatherInfo(ft.Container):
                             content=ft.Row([
                                 ft.Icon(
                                     ft.Icons.KEYBOARD_ARROW_UP,
-                                    size=18,
+                                    size=25,
                                     color=ft.Colors.RED_400,
                                 ),
                                 ft.Column([
                                     ResponsiveTextFactory.create_adaptive_text(
                                         page=self.page,
                                         text=translation_manager.get_translation('weather', 'main_information_items', 'high', language=self.current_language).upper(),
-                                        text_type="caption",
+                                        text_type="title_card",
                                         color=ft.Colors.with_opacity(0.6, self._current_text_color),
                                         weight="w500"
                                     ),
                                     ResponsiveTextFactory.create_adaptive_text(
                                         page=self.page,
                                         text=f"{self.temp_max}{unit_symbol}",
-                                        text_type="body_secondary",
+                                        text_type="title_section",
                                         color=self._current_text_color,
                                         weight="w600"
                                     ),
@@ -330,21 +330,21 @@ class MainWeatherInfo(ft.Container):
                             content=ft.Row([
                                 ft.Icon(
                                     ft.Icons.KEYBOARD_ARROW_DOWN,
-                                    size=18,
+                                    size=25,
                                     color=ft.Colors.BLUE_400,
                                 ),
                                 ft.Column([
                                     ResponsiveTextFactory.create_adaptive_text(
                                         page=self.page,
                                         text=translation_manager.get_translation('weather', 'main_information_items', 'low', language=self.current_language).upper(),
-                                        text_type="caption",
+                                        text_type="title_card",
                                         color=ft.Colors.with_opacity(0.6, self._current_text_color),
                                         weight="w500"
                                     ),
                                     ResponsiveTextFactory.create_adaptive_text(
                                         page=self.page,
                                         text=f"{self.temp_min}{unit_symbol}",
-                                        text_type="body_secondary",
+                                        text_type="title_section",
                                         color=self._current_text_color,
                                         weight="w600"
                                     ),

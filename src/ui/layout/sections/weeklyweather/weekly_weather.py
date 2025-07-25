@@ -368,7 +368,7 @@ class WeeklyForecastDisplay(ft.Container):
                         ResponsiveTextFactory.create_adaptive_text(
                             page=self.page,
                             text=f"{day_data['rain_probability']}%",
-                            text_type="tiny",
+                            text_type="subtitle",
                             color=ft.Colors.BLUE_400,
                             weight="w500"
                         )
@@ -387,7 +387,7 @@ class WeeklyForecastDisplay(ft.Container):
                     ResponsiveTextFactory.create_adaptive_text(
                         page=self.page,
                         text=f"{day_data.get('humidity', 0)}%",
-                        text_type="tiny",
+                        text_type="subtitle",
                         color=ft.Colors.CYAN_400,
                         weight="w500"
                     )
@@ -407,7 +407,7 @@ class WeeklyForecastDisplay(ft.Container):
                     ResponsiveTextFactory.create_adaptive_text(
                         page=self.page,
                         text=f"{day_data.get('wind_speed', 0)}{wind_unit}",
-                        text_type="tiny",
+                        text_type="subtitle",
                         color=ft.Colors.GREEN_400,
                         weight="w500"
                     )

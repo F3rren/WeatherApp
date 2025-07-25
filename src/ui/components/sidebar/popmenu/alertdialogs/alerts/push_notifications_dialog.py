@@ -6,6 +6,7 @@ Dialog semplificato per gestire le notifiche push.
 
 import flet as ft
 from translations import translation_manager
+from utils.responsive_utils import ResponsiveTextFactory
 
 
 class PushNotificationsDialog:
@@ -95,16 +96,32 @@ class PushNotificationsDialog:
         # Create scrollable content
         scrollable_content = ft.Column([
             ft.Icon(ft.Icons.NOTIFICATIONS, size=24, color=self.colors["accent"]),
-            ft.Text(f"{self._get_translation('title')}", size=18, weight=ft.FontWeight.BOLD,
-                   text_align=ft.TextAlign.CENTER, color=self.colors["text"]),
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=f"{self._get_translation('title')}",
+                text_type="title_small",
+                color=self.colors["text"],
+                weight=ft.FontWeight.BOLD,
+                text_align=ft.TextAlign.CENTER
+            ),
             ft.Divider(color=ft.Colors.with_opacity(0.3, self.colors["text"])),
-            ft.Text(self._get_translation('description'), size=14, color=self.colors["text_secondary"], 
-                   text_align=ft.TextAlign.CENTER),
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=self._get_translation('description'),
+                text_type="body_primary",
+                color=self.colors["text_secondary"],
+                text_align=ft.TextAlign.CENTER
+            ),
             ft.Container(height=15),
             
             # Notification settings
-            ft.Text(self._get_translation('notification_types'), size=16, weight=ft.FontWeight.BOLD, 
-                   color=self.colors["text"]),
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=self._get_translation('notification_types'),
+                text_type="title_small",
+                color=self.colors["text"],
+                weight=ft.FontWeight.BOLD
+            ),
             ft.Container(height=5),
             
             self.create_notification_settings(),
@@ -114,8 +131,13 @@ class PushNotificationsDialog:
             
             # Time settings
             ft.Row([
-                ft.Text(self._get_translation('notification_time'), size=14, weight=ft.FontWeight.BOLD, 
-                       color=self.colors["text"]),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self._get_translation('notification_time'),
+                    text_type="body_primary",
+                    color=self.colors["text"],
+                    weight=ft.FontWeight.BOLD
+                ),
                 ft.Dropdown(
                     width=120,
                     options=[
@@ -138,9 +160,12 @@ class PushNotificationsDialog:
             ft.Row([
                 ft.ElevatedButton(
                     icon=ft.Icons.SAVE,
-                    text=f"{self._get_translation('save_settings')}", on_click=lambda _: self.save_settings(),
-                    bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
-                    width=200, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                    text=f"{self._get_translation('save_settings')}", 
+                    on_click=lambda _: self.save_settings(),
+                    bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), 
+                    color=self.colors["accent"],
+                    width=200, 
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
                 )
             ], alignment=ft.MainAxisAlignment.CENTER)
             
@@ -157,7 +182,13 @@ class PushNotificationsDialog:
             modal=False, scrollable=True,
             title=ft.Row([
                 ft.Icon(ft.Icons.NOTIFICATIONS, color=self.colors["accent"], size=24),
-                ft.Text(self._get_translation('dialog_title'), weight=ft.FontWeight.BOLD, color=self.colors["text"], size=18)
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self._get_translation('dialog_title'),
+                    text_type="title_small",
+                    color=self.colors["text"],
+                    weight=ft.FontWeight.BOLD
+                )
             ], spacing=10),
             content=content,
             actions=[ft.FilledButton(
@@ -165,7 +196,8 @@ class PushNotificationsDialog:
                 style=ft.ButtonStyle(bgcolor=self.colors["accent"], color=ft.Colors.WHITE,
                                    shape=ft.RoundedRectangleBorder(radius=8))
             )],
-            actions_alignment=ft.MainAxisAlignment.END, bgcolor=self.colors["bg"],
+            actions_alignment=ft.MainAxisAlignment.END,
+            bgcolor=self.colors["bg"],
             title_text_style=ft.TextStyle(size=18, weight=ft.FontWeight.BOLD, color=self.colors["text"]),
             content_text_style=ft.TextStyle(size=14, color=self.colors["text"]),
             inset_padding=ft.padding.all(20)
@@ -232,7 +264,12 @@ class PushNotificationsDialog:
             )
             
             self.page.snack_bar = ft.SnackBar(
-                content=ft.Text(message),
+                content=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=message,
+                    text_type="body_primary",
+                    color=ft.Colors.WHITE
+                ),
                 bgcolor=self.colors["accent"]
             )
             self.page.snack_bar.open = True

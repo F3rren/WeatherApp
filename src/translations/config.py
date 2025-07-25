@@ -60,6 +60,7 @@ MODULE_PRIORITY = [
     'air_quality',
     'settings',
     'charts',
+    'units',         # Unit system translations
     'alerts'         # Lowest priority
 ]
 
@@ -88,6 +89,7 @@ VALIDATION_RULES = {
         'air_quality': 80,
         'settings': 60,
         'charts': 70,
+        'units': 40,                    # Unit translations are typically short
         'alerts': 150
     }
 }

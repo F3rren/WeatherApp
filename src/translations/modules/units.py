@@ -63,7 +63,7 @@ unit_items = {
         "measurement": "측정",
         "language": "언어"
     },
-    'zh': {
+    'zh_cn': {
         "unit_metric": "公制 (°C)",
         "unit_imperial": "英制 (°F)",
         "unit_standard": "标准 (K)",
@@ -91,4 +91,8 @@ unit_items = {
         "measurement": "القياس",
         "language": "اللغة"
     }
+}
+
+TRANSLATIONS = {
+    "unit_items": unit_items
 }

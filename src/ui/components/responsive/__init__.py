@@ -1,3 +1,0 @@
-"""
-Responsive UI components
-"""

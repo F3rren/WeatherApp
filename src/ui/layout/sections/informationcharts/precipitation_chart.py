@@ -12,6 +12,7 @@ from services.api.api_service import ApiService
 from translations import translation_manager
 from services.ui.translation_service import TranslationService  # For unit symbols
 from services.ui.theme_handler import ThemeHandler
+from utils.responsive_utils import ResponsiveTextFactory
 
 
 class PrecipitationChartDisplay(ft.Container):
@@ -132,10 +133,11 @@ class PrecipitationChartDisplay(ft.Container):
         try:
             self._precipitation_data = []
             self.content = ft.Container(
-                content=ft.Text(
-                    "Error loading precipitation chart",
+                content=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="Error loading precipitation chart",
+                    text_type="body_primary",
                     color=ft.Colors.RED_400,
-                    size=14,
                     weight=ft.FontWeight.W_500
                 ),
                 alignment=ft.alignment.center,
@@ -219,12 +221,12 @@ class PrecipitationChartDisplay(ft.Container):
                     size=25
                 ),
                 ft.Container(width=5),  # Spacer
-                ft.Text(
-                    header_text,
-                    size=20,
-                    weight=ft.FontWeight.BOLD,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=header_text,
+                    text_type="title_main",
                     color=self._current_text_color,
-                    font_family="system-ui",
+                    weight=ft.FontWeight.BOLD
                 ),
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.only(left=20, top=16, bottom=12)
@@ -249,9 +251,10 @@ class PrecipitationChartDisplay(ft.Container):
             content=ft.Column([
                 ft.ProgressRing(width=50, height=50),
                 ft.Container(height=10),
-                ft.Text(
-                    loading_text,
-                    size=14,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=loading_text,
+                    text_type="body_primary",
                     color=ft.Colors.GREY_600
                 )
             ], 
@@ -282,19 +285,21 @@ class PrecipitationChartDisplay(ft.Container):
         header_row = ft.DataRow(
             cells=[
                 ft.DataCell(
-                    ft.Text(
-                        time_label,
-                        weight=ft.FontWeight.BOLD,
-                        size=11,
-                        color=ft.Colors.with_opacity(0.7, text_color)
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=time_label,
+                        text_type="label_small",
+                        color=ft.Colors.with_opacity(0.7, text_color),
+                        weight=ft.FontWeight.BOLD
                     )
                 ),
                 ft.DataCell(
-                    ft.Text(
-                        precip_label,
-                        weight=ft.FontWeight.BOLD,
-                        size=11,
-                        color=ft.Colors.with_opacity(0.7, text_color)
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=precip_label,
+                        text_type="label_small",
+                        color=ft.Colors.with_opacity(0.7, text_color),
+                        weight=ft.FontWeight.BOLD
                     )
                 )
             ],
@@ -330,25 +335,28 @@ class PrecipitationChartDisplay(ft.Container):
             data_row = ft.DataRow(
                 cells=[
                     ft.DataCell(
-                        ft.Text(
-                            time_str,
-                            size=12,
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=time_str,
+                            text_type="body_primary",
                             color=text_color
                         )
                     ),
                     ft.DataCell(
                         ft.Row([
-                            ft.Text(
-                                f"{precip:.1f} mm",
-                                size=12,
-                                weight=ft.FontWeight.W_500,
-                                color=text_color
+                            ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=f"{precip:.1f} mm",
+                                text_type="body_primary",
+                                color=text_color,
+                                weight=ft.FontWeight.W_500
                             ),
                             ft.Container(width=4),  # Small spacer
                             ft.Container(
-                                ft.Text(
-                                    intensity,
-                                    size=10,
+                                ResponsiveTextFactory.create_adaptive_text(
+                                    page=self.page,
+                                    text=intensity,
+                                    text_type="label_small",
                                     color=ft.Colors.WHITE
                                 ),
                                 padding=ft.padding.symmetric(horizontal=6, vertical=2),
@@ -397,9 +405,10 @@ class PrecipitationChartDisplay(ft.Container):
                     color=accent_color
                 ),
                 ft.Container(width=8),
-                ft.Text(
-                    next_hours_label,
-                    size=12,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=next_hours_label,
+                    text_type="body_primary",
                     color=ft.Colors.with_opacity(0.8, text_color),
                     weight=ft.FontWeight.W_500
                 )
@@ -434,15 +443,21 @@ class PrecipitationChartDisplay(ft.Container):
                 content=ft.Column([
                     ft.Row([
                         ft.Icon(ft.Icons.WATER_DROP, size=14, color=ft.Colors.BLUE_600),
-                        ft.Text(f"{total_precipitation:.1f} mm", 
-                               size=13, 
-                               weight=ft.FontWeight.W_600, 
-                               color=text_color)
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=f"{total_precipitation:.1f} mm",
+                            text_type="subtitle",
+                            color=text_color,
+                            weight=ft.FontWeight.W_600
+                        )
                     ], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
-                    ft.Text(total_label, 
-                           size=9, 
-                           color=ft.Colors.with_opacity(0.65, text_color),
-                           text_align=ft.TextAlign.CENTER)
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=total_label,
+                        text_type="micro",
+                        color=ft.Colors.with_opacity(0.65, text_color),
+                        text_align=ft.TextAlign.CENTER
+                    )
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=3),
                 padding=ft.padding.symmetric(horizontal=10, vertical=7),
                 bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.BLUE_600),
@@ -457,15 +472,21 @@ class PrecipitationChartDisplay(ft.Container):
                 content=ft.Column([
                     ft.Row([
                         ft.Icon(ft.Icons.TRENDING_UP, size=14, color=ft.Colors.ORANGE_600),
-                        ft.Text(f"{max_intensity:.1f} mm/h", 
-                               size=13, 
-                               weight=ft.FontWeight.W_600, 
-                               color=text_color)
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=f"{max_intensity:.1f} mm/h",
+                            text_type="subtitle",
+                            color=text_color,
+                            weight=ft.FontWeight.W_600
+                        )
                     ], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
-                    ft.Text(max_label, 
-                           size=9, 
-                           color=ft.Colors.with_opacity(0.65, text_color),
-                           text_align=ft.TextAlign.CENTER)
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=max_label,
+                        text_type="micro",
+                        color=ft.Colors.with_opacity(0.65, text_color),
+                        text_align=ft.TextAlign.CENTER
+                    )
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=3),
                 padding=ft.padding.symmetric(horizontal=10, vertical=7),
                 bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.ORANGE_600),
@@ -480,15 +501,21 @@ class PrecipitationChartDisplay(ft.Container):
                 content=ft.Column([
                     ft.Row([
                         ft.Icon(ft.Icons.ACCESS_TIME, size=14, color=ft.Colors.GREEN_600),
-                        ft.Text(f"{hours_with_rain}h", 
-                               size=13, 
-                               weight=ft.FontWeight.W_600, 
-                               color=text_color)
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=f"{hours_with_rain} h",
+                            text_type="subtitle",
+                            color=text_color,
+                            weight=ft.FontWeight.W_600
+                        )
                     ], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
-                    ft.Text(hours_label, 
-                           size=9, 
-                           color=ft.Colors.with_opacity(0.65, text_color),
-                           text_align=ft.TextAlign.CENTER)
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=hours_label,
+                        text_type="micro",
+                        color=ft.Colors.with_opacity(0.65, text_color),
+                        text_align=ft.TextAlign.CENTER
+                    )
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=3),
                 padding=ft.padding.symmetric(horizontal=10, vertical=7),
                 bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.GREEN_600),
@@ -518,16 +545,18 @@ class PrecipitationChartDisplay(ft.Container):
         return ft.Container(
             content=ft.Column([
                 ft.Icon(ft.Icons.WB_SUNNY_OUTLINED, size=48, color=ft.Colors.BLUE_300),
-                ft.Text(
-                    no_data_text,
-                    size=14,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=no_data_text,
+                    text_type="body_primary",
                     color=ft.Colors.with_opacity(0.7, self._current_text_color),
                     text_align=ft.TextAlign.CENTER
                 ),
                 ft.Container(height=8),
-                ft.Text(
-                    "☀️ Tempo sereno previsto",
-                    size=12,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="☀️ Tempo sereno previsto",
+                    text_type="body_primary",
                     color=ft.Colors.with_opacity(0.6, self._current_text_color),
                     text_align=ft.TextAlign.CENTER
                 )
@@ -559,17 +588,19 @@ class PrecipitationChartDisplay(ft.Container):
                     color=ft.Colors.AMBER_400
                 ),
                 ft.Container(height=16),
-                ft.Text(
-                    no_significant_rain,
-                    size=16,
-                    weight=ft.FontWeight.W_500,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=no_significant_rain,
+                    text_type="title_small",
                     color=text_color,
+                    weight=ft.FontWeight.W_500,
                     text_align=ft.TextAlign.CENTER
                 ),
                 ft.Container(height=8),
-                ft.Text(
-                    "☀️ Tempo sereno per le prossime 24 ore",
-                    size=13,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="Tempo sereno per le prossime 24 ore",
+                    text_type="body_primary",
                     color=ft.Colors.with_opacity(0.7, text_color),
                     text_align=ft.TextAlign.CENTER
                 ),
@@ -577,9 +608,10 @@ class PrecipitationChartDisplay(ft.Container):
                 ft.Container(
                     content=ft.Row([
                         ft.Icon(ft.Icons.UMBRELLA, size=20, color=ft.Colors.BLUE_300),
-                        ft.Text(
-                            "Probabilità di pioggia < 20%",
-                            size=12,
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text="Probabilità di pioggia < 20%",
+                            text_type="body_primary",
                             color=ft.Colors.with_opacity(0.8, text_color)
                         )
                     ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),

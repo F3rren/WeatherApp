@@ -6,6 +6,7 @@ from services.api.api_service import ApiService, load_dotenv
 from services.ui.translation_service import TranslationService
 from services.ui.theme_handler import ThemeHandler
 from translations import translation_manager
+from utils.responsive_utils import ResponsiveTextFactory
 
 from utils.translations_data import TRANSLATIONS
 
@@ -81,10 +82,11 @@ class AirPollutionDisplay(ft.Container):
             return ft.Column([
                 self._build_header(),
                 ft.Container(
-                    content=ft.Text(
-                        loading_text,
-                        color=self._current_text_color,
-                        size=14
+                    content=ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=loading_text,
+                        text_type="body_primary",
+                        color=self._current_text_color
                     ),
                     alignment=ft.alignment.center,
                     padding=ft.padding.all(20)
@@ -164,11 +166,12 @@ class AirPollutionDisplay(ft.Container):
                     size=25
                 ),
                 ft.Container(width=5),  # Spacer
-                ft.Text(
-                    header_text,
-                    size=20,
-                    weight=ft.FontWeight.BOLD,
-                    color=self._current_text_color
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=header_text,
+                    text_type="title_main",
+                    color=self._current_text_color,
+                    weight=ft.FontWeight.BOLD
                 ),
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.only(left=20, top=20, bottom=10)
@@ -207,18 +210,20 @@ class AirPollutionDisplay(ft.Container):
                         size=24
                     ),
                     ft.Container(width=12),
-                    ft.Text(
-                        header_text,
-                        size=20,
-                        weight=ft.FontWeight.BOLD,
-                        color=self._current_text_color
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=header_text,
+                        text_type="title_section",
+                        color=self._current_text_color,
+                        weight=ft.FontWeight.BOLD
                     ),
                     ft.Container(
-                    content=ft.Text(
-                        aqi_desc,
-                        size=12,
-                        weight=ft.FontWeight.W_600,
-                        color=ft.Colors.WHITE if aqi > 2 else ft.Colors.BLACK
+                    content=ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=aqi_desc,
+                        text_type="body_primary",
+                        color=ft.Colors.WHITE if aqi > 2 else ft.Colors.BLACK,
+                        weight=ft.FontWeight.W_600
                     ),
                     bgcolor=aqi_color,
                     border_radius=12,
@@ -288,8 +293,8 @@ class AirPollutionDisplay(ft.Container):
                 color=ft.Colors.WHITE,
                 size=20
             ),
-            width=40,
-            height=40,
+            width=50,
+            height=50,
             bgcolor=scheme["bg"],
             border_radius=20,
             alignment=ft.alignment.center,
@@ -423,9 +428,10 @@ class AirPollutionDisplay(ft.Container):
         quality_text, quality_color = get_quality_indicator(value, symbol.lower().replace(".", "_"))
         
         quality_badge = ft.Container(
-            content=ft.Text(
-                quality_text,
-                size=10,
+            content=ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=quality_text,
+                text_type="label_small",
                 color=ft.Colors.WHITE,
                 weight=ft.FontWeight.W_600
             ),
@@ -434,44 +440,50 @@ class AirPollutionDisplay(ft.Container):
             border_radius=8
         )
         
-        # Card content
+        # Card content with improved spacing
         card_content = ft.Column([
             ft.Row([
                 icon_container,
-                ft.Container(width=8),
+                ft.Container(width=12),  # Increased spacing between icon and text
                 ft.Column([
-                    ft.Text(
-                        f"{value:.1f}",
-                        size=16,
-                        weight=ft.FontWeight.BOLD,
-                        color=self._current_text_color
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=f"{value:.1f}",
+                        text_type="title_small",
+                        color=self._current_text_color,
+                        weight=ft.FontWeight.BOLD
                     ),
-                    ft.Text(
-                        "μg/m³",
-                        size=10,
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text="μg/m³",
+                        text_type="label_small",
                         color=ft.Colors.with_opacity(0.7, self._current_text_color)
                     )
-                ], spacing=0, alignment=ft.MainAxisAlignment.CENTER)
+                ], spacing=2, alignment=ft.MainAxisAlignment.CENTER)  # Added spacing between value and unit
             ], alignment=ft.MainAxisAlignment.START),
-            ft.Container(height=4),  # Spacer
+            ft.Container(height=8),  # Increased spacer for better separation
             ft.Row([
-                ft.Text(
-                    f"{symbol}:",
-                    size=12,
-                    weight=ft.FontWeight.W_600,
-                    color=self._current_text_color
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"{symbol}:",
+                    text_type="body_primary",
+                    color=self._current_text_color,
+                    weight=ft.FontWeight.W_600
                 ),
                 ft.Container(expand=True),
                 quality_badge
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-            ft.Text(
-                name,
-                size=10,
+            ft.Container(height=6),  # Added spacer before pollutant name
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=name,
+                text_type="label_small",
                 color=ft.Colors.with_opacity(0.8, self._current_text_color),
                 max_lines=2,
-                overflow=ft.TextOverflow.ELLIPSIS
+                overflow=ft.TextOverflow.ELLIPSIS,
+                text_align=ft.TextAlign.CENTER  # Center the pollutant name
             )
-        ], spacing=4)
+        ], spacing=0)  # Use manual spacing with containers instead
         
         # Card container
         # Safe theme detection
@@ -483,74 +495,57 @@ class AirPollutionDisplay(ft.Container):
         return ft.Container(
             content=card_content,
             width=None,  # Let container expand based on available space
-            height=110,   # Slightly reduced height for better grid layout
-            padding=ft.padding.all(14),
-            border_radius=14,
-            bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.WHITE if not is_dark else ft.Colors.BLACK),
+            height=150,   # Increased height for better data distribution
+            padding=ft.padding.all(18),  # Increased padding for more breathing room
+            border_radius=16,  # Slightly more rounded corners
+            bgcolor=ft.Colors.with_opacity(0.05, ft.Colors.WHITE if not is_dark else ft.Colors.BLACK),  # Slightly more visible background
             border=ft.border.all(
                 1, 
-                ft.Colors.with_opacity(0.1, ft.Colors.GREY_400 if not is_dark else ft.Colors.GREY_600)
+                ft.Colors.with_opacity(0.12, ft.Colors.GREY_400 if not is_dark else ft.Colors.GREY_600)  # More visible border
             ),
             shadow=ft.BoxShadow(
                 spread_radius=0,
-                blur_radius=8,
-                color=ft.Colors.with_opacity(0.08, ft.Colors.BLACK),
-                offset=ft.Offset(0, 2)
+                blur_radius=12,  # Increased shadow blur for more depth
+                color=ft.Colors.with_opacity(0.1, ft.Colors.BLACK),  # Slightly more prominent shadow
+                offset=ft.Offset(0, 4)  # Increased shadow offset
             ),
             animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
             expand=True  # Allow card to expand within its container
         )
     
     def _build_responsive_grid(self, cards):
-        """Builds a responsive grid layout for pollutant cards (2x4 vertical)."""
+        """Builds a vertical layout with all cards stacked one below the other."""
         if not cards:
             return ft.Container()
         
-        # Ensure we always have 8 cards (add empty ones if needed)
+        # Ensure we have exactly 8 cards
         while len(cards) < 8:
             cards.append(ft.Container())  # Empty placeholder
-        
-        # Take only first 8 cards to ensure 2x4 grid
         cards = cards[:8]
         
-        # Build grid layout with 2 columns (4 rows x 2 columns)
-        grid_rows = []
-        
-        for i in range(0, len(cards), 2):
-            row_cards = cards[i:i+2]
-            
-            # Create containers with equal width
-            row_controls = []
-            for card in row_cards:
-                row_controls.append(
-                    ft.Container(
-                        content=card,
-                        expand=True,
-                        alignment=ft.alignment.center
-                    )
+        # Create vertical layout - each card in its own row
+        card_containers = []
+        for card in cards:
+            card_containers.append(
+                ft.Container(
+                    content=card,
+                    expand=True,
+                    alignment=ft.alignment.center
                 )
-            
-            # Ensure we always have 2 cards per row (add empty container if needed)
-            while len(row_controls) < 2:
-                row_controls.append(ft.Container(expand=True))
-            
-            row = ft.Row(
-                controls=row_controls,
-                alignment=ft.MainAxisAlignment.SPACE_EVENLY,
-                spacing=16
             )
-            grid_rows.append(row)
         
         return ft.Container(
             content=ft.Column(
-                controls=grid_rows,
-                spacing=14,
-                alignment=ft.MainAxisAlignment.START
+                controls=card_containers,
+                spacing=16,  # Spacing between each card vertically
+                alignment=ft.MainAxisAlignment.START,
+                expand=True
             ),
             padding=ft.padding.symmetric(
                 horizontal=20,
-                vertical=10
-            )
+                vertical=12
+            ),
+            expand=True
         )
 
 

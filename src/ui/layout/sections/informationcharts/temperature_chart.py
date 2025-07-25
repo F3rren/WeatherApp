@@ -5,6 +5,7 @@ import math
 from translations import translation_manager
 from services.ui.translation_service import TranslationService  # For unit symbols
 from services.ui.theme_handler import ThemeHandler
+from utils.responsive_utils import ResponsiveTextFactory
 import logging
 
 class TemperatureChartDisplay(ft.Container):
@@ -164,11 +165,12 @@ class TemperatureChartDisplay(ft.Container):
                     size=25
                 ),
                 ft.Container(width=5),
-                ft.Text(
-                    complete_title,
-                    size=20,
-                    weight=ft.FontWeight.BOLD,
-                    color=self.current_text_color
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=complete_title,
+                    text_type="title_main",
+                    color=self.current_text_color,
+                    weight=ft.FontWeight.BOLD
                 ),
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.only(left=20, top=20, bottom=10)
@@ -227,9 +229,10 @@ class TemperatureChartDisplay(ft.Container):
             x_labels.append(
                 ft.ChartAxisLabel(
                     value=i,
-                    label=ft.Text(
-                        day_display_name,
-                        size=14,
+                    label=ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=day_display_name,
+                        text_type="label",
                         color=self.current_text_color,
                         weight=ft.FontWeight.W_500
                     )
@@ -267,9 +270,10 @@ class TemperatureChartDisplay(ft.Container):
                 labels=[
                     ft.ChartAxisLabel(
                         value=y,
-                        label=ft.Text(
-                            str(int(y)),
-                            size=14,
+                        label=ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=str(int(y)),
+                            text_type="label",
                             color=self.current_text_color,
                             weight=ft.FontWeight.W_500
                         )
@@ -312,7 +316,13 @@ class TemperatureChartDisplay(ft.Container):
             content=ft.Row([
                 ft.Container(width=16, height=4, bgcolor=max_color, border_radius=2),
                 ft.Container(width=8),
-                ft.Text(legend_max_text, color=self.current_text_color, size=14, weight=ft.FontWeight.W_500)
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=legend_max_text,
+                    text_type="label",
+                    color=self.current_text_color,
+                    weight=ft.FontWeight.W_500
+                )
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.symmetric(horizontal=12, vertical=6),
             border_radius=8,
@@ -322,7 +332,13 @@ class TemperatureChartDisplay(ft.Container):
             content=ft.Row([
                 ft.Container(width=16, height=4, bgcolor=min_color, border_radius=2),
                 ft.Container(width=8),
-                ft.Text(legend_min_text, color=self.current_text_color, size=14, weight=ft.FontWeight.W_500)
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=legend_min_text,
+                    text_type="label",
+                    color=self.current_text_color,
+                    weight=ft.FontWeight.W_500
+                )
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.symmetric(horizontal=12, vertical=6),
             border_radius=8,
@@ -338,10 +354,11 @@ class TemperatureChartDisplay(ft.Container):
         return ft.Column([
             self._build_header(),
             ft.Container(
-                content=ft.Text(
-                    translation_manager.get_translation("charts", "temperature_chart_items", "no_temperature_data", self.current_language),
-                    color=self.current_text_color,
-                    size=14
+                content=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=translation_manager.get_translation("charts", "temperature_chart_items", "no_temperature_data", self.current_language),
+                    text_type="body_primary",
+                    color=self.current_text_color
                 ),
                 alignment=ft.alignment.center,
                 padding=ft.padding.all(20)
@@ -351,10 +368,11 @@ class TemperatureChartDisplay(ft.Container):
     def _build_error_view(self):
         """Builds view when there's an error."""
         return ft.Container(
-            content=ft.Text(
-                "Error loading temperature chart",
+            content=ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text="Error loading temperature chart",
+                text_type="body_primary",
                 color=ft.Colors.RED_400,
-                size=14,
                 weight=ft.FontWeight.W_500
             ),
             alignment=ft.alignment.center,
@@ -380,12 +398,3 @@ class TemperatureChartDisplay(ft.Container):
                 self.update()
         except Exception as e:
             logging.error(f"TemperatureChartDisplay: Error handling unit change: {e}")
-
-    def cleanup(self):
-        """Clean up observers and resources."""
-        if self.state_manager:
-            try:
-                self.state_manager.unregister_observer("unit_text_change", self._handle_unit_change)
-                self.state_manager.unregister_observer("unit", self._handle_unit_change)
-            except Exception as e:
-                logging.error(f"TemperatureChartDisplay: Error during cleanup: {e}")

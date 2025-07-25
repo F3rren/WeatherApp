@@ -104,7 +104,7 @@ class HourlyForecastDisplay(ft.Container):
                 content=ResponsiveTextFactory.create_adaptive_text(
                     page=self.page,
                     text=loading_text,
-                    text_type="body_primary",
+                    text_type="title_section",
                     color=self._text_color
                 ),
                 padding=ft.padding.all(20)
@@ -131,7 +131,7 @@ class HourlyForecastDisplay(ft.Container):
                 ResponsiveTextFactory.create_adaptive_text(
                     page=self.page,
                     text=header_text,
-                    text_type="title_secondary",
+                    text_type="title_main",
                     weight=ft.FontWeight.BOLD,
                     color=self._text_color,
                     font_family="system-ui"
@@ -281,7 +281,7 @@ class HourlyForecastDisplay(ft.Container):
                 time_text = ResponsiveTextFactory.create_adaptive_text(
                     page=self.page,
                     text=hour,
-                    text_type="body_secondary",
+                    text_type="title_card",
                     color=ft.Colors.with_opacity(0.7, self._text_color),
                     weight="w500",
                     text_align=ft.TextAlign.CENTER,
@@ -307,7 +307,7 @@ class HourlyForecastDisplay(ft.Container):
                         content=ResponsiveTextFactory.create_adaptive_text(
                             page=self.page,
                             text=f"{rain_probability}%",
-                            text_type="caption",
+                            text_type="label",
                             color=ft.Colors.BLUE_400,
                             weight="w500",
                             text_align=ft.TextAlign.CENTER

@@ -22,20 +22,19 @@ AIR_QUALITY_TRANSLATIONS = {
             "id": "Kondisi Udara"
         },
         "air_quality_index": {
-            "en": "Air Quality Index",
-            "it": "Indice Qualità Aria",
-            "es": "Índice de Calidad del Aire",
-            "fr": "Indice de Qualité de l'Air",
-            "de": "Luftqualitätsindex",
-            "pt": "Índice de Qualidade do Ar",
-            "ru": "Индекс Качества Воздуха",
-            "zh": "空气质量指数",
-            "ja": "大気質指数",
-            "ko": "대기질 지수",
-            "ar": "مؤشر جودة الهواء",
-            "hi": "वायु गुणवत्ता सूचकांक"
-        ,
-            "id": "Indeks Kualitas Udara"
+            "en": "Air Quality",
+            "it": "Qualità Aria",
+            "es": "Calidad del Aire",
+            "fr": "Qualité de l'Air",
+            "de": "Luftqualität",
+            "pt": "Qualidade do Ar",
+            "ru": "Качество Воздуха",
+            "zh": "空气质量",
+            "ja": "大気質",
+            "ko": "대기질",
+            "ar": "جودة الهواء",
+            "hi": "वायु गुणवत्ता",
+            "id": "Kualitas Udara"
         },
         "no_air_pollution_data": {
             "en": "No air pollution data available",
@@ -231,18 +230,18 @@ AIR_QUALITY_TRANSLATIONS = {
             "id": "Titik Embun"
         },
         "cloud_coverage": {
-            "en": "Cloud Coverage",
-            "it": "Copertura Nuvolosa",
-            "es": "Cobertura de Nubes",
-            "fr": "Couverture Nuageuse",
-            "de": "Bewölkung",
-            "pt": "Cobertura de Nuvens",
-            "ru": "Облачность",
-            "zh": "云量",
-            "ja": "雲量",
-            "ko": "구름량",
-            "ar": "الغطاء السحابي",
-            "hi": "बादल कवरेज"
+            "en": "Cloudiness",
+            "it": "Nuvolosità",
+            "es": "Nubosidad",
+            "fr": "Nébulosité",
+            "de": "Bewölkungsgrad",
+            "pt": "Nebulosidade",
+            "ru": "Облачный покров",
+            "zh": "云层覆盖",
+            "ja": "雲の状態",
+            "ko": "구름 상태",
+            "ar": "كثافة السحب",
+            "hi": "बादलों की स्थिति"
         }
     },
     

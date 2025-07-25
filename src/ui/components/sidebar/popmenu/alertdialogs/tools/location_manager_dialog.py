@@ -3,8 +3,10 @@ from core.state_manager import StateManager
 from services.location.location_manager_service import LocationManagerService
 from services.location.geocoding_service import GeocodingService
 from translations import translation_manager
-from utils.responsive_utils import ResponsiveHelper, ResponsiveTextFactory
+from utils.responsive_utils import ResponsiveTextFactory
 import logging
+import requests
+import os
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -267,8 +269,9 @@ class LocationManagerDialog:
             bgcolor=self.colors.bg,
             content=ft.Container(
                 width=dialog_width,
+                height=600,  # Fixed height for natural scrolling like weather alert
                 bgcolor=self.colors.bg,
-                padding=20,
+                padding=20,  # Added back padding for content
                 content=ft.Column([
                     # Enhanced search section
                     self._create_search_section(),
@@ -285,13 +288,13 @@ class LocationManagerDialog:
                     # Enhanced saved locations section
                     self._create_saved_locations_section(texts),
                     
-                    # Locations list
+                    # Locations list (now without fixed height)
                     self.create_locations_list(),
                     
                     # Bottom spacing
-                    ft.Container(height=10),
+                    ft.Container(height=20),
 
-                ], spacing=16, scroll=ft.ScrollMode.AUTO)
+                ], spacing=16, scroll=ft.ScrollMode.AUTO, expand=True)
             ),
             actions=[
                 ft.FilledButton(
@@ -308,10 +311,10 @@ class LocationManagerDialog:
                     )
                 ),
             ],
-            actions_alignment=ft.MainAxisAlignment.CENTER,
-            content_padding=ft.padding.all(8),
-            title_padding=ft.padding.all(16),
-            open=False,
+            actions_alignment=ft.MainAxisAlignment.END,
+            title_text_style=ft.TextStyle(size=18, weight=ft.FontWeight.BOLD, color=self.colors.text),
+            content_text_style=ft.TextStyle(size=14, color=self.colors.text),
+            inset_padding=ft.padding.all(20)
         )
     
     def _create_dialog_title(self, texts):
@@ -335,98 +338,156 @@ class LocationManagerDialog:
         ], spacing=8)
     
     def _create_search_fields(self):
-        """Create enhanced search input fields with better UX."""
+        """Create enhanced search input fields with modern mobile-optimized design."""
+        # Enhanced field styling for better visual hierarchy
         field_style = {
-            "border_color": self.colors.border,
+            "border_color": ft.Colors.with_opacity(0.2, self.colors.text),
             "focused_border_color": self.colors.accent,
             "color": self.colors.text,
             "bgcolor": self.colors.surface,
-            "border_radius": self.ui_constants.BORDER_RADIUS_MEDIUM,
-            "content_padding": ft.padding.symmetric(horizontal=12, vertical=8)
+            "border_radius": self.ui_constants.BORDER_RADIUS_LARGE,
+            "content_padding": ft.padding.symmetric(horizontal=16, vertical=12),
+            "cursor_color": self.colors.accent,
+            "selection_color": ft.Colors.with_opacity(0.3, self.colors.accent)
         }
         
         self.city_field = ft.TextField(
-            label=self.get_translation("location_manager_dialog.city_label"),
+            #label=self.get_translation("location_manager_dialog.city_label"),
             hint_text=self.get_translation("location_manager_dialog.city_hint"),
-            width=180,
+            prefix_icon=ft.Icons.LOCATION_CITY,
+            expand=True,  # Make it responsive
             **field_style
         )
         
         self.state_field = ft.TextField(
-            label=self.get_translation("location_input_dialog.state_label"),
+            #label=self.get_translation("location_input_dialog.state_label"),
             hint_text=self.get_translation("location_input_dialog.state_hint"),
-            width=140,
+            prefix_icon=ft.Icons.MAP_OUTLINED,
+            expand=True,
             **field_style
         )
         
         self.country_field = ft.TextField(
-            label=self.get_translation("location_input_dialog.country_label"),
+            #label=self.get_translation("location_input_dialog.country_label"),
             hint_text=self.get_translation("location_input_dialog.country_hint"),
-            width=130,
+            prefix_icon=ft.Icons.PUBLIC,
+            expand=True,
             **field_style
         )
         
-        self.search_button = ft.ElevatedButton(
-            text=self.get_translation("location_manager_dialog.search_button"),
-            icon=ft.Icons.SEARCH,
-            on_click=self._handle_search_click,
-            bgcolor=ft.Colors.with_opacity(0.1, self.colors.accent),
-            color=self.colors.accent,
-            style=ft.ButtonStyle(
-                shape=ft.RoundedRectangleBorder(
-                    radius=self.ui_constants.BORDER_RADIUS_MEDIUM
-                )
+        # Enhanced search button with modern styling
+        self.search_button = ft.Container(
+            content=ft.ElevatedButton(
+                content=ft.Row([
+                    ft.Icon(ft.Icons.SEARCH, size=20),
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=self.get_translation("location_manager_dialog.search_button"),
+                        text_type="button",
+                        weight=ft.FontWeight.W_600,
+                        color=ft.Colors.WHITE
+                    )
+                ], spacing=8, tight=True),
+                on_click=self._handle_search_click,
+                style=ft.ButtonStyle(
+                    bgcolor=self.colors.accent,
+                    color=ft.Colors.WHITE,
+                    shape=ft.RoundedRectangleBorder(
+                        radius=self.ui_constants.BORDER_RADIUS_LARGE
+                    ),
+                    padding=ft.padding.symmetric(horizontal=20, vertical=12),
+                    elevation=2
+                ),
+                height=48
             ),
-            width=120,
-            height=self.ui_constants.BUTTON_HEIGHT
+            expand=True
         )
     
     def _create_search_results_container(self):
-        """Create enhanced search results container with better animations."""
+        """Create enhanced search results container with modern design and better animations."""
         self.search_results_container = ft.Container(
-            content=ft.Column([], spacing=6),
+            content=ft.Column([], spacing=8),
             visible=False,
             height=0,
-            bgcolor=ft.Colors.with_opacity(0.03, self.colors.text),
-            border=ft.border.all(1, ft.Colors.with_opacity(0.12, self.colors.text)),
-            border_radius=self.ui_constants.BORDER_RADIUS_MEDIUM,
-            padding=12,
+            bgcolor=ft.Colors.with_opacity(0.02, self.colors.text),
+            border=ft.border.all(1, ft.Colors.with_opacity(0.1, self.colors.text)),
+            border_radius=self.ui_constants.BORDER_RADIUS_LARGE,
+            padding=16,
+            margin=ft.margin.only(bottom=12),
             animate=ft.Animation(
-                self.ui_constants.ANIMATION_DURATION, 
+                300,  # Slightly faster animation
                 ft.AnimationCurve.EASE_OUT
+            ),
+            shadow=ft.BoxShadow(
+                spread_radius=0,
+                blur_radius=4,
+                color=ft.Colors.with_opacity(0.1, self.colors.text),
+                offset=ft.Offset(0, 2)
             )
         )
     
     def _create_search_section(self):
-        """Create enhanced search section with responsive mobile text sizing."""
-        return ft.Column([
-            # Section header with icon and title
-            ft.Row([
-                ft.Icon(
-                    ft.Icons.SEARCH_OUTLINED, 
-                    size=self.ui_constants.ICON_SIZE_MEDIUM, 
-                    color=self.colors.accent
+        """Create enhanced search section with modern mobile-optimized design."""
+        return ft.Container(
+            content=ft.Column([
+                # Enhanced section header with modern styling
+                ft.Container(
+                    content=ft.Row([
+                        ft.Container(
+                            content=ft.Icon(
+                                ft.Icons.SEARCH_OUTLINED, 
+                                size=24, 
+                                color=self.colors.accent
+                            ),
+                            bgcolor=ft.Colors.with_opacity(0.1, self.colors.accent),
+                            border_radius=8,
+                            padding=8
+                        ),
+                        ft.Column([
+                            ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=self.get_translation("location_manager_dialog.search_new_location"),
+                                text_type="title_secondary",
+                                weight=ft.FontWeight.BOLD,
+                                color=self.colors.text
+                            ),
+                            ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text="",
+                                text_type="caption",
+                                color=self.colors.text_secondary
+                            )
+                        ], spacing=2, expand=True)
+                    ], spacing=12),
+                    padding=ft.padding.only(bottom=16)
                 ),
-                ResponsiveTextFactory.create_adaptive_text(
-                    page=self.page,
-                    text=self.get_translation("location_manager_dialog.search_new_location"),
-                    text_type="title_secondary",
-                    weight=ft.FontWeight.W_600,
-                    color=self.colors.text
-                ),
-            ], spacing=8),
-            
-            # Input fields row with responsive scrolling
-            ft.Container(
-                content=ft.Row([
+                
+                # Mobile-optimized input fields layout
+                ft.Column([
+                    # Primary field (city) - full width
                     self.city_field,
-                    self.state_field,
-                    self.country_field,
+                    
+                    # Secondary fields (state and country) - side by side
+                    ft.Row([
+                        self.state_field,
+                        ft.Container(width=8),  # Spacing
+                        self.country_field
+                    ], expand=True),
+                    
+                    # Search button - full width for easy tapping
                     self.search_button
-                ], spacing=12, scroll=ft.ScrollMode.AUTO),
-                padding=ft.padding.only(top=8)
-            )
-        ], spacing=12)
+                    
+                ], spacing=12)
+                
+            ], spacing=0),
+            
+            # Enhanced container styling
+            padding=20,
+            border=ft.border.all(1, ft.Colors.with_opacity(0.1, self.colors.text)),
+            border_radius=self.ui_constants.BORDER_RADIUS_LARGE,
+            bgcolor=ft.Colors.with_opacity(0.02, self.colors.text),
+            margin=ft.margin.only(bottom=16)
+        )
     
     def _create_saved_locations_section(self, texts):
         """Create enhanced saved locations header with responsive mobile text sizing."""
@@ -479,8 +540,8 @@ class LocationManagerDialog:
         )
     
     def create_locations_list(self):
-        """Create enhanced locations list with improved UI/UX and performance."""
-        locations_column = ft.Column([], spacing=6, scroll=ft.ScrollMode.AUTO)
+        """Create enhanced locations list with natural scrolling (no fixed height)."""
+        locations_column = ft.Column([], spacing=6)  # Removed scroll from here
         
         # Get locations with enhanced error handling
         try:
@@ -504,7 +565,7 @@ class LocationManagerDialog:
         
         return ft.Container(
             content=locations_column,
-            height=self.ui_constants.LOCATIONS_LIST_HEIGHT,
+            # Removed fixed height for natural scrolling
             padding=12,
             border=ft.border.all(
                 1, 
@@ -526,16 +587,18 @@ class LocationManagerDialog:
                     ),
                     padding=ft.padding.only(bottom=12)
                 ),
-                ft.Text(
-                    self.get_translation("location_manager_dialog.no_saved_locations"), 
-                    weight=ft.FontWeight.BOLD, 
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("location_manager_dialog.no_saved_locations"),
+                    text_type="title_small",
                     color=self.colors.text_secondary,
-                    text_align=ft.TextAlign.CENTER,
-                    size=16
+                    weight=ft.FontWeight.BOLD,
+                    text_align=ft.TextAlign.CENTER
                 ),
-                ft.Text(
-                    self.get_translation("location_manager_dialog.add_location_to_start"), 
-                    size=13, 
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("location_manager_dialog.add_location_to_start"),
+                    text_type="body_primary",
                     color=self.colors.text_secondary,
                     text_align=ft.TextAlign.CENTER
                 )
@@ -558,10 +621,7 @@ class LocationManagerDialog:
         )
     
     def _create_location_card(self, location):
-        """Create enhanced location card with improved design and interactions."""
-        # Status indicators with enhanced design
-        status_indicators = self._create_status_indicators(location)
-        
+        """Create enhanced location card optimized for Samsung A55 5G mobile layout."""
         # Location information with better formatting
         location_info = self._create_location_info(location)
         
@@ -571,22 +631,26 @@ class LocationManagerDialog:
         # Enhanced card styling based on location status
         card_bgcolor = self._get_card_background_color(location)
         
+        # Mobile-optimized layout: two rows - text on top, buttons on bottom
         return ft.Container(
-            content=ft.Row([
-                # Left side: Status + Info
-                ft.Row([
-                    status_indicators,
-                    ft.Container(width=8),  # Spacing
-                    location_info
-                ], expand=True),
+            content=ft.Column([
+                # First row: Location info (full width)
+                ft.Container(
+                    content=location_info,
+                    expand=True
+                ),
                 
-                # Right side: Action buttons
-                action_buttons
+                # Second row: Action buttons (centered)
+                ft.Container(
+                    content=action_buttons,
+                    alignment=ft.alignment.center_right,
+                    padding=ft.padding.only(top=8)
+                )
                 
-            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            ], spacing=0),
             
-            padding=16,
-            margin=ft.margin.symmetric(vertical=3),
+            padding=12,  # Reduced padding for more space
+            margin=ft.margin.symmetric(vertical=2),
             border=ft.border.all(
                 1, 
                 ft.Colors.with_opacity(0.12, self.colors.text)
@@ -634,25 +698,27 @@ class LocationManagerDialog:
             )
         
         return ft.Container(
-            content=ft.Column(indicators, spacing=4),
-            width=40,
+            content=ft.Row(indicators, spacing=2),  # Horizontal layout for mobile
+            width=60,  # Increased width for horizontal layout
         )
     
     def _create_location_info(self, location):
-        """Create enhanced location information display with responsive mobile text sizing."""
+        """Create enhanced location information display optimized for Samsung A55 5G."""
         info_items = [
             ResponsiveTextFactory.create_adaptive_text(
                 page=self.page,
                 text=location["name"],
-                text_type="body_primary",
+                text_type="label_small",  # Changed from tiny to label_small for better readability
                 weight=ft.FontWeight.BOLD,
-                color=self.colors.text
+                color=self.colors.text,
+                overflow=ft.TextOverflow.ELLIPSIS
             ),
             ResponsiveTextFactory.create_adaptive_text(
                 page=self.page,
                 text=f"📍 {location['lat']:.4f}, {location['lon']:.4f}",
-                text_type="caption",
-                color=self.colors.text_secondary
+                text_type="caption",  # Changed from tiny to caption
+                color=self.colors.text_secondary,
+                overflow=ft.TextOverflow.ELLIPSIS
             )
         ]
         
@@ -664,12 +730,13 @@ class LocationManagerDialog:
                 ResponsiveTextFactory.create_adaptive_text(
                     page=self.page,
                     text=f"🌍 {country_display}",
-                    text_type="caption",
-                    color=self.colors.text_secondary
+                    text_type="caption",  # Changed from tiny to caption
+                    color=self.colors.text_secondary,
+                    overflow=ft.TextOverflow.ELLIPSIS
                 )
             )
         
-        return ft.Column(info_items, spacing=3, expand=True)
+        return ft.Column(info_items, spacing=2)  # Removed expand=True for two-row layout
     
     def _create_location_action_buttons(self, location):
         """Create enhanced action buttons for location cards."""
@@ -697,16 +764,7 @@ class LocationManagerDialog:
                 bg_color=self.colors.accent
             )
         )
-        
-        # Settings button
-        buttons.append(
-            self._create_location_button(
-                icon=ft.Icons.SETTINGS_OUTLINED,
-                tooltip="Impostazioni",
-                on_click=lambda e, loc=location: self.show_location_settings(loc),
-                color=self.colors.text_secondary
-            )
-        )
+
         
         # Delete button
         buttons.append(
@@ -719,19 +777,19 @@ class LocationManagerDialog:
             )
         )
         
-        return ft.Row(buttons, spacing=6)
+        return ft.Row(buttons, spacing=8, alignment=ft.MainAxisAlignment.END)  # Increased spacing and right alignment
     
     def _create_location_button(self, icon, tooltip, on_click, color, bg_color=None):
-        """Create standardized location action button."""
+        """Create standardized location action button optimized for mobile touch."""
         return ft.Container(
             content=ft.IconButton(
                 icon=icon,
                 icon_color=color,
                 tooltip=tooltip,
                 on_click=on_click,
-                icon_size=self.ui_constants.ICON_SIZE_MEDIUM
+                icon_size=18  # Slightly larger for easier touch
             ),
-            width=36,
+            width=36,  # Larger touch target
             height=36,
             border_radius=self.ui_constants.BORDER_RADIUS_MEDIUM,
             bgcolor=ft.Colors.with_opacity(
@@ -743,7 +801,7 @@ class LocationManagerDialog:
     def _get_card_background_color(self, location):
         """Get appropriate background color for location card."""
         if location.get("last_selected", False):
-            return ft.Colors.with_opacity(0.08, self.colors.accent)
+            return ft.Colors.with_opacity(0.15, self.colors.accent)  # More visible for current location
         else:
             return self.colors.surface
     
@@ -780,9 +838,7 @@ class LocationManagerDialog:
             "add": self.get_translation("location_manager_dialog.add_button"),
             "use_current": self.get_translation("location_manager_dialog.use_current"),
             "close": self.get_translation("dialog_buttons.close"),
-            "stats": self.get_translation("location_manager_dialog.stats"),
-            "export": self.get_translation("location_manager_dialog.export"),
-            "import": self.get_translation("location_manager_dialog.import")
+            "stats": self.get_translation("location_manager_dialog.stats")
         }
         
         return base_texts
@@ -868,35 +924,54 @@ class LocationManagerDialog:
                 )
             else:
                 logger.info("Search completed: no results found")
-                self._show_search_message(
+                self.show_search_message(
                     self.get_translation("location_manager_dialog.no_locations_found"), 
-                    self.colors.warning
+                    "#FF9800"  # Orange warning color
                 )
                 
         except Exception as ex:
             logger.error(f"Search error: {ex}")
-            self._show_search_message(
+            self.show_search_message(
                 f"{self.get_translation('location_manager_dialog.search_error')}: {str(ex)}", 
-                self.colors.error
+                "#F44336"  # Red error color
             )
         finally:
             self._set_search_loading_state(False)
     
     def _set_search_loading_state(self, is_loading: bool):
-        """Set search loading state with enhanced visual feedback."""
+        """Set search loading state with enhanced visual feedback for new button design."""
         if not self.search_button:
             return
             
         self.is_searching = is_loading
         
+        # Get the actual button inside the container
+        actual_button = self.search_button.content
+        
         if is_loading:
-            self.search_button.text = self.get_translation("location_manager_dialog.searching")
-            self.search_button.icon = ft.Icons.HOURGLASS_EMPTY
-            self.search_button.disabled = True
+            actual_button.content = ft.Row([
+                ft.ProgressRing(width=16, height=16, stroke_width=2, color=ft.Colors.WHITE),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("location_manager_dialog.searching"),
+                    text_type="button",
+                    weight=ft.FontWeight.W_600,
+                    color=ft.Colors.WHITE
+                )
+            ], spacing=8, tight=True)
+            actual_button.disabled = True
         else:
-            self.search_button.text = self.get_translation("location_manager_dialog.search_button")
-            self.search_button.icon = ft.Icons.SEARCH
-            self.search_button.disabled = False
+            actual_button.content = ft.Row([
+                ft.Icon(ft.Icons.SEARCH, size=20),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("location_manager_dialog.search_button"),
+                    text_type="button",
+                    weight=ft.FontWeight.W_600,
+                    color=ft.Colors.WHITE
+                )
+            ], spacing=8, tight=True)
+            actual_button.disabled = False
         
         if self.page:
             self.page.update()
@@ -904,8 +979,6 @@ class LocationManagerDialog:
     def _geocode_sync(self, city: str, state: str = None, country: str = None):
         """Synchronous geocoding using requests."""
         try:
-            import requests
-            import os
             from services.location.geocoding_service import LocationCandidate
             
             # Get API key
@@ -1332,7 +1405,12 @@ class LocationManagerDialog:
                 is_favorite = updated_location.get("favorite", False) if updated_location else False
                 status_text = self.get_translation("added_to_favorites") if is_favorite else self.get_translation("removed_from_favorites")
                 self.page.snack_bar = ft.SnackBar(
-                    content=ft.Text(f"Località {status_text} {self.get_translation('favorites')}"),
+                    content=ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=f"Località {status_text} {self.get_translation('favorites')}",
+                        text_type="body_primary",
+                        color=ft.Colors.WHITE
+                    ),
                     bgcolor=self.colors.accent
                 )
                 self.page.snack_bar.open = True
@@ -1365,24 +1443,56 @@ class LocationManagerDialog:
     def use_location(self, location):
         """Use selected location as current location."""
         try:
+            logger.info(f"Using location: {location['name']} (ID: {location['id']})")
+            
             # Seleziona la località nel servizio
             success = self.location_service.select_location(location['id'])
             
             if success:
+                logger.info(f"Location service selected successfully: {location['name']}")
+                
                 # Aggiorna lo stato nell'app principale usando il metodo sincrono
                 if self.state_manager:
                     self.state_manager.set_state_sync('current_lat', location['lat'])
                     self.state_manager.set_state_sync('current_lon', location['lon'])
                     self.state_manager.set_state_sync('current_city', location['name'])
+                    
+                    # Trigger location change event through state manager
+                    try:
+                        self.state_manager.notify_observers("location_changed", {
+                            "city": location['name'],
+                            "lat": location['lat'],
+                            "lon": location['lon']
+                        })
+                        logger.info("Location change event triggered through state manager")
+                    except Exception as event_error:
+                        logger.warning(f"Could not trigger location change event: {event_error}")
+                    
+                    logger.info(f"State updated - lat: {location['lat']}, lon: {location['lon']}, city: {location['name']}")
                 
                 # Triggerare l'aggiornamento completo dell'UI
                 if self.update_weather_callback:
+                    logger.info("Triggering weather update callback")
                     # Ottieni impostazioni correnti
                     language = self.state_manager.get_state("language") or "it"
                     unit = self.state_manager.get_state("unit") or "metric"
+                    logger.info(f"Update parameters - city: {location['name']}, language: {language}, unit: {unit}")
                     
-                    # Chiama il callback per aggiornare l'UI usando run_task di Flet
-                    self.page.run_task(self._update_ui_async, location['name'], language, unit)
+                    # Try async callback first
+                    try:
+                        # Chiama il callback per aggiornare l'UI usando run_task di Flet
+                        self.page.run_task(self._update_ui_async, location['name'], language, unit)
+                    except Exception as callback_error:
+                        logger.error(f"Error in async callback: {callback_error}")
+                        # Fallback: try to trigger page update directly
+                        try:
+                            logger.info("Attempting fallback page update")
+                            if hasattr(self.page, 'update'):
+                                self.page.update()
+                        except Exception as update_error:
+                            logger.error(f"Fallback page update failed: {update_error}")
+                else:
+                    logger.warning("No update_weather_callback available")
                 
                 # Show success feedback
                 self._show_success_snackbar(f"Località selezionata: {location['name']}")
@@ -1395,25 +1505,45 @@ class LocationManagerDialog:
                     import asyncio
                     async def delayed_close():
                         await asyncio.sleep(1.5)  # 1.5 second delay
-                        self.close_dialog()
+                        try:
+                            self.close_dialog()
+                            logger.info("Dialog closed after location selection")
+                        except Exception as ex:
+                            logger.error(f"Error closing dialog: {ex}")
                     
                     self.page.run_task(delayed_close)
+            else:
+                logger.error(f"Failed to select location in service: {location['name']}")
+                self._show_error_snackbar(f"Errore nella selezione della località: {location['name']}")
                 
         except Exception as ex:
             logger.error(f"Errore nell'uso della località: {ex}")
             self._show_error_snackbar(f"Errore nell'uso della località: {str(ex)}")
     
     async def _update_ui_async(self, city_name, language, unit):
-        """Aggiorna l'UI in modo asincrono."""
+        """Aggiorna l'UI in modo asincrono con logging dettagliato."""
         try:
+            logger.info(f"Starting async UI update for: city={city_name}, language={language}, unit={unit}")
+            
             if self.update_weather_callback:
+                logger.info("Calling update_weather_callback...")
                 result = await self.update_weather_callback(city_name, language, unit)
+                
                 if result:
                     logger.info(f"UI aggiornata con successo per: {city_name}")
                 else:
-                    logger.warning(f"Errore nell'aggiornamento UI per: {city_name}")
+                    logger.warning(f"Update callback returned false for: {city_name}")
+            else:
+                logger.error("update_weather_callback is None!")
+                
         except Exception as ex:
-            logger.error(f"Errore nell'aggiornamento asincrono: {ex}")
+            logger.error(f"Errore nell'aggiornamento asincrono per {city_name}: {ex}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            
+            # Show error feedback to user
+            if self.page:
+                self._show_error_snackbar(f"Errore nell'aggiornamento meteo per {city_name}")
     
     def remove_location(self, location_id: str):
         """Remove a location using professional service."""
@@ -1427,7 +1557,12 @@ class LocationManagerDialog:
             
             if success and self.page:
                 self.page.snack_bar = ft.SnackBar(
-                    content=ft.Text(f"{self.get_translation('location_manager_dialog.location_removed')}: '{location_name}'"),
+                    content=ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=f"{self.get_translation('location_manager_dialog.location_removed')}: '{location_name}'",
+                        text_type="body_primary",
+                        color=ft.Colors.WHITE
+                    ),
                     bgcolor="#F44336"
                 )
                 self.page.snack_bar.open = True
@@ -1438,17 +1573,6 @@ class LocationManagerDialog:
             
         except Exception as ex:
             logger.error(f"Errore nella rimozione della località: {ex}")
-    
-    def show_location_settings(self, location):
-        """Show location-specific settings dialog."""
-        # Per ora mostra solo un messaggio, in futuro implementeremo il dialog completo
-        if self.page:
-            self.page.snack_bar = ft.SnackBar(
-                content=ft.Text(f"Configurazioni per {location['name']} (in sviluppo)"),
-                bgcolor=self.colors.accent
-            )
-            self.page.snack_bar.open = True
-            self.page.update()
     
     def show_statistics(self):
         """Show location statistics dialog."""
@@ -1465,36 +1589,41 @@ class LocationManagerDialog:
                 ft.Divider(),
                 ResponsiveTextFactory.create_adaptive_text(
                     page=self.page,
-                    text=f"📍 Totale località: {stats['total_locations']}",
+                    text=f"Totale località: {stats['total_locations']}",
                     text_type="body_primary"
                 ),
                 ResponsiveTextFactory.create_adaptive_text(
                     page=self.page,
-                    text=f"⭐ Località preferite: {stats['favorite_locations']}",
+                    text=f"Località preferite: {stats['favorite_locations']}",
                     text_type="body_primary"
                 ),
                 ResponsiveTextFactory.create_adaptive_text(
                     page=self.page,
-                    text=f"🗂️ File storage: {stats['storage_size_bytes']} bytes",
+                    text=f"File storage: {stats['storage_size_bytes']} bytes",
                     text_type="body_primary"
                 ),
                 
                 ResponsiveTextFactory.create_adaptive_text(
                     page=self.page,
-                    text="📊 Paesi rappresentati:",
+                    text="Paesi rappresentati:",
                     text_type="body_secondary",
                     weight=ft.FontWeight.BOLD
                 ),
                 *[ResponsiveTextFactory.create_adaptive_text(
                     page=self.page,
-                    text=f"  🏳️ {country}: {count}",
+                    text=f"{country}: {count}",
                     text_type="caption"
                 ) for country, count in stats['countries'].items()],
                 
             ], spacing=8)
             
             self.stats_dialog = ft.AlertDialog(
-                title=ft.Text("Statistiche"),
+                title=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="Statistiche",
+                    text_type="title_small",
+                    weight=ft.FontWeight.BOLD
+                ),
                 content=ft.Container(content=stats_content, width=300),
                 actions=[ft.TextButton("Chiudi", on_click=lambda e: self.close_stats_dialog())]
             )
@@ -1515,23 +1644,6 @@ class LocationManagerDialog:
             logger.error(f"Errore durante l'aggiornamento: {e}")
             self.show_snackbar("Errore durante l'aggiornamento")
     
-    def export_locations(self):
-        """Export locations to a file."""
-        try:
-            all_locations = self.location_service.get_all_locations()
-            if not all_locations:
-                self.show_snackbar("Nessuna località da esportare")
-                return
-            
-            # Simulazione esportazione (in futuro potresti implementare il salvataggio file)
-            export_count = len(all_locations)
-            logger.info(f"Exported {export_count} locations")
-            self.show_snackbar(f"Esportate {export_count} località!", "#4CAF50")
-            
-        except Exception as e:
-            logger.error(f"Errore durante l'esportazione: {e}")
-            self.show_snackbar("Errore durante l'esportazione")
-    
     def close_stats_dialog(self):
         """Close statistics dialog properly."""
         try:
@@ -1546,7 +1658,12 @@ class LocationManagerDialog:
         """Use current GPS location."""
         if self.page:
             self.page.snack_bar = ft.SnackBar(
-                content=ft.Text("Funzionalità GPS in sviluppo"),
+                content=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="Funzionalità GPS in sviluppo",
+                    text_type="body_primary",
+                    color=ft.Colors.WHITE
+                ),
                 bgcolor=self.colors.accent
             )
             self.page.snack_bar.open = True
@@ -1633,7 +1750,13 @@ class LocationManagerDialog:
             
         content = ft.Row([
             ft.Icon(icon, color=ft.Colors.WHITE, size=20) if icon else ft.Container(),
-            ft.Text(message, color=ft.Colors.WHITE, weight=ft.FontWeight.W_500)
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=message,
+                text_type="body_primary",
+                color=ft.Colors.WHITE,
+                weight=ft.FontWeight.W_500
+            )
         ], spacing=8, tight=True)
         
         self.page.snack_bar = ft.SnackBar(

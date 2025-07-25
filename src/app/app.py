@@ -547,13 +547,19 @@ class MeteoApp:
         try:
             await asyncio.wait_for(
                 self.location_toggle_service.initialize_tracking(), 
-                timeout=5.0
+                timeout=10.0  # Increased timeout for better reliability
             )
             logger.info("Location service initialized successfully")
         except asyncio.TimeoutError:
-            logger.warning("Location service initialization timed out")
+            logger.warning("Location service initialization timed out - continuing without location services")
+            # Set a flag to indicate location services are not available
+            if hasattr(self, 'location_toggle_service'):
+                self.location_toggle_service.is_available = False
         except Exception as e:
             logger.warning(f"Failed to initialize location tracking: {e}")
+            # Ensure location services are marked as unavailable
+            if hasattr(self, 'location_toggle_service'):
+                self.location_toggle_service.is_available = False
         
         # Initialize theme service
         try:

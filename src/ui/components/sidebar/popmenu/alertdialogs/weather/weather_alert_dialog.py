@@ -1,7 +1,8 @@
 import asyncio
 import flet as ft
 from services.alerts.weather_alerts_service import AlertSeverity, AlertType
-from services.ui.translation_service import TranslationService
+from translations import translation_manager  # New modular translation system
+from utils.responsive_utils import ResponsiveTextFactory
 
 class WeatherAlertDialog:
     """Dialog semplificato per la gestione delle allerte meteo."""
@@ -37,8 +38,11 @@ class WeatherAlertDialog:
             }
 
     def get_translation(self, key: str) -> str:
-        """Get translation for a key."""
-        return TranslationService.translate_from_dict("weather_alert_dialog_items", key, self.language)
+        """Get translation for a key using new modular translation system."""
+        return translation_manager.get_translation(
+            'weather', 'weather_alert_dialog_items', key, 
+            language=self.language
+        )
 
     def create_dialog(self):
         """Create the weather alerts dialog."""
@@ -55,35 +59,14 @@ class WeatherAlertDialog:
                 content=ft.Container(
                     width=min(400, self.page.width * 0.9),
                     bgcolor=self.colors["bg"],
-                    padding=20,
                     content=ft.Column([
-                        # Titolo principale
-                        ft.Text("⚠️ Allerte Meteo Attive", size=20, weight=ft.FontWeight.BOLD,
-                               text_align=ft.TextAlign.CENTER, color=self.colors["text"]),
-                        ft.Divider(color=ft.Colors.with_opacity(0.3, self.colors["text"])),
-                        
                         # Statistiche compatte
                         self.create_compact_statistics(),
-                        ft.Container(height=15),
-                        
+                        #ft.Container(height=15),
                         # Lista allerte semplificata
                         self.create_compact_alerts_list(),
-                        ft.Container(height=15),
-                        
-                        # Azioni principali
-                        ft.Column([
-                            ft.ElevatedButton(
-                                "🔔 Gestisci Notifiche", on_click=lambda _: self.open_notifications(),
-                                bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
-                                width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
-                            ),
-                            ft.ElevatedButton(
-                                "📊 Visualizza Dettagli", on_click=lambda _: self.open_details(),
-                                bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
-                                width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
-                            )
-                        ], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                    ], spacing=10, tight=True)
+                        #ft.Container(height=15),
+                    ], spacing=10, tight=True, scroll=ft.ScrollMode.AUTO)  # Scroll sul contenuto principale
                 ),
                 actions=[self.create_actions()],
                 actions_alignment=ft.MainAxisAlignment.END,
@@ -101,28 +84,50 @@ class WeatherAlertDialog:
             modal=False,
             title=ft.Row([
                 ft.Icon(ft.Icons.ERROR_OUTLINE, color=self.colors["error"], size=24),
-                ft.Text("Errore Allerte Meteo", size=18, weight=ft.FontWeight.BOLD, color=self.colors["text"])
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("weather_alert_error"),
+                    text_type="title_small",
+                    color=self.colors["text"],
+                    weight=ft.FontWeight.BOLD
+                )
             ], spacing=10),
             bgcolor=self.colors["bg"],
             content=ft.Container(
                 width=min(400, self.page.width * 0.9), bgcolor=self.colors["bg"],
                 padding=ft.padding.all(20),
                 content=ft.Column([
-                    ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED, size=48, color=self.colors["warning"]),
-                    ft.Text(message, size=14, color=self.colors["text"], text_align=ft.TextAlign.CENTER),
-                    ft.Text("Riprova più tardi o riavvia l'applicazione", size=12, 
-                           color=self.colors["text_secondary"], text_align=ft.TextAlign.CENTER)
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=message,
+                        text_type="body_primary",
+                        color=self.colors["text"],
+                        text_align=ft.TextAlign.CENTER
+                    ),
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=self.get_translation("error_retry_message"),
+                        text_type="label_small",
+                        color=self.colors["text_secondary"],
+                        text_align=ft.TextAlign.CENTER
+                    )
                 ], spacing=15, horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
                 alignment=ft.MainAxisAlignment.CENTER)
             ),
             actions=[ft.Row([
                 ft.TextButton(
-                    text=TranslationService.translate_from_dict("dialog_buttons", "retry", self.language),
+                    text=translation_manager.get_translation(
+                        'weather', 'dialog_buttons', 'retry', 
+                        language=self.language
+                    ),
                     icon=ft.Icons.REFRESH, on_click=lambda e: self.retry_dialog(),
                     style=ft.ButtonStyle(color=self.colors["accent"])
                 ),
                 ft.FilledButton(
-                    text=TranslationService.translate_from_dict("dialog_buttons", "close", self.language),
+                    text=translation_manager.get_translation(
+                        'weather', 'dialog_buttons', 'close', 
+                        language=self.language
+                    ),
                     on_click=lambda e: self.close_dialog(),
                     style=ft.ButtonStyle(bgcolor=self.colors["accent"], color=ft.Colors.WHITE,
                                        shape=ft.RoundedRectangleBorder(radius=8))
@@ -141,7 +146,7 @@ class WeatherAlertDialog:
                 self.show_snackbar(self.get_translation("service_unavailable"), self.colors["error"])
         except Exception as e:
             print(f"Error retrying dialog: {e}")
-            self.show_snackbar(f"Errore nel riprovare: {str(e)}", self.colors["error"])
+            self.show_snackbar(f"{self.get_translation('error_retrying')}: {str(e)}", self.colors["error"])
 
     def create_header(self):
         """Create dialog header with title and status."""
@@ -150,8 +155,19 @@ class WeatherAlertDialog:
         return ft.Row([
             ft.Icon(ft.Icons.WARNING_ROUNDED, color=self.colors["warning"], size=24),
             ft.Column([
-                ft.Text(self.get_translation("weather_alerts"), size=18, weight=ft.FontWeight.BOLD, color=self.colors["text"]),
-                ft.Text(f"{active_count} " + self.get_translation("active_alerts_count"), size=12, color=self.colors["text_secondary"])
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("weather_alerts"),
+                    text_type="title_small",
+                    color=self.colors["text"],
+                    weight=ft.FontWeight.BOLD
+                ),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"{active_count} " + self.get_translation("active_alerts_count"),
+                    text_type="label_small",
+                    color=self.colors["text_secondary"]
+                )
             ], spacing=2, expand=True),
             ft.IconButton(icon=ft.Icons.REFRESH, tooltip=self.get_translation("refresh"), 
                          on_click=self.refresh_alerts, icon_color=self.colors["accent"])
@@ -179,50 +195,89 @@ class WeatherAlertDialog:
             count = severity_counts[severity]
             cards.append(ft.Container(
                 content=ft.Column([
-                    ft.Text(str(count), size=20, weight=ft.FontWeight.BOLD, color=color),
-                    ft.Text(label, size=10, color=self.colors["text_secondary"])
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=str(count),
+                        text_type="title_small",
+                        color=color,
+                        weight=ft.FontWeight.BOLD
+                    ),
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=label,
+                        text_type="label_small",
+                        color=self.colors["text_secondary"]
+                    )
                 ], spacing=3, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                 padding=ft.padding.all(12), bgcolor=ft.Colors.with_opacity(0.1, color),
                 border_radius=8, width=80
             ))
         
         return ft.Column([
-            ft.Text(self.get_translation("alert_statistics"), size=14, weight=ft.FontWeight.W_600, color=self.colors["text"]),
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=self.get_translation("alert_statistics"),
+                text_type="body_primary",
+                color=self.colors["text"],
+                weight=ft.FontWeight.W_600
+            ),
             ft.Row(cards, spacing=10, alignment=ft.MainAxisAlignment.SPACE_AROUND)
         ], spacing=10)
 
     def create_alerts_list(self):
         """Create active alerts list."""
         if not self.weather_alerts_service:
-            return ft.Container(content=ft.Text(self.get_translation("service_unavailable"), 
-                                              color=self.colors["text_secondary"]), padding=20)
+            return ft.Container(content=ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=self.get_translation("service_unavailable"),
+                text_type="body_primary",
+                color=self.colors["text_secondary"]
+            ), padding=20)
         
         active_alerts = self.weather_alerts_service.get_active_alerts()
         
         if not active_alerts:
             return ft.Container(
                 content=ft.Column([
-                    ft.Icon(ft.Icons.CHECK_CIRCLE_OUTLINE, size=48, color=self.colors["success"]),
-                    ft.Text(self.get_translation("no_active_alerts"), size=16, weight=ft.FontWeight.W_500, color=self.colors["success"]),
-                    ft.Text(self.get_translation("all_clear"), size=12, color=self.colors["text_secondary"])
+                    #ft.Icon(ft.Icons.CHECK_CIRCLE_OUTLINE, size=48, color=self.colors["success"]),
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=self.get_translation("no_active_alerts"),
+                        text_type="body_primary",
+                        color=self.colors["success"],
+                        weight=ft.FontWeight.W_500
+                    ),
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=self.get_translation("all_clear"),
+                        text_type="label_small",
+                        color=self.colors["text_secondary"]
+                    )
                 ], spacing=8, horizontal_alignment=ft.CrossAxisAlignment.CENTER), padding=20
             )
         
-        alert_cards = [self.create_alert_card(alert) for alert in active_alerts[:10]]
-        
-        if len(active_alerts) > 10:
-            alert_cards.append(ft.Container(
-                content=ft.Text(f"+{len(active_alerts) - 10} " + self.get_translation("more_alerts"),
-                               color=self.colors["text_secondary"], text_align=ft.TextAlign.CENTER), padding=10
-            ))
+        alert_cards = [self.create_alert_card(alert) for alert in active_alerts]
         
         return ft.Column([
             ft.Row([
-                ft.Text(self.get_translation("active_alerts"), size=14, weight=ft.FontWeight.W_600, color=self.colors["text"]),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("active_alerts"),
+                    text_type="body_primary",
+                    color=self.colors["text"],
+                    weight=ft.FontWeight.W_600
+                ),
                 ft.TextButton(text=self.get_translation("acknowledge_all"), icon=ft.Icons.DONE_ALL,
                              on_click=self.acknowledge_all_alerts, style=ft.ButtonStyle(color=self.colors["accent"])) if active_alerts else ft.Container()
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-            ft.Column(alert_cards, spacing=8, tight=True)
+            # Lista degli alert con ListView espandibile
+            ft.ListView(
+                controls=alert_cards,
+                spacing=8,
+                padding=ft.padding.symmetric(vertical=5),
+                expand=True,
+                auto_scroll=False
+            )
         ], spacing=8)
 
     def create_alert_card(self, alert):
@@ -240,20 +295,46 @@ class WeatherAlertDialog:
                 ft.Container(
                     content=ft.Column([
                         ft.Row([
-                            ft.Text(alert.title, size=13, weight=ft.FontWeight.W_600, color=self.colors["text"], expand=True),
+                            ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=alert.title,
+                                text_type="body_primary",
+                                color=self.colors["text"],
+                                weight=ft.FontWeight.W_600,
+                                expand=True
+                            ),
                             ft.Container(
-                                content=ft.Text(self.get_translation(f"severity_{alert.severity.value}"), 
-                                               size=9, color=severity_color, weight=ft.FontWeight.W_500),
+                                content=ResponsiveTextFactory.create_adaptive_text(
+                                    page=self.page,
+                                    text=self.get_translation(f"severity_{alert.severity.value}"),
+                                    text_type="label_small",
+                                    color=severity_color,
+                                    weight=ft.FontWeight.W_500
+                                ),
                                 padding=ft.padding.symmetric(horizontal=6, vertical=2),
                                 bgcolor=ft.Colors.with_opacity(0.1, severity_color), border_radius=10
                             )
                         ]),
-                        ft.Text(alert.message[:100] + "..." if len(alert.message) > 100 else alert.message,
-                               size=11, color=self.colors["text_secondary"], max_lines=2),
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=alert.message[:100] + "..." if len(alert.message) > 100 else alert.message,
+                            text_type="label_small",
+                            color=self.colors["text_secondary"],
+                            max_lines=2
+                        ),
                         ft.Row([
-                            ft.Text(alert.created_at.strftime("%H:%M"), size=9, color=self.colors["text_secondary"]),
-                            ft.Text(f"{alert.value:.1f} {alert.unit}" if alert.value and alert.unit else "", 
-                                   size=9, color=self.colors["text_secondary"]),
+                            ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=alert.created_at.strftime("%H:%M"),
+                                text_type="label_small",
+                                color=self.colors["text_secondary"]
+                            ),
+                            ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=f"{alert.value:.1f} {alert.unit}" if alert.value and alert.unit else "",
+                                text_type="label_small",
+                                color=self.colors["text_secondary"]
+                            ),
                             ft.IconButton(icon=ft.Icons.CHECK, icon_size=16, tooltip=self.get_translation("acknowledge"),
                                         on_click=lambda e, alert_id=alert.id: self.acknowledge_alert(alert_id),
                                         icon_color=self.colors["accent"])
@@ -284,13 +365,25 @@ class WeatherAlertDialog:
             is_enabled = alert_type in enabled_alerts
             config_switches.append(ft.Row([
                 ft.Icon(icon, size=16, color=self.colors["accent"]),
-                ft.Text(label, size=12, color=self.colors["text"], expand=True),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=label,
+                    text_type="label_small",
+                    color=self.colors["text"],
+                    expand=True
+                ),
                 ft.Switch(value=is_enabled, on_change=lambda e, at=alert_type: self.toggle_alert_type(at, e.control.value),
                          active_color=self.colors["accent"])
             ], spacing=8))
         
         return ft.Column([
-            ft.Text(self.get_translation("alert_types"), size=14, weight=ft.FontWeight.W_600, color=self.colors["text"]),
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=self.get_translation("alert_types"),
+                text_type="body_primary",
+                color=self.colors["text"],
+                weight=ft.FontWeight.W_600
+            ),
             ft.Column(config_switches, spacing=5)
         ], spacing=8)
 
@@ -308,7 +401,10 @@ class WeatherAlertDialog:
                 style=ft.ButtonStyle(bgcolor=self.colors["warning"], color=ft.Colors.WHITE, shape=ft.RoundedRectangleBorder(radius=8))
             ),
             ft.FilledButton(
-                icon=ft.Icons.CLOSE, text=TranslationService.translate_from_dict("dialog_buttons", "close", self.language),
+                icon=ft.Icons.CLOSE, text=translation_manager.get_translation(
+                    'weather', 'dialog_buttons', 'close', 
+                    language=self.language
+                ),
                 on_click=lambda e: self.close_dialog(),
                 style=ft.ButtonStyle(bgcolor=self.colors["accent"], color=ft.Colors.WHITE, shape=ft.RoundedRectangleBorder(radius=8))
             ),
@@ -317,7 +413,15 @@ class WeatherAlertDialog:
     def show_snackbar(self, message: str, bgcolor: str = None):
         """Show snackbar with proper error handling."""
         try:
-            snackbar = ft.SnackBar(content=ft.Text(message), bgcolor=bgcolor or self.colors["success"])
+            snackbar = ft.SnackBar(
+                content=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=message,
+                    text_type="body_primary",
+                    color=ft.Colors.WHITE
+                ),
+                bgcolor=bgcolor or self.colors["success"]
+            )
             self.page.overlay.append(snackbar)
             snackbar.open = True
             self.page.update()
@@ -371,59 +475,78 @@ class WeatherAlertDialog:
             self.update_theme_colors()
             self.dialog.title = self.create_header()
             self.dialog.content = ft.Container(
-                width=min(400, self.page.width * 0.9), bgcolor=self.colors["bg"],
+                width=min(400, self.page.width * 0.9), 
+                bgcolor=self.colors["bg"],
                 padding=20,
                 content=ft.Column([
-                    # Titolo principale
-                    ft.Text("⚠️ Allerte Meteo Attive", size=20, weight=ft.FontWeight.BOLD,
-                           text_align=ft.TextAlign.CENTER, color=self.colors["text"]),
-                    ft.Divider(color=ft.Colors.with_opacity(0.3, self.colors["text"])),
-                    
+                    # Header migliorato con icona e stile
                     # Statistiche compatte
                     self.create_compact_statistics(),
-                    ft.Container(height=10),
-                    
                     # Lista allerte semplificata
                     self.create_compact_alerts_list(),
-                    ft.Container(height=10),
                     
-                    # Azioni principali
-                    ft.Column([
-                        ft.ElevatedButton(
-                            "🔔 Gestisci Notifiche", on_click=lambda _: self.open_notifications(),
-                            bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
-                            width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
-                        ),
-                        ft.ElevatedButton(
-                            "📊 Visualizza Dettagli", on_click=lambda _: self.open_details(),
-                            bgcolor=ft.Colors.with_opacity(0.1, self.colors["accent"]), color=self.colors["accent"],
-                            width=300, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
-                        )
-                    ], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                 ], spacing=10, tight=True)
             )
+
             self.page.update()
 
     def create_compact_statistics(self):
         """Create compact statistics display."""
         if not self.weather_alerts_service:
-            return ft.Text("Servizio non disponibile", color=self.colors["text_secondary"], text_align=ft.TextAlign.CENTER)
+            return ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=self.get_translation("service_unavailable"),
+                text_type="body_primary",
+                color=self.colors["text_secondary"],
+                text_align=ft.TextAlign.CENTER
+            )
         
         active_alerts = self.weather_alerts_service.get_active_alerts()
         total_alerts = len(active_alerts)
         
         if total_alerts == 0:
-            return ft.Column([
-                ft.Icon(ft.Icons.CHECK_CIRCLE, color=self.colors["success"], size=32),
-                ft.Text("Nessuna allerta attiva", size=14, color=self.colors["success"], text_align=ft.TextAlign.CENTER)
-            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8)
+            return ft.Container(
+                content=ft.Column([
+                    ft.Icon(ft.Icons.CHECK_CIRCLE, color=self.colors["success"], size=36),
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=self.get_translation("no_active_alerts"),
+                        text_type="body_primary",
+                        color=self.colors["success"],
+                        text_align=ft.TextAlign.CENTER,
+                        weight=ft.FontWeight.W_500
+                    )
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10),
+                padding=ft.padding.all(20),
+                border_radius=12,
+                bgcolor=ft.Colors.with_opacity(0.05, self.colors["success"])
+            )
         
-        return ft.Column([
-            ft.Text(f"{total_alerts} allerte attive", size=16, weight=ft.FontWeight.W_600, 
-                    color=self.colors["warning"], text_align=ft.TextAlign.CENTER),
-            ft.Text("Controlla i dettagli per maggiori informazioni", size=12, 
-                    color=self.colors["text_secondary"], text_align=ft.TextAlign.CENTER)
-        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=6)
+        return ft.Container(
+            content=ft.Column([
+                ft.Row([
+                    ft.Icon(ft.Icons.NOTIFICATIONS_ACTIVE, color=self.colors["warning"], size=24),
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=f"{total_alerts} {self.get_translation('alerts_active')}",
+                        text_type="body_primary",
+                        color=self.colors["warning"],
+                        weight=ft.FontWeight.W_600
+                    )
+                ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("check_details_info"),
+                    text_type="label_small",
+                    color=self.colors["text_secondary"],
+                    text_align=ft.TextAlign.CENTER
+                )
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=6),
+            padding=ft.padding.all(16),
+            border_radius=10,
+            bgcolor=ft.Colors.with_opacity(0.03, self.colors["warning"]),
+            border=ft.border.all(1, ft.Colors.with_opacity(0.1, self.colors["warning"]))
+        )
 
     def create_compact_alerts_list(self):
         """Create compact alerts list."""
@@ -434,52 +557,102 @@ class WeatherAlertDialog:
         if not active_alerts:
             return ft.Container()
         
-        # Mostra solo le prime 2-3 allerte più importanti
-        top_alerts = sorted(active_alerts, key=lambda x: x.severity.value, reverse=True)[:3]
+        # Ordina le allerte per severità
+        sorted_alerts = sorted(active_alerts, key=lambda x: x.severity.value, reverse=True)
         
         alert_items = []
-        for alert in top_alerts:
+        for alert in sorted_alerts:
+            # Mappa dei colori per severità
             severity_colors = {
                 AlertSeverity.LOW: self.colors["success"], 
                 AlertSeverity.MODERATE: self.colors["warning"],
                 AlertSeverity.HIGH: self.colors["error"], 
                 AlertSeverity.EXTREME: "#9C27B0"
             }
+            
+            # Icone per tipo di alert usando Flet Icons
+            alert_icons = {
+                AlertType.STORM: ft.Icons.THUNDERSTORM,
+                AlertType.RAIN_HEAVY: ft.Icons.WATER_DROP,
+                AlertType.SNOW_HEAVY: ft.Icons.AC_UNIT,
+                AlertType.WIND_STRONG: ft.Icons.AIR,
+                AlertType.TEMPERATURE_HIGH: ft.Icons.WB_SUNNY,
+                AlertType.TEMPERATURE_LOW: ft.Icons.AC_UNIT,
+                AlertType.FOG: ft.Icons.CLOUD,
+                AlertType.UV_HIGH: ft.Icons.WB_SUNNY,
+                AlertType.AIR_QUALITY_POOR: ft.Icons.MASKS,
+                AlertType.HUMIDITY_HIGH: ft.Icons.WATER_DROP,
+                AlertType.PRESSURE_LOW: ft.Icons.COMPRESS
+            }
+            
             color = severity_colors.get(alert.severity, self.colors["warning"])
+            icon = alert_icons.get(alert.alert_type, ft.Icons.WARNING)
+            
+            # Traduzione del tipo di severità
+            severity_key = f"alert_severity_{alert.severity.name.lower()}"
+            severity_text = self.get_translation(severity_key)
             
             alert_items.append(
                 ft.Container(
-                    content=ft.Row([
-                        ft.Container(width=4, height=24, bgcolor=color, border_radius=2),
-                        ft.Column([
-                            ft.Text(alert.title, size=12, weight=ft.FontWeight.W_500, color=self.colors["text"]),
-                            ft.Text(alert.message[:50] + "..." if len(alert.message) > 50 else alert.message, 
-                                    size=10, color=self.colors["text_secondary"])
-                        ], spacing=2, expand=True)
-                    ], spacing=8),
-                    padding=ft.padding.all(8),
-                    bgcolor=ft.Colors.with_opacity(0.05, self.colors["text"]),
-                    border_radius=8
+                    content=ft.Column([
+                        # Header con icona e severità
+                        ft.Row([
+                            ft.Icon(icon, size=20, color=color),
+                            ft.Column([
+                                ResponsiveTextFactory.create_adaptive_text(
+                                    page=self.page,
+                                    text=alert.title,
+                                    text_type="body_primary",
+                                    color=self.colors["text"],
+                                    weight=ft.FontWeight.W_600
+                                ),
+                                ft.Row([
+                                    ft.Icon(ft.Icons.KEYBOARD_ARROW_UP, size=12, color=color),
+                                    ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text=severity_text,
+                                        text_type="label_small",
+                                        color=color,
+                                        weight=ft.FontWeight.W_500
+                                    )
+                                ], spacing=2)
+                            ], spacing=2, expand=True),
+                            ft.Container(width=4, height=40, bgcolor=color, border_radius=2)
+                        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                        
+                        # Messaggio dell'alert
+                        ft.Container(
+                            content=ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=alert.message[:80] + "..." if len(alert.message) > 80 else alert.message,
+                                text_type="label_small",
+                                color=self.colors["text_secondary"],
+                                text_align=ft.TextAlign.LEFT
+                            ),
+                            padding=ft.padding.only(left=28)
+                        )
+                    ], spacing=4),
+                    padding=ft.padding.all(12),
+                    bgcolor=ft.Colors.with_opacity(0.03, color),
+                    border=ft.border.all(1, ft.Colors.with_opacity(0.2, color)),
+                    border_radius=10,
+                    margin=ft.margin.only(bottom=6)
                 )
             )
         
-        if len(active_alerts) > 3:
-            alert_items.append(
-                ft.Text(f"... e altre {len(active_alerts) - 3} allerte", 
-                       size=10, color=self.colors["text_secondary"], text_align=ft.TextAlign.CENTER)
-            )
+        # Calcola l'altezza dinamica basata sul numero di allerte
+        alert_count = len(alert_items)
+        if alert_count == 0:
+            return ft.Container()
         
-        return ft.Column(alert_items, spacing=8)
-
-    def open_notifications(self):
-        """Open notifications management."""
-        # Qui possiamo integrare con il push_notifications_dialog
-        print("Opening notifications management...")
-        
-    def open_details(self):
-        """Open detailed alerts view."""
-        # Qui possiamo aprire una vista dettagliata delle allerte
-        print("Opening detailed alerts view...")
+        # Usa ListView senza container fisso - si adatta al contenuto
+        return ft.ListView(
+            controls=alert_items,
+            spacing=8,
+            padding=ft.padding.symmetric(vertical=4),
+            expand=True,
+            auto_scroll=False
+        )
 
     def acknowledge_alert(self, alert_id: str):
         """Acknowledge a specific alert."""

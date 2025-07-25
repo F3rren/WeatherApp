@@ -1,13 +1,13 @@
 import os
 from services.api.api_service import load_dotenv
-from services.ui.translation_service import TranslationService
+from translations import translation_manager
 from services.ui.theme_handler import ThemeHandler
 from ui.components.sidebar.popmenu.alertdialogs.settings.settings_alert_dialog import SettingsAlertDialog
 from ui.components.sidebar.popmenu.alertdialogs.maps.radar_live_dialog import RadarLiveDialog
 from ui.components.sidebar.popmenu.alertdialogs.weather.weather_alert_dialog import WeatherAlertDialog
 from ui.components.sidebar.popmenu.alertdialogs.alerts.push_notifications_dialog import PushNotificationsDialog
 from ui.components.sidebar.popmenu.alertdialogs.tools.location_manager_dialog import LocationManagerDialog
-from ui.components.sidebar.popmenu.alertdialogs.tools.export_data_dialog import ExportDataDialog
+from utils.responsive_utils import ResponsiveTextFactory
 import flet as ft
 import webbrowser
 
@@ -30,16 +30,10 @@ class PopMenu(ft.Container):
         self.language = language if language else os.getenv("DEFAULT_LANGUAGE")
         self.update_weather_callback = update_weather_callback
         self.weather_alert = None
-        # Dialog rimossi - ora apriamo direttamente servizi esterni:
-        # - advanced_maps_alert (sostituito da apertura diretta)
-        # - interactive_maps_alert (sostituito da apertura diretta)  
-        # - satellite_view_dialog (sostituito da apertura diretta Windy)
-        # - weather_trends_dialog (sostituito da Climate Data Online)
-        # - historical_data_dialog (sostituito da Weather History)
+
         self.radar_live_dialog = None
         self.push_notifications_dialog = None
         self.location_manager_dialog = None
-        self.export_data_dialog = None
         self.setting_alert = None
         self.pop_menu_items = None
         self.popup_menu_button_icon = None
@@ -56,6 +50,12 @@ class PopMenu(ft.Container):
     def update_ui(self, event_data=None):
         """Update theme, language, text sizes, and rebuild UI."""
         print(f"DEBUG: update_ui chiamato, self.page={self.page}")
+        
+        # Early return if page is not available
+        if not self.page:
+            print("DEBUG: PopMenu update_ui called but page is None, skipping update")
+            return
+            
         self._current_text_color = self.theme_handler.get_text_color() if self.theme_handler else "black"
         self.language = self.state_manager.get_state('language') if self.state_manager else os.getenv("DEFAULT_LANGUAGE")
 
@@ -64,31 +64,101 @@ class PopMenu(ft.Container):
         
         # Initialize dialogs (alcuni dialog rimossi - ora apriamo direttamente servizi esterni)
         self.radar_live_dialog = RadarLiveDialog(page=self.page, state_manager=self.state_manager, language=self.language)
-        self.push_notifications_dialog = PushNotificationsDialog(page=self.page)
+        self.push_notifications_dialog = PushNotificationsDialog(page=self.page, state_manager=self.state_manager, language=self.language)
         self.location_manager_dialog = LocationManagerDialog(
             page=self.page, 
-            update_weather_callback=self.update_weather_callback
+            update_weather_callback=self.update_weather_callback,
+            state_manager=self.state_manager,
+            language=self.language
         )
-        self.export_data_dialog = ExportDataDialog(page=self.page)
         self.setting_alert = SettingsAlertDialog(page=self.page, state_manager=self.state_manager, language=self.language, theme_handler=self.theme_handler, handle_location_toggle=self.handle_location_toggle, handle_theme_toggle=self.handle_theme_toggle)
 
-        # Create popup menu items text
+        # Create popup menu items text with responsive text
         self.pop_menu_items = {
-            "weather": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "weather", self.language), color=self._current_text_color),
-            "maps": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "maps", self.language), color=self._current_text_color),
-            "advanced_maps": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "advanced_maps", self.language), color=self._current_text_color),
-            "interactive_maps": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "interactive_maps", self.language), color=self._current_text_color),
-            "satellite_view": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "satellite_view", self.language), color=self._current_text_color),
-            "radar_live": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "radar_live", self.language), color=self._current_text_color),
-            "analytics": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "analytics", self.language), color=self._current_text_color),
-            "weather_trends": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "weather_trends", self.language), color=self._current_text_color),
-            "historical_data": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "historical_data", self.language), color=self._current_text_color),
-            "alerts": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "alerts", self.language), color=self._current_text_color),
-            "push_notifications": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "push_notifications", self.language), color=self._current_text_color),
-            "tools": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "tools", self.language), color=self._current_text_color),
-            "location_manager": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "location_manager", self.language), color=self._current_text_color),
-            "export_data": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "export_data", self.language), color=self._current_text_color),
-            "settings": ft.Text(value=TranslationService.translate_from_dict("popup_menu_items", "settings", self.language), color=self._current_text_color)
+            "weather": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "weather", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "maps": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "maps", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "advanced_maps": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "advanced_maps", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "interactive_maps": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "interactive_maps", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "satellite_view": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "satellite_view", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "radar_live": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "radar_live", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "analytics": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "analytics", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "weather_trends": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "weather_trends", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "historical_data": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "historical_data", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "alerts": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "alerts", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "push_notifications": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "push_notifications", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "tools": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "tools", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "location_manager": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "location_manager", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            ),
+            "settings": ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=translation_manager.get_translation("popup_menu", "items", "settings", self.language),
+                text_type="body_primary",
+                color=self._current_text_color
+            )
         }
         
         # Aggiorna il contenuto del container se già inizializzato
@@ -109,37 +179,65 @@ class PopMenu(ft.Container):
                     controls=[
                         # Meteo - item diretto
                         ft.MenuItemButton(
-                            content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "weather", self.language)),
+                            content=ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=translation_manager.get_translation("popup_menu", "items", "weather", self.language),
+                                text_type="body_primary"
+                            ),
                             leading=ft.Icon(ft.Icons.SUNNY, color="#FF8C00", size=20),
                             on_click=lambda _: self.weather_alert.show_dialog() if self.weather_alert else None,
                         ),
                 # Mappe - sottomenu
                 ft.SubmenuButton(
-                    content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "maps", self.language)),
+                    content=ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=translation_manager.get_translation("popup_menu", "items", "maps", self.language),
+                        text_type="body_primary"
+                    ),
                     leading=ft.Icon(ft.Icons.MAP, color="#2196F3", size=20),
                     controls=[
                         # Mappe Avanzate - sottomenu
                         ft.SubmenuButton(
-                            content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "advanced_maps", self.language)),
+                            content=ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=translation_manager.get_translation("popup_menu", "items", "advanced_maps", self.language),
+                                text_type="body_primary"
+                            ),
                             leading=ft.Icon(ft.Icons.LAYERS_OUTLINED, color="#4CAF50", size=20),
                             controls=[
                                 ft.MenuItemButton(
-                                    content=ft.Text("Earth Nullschool"),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text="Earth Nullschool",
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.PUBLIC, color="#FF5722", size=20),
                                     on_click=lambda _: self._open_nasa_worldview(),
                                 ),
                                 ft.MenuItemButton(
-                                    content=ft.Text("Ventusky Weather"),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text="Ventusky Weather",
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.CLOUD, color="#2196F3", size=20),
                                     on_click=lambda _: self._open_noaa_weather(),
                                 ),
                                 ft.MenuItemButton(
-                                    content=ft.Text("Windy Advanced Maps"),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text="Windy Advanced Maps",
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.LAYERS, color="#4CAF50", size=20),
                                     on_click=lambda _: self._open_ecmwf_maps(),
                                 ),
                                 ft.MenuItemButton(
-                                    content=ft.Text("Weather Radar Live"),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text="Weather Radar Live",
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.RADAR, color="#E91E63", size=20),
                                     on_click=lambda _: self._open_radar_italia(),
                                 ),
@@ -147,38 +245,66 @@ class PopMenu(ft.Container):
                         ),
                         # Mappe Interattive - sottomenu  
                         ft.SubmenuButton(
-                            content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "interactive_maps", self.language)),
+                            content=ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=translation_manager.get_translation("popup_menu", "items", "interactive_maps", self.language),
+                                text_type="body_primary"
+                            ),
                             leading=ft.Icon(ft.Icons.MAP, color="#2196F3", size=20),
                             controls=[
                                 ft.MenuItemButton(
-                                    content=ft.Text("Weather.com Maps"),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text="Weather.com Maps",
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.CLOUD_QUEUE, color="#4285F4", size=20),
                                     on_click=lambda _: self._open_google_weather_maps(),
                                 ),
                                 ft.MenuItemButton(
-                                    content=ft.Text("OpenWeatherMap"),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text="OpenWeatherMap",
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.MAP_OUTLINED, color="#FF8C00", size=20),
                                     on_click=lambda _: self._open_openweather_maps(),
                                 ),
                                 ft.MenuItemButton(
-                                    content=ft.Text("Weather Underground"),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text="Weather Underground",
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.THUNDERSTORM, color="#9C27B0", size=20),
                                     on_click=lambda _: self._open_weather_underground(),
                                 ),
                                 ft.MenuItemButton(
-                                    content=ft.Text("AccuWeather Radar"),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text="AccuWeather Radar",
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.THERMOSTAT, color="#FF5722", size=20),
                                     on_click=lambda _: self._open_accuweather_maps(),
                                 ),
                             ],
                         ),
                         ft.MenuItemButton(
-                            content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "satellite_view", self.language)),
+                            content=ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=translation_manager.get_translation("popup_menu", "items", "satellite_view", self.language),
+                                text_type="body_primary"
+                            ),
                             leading=ft.Icon(ft.Icons.SATELLITE_ALT, color="#607D8B", size=20),
                             on_click=lambda _: self._open_satellite_view(),
                         ),
                         ft.MenuItemButton(
-                            content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "radar_live", self.language)),
+                            content=ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=translation_manager.get_translation("popup_menu", "items", "radar_live", self.language),
+                                text_type="body_primary"
+                            ),
                             leading=ft.Icon(ft.Icons.RADAR, color="#E91E63", size=20),
                             on_click=lambda _: self._open_radar_live(),
                         ),
@@ -186,26 +312,46 @@ class PopMenu(ft.Container):
                 ),
                         # Analisi - sottomenu
                         ft.SubmenuButton(
-                            content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "analytics", self.language)),
+                            content=ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=translation_manager.get_translation("popup_menu", "items", "analytics", self.language),
+                                text_type="body_primary"
+                            ),
                             leading=ft.Icon(ft.Icons.ANALYTICS, color="#9C27B0", size=20),
                             controls=[
                                 ft.MenuItemButton(
-                                    content=ft.Text("Climate Data Online"),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text="Climate Data Online",
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.TRENDING_UP, color="#4CAF50", size=20),
                                     on_click=lambda _: self._open_climate_data(),
                                 ),
                                 ft.MenuItemButton(
-                                    content=ft.Text("Weather History"),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text="Weather History",
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.HISTORY, color="#795548", size=20),
                                     on_click=lambda _: self._open_weather_history(),
                                 ),
                                 ft.MenuItemButton(
-                                    content=ft.Text("Weather Analytics"),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text="Weather Analytics",
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.ANALYTICS_OUTLINED, color="#FF9800", size=20),
                                     on_click=lambda _: self._open_weather_analytics(),
                                 ),
                                 ft.MenuItemButton(
-                                    content=ft.Text("Climate Explorer"),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text="Climate Explorer",
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.EXPLORE, color="#2196F3", size=20),
                                     on_click=lambda _: self._open_climate_explorer(),
                                 ),
@@ -213,11 +359,19 @@ class PopMenu(ft.Container):
                         ),
                         # Avvisi - sottomenu
                         ft.SubmenuButton(
-                            content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "alerts", self.language)),
+                            content=ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=translation_manager.get_translation("popup_menu", "items", "alerts", self.language),
+                                text_type="body_primary"
+                            ),
                             leading=ft.Icon(ft.Icons.WARNING, color="#FF5722", size=20),
                             controls=[
                                 ft.MenuItemButton(
-                                    content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "push_notifications", self.language)),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text=translation_manager.get_translation("popup_menu", "items", "push_notifications", self.language),
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.NOTIFICATIONS, color="#FF9800", size=20),
                                     on_click=lambda _: self.push_notifications_dialog.show_dialog() if self.push_notifications_dialog else None,
                                 ),
@@ -225,24 +379,31 @@ class PopMenu(ft.Container):
                         ),
                         # Strumenti - sottomenu
                         ft.SubmenuButton(
-                            content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "tools", self.language)),
+                            content=ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=translation_manager.get_translation("popup_menu", "items", "tools", self.language),
+                                text_type="body_primary"
+                            ),
                             leading=ft.Icon(ft.Icons.BUILD, color="#607D8B", size=20),
                             controls=[
                                 ft.MenuItemButton(
-                                    content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "location_manager", self.language)),
+                                    content=ResponsiveTextFactory.create_adaptive_text(
+                                        page=self.page,
+                                        text=translation_manager.get_translation("popup_menu", "items", "location_manager", self.language),
+                                        text_type="body_primary"
+                                    ),
                                     leading=ft.Icon(ft.Icons.LOCATION_ON, color="#E91E63", size=20),
                                     on_click=lambda _: self.location_manager_dialog.show_dialog() if self.location_manager_dialog else None,
-                                ),
-                                ft.MenuItemButton(
-                                    content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "export_data", self.language)),
-                                    leading=ft.Icon(ft.Icons.DOWNLOAD, color="#3F51B5", size=20),
-                                    on_click=lambda _: self.export_data_dialog.show_dialog() if self.export_data_dialog else None,
                                 ),
                             ],
                         ),
                         # Impostazioni - item diretto
                         ft.MenuItemButton(
-                            content=ft.Text(TranslationService.translate_from_dict("popup_menu_items", "settings", self.language)),
+                            content=ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=translation_manager.get_translation("popup_menu", "items", "settings", self.language),
+                                text_type="body_primary"
+                            ),
                             leading=ft.Icon(ft.Icons.SETTINGS, color="#808080", size=20),
                             on_click=lambda _: self.setting_alert.open_dialog() if self.setting_alert else None,
                         ),
@@ -255,9 +416,17 @@ class PopMenu(ft.Container):
 
     def cleanup(self):
         """Cleanup observers and resources."""
-        if self.state_manager:
-            self.state_manager.unregister_observer("language_event", self.update_ui)
-            self.state_manager.unregister_observer("theme_event", self.update_ui)
+        try:
+            if self.state_manager:
+                self.state_manager.unregister_observer("language_event", self.update_ui)
+                self.state_manager.unregister_observer("theme_event", self.update_ui)
+                print("DEBUG: PopMenu observers unregistered")
+            
+            # Clear references to prevent memory leaks and further callbacks
+            self.page = None
+            
+        except Exception as e:
+            print(f"ERROR: PopMenu cleanup failed: {e}")
     
     def _get_current_latitude(self) -> float:
         """Ottiene la latitudine corrente dal state manager"""

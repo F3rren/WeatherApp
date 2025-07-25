@@ -2,56 +2,24 @@ import flet as ft
 import webbrowser
 import logging
 
-
 from core.state_manager import StateManager
-from services.ui.translation_service import TranslationService
+from translations import translation_manager  # New modular translation system
 from .map_view import MapView
 
 class MapsAlertDialog:
     def __init__(self, page: ft.Page, state_manager: StateManager):
         self.page = page
         self.state_manager = state_manager
-        self.translation_service = None
         self.dialog = None
         self.map_view_instance = None
         self.current_city = None
         self.current_lat = None
         self.current_lon = None
         
-        # Initialize translation service
-        try:
-            # First try to get from page session
-            self.translation_service = self.page.session.get('translation_service')
-            if not self.translation_service:
-                # Create new instance only if session is available
-                if self.page and hasattr(self.page, 'session') and self.page.session:
-                    self.translation_service = TranslationService(self.page.session)
-                else:
-                    # Use a placeholder that will be updated later
-                    self.translation_service = None
-                    logging.debug("Translation service initialization deferred - session not available")
-        except Exception as e:
-            logging.debug(f"Translation service initialization deferred: {e}")
-            self.translation_service = None
-        
         # Register for theme and language updates
         if self.state_manager:
             self.state_manager.register_observer("theme_event", self._on_theme_change)
             self.state_manager.register_observer("language_event", self._on_language_change)
-
-    def _ensure_translation_service(self):
-        """Ensure translation service is available, initialize if needed."""
-        if not self.translation_service:
-            try:
-                # Try to get from session
-                if self.page and hasattr(self.page, 'session') and self.page.session:
-                    self.translation_service = self.page.session.get('translation_service')
-                    if not self.translation_service:
-                        self.translation_service = TranslationService(self.page.session)
-                        logging.debug("Translation service initialized on demand")
-            except Exception as e:
-                logging.debug(f"Could not initialize translation service on demand: {e}")
-        return self.translation_service is not None
 
     def build(self):
         """Costruisce l'interfaccia dell'AlertDialog con supporto tema e traduzione."""
@@ -60,8 +28,7 @@ class MapsAlertDialog:
                 self.page, 
                 lat=self.current_lat, 
                 lon=self.current_lon,
-                state_manager=self.state_manager,
-                translation_service=self.translation_service
+                state_manager=self.state_manager
             )
 
             # Get current theme
@@ -308,15 +275,15 @@ class MapsAlertDialog:
             # Ensure translation service is available
             self._ensure_translation_service()
             
-            if self.translation_service and self.state_manager:
+            if self.state_manager:
                 current_language = self.state_manager.get_state('language') or 'en'
-                # Build translations dict from individual keys
+                # Use modular translation system
                 return {
-                    'weather_map_title': TranslationService.translate_from_dict('maps_alert_dialog_items', 'weather_map_title', current_language),
-                    'fullscreen': TranslationService.translate_from_dict('maps_alert_dialog_items', 'fullscreen', current_language),
-                    'close': TranslationService.translate_from_dict('maps_alert_dialog_items', 'close', current_language),
-                    'loading': TranslationService.translate_from_dict('maps_alert_dialog_items', 'loading', current_language),
-                    'error': TranslationService.translate_from_dict('maps_alert_dialog_items', 'error', current_language)
+                    'weather_map_title': translation_manager.get_translation('maps', 'maps_alert_dialog_items', 'weather_map_title', current_language),
+                    'fullscreen': translation_manager.get_translation('maps', 'maps_alert_dialog_items', 'fullscreen', current_language),
+                    'close': translation_manager.get_translation('maps', 'maps_alert_dialog_items', 'close', current_language),
+                    'loading': translation_manager.get_translation('maps', 'maps_alert_dialog_items', 'loading', current_language),
+                    'error': translation_manager.get_translation('maps', 'maps_alert_dialog_items', 'error', current_language)
                 }
         except Exception as e:
             logging.debug(f"Using fallback translations: {e}")

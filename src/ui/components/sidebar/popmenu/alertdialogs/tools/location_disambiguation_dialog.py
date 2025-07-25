@@ -3,6 +3,7 @@
 import flet as ft
 from typing import List, Callable
 from services.location.geocoding_service import LocationCandidate
+from utils.responsive_utils import ResponsiveTextFactory
 import logging
 
 logger = logging.getLogger(__name__)
@@ -71,17 +72,25 @@ class LocationDisambiguationDialog:
                     content=ft.Row([
                         ft.Icon(ft.Icons.LOCATION_SEARCHING, 
                                color=self.colors["accent"], size=24),
-                        ft.Text("Seleziona Località", 
-                               weight=ft.FontWeight.BOLD, 
-                               color=self.colors["text"], size=18)
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text="Seleziona Località",
+                            text_type="title_small",
+                            color=self.colors["text"],
+                            weight=ft.FontWeight.BOLD
+                        )
                     ], spacing=10),
                     padding=ft.padding.only(bottom=10)
                 ),
                 
                 # Descrizione
-                ft.Text(header_text, 
-                       color=self.colors["text_secondary"], 
-                       size=14, text_align=ft.TextAlign.LEFT),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=header_text,
+                    text_type="body_primary",
+                    color=self.colors["text_secondary"],
+                    text_align=ft.TextAlign.LEFT
+                ),
                 
                 ft.Divider(color=self.colors["border"]),
                 
@@ -115,22 +124,37 @@ class LocationDisambiguationDialog:
         
         # Informazioni principali
         main_info = ft.Column([
-            ft.Text(candidate.name, 
-                   weight=ft.FontWeight.BOLD, 
-                   color=self.colors["text"], size=16),
-            ft.Text(f"{flag_emoji} {candidate.country}" + 
-                   (f", {candidate.state}" if candidate.state else ""),
-                   color=self.colors["text_secondary"], size=13),
-            ft.Text(f"📍 {candidate.lat:.4f}, {candidate.lon:.4f}",
-                   color=self.colors["text_secondary"], size=11),
+            ResponsiveTextFactory.create_adaptive_text(
+                text=candidate.name,
+                text_type="body_primary",
+                color=self.colors["text"],
+                weight=ft.FontWeight.BOLD
+            ),
+            ResponsiveTextFactory.create_adaptive_text(
+                text=f"{flag_emoji} {candidate.country}" + 
+                     (f", {candidate.state}" if candidate.state else ""),
+                text_type="label_small",
+                color=self.colors["text_secondary"]
+            ),
+            ResponsiveTextFactory.create_adaptive_text(
+                text=f"📍 {candidate.lat:.4f}, {candidate.lon:.4f}",
+                text_type="label_small",
+                color=self.colors["text_secondary"]
+            ),
         ], spacing=2, expand=True)
         
         # Informazioni aggiuntive
         additional_info = ft.Column([
-            ft.Text(f"👥 {candidate.population:,} ab." if candidate.population > 0 else "👥 N/A",
-                   color=self.colors["text_secondary"], size=11),
-            ft.Text(f"🎯 {candidate.relevance_score:.1f}%" if candidate.relevance_score > 0 else "",
-                   color=self.colors["accent"], size=10),
+            ResponsiveTextFactory.create_adaptive_text(
+                text=f"👥 {candidate.population:,} ab." if candidate.population > 0 else "👥 N/A",
+                text_type="label_small",
+                color=self.colors["text_secondary"]
+            ),
+            ResponsiveTextFactory.create_adaptive_text(
+                text=f"🎯 {candidate.relevance_score:.1f}%" if candidate.relevance_score > 0 else "",
+                text_type="label_small",
+                color=self.colors["accent"]
+            ),
         ], spacing=2, horizontal_alignment=ft.CrossAxisAlignment.END)
         
         # Container principale
@@ -138,9 +162,12 @@ class LocationDisambiguationDialog:
             content=ft.Row([
                 # Numero opzione
                 ft.Container(
-                    content=ft.Text(str(index + 1), 
-                                   weight=ft.FontWeight.BOLD, 
-                                   color=self.colors["accent"]),
+                    content=ResponsiveTextFactory.create_adaptive_text(
+                        text=str(index + 1),
+                        text_type="label_small",
+                        color=self.colors["accent"],
+                        weight=ft.FontWeight.BOLD
+                    ),
                     width=30, height=30, 
                     border_radius=15,
                     bgcolor=f"{self.colors['accent']}20",

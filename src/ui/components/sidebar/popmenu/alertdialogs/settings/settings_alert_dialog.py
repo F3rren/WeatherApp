@@ -1,9 +1,8 @@
 import logging
 import flet as ft
-import os
                
 from services.api.api_service import load_dotenv
-from services.ui.translation_service import TranslationService
+from translations import translation_manager  # New modular translation system
 from ui.components.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_language import DropdownLanguage
 from ui.components.sidebar.popmenu.alertdialogs.settings.dropdowns.dropdown_measurement import DropdownMeasurement
 
@@ -31,10 +30,14 @@ class SettingsAlertDialog:
             self.state_manager.register_observer("theme_event", self.update_ui)
 
     def _init_dropdowns(self):
-        # Always use theme_handler for color
-        text_color = self.theme_handler.get_text_color() if self.theme_handler else {"TEXT": "#000000"}
-        if isinstance(text_color, str):
-            text_color = {"TEXT": text_color, "ACCENT": "#3b82f6"}
+        # Usa la nuova architettura di colori
+        colors = self._get_current_colors()
+        # Converte il nuovo formato in quello legacy per i dropdown
+        text_color = {
+            "TEXT": colors["text"],
+            "ACCENT": colors["accent"],
+            "SECONDARY_TEXT": ft.Colors.with_opacity(0.6, colors["text"])
+        }
         self.language_dropdown = DropdownLanguage(
             page=self.page,
             state_manager=self.state_manager,
@@ -55,12 +58,187 @@ class SettingsAlertDialog:
         logging.info(f"Settings dialog received language change notification: {new_language_code}")
         self.language = new_language_code
         
-        # Update UI to reflect the language change
+        # Update UI to reflect the language change using new architecture
         if self.dialog:
-            self._apply_current_styling_and_text()
+            self._update_dialog_theme_colors()
+
+    def _get_current_colors(self):
+        """Ottiene i colori del tema corrente usando la stessa logica del test funzionante."""
+        is_dark = False
+        
+        # Determina se il tema è scuro
+        if hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
+            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        elif self.state_manager:
+            theme_mode = self.state_manager.get_state('theme_mode')
+            if theme_mode is not None:
+                is_dark = theme_mode == 'dark'
+        
+        # Restituisce i colori come nel test funzionante
+        if is_dark:
+            return {
+                "bg": "#161b22",
+                "text": "#ffffff", 
+                "accent": "#60a5fa"
+            }
+        else:
+            return {
+                "bg": "#ffffff",
+                "text": "#000000",
+                "accent": "#3b82f6"
+            }
+
+    def _update_dialog_theme_colors(self):
+        """Aggiorna i colori del dialog usando la logica del test funzionante."""
+        if not self.dialog:
+            return
+            
+        colors = self._get_current_colors()
+        
+        logging.info(f"Aggiornamento colori dialog - BG: {colors['bg']}, Text: {colors['text']}")
+        
+        # AGGIORNA BACKGROUND DIALOG
+        self.dialog.bgcolor = colors["bg"]
+        
+        # AGGIORNA BACKGROUND CONTENUTO
+        if self.dialog.content:
+            self.dialog.content.bgcolor = colors["bg"]
+        
+        # AGGIORNA TITOLO
+        if hasattr(self.dialog, 'title') and isinstance(self.dialog.title, ft.Row):
+            for control in self.dialog.title.controls:
+                if isinstance(control, ft.Text):
+                    control.color = colors["text"]
+                elif isinstance(control, ft.Icon):
+                    control.color = colors["accent"]
+        
+        # AGGIORNA CONTENUTO RICORSIVAMENTE
+        if self.dialog.content and hasattr(self.dialog.content, 'content'):
+            self._update_content_colors_recursive(self.dialog.content.content, colors)
+        
+        # AGGIORNA DROPDOWN CON NUOVA ARCHITETTURA
+        if self.language_dropdown or self.measurement_dropdown:
+            # Converte il nuovo formato in quello legacy per i dropdown
+            text_color = {
+                "TEXT": colors["text"],
+                "ACCENT": colors["accent"],
+                "SECONDARY_TEXT": ft.Colors.with_opacity(0.6, colors["text"])
+            }
+            is_dark = colors["bg"] == "#161b22"
+            
+            logging.info(f"🔄 Aggiornamento dropdown con tema: {('SCURO' if is_dark else 'CHIARO')}")
+            
+            if self.language_dropdown:
+                try:
+                    self.language_dropdown.update_text_sizes(text_color, self.language)
+                    self.language_dropdown.update_theme_colors(text_color, is_dark)
+                    logging.info("✅ Language dropdown aggiornato")
+                except Exception as e:
+                    logging.debug(f"Error updating language dropdown: {e}")
+            
+            if self.measurement_dropdown:
+                try:
+                    self.measurement_dropdown.update_text_sizes(text_color, self.language)
+                    self.measurement_dropdown.update_theme_colors(text_color, is_dark)
+                    logging.info("✅ Measurement dropdown aggiornato")
+                except Exception as e:
+                    logging.debug(f"Error updating measurement dropdown: {e}")
+        
+        # AGGIORNA PULSANTI DI AZIONE
+        if hasattr(self.dialog, 'actions'):
+            for action in self.dialog.actions:
+                if isinstance(action, ft.TextButton):
+                    action.style = ft.ButtonStyle(color=colors["accent"])
+                elif isinstance(action, ft.ElevatedButton):
+                    action.bgcolor = colors["accent"]
+                elif isinstance(action, ft.FilledButton):
+                    action.style = ft.ButtonStyle(
+                        bgcolor=colors["accent"],
+                        color="#FFFFFF"
+                    )
+        
+        # FORZA UPDATE
+        try:
+            self.dialog.update()
+            logging.info("✅ Dialog theme aggiornato con successo!")
+        except Exception as ex:
+            logging.error(f"❌ Errore update dialog theme: {ex}")
+
+    def _update_content_colors_recursive(self, content, colors):
+        """Aggiorna ricorsivamente tutti i controlli con i nuovi colori."""
+        if isinstance(content, ft.Text):
+            content.color = colors["text"]
+        elif isinstance(content, ft.Icon):
+            # Mantieni i colori fissi per le icone delle sezioni principali
+            # Solo le icone del titolo e altre azioni usano colors["accent"]
+            if hasattr(content, 'name'):
+                # Colori fissi per le icone delle sezioni
+                if content.name == ft.Icons.LANGUAGE:
+                    content.color = "#ff6b35"  # Arancione per lingua
+                elif content.name == ft.Icons.STRAIGHTEN:
+                    content.color = "#22c55e"  # Verde per misure  
+                elif content.name == ft.Icons.LOCATION_ON:
+                    content.color = "#ef4444"  # Rosso per posizione
+                elif content.name == ft.Icons.DARK_MODE:
+                    content.color = "#8b5cf6"  # Viola per tema
+                else:
+                    # Per tutte le altre icone (titolo, pulsanti, ecc.)
+                    content.color = colors["accent"]
+            else:
+                content.color = colors["accent"]
+        elif isinstance(content, ft.Switch):
+            content.active_color = colors["accent"]
+            content.active_track_color = ft.Colors.with_opacity(0.5, colors["accent"])
+        elif isinstance(content, ft.Divider):
+            content.color = ft.Colors.with_opacity(0.3, colors["text"])
+        elif isinstance(content, ft.Dropdown):
+            # Aggiorna i dropdown con i nuovi colori
+            is_dark = colors["bg"] == "#161b22"
+            if is_dark:
+                content.bgcolor = "#2d3748"
+                content.border_color = "#4a5568" 
+                content.focused_border_color = colors["accent"]
+                content.color = colors["text"]
+            else:
+                content.bgcolor = "#ffffff"
+                content.border_color = "#e2e8f0"
+                content.focused_border_color = colors["accent"]
+                content.color = colors["text"]
+            
+            # Update hint style
+            secondary_color = ft.Colors.with_opacity(0.6, colors["text"])
+            if content.hint_style:
+                content.hint_style.color = secondary_color
+            else:
+                content.hint_style = ft.TextStyle(color=secondary_color)
+            
+            # Update label style if present
+            if content.label_style:
+                content.label_style.color = secondary_color
+            else:
+                content.label_style = ft.TextStyle(color=secondary_color)
+        elif isinstance(content, ft.Container):
+            if hasattr(content, 'content'):
+                self._update_content_colors_recursive(content.content, colors)
+            # Aggiorna background dei container se necessario
+            if hasattr(content, 'bgcolor') and content.bgcolor:
+                # Mantieni solo i container con background specifici
+                if str(content.bgcolor).startswith("#") or "opacity" in str(content.bgcolor):
+                    content.bgcolor = ft.Colors.with_opacity(0.1, colors["accent"])
+        elif isinstance(content, (ft.ElevatedButton, ft.OutlinedButton)):
+            # Aggiorna i pulsanti nel contenuto
+            if "refresh" in str(content.text).lower():
+                content.bgcolor = ft.Colors.with_opacity(0.1, colors["accent"])
+                content.color = colors["accent"]
+            elif "reset" in str(content.text).lower():
+                content.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.ORANGE)
+                content.color = ft.Colors.ORANGE_700
+        elif hasattr(content, 'controls'):
+            for child in content.controls:
+                self._update_content_colors_recursive(child, colors)
 
     def update_ui(self, event_data=None):
-        """Update UI based on current state with instant theme application."""
+        """Update UI based on current state with instant theme application usando la nuova architettura."""
         logging.debug(f"Settings dialog update_ui called with event_data: {event_data}")
         
         # Update language from state manager
@@ -73,25 +251,14 @@ class SettingsAlertDialog:
         # Force reinitialize dropdowns with new state
         self._init_dropdowns()
         
-        # Update theme switch to reflect current theme
+        # Update theme switch to reflect current theme usando i nuovi colori
         if self.theme_toggle_control:
-            current_theme_value = False
-            if hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
-                current_theme_value = self.page.theme_mode == ft.ThemeMode.DARK
-            elif self.state_manager:
-                theme_mode = self.state_manager.get_state('theme_mode')
-                if theme_mode is not None:
-                    current_theme_value = theme_mode == 'dark'
+            colors = self._get_current_colors()
+            is_dark = colors["bg"] == "#161b22"  # Determina tema dall'background
             
-            self.theme_toggle_control.value = current_theme_value
-            
-            # Update theme switch colors immediately
-            text_color = self.theme_handler.get_text_color() if self.theme_handler else {"TEXT": "#000000"}
-            if isinstance(text_color, str):
-                text_color = {"TEXT": text_color, "ACCENT": "#3b82f6"}
-            if isinstance(text_color, dict):
-                self.theme_toggle_control.active_color = text_color.get("ACCENT", "#3b82f6")
-                self.theme_toggle_control.active_track_color = ft.Colors.with_opacity(0.5, text_color.get("ACCENT", "#3b82f6"))
+            self.theme_toggle_control.value = is_dark
+            self.theme_toggle_control.active_color = colors["accent"]
+            self.theme_toggle_control.active_track_color = ft.Colors.with_opacity(0.5, colors["accent"])
             
             try:
                 if hasattr(self.theme_toggle_control, 'page') and self.theme_toggle_control.page:
@@ -99,19 +266,17 @@ class SettingsAlertDialog:
             except Exception:
                 pass
         
-        # Apply complete theme and text updates
+        # Applica i nuovi colori del tema al dialog se esiste
         if self.dialog:
-            self._apply_current_styling_and_text()
-            self._force_update_all_components()
+            self._update_dialog_theme_colors()
             
             # Force update if dialog is open
             if hasattr(self.dialog, 'open') and self.dialog.open:
                 try:
-                    self.dialog.update()
                     if self.page:
                         self.page.update()
                 except Exception as e:
-                    logging.debug(f"Error updating dialog: {e}")
+                    logging.debug(f"Error updating page: {e}")
         
         logging.debug("Settings dialog update_ui completed")
 
@@ -121,40 +286,37 @@ class SettingsAlertDialog:
 
     # --- Internal helpers and dialog logic remain private ---
     def createAlertDialog(self, page):
-        # Always use theme_handler for all color logic
-        text_color = self.theme_handler.get_text_color() if self.theme_handler else {"TEXT": "#000000"}
-        if isinstance(text_color, str):
-            text_color = {"TEXT": text_color, "DIALOG_BACKGROUND": "#fff", "ACCENT": "#0078d4"}
-        # Support dark mode for dialog background
-        is_dark = False
-        if hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        dialog_bg = "#161b22" if is_dark else "#ffffff"
-        # (Stateless: do not check or update self.dialog here)
+        # Usa la nuova architettura per i colori
+        colors = self._get_current_colors()
+        
+        logging.info(f"Creazione dialog con colori: BG={colors['bg']}, Text={colors['text']}, Accent={colors['accent']}")
 
         language_dropdown_control = self.language_dropdown.build()
         measurement_dropdown_control = self.measurement_dropdown.build()
 
         self.dialog = ft.AlertDialog(
-            modal=False,
+
+            modal=False,  # Cambiato da False a True per miglior visibilità
             title=ft.Row([
-                ft.Icon(ft.Icons.SETTINGS, size=24, color=text_color.get("ACCENT", "#0078d4")),
-                ft.Text(TranslationService.translate_from_dict("settings_alert_dialog_items", "settings_alert_dialog_title", self.language),
-                    size=20, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER, color=text_color["TEXT"]),
-                ft.Divider(color=ft.Colors.with_opacity(0.3, text_color["TEXT"])),
-            ], spacing=12, alignment=ft.MainAxisAlignment.START),
+                ft.Icon(ft.Icons.SETTINGS, size=24, color=colors["accent"]),
+                ft.Text(
+                    translation_manager.get_translation("weather", "settings_alert_dialog_items", "settings_alert_dialog_title", self.language),
+                    size=20, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER, color=colors["text"]
+                ),
+            ], spacing=2, expand=True),
             scrollable=True,
-            bgcolor=dialog_bg,
+            bgcolor=colors["bg"],  # Usa il background del nuovo tema
             content=ft.Container(
-                width=min(450, self.page.width * 0.9) if self.page else 400,  # Responsive width
+                width=min(450, self.page.width * 0.9) if self.page else 400,
+                bgcolor=colors["bg"],  # Assicura che anche il contenuto abbia il background corretto
                 content=ft.Column(
                     controls=[
                         # Language settings section
                         ft.Row([
-                            ft.Icon(ft.Icons.LANGUAGE, size=20, color="#ff6b35"),
+                            ft.Icon(ft.Icons.LANGUAGE, size=20, color="#ff6b35"),  # Arancione per lingua
                             ft.Text(
-                                TranslationService.translate_from_dict("settings_alert_dialog_items", "language", self.language), 
-                                size=15, weight=ft.FontWeight.W_600, color=text_color["TEXT"]
+                                translation_manager.get_translation("weather", "settings_alert_dialog_items", "language", self.language), 
+                                size=15, weight=ft.FontWeight.W_600, color=colors["text"]
                             ),
                             ft.Container(expand=True),
                             ft.Container(
@@ -165,10 +327,10 @@ class SettingsAlertDialog:
                         
                         # Unit measurement section
                         ft.Row([
-                            ft.Icon(ft.Icons.STRAIGHTEN, size=20, color="#22c55e"),
+                            ft.Icon(ft.Icons.STRAIGHTEN, size=20, color="#22c55e"),  # Verde per misure
                             ft.Text(
-                                TranslationService.translate_from_dict("settings_alert_dialog_items", "measurement", self.language), 
-                                size=15, weight=ft.FontWeight.W_600, color=text_color["TEXT"]
+                                translation_manager.get_translation("weather", "settings_alert_dialog_items", "measurement", self.language), 
+                                size=15, weight=ft.FontWeight.W_600, color=colors["text"]
                             ),
                             ft.Container(expand=True),
                             ft.Container(
@@ -179,24 +341,24 @@ class SettingsAlertDialog:
                         
                         # Location toggle section
                         ft.Row([
-                            ft.Icon(ft.Icons.LOCATION_ON, size=20, color="#ef4444"),
+                            ft.Icon(ft.Icons.LOCATION_ON, size=20, color="#ef4444"),  # Rosso per posizione
                             ft.Text(
-                                TranslationService.translate_from_dict("settings_alert_dialog_items", "use_current_location", self.language), 
-                                size=15, weight=ft.FontWeight.W_600, color=text_color["TEXT"]
+                                translation_manager.get_translation("weather", "settings_alert_dialog_items", "use_current_location", self.language), 
+                                size=15, weight=ft.FontWeight.W_600, color=colors["text"]
                             ),
                             ft.Container(expand=True),
                             ft.Container(
-                                content=self._create_location_button_instance(text_color),
+                                content=self._create_location_button_instance(colors),
                                 width=80,  # Fixed smaller width for button
                             ),
                         ], spacing=10),
                         
                         # Theme toggle section
                         ft.Row([
-                            ft.Icon(ft.Icons.DARK_MODE, size=20, color="#3b82f6"),
+                            ft.Icon(ft.Icons.DARK_MODE, size=20, color="#8b5cf6"),  # Viola per tema
                             ft.Text(
-                                TranslationService.translate_from_dict("settings_alert_dialog_items", "dark_theme", self.language), 
-                                size=15, weight=ft.FontWeight.W_600, color=text_color["TEXT"]
+                                translation_manager.get_translation("weather", "settings_alert_dialog_items", "dark_theme", self.language), 
+                                size=15, weight=ft.FontWeight.W_600, color=colors["text"]
                             ),
                             ft.Container(expand=True),
                             ft.Container(
@@ -205,48 +367,6 @@ class SettingsAlertDialog:
                             ),
                         ], spacing=10),
                         
-                        # Divider
-                        ft.Divider(color=ft.Colors.with_opacity(0.2, text_color["TEXT"])),
-                        
-                        # App information section
-                        self._build_app_info_section(text_color),
-                        
-                        # Quick actions section - Mobile optimized
-                        ft.Column([
-                            ft.ElevatedButton(
-                                text=self._get_translation_local("refresh_data"),
-                                icon=ft.Icons.REFRESH,
-                                on_click=self._refresh_weather_data,
-                                bgcolor=ft.Colors.with_opacity(0.1, text_color.get("ACCENT", "#0078d4")),
-                                color=text_color.get("ACCENT", "#0078d4"),
-                                style=ft.ButtonStyle(
-                                    shape=ft.RoundedRectangleBorder(radius=8)
-                                ),
-                                expand=True
-                            ),
-                            ft.ElevatedButton(
-                                text=self._get_translation_local("reset_settings"),
-                                icon=ft.Icons.RESTORE,
-                                on_click=self._reset_settings,
-                                bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.ORANGE),
-                                color=ft.Colors.ORANGE_700,
-                                style=ft.ButtonStyle(
-                                    shape=ft.RoundedRectangleBorder(radius=8)
-                                ),
-                                expand=True
-                            ),
-                            ft.OutlinedButton(
-                                text=self._get_translation_local("about_app"),
-                                icon=ft.Icons.INFO_OUTLINE,
-                                on_click=self._show_about_dialog,
-                                style=ft.ButtonStyle(
-                                    color=text_color.get("ACCENT", "#0078d4"),
-                                    side=ft.BorderSide(1, text_color.get("ACCENT", "#0078d4")),
-                                    shape=ft.RoundedRectangleBorder(radius=8)
-                                ),
-                                expand=True
-                            ),
-                        ], spacing=12),
                     ],
                     spacing=24,
                     scroll=ft.ScrollMode.AUTO,
@@ -256,140 +376,22 @@ class SettingsAlertDialog:
             actions=[                
                 ft.FilledButton(
                     icon=ft.Icons.CLOSE,
-                    text=TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language),
+                    text=translation_manager.get_translation("weather", "dialog_buttons", "close", self.language),
                     on_click=lambda e: self._close_dialog(e),
                     style=ft.ButtonStyle(
-                        bgcolor="#3F51B5",
+                        bgcolor=colors["accent"],
                         color=ft.Colors.WHITE,
                         shape=ft.RoundedRectangleBorder(radius=12),
                         padding=ft.padding.symmetric(horizontal=24, vertical=12)
                     )
                 ),
             ],
-            actions_alignment=ft.MainAxisAlignment.CENTER,  # Center on mobile
-            content_padding=ft.padding.all(8),  # Reduce padding for mobile
-            title_padding=ft.padding.all(16),
-            open=False,
+            actions_alignment=ft.MainAxisAlignment.END,
+            title_text_style=ft.TextStyle(size=18, weight=ft.FontWeight.BOLD, color=colors["text"]),
+            content_text_style=ft.TextStyle(size=14, color=colors["text"]),
+            inset_padding=ft.padding.all(20)
         )
         return self.dialog
-
-    def _apply_current_styling_and_text(self):
-        """Applies current text sizes, colors, language, and theme styles to the dialog."""
-        if not self.dialog:
-            return
-            
-        logging.debug("Applying current styling and text to settings dialog")
-            
-        # Get current state
-        if self.state_manager:
-            current_language = self.state_manager.get_state('language')
-            if current_language:
-                self.language = current_language
-            
-        # Always get the latest theme colors
-        text_color = self.theme_handler.get_text_color() if self.theme_handler else {"TEXT": "#000000"}
-        if isinstance(text_color, str):
-            text_color = {"TEXT": text_color, "DIALOG_BACKGROUND": "#fff", "ACCENT": "#0078d4"}
-        self.text_color = text_color
-
-        # Support dark mode for dialog background also on update
-        is_dark = False
-        if hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
-        dialog_bg = "#161b22" if is_dark else "#ffffff"
-        
-        # Update dialog background
-        self.dialog.bgcolor = dialog_bg
-        if self.dialog.content and hasattr(self.dialog.content, 'bgcolor'):
-            self.dialog.content.bgcolor = dialog_bg
-        if self.dialog.content and hasattr(self.dialog.content, 'opacity'):
-            self.dialog.content.opacity = 1.0
-            
-        # Update title with current language and theme
-        if isinstance(self.dialog.title, ft.Text):
-            self.dialog.title.value = TranslationService.translate_from_dict("settings_alert_dialog_items", "settings_alert_dialog_title", self.language)
-            self.dialog.title.size = 20
-            self.dialog.title.weight = ft.FontWeight.BOLD
-            self.dialog.title.color = self.text_color["TEXT"]
-
-        # Update content controls with current language and theme
-        if self.dialog.content and hasattr(self.dialog.content, 'content') and isinstance(self.dialog.content.content, ft.Column):
-            rows = self.dialog.content.content.controls
-            sections_config = [
-                ("language", ft.Icons.LANGUAGE, "#ff6b35"),
-                ("measurement", ft.Icons.STRAIGHTEN, "#22c55e"),
-                ("use_current_location", ft.Icons.LOCATION_ON, "#ef4444"),
-                ("dark_theme", ft.Icons.DARK_MODE, "#3b82f6"),
-            ]
-            
-            for i, config in enumerate(sections_config):
-                key, icon_name, icon_color_val = config
-                if len(rows) > i and isinstance(rows[i], ft.Row) and \
-                   len(rows[i].controls) > 0 and isinstance(rows[i].controls[0], ft.Row) and \
-                   len(rows[i].controls[0].controls) > 1:
-                    icon_control = rows[i].controls[0].controls[0]
-                    label_control = rows[i].controls[0].controls[1]
-                    if isinstance(icon_control, ft.Icon):
-                        icon_control.size = 20
-                        icon_control.color = icon_color_val
-                    if isinstance(label_control, ft.Text):
-                        # Update text with current language
-                        label_control.value = TranslationService.translate_from_dict("settings_alert_dialog_items", key, self.language)
-                        label_control.size = 16
-                        label_control.weight = ft.FontWeight.W_500
-                        label_control.color = self.text_color["TEXT"]
-                        
-        # Update action buttons with current language and theme
-        if self.dialog.actions and len(self.dialog.actions) > 0:
-            action_button = self.dialog.actions[0]
-            if isinstance(action_button, ft.FilledButton):
-                action_button.text = TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language)
-                action_button.style = ft.ButtonStyle(
-                    bgcolor=self.text_color.get("ACCENT", ft.Colors.BLUE),
-                    color=ft.Colors.WHITE,
-                    shape=ft.RoundedRectangleBorder(radius=8)
-                )
-            elif isinstance(action_button, ft.TextButton) and hasattr(action_button, 'content') and isinstance(action_button.content, ft.Text):
-                action_button.content.value = TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language)
-                action_button.content.size = 14
-                action_button.content.color = self.text_color.get("ACCENT", ft.Colors.BLUE)
-            
-                # Update button style with theme colors
-                action_button.style = ft.ButtonStyle(
-                    color=self.text_color.get("ACCENT", "#0078d4"),
-                    overlay_color=ft.Colors.with_opacity(0.1, self.text_color.get("ACCENT", "#0078d4")),
-                )
-            
-        # Update theme switch colors and value
-        if self.theme_toggle_control:
-            self.theme_toggle_control.value = is_dark
-            self.theme_toggle_control.active_color = self.text_color.get("ACCENT", "#3b82f6")
-            self.theme_toggle_control.active_track_color = ft.Colors.with_opacity(0.5, self.text_color.get("ACCENT", "#3b82f6"))
-            self.theme_toggle_control.inactive_thumb_color = "#cccccc" if not is_dark else "#666666"
-            self.theme_toggle_control.inactive_track_color = "#eeeeee" if not is_dark else "#333333"
-            
-        # Update dropdown controls with current theme
-        if self.language_dropdown:
-            try:
-                self.language_dropdown.update_text_sizes(self.text_color, self.language)
-                self.language_dropdown.update_theme_colors(self.text_color, is_dark)
-            except Exception as e:
-                logging.debug(f"Error updating language dropdown: {e}")
-                
-        if self.measurement_dropdown:
-            try:
-                self.measurement_dropdown.update_text_sizes(self.text_color, self.language)
-                self.measurement_dropdown.update_theme_colors(self.text_color, is_dark)
-            except Exception as e:
-                logging.debug(f"Error updating measurement dropdown: {e}")
-        
-        # Update app info section with current theme
-        self._update_app_info_section_theme()
-        
-        # Update action buttons in the quick actions section
-        self._update_action_buttons_theme()
-        
-        logging.debug("Styling and text application completed")
 
     def _force_update_all_components(self):
         """Force update all dialog components."""
@@ -464,85 +466,11 @@ class SettingsAlertDialog:
         except Exception as e:
             logging.debug(f"Error updating control {type(control)}: {e}")
 
-    def _update_app_info_section_theme(self):
-        """Update app info section with current theme colors."""
-        if not self.dialog or not hasattr(self.dialog, 'content'):
-            return
-            
-        try:
-            # Find the app info section in the dialog content
-            if hasattr(self.dialog.content, 'content') and isinstance(self.dialog.content.content, ft.Column):
-                rows = self.dialog.content.content.controls
-                # App info section is typically the second-to-last control before action buttons
-                for row in rows:
-                    if isinstance(row, ft.Container) and hasattr(row, 'content'):
-                        # This might be the app info section
-                        info_color = self.text_color["TEXT"]
-                        
-                        # Update container background with theme
-                        row.bgcolor = ft.Colors.with_opacity(0.05, self.text_color["TEXT"])
-                        
-                        # Update text colors in the info section
-                        if hasattr(row.content, 'controls'):
-                            for control in row.content.controls:
-                                if isinstance(control, ft.Text):
-                                    control.color = info_color
-                                elif isinstance(control, ft.Row) and hasattr(control, 'controls'):
-                                    for subcontrol in control.controls:
-                                        if isinstance(subcontrol, ft.Text):
-                                            if "MeteoApp" in str(subcontrol.value):
-                                                subcontrol.color = ft.Colors.with_opacity(0.7, info_color)
-                                            else:
-                                                subcontrol.color = info_color
-                        try:
-                            row.update()
-                        except Exception:
-                            pass
-                            
-        except Exception as e:
-            logging.debug(f"Error updating app info section theme: {e}")
-
-    def _update_action_buttons_theme(self):
-        """Update quick action buttons with current theme colors."""
-        if not self.dialog or not hasattr(self.dialog, 'content'):
-            return
-            
-        try:
-            # Find the action buttons row in the dialog content
-            if hasattr(self.dialog.content, 'content') and isinstance(self.dialog.content.content, ft.Column):
-                rows = self.dialog.content.content.controls
-                # Action buttons are typically the last row before dialog actions
-                for row in rows:
-                    if isinstance(row, ft.Row) and hasattr(row, 'controls'):
-                        for control in row.controls:
-                            if isinstance(control, (ft.ElevatedButton, ft.OutlinedButton)):
-                                # Update button colors based on theme
-                                if isinstance(control, ft.ElevatedButton):
-                                    if "refresh" in str(control.text).lower():
-                                        control.bgcolor = ft.Colors.with_opacity(0.1, self.text_color.get("ACCENT", "#0078d4"))
-                                        control.color = self.text_color.get("ACCENT", "#0078d4")
-                                    elif "reset" in str(control.text).lower():
-                                        control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.ORANGE)
-                                        control.color = ft.Colors.ORANGE_700
-                                elif isinstance(control, ft.OutlinedButton):
-                                    # About button
-                                    control.style = ft.ButtonStyle(
-                                        color=self.text_color.get("ACCENT", "#0078d4"),
-                                        side=ft.BorderSide(1, self.text_color.get("ACCENT", "#0078d4")),
-                                        shape=ft.RoundedRectangleBorder(radius=8)
-                                    )
-                                try:
-                                    control.update()
-                                except Exception:
-                                    pass
-                                    
-        except Exception as e:
-            logging.debug(f"Error updating action buttons theme: {e}")
-
     def _get_translation(self, key, dict_key=None):
         if dict_key:
-            return TranslationService.translate_from_dict(dict_key, key, str(self.language))
-        return TranslationService.translate(key, str(self.language))
+            return translation_manager.get_translation("weather", dict_key, key, self.language)
+        # For simple translations, use weather module with a general section
+        return translation_manager.get_translation("weather", "general", key, self.language)
 
     def _close_dialog(self, e=None):
         """Close the dialog when close button is clicked"""
@@ -551,12 +479,12 @@ class SettingsAlertDialog:
             self.page.update()
 
     def open_dialog(self):
-        """Always (re)builds and opens the alert dialog with instant theme application."""
+        """Apre l'alert dialog usando l'architettura funzionante del test."""
         if not self.page:
             logging.error("Error: Page context not available for SettingsAlertDialog.")
             return
             
-        logging.info("Opening settings dialog with instant theme update")
+        logging.info("Opening settings dialog con nuova architettura tema")
         
         # Build the dialog first
         dialog = self.build()
@@ -564,16 +492,10 @@ class SettingsAlertDialog:
         # Apply immediate theme and language updates
         self.update_ui()
         
-        # Ensure the dialog is properly added to the page
-        if dialog not in self.page.controls:
-            self.page.controls.append(dialog)
-        self.page.dialog = dialog
-        self.page.dialog.open = True
+        # Usa page.open() come nel test funzionante
+        self.page.open(dialog)
         
-        # Force a complete page update to ensure all theme changes are applied
-        self.page.update()
-        
-        logging.info("Settings dialog opened successfully with current theme")
+        logging.info("Settings dialog opened successfully usando page.open()")
 
     def close_dialog(self):
         """Closes the alert dialog."""
@@ -581,17 +503,15 @@ class SettingsAlertDialog:
             self.page.dialog.open = False
             self.page.update()
 
-    def _create_location_button_instance(self, text_color):
-        """Create location button with current state indication and theme awareness."""
+    def _create_location_button_instance(self, colors):
+        """Create location button with current state indication and theme awareness using new color system."""
         # Get current location state
         using_location = False
         if self.state_manager:
             using_location = self.state_manager.get_state('using_location') or False
         
         # Determine button style based on state and theme
-        is_dark = False
-        if hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
-            is_dark = self.page.theme_mode == ft.ThemeMode.DARK
+        is_dark = colors["bg"] == "#161b22"
         
         if using_location:
             button_icon = ft.Icons.GPS_FIXED
@@ -638,292 +558,49 @@ class SettingsAlertDialog:
         )
 
     def _create_theme_toggle_instance(self):
-        """Create theme toggle switch with improved state management."""
-        # Get current theme state - check page first, then state manager
-        theme_value = False
-        if hasattr(self.page, 'theme_mode') and self.page.theme_mode is not None:
-            theme_value = self.page.theme_mode == ft.ThemeMode.DARK
-        elif self.state_manager:
-            theme_mode = self.state_manager.get_state('theme_mode')
-            if theme_mode is not None:
-                theme_value = theme_mode == 'dark'
+        """Create theme toggle switch con la nuova architettura tema."""
+        colors = self._get_current_colors()
+        is_dark = colors["bg"] == "#161b22"
 
         async def on_theme_toggle(e):
-            # Log the theme toggle action
-            logging.info(f"Theme toggle clicked - current value: {e.control.value}")
+            logging.info(f"🔄 THEME TOGGLE: {'SCURO' if e.control.value else 'CHIARO'}")
             
-            # Update the switch appearance immediately for instant feedback
-            if self.theme_toggle_control:
-                current_theme_colors = self.theme_handler.get_text_color() if self.theme_handler else {"ACCENT": "#3b82f6"}
-                if isinstance(current_theme_colors, str):
-                    current_theme_colors = {"ACCENT": "#3b82f6"}
-                self.theme_toggle_control.active_color = current_theme_colors.get("ACCENT", "#3b82f6")
-                try:
-                    self.theme_toggle_control.update()
-                except Exception:
-                    pass
+            # Aggiorna immediatamente i colori del dialog usando la nuova architettura
+            self._update_dialog_theme_colors()
             
-            # Use the same pattern as weather_alert_dialog for consistency
+            # Chiama il callback originale per aggiornare il tema globale
             if self.handle_theme_toggle_callback:
-                # Call the callback which should handle both state and page theme updates
                 if hasattr(self.page, 'run_task'):
                     self.page.run_task(self.handle_theme_toggle_callback, e)
                 else:
                     await self.handle_theme_toggle_callback(e)
 
         if self.theme_toggle_control is None:
-            # Get current theme colors for initial styling
-            current_theme_colors = self.theme_handler.get_text_color() if self.theme_handler else {"ACCENT": "#3b82f6"}
-            if isinstance(current_theme_colors, str):
-                current_theme_colors = {"ACCENT": "#3b82f6"}
-            
             self.theme_toggle_control = ft.Switch(
-                value=theme_value,
+                value=is_dark,
                 on_change=on_theme_toggle,
-                active_color=current_theme_colors.get("ACCENT", "#3b82f6"),
-                active_track_color=ft.Colors.with_opacity(0.5, current_theme_colors.get("ACCENT", "#3b82f6")),
-                inactive_thumb_color="#cccccc" if not theme_value else "#666666",
-                inactive_track_color="#eeeeee" if not theme_value else "#333333",
+                active_color=colors["accent"],
+                active_track_color=ft.Colors.with_opacity(0.5, colors["accent"]),
+                inactive_thumb_color="#cccccc" if not is_dark else "#666666",
+                inactive_track_color="#eeeeee" if not is_dark else "#333333",
             )
         else:
-            # Update existing switch
-            self.theme_toggle_control.value = theme_value
-            current_theme_colors = self.theme_handler.get_text_color() if self.theme_handler else {"ACCENT": "#3b82f6"}
-            if isinstance(current_theme_colors, str):
-                current_theme_colors = {"ACCENT": "#3b82f6"}
-            self.theme_toggle_control.active_color = current_theme_colors.get("ACCENT", "#3b82f6")
-            self.theme_toggle_control.active_track_color = ft.Colors.with_opacity(0.5, current_theme_colors.get("ACCENT", "#3b82f6"))
-            self.theme_toggle_control.inactive_thumb_color = "#cccccc" if not theme_value else "#666666"
-            self.theme_toggle_control.inactive_track_color = "#eeeeee" if not theme_value else "#333333"
+            # Update existing switch con nuovi colori
+            self.theme_toggle_control.value = is_dark
+            self.theme_toggle_control.active_color = colors["accent"]
+            self.theme_toggle_control.active_track_color = ft.Colors.with_opacity(0.5, colors["accent"])
+            self.theme_toggle_control.inactive_thumb_color = "#cccccc" if not is_dark else "#666666"
+            self.theme_toggle_control.inactive_track_color = "#eeeeee" if not is_dark else "#333333"
             
         return self.theme_toggle_control
 
-    def _build_app_info_section(self, text_color):
-        """Build app information section."""
-        try:
-            current_city = self.state_manager.get_state('city') if self.state_manager else "Unknown"
-            current_language = self.state_manager.get_state('language') if self.state_manager else "en"
-            current_unit = self.state_manager.get_state('unit') if self.state_manager else "metric"
-            
-            info_color = text_color["TEXT"]
-            accent_color = text_color.get("ACCENT", "#0078d4")
-            
-            return ft.Container(
-                content=ft.Column(
-                    controls=[
-                        ft.Text(
-                            self._get_translation_local("app_status"),
-                            size=15,
-                            weight=ft.FontWeight.W_600,
-                            color=info_color
-                        ),
-                        ft.Row(
-                            controls=[
-                                ft.Icon(ft.Icons.LOCATION_CITY, size=14, color="#f59e0b"),
-                                ft.Text(f"{self._get_translation_local('current_city')}: {current_city}", size=12, color=info_color),
-                            ],
-                            spacing=2
-                        ),
-                        ft.Row(
-                            controls=[
-                                ft.Icon(ft.Icons.LANGUAGE, size=14, color="#ff6b35"),
-                                ft.Text(f"{self._get_translation_local('active_language')}: {current_language.upper()}", size=12, color=info_color),
-                            ],
-                            spacing=2
-                        ),
-                        ft.Row(
-                            controls=[
-                                ft.Icon(ft.Icons.STRAIGHTEN, size=14, color="#22c55e"),
-                                ft.Text(f"{self._get_translation_local('unit_system')}: {current_unit.title()}", size=12, color=info_color),
-                            ],
-                            spacing=2
-                        ),
-                        # App version info
-                        ft.Row(
-                            controls=[
-                                ft.Icon(ft.Icons.INFO, size=14, color=accent_color),
-                                ft.Text("MeteoApp v1.0.0", size=10, color=ft.Colors.with_opacity(0.7, info_color)),
-                            ],
-                            spacing=2
-                        ),
-                    ],
-                    spacing=5
-                ),
-                padding=ft.padding.all(8),
-                bgcolor=ft.Colors.with_opacity(0.05, text_color["TEXT"]),
-                border_radius=8,
-            )
-        except Exception as e:
-            logging.warning(f"Error building app info section: {e}")
-            return ft.Container(
-                content=ft.Text(
-                    self._get_translation_local("app_info_unavailable"),
-                    size=12,
-                    color=ft.Colors.with_opacity(0.6, text_color["TEXT"])
-                ),
-                padding=8
-            )
-
     def _get_translation_local(self, key):
-        """Get translation using the standard translation service."""
+        """Get translation using the new modular translation system."""
         try:
-            return self._get_translation(key, "settings_alert_dialog_items")
+            return translation_manager.get_translation("weather", "settings_dialog", key, self.language)
         except Exception as e:
             logging.warning(f"Translation error for key '{key}': {e}")
             return key
-
-    def _reset_settings(self, e):
-        """Reset all settings to defaults with confirmation."""
-        try:
-            # Create confirmation dialog
-            def confirm_reset(e):
-                confirmation_dialog.open = False
-                self.page.update()
-                
-                # Perform the reset
-                if self.state_manager:
-                    
-                    async def do_reset():
-                        await self.state_manager.update_state({
-                            "city": os.getenv("DEFAULT_CITY"),
-                            "language": os.getenv("DEFAULT_LANGUAGE"),
-                            "unit": os.getenv("DEFAULT_UNIT_SYSTEM"),
-                            "using_location": False
-                        })
-                    
-                    if hasattr(self.page, 'run_task'):
-                        self.page.run_task(do_reset)
-                    
-                    # Show confirmation
-                    self.page.show_snack_bar(
-                        ft.SnackBar(
-                            content=ft.Text(self._get_translation_local("settings_reset")),
-                            duration=3000
-                        )
-                    )
-                    
-                    # Update the dialog content
-                    self.update_ui()
-
-            def cancel_reset(e):
-                confirmation_dialog.open = False
-                self.page.update()
-
-            confirmation_dialog = ft.AlertDialog(
-                modal=False,
-                title=ft.Text(self._get_translation_local("reset_confirmation")),
-                scrollable=True,  # Make dialog scrollable
-                content=ft.Text(self._get_translation_local("confirm_reset")),
-                actions=[
-                    ft.TextButton(
-                        self._get_translation_local("cancel"),
-                        on_click=cancel_reset
-                    ),
-                    ft.ElevatedButton(
-                        self._get_translation_local("confirm"),
-                        on_click=confirm_reset,
-                        bgcolor=ft.Colors.ORANGE,
-                        color=ft.Colors.WHITE
-                    ),
-                ],
-                actions_alignment=ft.MainAxisAlignment.END
-            )
-            
-            self.page.dialog = confirmation_dialog
-            confirmation_dialog.open = True
-            self.page.update()
-            
-        except Exception as ex:
-            logging.error(f"Error resetting settings: {ex}")
-
-    def _refresh_weather_data(self, e):
-        """Refresh weather data."""
-        try:
-            main_app = self.page.session.get('main_app') if self.page else None
-            if main_app and self.state_manager:
-                city = self.state_manager.get_state('city')
-                language = self.state_manager.get_state('language')
-                unit = self.state_manager.get_state('unit')
-                
-                if city and language and unit:
-                    if hasattr(self.page, 'run_task'):
-                        self.page.run_task(main_app.update_weather_with_sidebar, city, language, unit)
-                    
-                    # Show temporary feedback
-                    self.page.show_snack_bar(
-                        ft.SnackBar(
-                            content=ft.Text(self._get_translation_local("refreshing_data")),
-                            duration=2000
-                        )
-                    )
-        except Exception as ex:
-            logging.error(f"Error refreshing weather data: {ex}")
-
-    def _show_about_dialog(self, e):
-        """Show application information dialog."""
-        try:
-            def close_about(e):
-                about_dialog.open = False
-                self.page.update()
-
-            about_content = ft.Column(
-                controls=[
-                    ft.Row(
-                        controls=[
-                            ft.Icon(ft.Icons.WB_SUNNY, size=32, color="#f59e0b"),
-                            ft.Text("MeteoApp", size=24, weight=ft.FontWeight.BOLD),
-                        ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        spacing=10
-                    ),
-                    ft.Divider(),
-                    ft.Text(
-                        self._get_translation_local("about_description"),
-                        size=14,
-                        text_align=ft.TextAlign.CENTER
-                    ),
-                    ft.Divider(),
-                    ft.Text(f"{self._get_translation_local('version')}: 1.0.0", size=12),
-                    ft.Text(f"{self._get_translation_local('developer')}: F3rren", size=12),
-                    ft.Divider(),
-                    ft.Text(
-                        self._get_translation_local("features"),
-                        size=14,
-                        weight=ft.FontWeight.W_600
-                    ),
-                    ft.Text(
-                        self._get_translation_local("feature_list"),
-                        size=12
-                    ),
-                ],
-                spacing=10,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER
-            )
-
-            about_dialog = ft.AlertDialog(
-                modal=False,
-                title=ft.Text(self._get_translation_local("about_title")),
-                scrollable=True,  # Make dialog scrollable
-                content=ft.Container(
-                    content=about_content,
-                    width=400,
-                    height=350,
-                ),
-                actions=[
-                    ft.TextButton(
-                        self._get_translation("close", "settings_alert_dialog_items"),
-                        on_click=close_about
-                    )
-                ],
-                actions_alignment=ft.MainAxisAlignment.CENTER
-            )
-            
-            self.page.dialog = about_dialog
-            about_dialog.open = True
-            self.page.update()
-            
-        except Exception as ex:
-            logging.error(f"Error showing about dialog: {ex}")
 
     def cleanup(self):
         if self.state_manager:

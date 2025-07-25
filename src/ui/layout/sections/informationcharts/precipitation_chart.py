@@ -9,8 +9,10 @@ from typing import Dict, List, Any
 import logging
 
 from services.api.api_service import ApiService
-from services.ui.translation_service import TranslationService
+from translations import translation_manager
+from services.ui.translation_service import TranslationService  # For unit symbols
 from services.ui.theme_handler import ThemeHandler
+from utils.responsive_utils import ResponsiveTextFactory
 
 
 class PrecipitationChartDisplay(ft.Container):
@@ -131,10 +133,11 @@ class PrecipitationChartDisplay(ft.Container):
         try:
             self._precipitation_data = []
             self.content = ft.Container(
-                content=ft.Text(
-                    "Error loading precipitation chart",
+                content=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="Error loading precipitation chart",
+                    text_type="body_primary",
                     color=ft.Colors.RED_400,
-                    size=14,
                     weight=ft.FontWeight.W_500
                 ),
                 alignment=ft.alignment.center,
@@ -205,7 +208,7 @@ class PrecipitationChartDisplay(ft.Container):
             return self._cached_header
         
         # print(f"DEBUG: Building new header for language: {self._current_language}")
-        header_text = TranslationService.translate_from_dict("precipitation_chart_items", "precipitation_chart_title", self._current_language)
+        header_text = translation_manager.get_translation("charts", "precipitation_chart_items", "precipitation_chart_title", self._current_language)
         # print(f"DEBUG: header_text result: {header_text}")  # Debugging line to check header text
 
         is_dark = self.theme_handler.get_theme() != self.theme_handler.get_theme()  # Always False, but keep for logic symmetry
@@ -218,12 +221,12 @@ class PrecipitationChartDisplay(ft.Container):
                     size=25
                 ),
                 ft.Container(width=5),  # Spacer
-                ft.Text(
-                    header_text,
-                    size=20,
-                    weight=ft.FontWeight.BOLD,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=header_text,
+                    text_type="title_main",
                     color=self._current_text_color,
-                    font_family="system-ui",
+                    weight=ft.FontWeight.BOLD
                 ),
             ], alignment=ft.MainAxisAlignment.START),
             padding=ft.padding.only(left=20, top=16, bottom=12)
@@ -237,7 +240,8 @@ class PrecipitationChartDisplay(ft.Container):
 
     def _build_loading_content(self) -> ft.Control:
         """Build loading state content with translations."""
-        loading_text = TranslationService.translate_from_dict(
+        loading_text = translation_manager.get_translation(
+            "charts", 
             "precipitation_chart_items", 
             "loading",
             self._current_language
@@ -247,9 +251,10 @@ class PrecipitationChartDisplay(ft.Container):
             content=ft.Column([
                 ft.ProgressRing(width=50, height=50),
                 ft.Container(height=10),
-                ft.Text(
-                    loading_text,
-                    size=14,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=loading_text,
+                    text_type="body_primary",
                     color=ft.Colors.GREY_600
                 )
             ], 
@@ -273,26 +278,28 @@ class PrecipitationChartDisplay(ft.Container):
         import datetime
         
         # Get translations
-        time_label = TranslationService.translate_from_dict("precipitation_chart_items", "time_hours", self._current_language) or "Time"
-        precip_label = TranslationService.translate_from_dict("precipitation_chart_items", "precipitation_mm", self._current_language) or "Precip. (mm)"
+        time_label = translation_manager.get_translation("charts", "precipitation_chart_items", "time_hours", self._current_language) or "Time"
+        precip_label = translation_manager.get_translation("charts", "precipitation_chart_items", "precipitation_mm", self._current_language) or "Precip. (mm)"
         
         # Table header row
         header_row = ft.DataRow(
             cells=[
                 ft.DataCell(
-                    ft.Text(
-                        time_label,
-                        weight=ft.FontWeight.BOLD,
-                        size=11,
-                        color=ft.Colors.with_opacity(0.7, text_color)
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=time_label,
+                        text_type="label_small",
+                        color=ft.Colors.with_opacity(0.7, text_color),
+                        weight=ft.FontWeight.BOLD
                     )
                 ),
                 ft.DataCell(
-                    ft.Text(
-                        precip_label,
-                        weight=ft.FontWeight.BOLD,
-                        size=11,
-                        color=ft.Colors.with_opacity(0.7, text_color)
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=precip_label,
+                        text_type="label_small",
+                        color=ft.Colors.with_opacity(0.7, text_color),
+                        weight=ft.FontWeight.BOLD
                     )
                 )
             ],
@@ -328,25 +335,28 @@ class PrecipitationChartDisplay(ft.Container):
             data_row = ft.DataRow(
                 cells=[
                     ft.DataCell(
-                        ft.Text(
-                            time_str,
-                            size=12,
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=time_str,
+                            text_type="body_primary",
                             color=text_color
                         )
                     ),
                     ft.DataCell(
                         ft.Row([
-                            ft.Text(
-                                f"{precip:.1f} mm",
-                                size=12,
-                                weight=ft.FontWeight.W_500,
-                                color=text_color
+                            ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=f"{precip:.1f} mm",
+                                text_type="body_primary",
+                                color=text_color,
+                                weight=ft.FontWeight.W_500
                             ),
                             ft.Container(width=4),  # Small spacer
                             ft.Container(
-                                ft.Text(
-                                    intensity,
-                                    size=10,
+                                ResponsiveTextFactory.create_adaptive_text(
+                                    page=self.page,
+                                    text=intensity,
+                                    text_type="label_small",
                                     color=ft.Colors.WHITE
                                 ),
                                 padding=ft.padding.symmetric(horizontal=6, vertical=2),
@@ -384,7 +394,7 @@ class PrecipitationChartDisplay(ft.Container):
         accent_color = ft.Colors.BLUE_500 if not is_dark else ft.Colors.BLUE_400
         
         # Get translation
-        next_hours_label = TranslationService.translate_from_dict("precipitation_chart_items", "next_24h", self._current_language) or "Next 24 hours"
+        next_hours_label = translation_manager.get_translation("charts", "precipitation_chart_items", "next_24h", self._current_language) or "Next 24 hours"
         
         # Create a title for the forecast list - adjusted for direct display
         return ft.Container(
@@ -395,9 +405,10 @@ class PrecipitationChartDisplay(ft.Container):
                     color=accent_color
                 ),
                 ft.Container(width=8),
-                ft.Text(
-                    next_hours_label,
-                    size=12,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=next_hours_label,
+                    text_type="body_primary",
                     color=ft.Colors.with_opacity(0.8, text_color),
                     weight=ft.FontWeight.W_500
                 )
@@ -419,9 +430,9 @@ class PrecipitationChartDisplay(ft.Container):
         text_color = self.theme_handler.get_text_color()
         
         # Get translations
-        total_label = TranslationService.translate_from_dict("precipitation_chart_items", "total_precipitation", self._current_language) or "Totale"
-        max_label = TranslationService.translate_from_dict("precipitation_chart_items", "max_intensity", self._current_language) or "Picco"
-        hours_label = TranslationService.translate_from_dict("precipitation_chart_items", "rainy_hours", self._current_language) or "Ore di pioggia"
+        total_label = translation_manager.get_translation("charts", "precipitation_chart_items", "total_precipitation", self._current_language) or "Totale"
+        max_label = translation_manager.get_translation("charts", "precipitation_chart_items", "max_intensity", self._current_language) or "Picco"
+        hours_label = translation_manager.get_translation("charts", "precipitation_chart_items", "rainy_hours", self._current_language) or "Ore di pioggia"
         
         # Create compact statistics cards
         stats_cards = []
@@ -432,15 +443,21 @@ class PrecipitationChartDisplay(ft.Container):
                 content=ft.Column([
                     ft.Row([
                         ft.Icon(ft.Icons.WATER_DROP, size=14, color=ft.Colors.BLUE_600),
-                        ft.Text(f"{total_precipitation:.1f} mm", 
-                               size=13, 
-                               weight=ft.FontWeight.W_600, 
-                               color=text_color)
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=f"{total_precipitation:.1f} mm",
+                            text_type="subtitle",
+                            color=text_color,
+                            weight=ft.FontWeight.W_600
+                        )
                     ], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
-                    ft.Text(total_label, 
-                           size=9, 
-                           color=ft.Colors.with_opacity(0.65, text_color),
-                           text_align=ft.TextAlign.CENTER)
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=total_label,
+                        text_type="micro",
+                        color=ft.Colors.with_opacity(0.65, text_color),
+                        text_align=ft.TextAlign.CENTER
+                    )
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=3),
                 padding=ft.padding.symmetric(horizontal=10, vertical=7),
                 bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.BLUE_600),
@@ -455,15 +472,21 @@ class PrecipitationChartDisplay(ft.Container):
                 content=ft.Column([
                     ft.Row([
                         ft.Icon(ft.Icons.TRENDING_UP, size=14, color=ft.Colors.ORANGE_600),
-                        ft.Text(f"{max_intensity:.1f} mm/h", 
-                               size=13, 
-                               weight=ft.FontWeight.W_600, 
-                               color=text_color)
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=f"{max_intensity:.1f} mm/h",
+                            text_type="subtitle",
+                            color=text_color,
+                            weight=ft.FontWeight.W_600
+                        )
                     ], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
-                    ft.Text(max_label, 
-                           size=9, 
-                           color=ft.Colors.with_opacity(0.65, text_color),
-                           text_align=ft.TextAlign.CENTER)
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=max_label,
+                        text_type="micro",
+                        color=ft.Colors.with_opacity(0.65, text_color),
+                        text_align=ft.TextAlign.CENTER
+                    )
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=3),
                 padding=ft.padding.symmetric(horizontal=10, vertical=7),
                 bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.ORANGE_600),
@@ -478,15 +501,21 @@ class PrecipitationChartDisplay(ft.Container):
                 content=ft.Column([
                     ft.Row([
                         ft.Icon(ft.Icons.ACCESS_TIME, size=14, color=ft.Colors.GREEN_600),
-                        ft.Text(f"{hours_with_rain}h", 
-                               size=13, 
-                               weight=ft.FontWeight.W_600, 
-                               color=text_color)
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=f"{hours_with_rain} h",
+                            text_type="subtitle",
+                            color=text_color,
+                            weight=ft.FontWeight.W_600
+                        )
                     ], spacing=5, alignment=ft.MainAxisAlignment.CENTER),
-                    ft.Text(hours_label, 
-                           size=9, 
-                           color=ft.Colors.with_opacity(0.65, text_color),
-                           text_align=ft.TextAlign.CENTER)
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=hours_label,
+                        text_type="micro",
+                        color=ft.Colors.with_opacity(0.65, text_color),
+                        text_align=ft.TextAlign.CENTER
+                    )
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=3),
                 padding=ft.padding.symmetric(horizontal=10, vertical=7),
                 bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.GREEN_600),
@@ -506,7 +535,8 @@ class PrecipitationChartDisplay(ft.Container):
     def _build_no_data_content(self) -> ft.Control:
         """Build content when no data is available with translations."""
         # Get translated text
-        no_data_text = TranslationService.translate_from_dict(
+        no_data_text = translation_manager.get_translation(
+            "charts",
             "precipitation_chart_items",
             "no_data",
             self._current_language
@@ -515,16 +545,18 @@ class PrecipitationChartDisplay(ft.Container):
         return ft.Container(
             content=ft.Column([
                 ft.Icon(ft.Icons.WB_SUNNY_OUTLINED, size=48, color=ft.Colors.BLUE_300),
-                ft.Text(
-                    no_data_text,
-                    size=14,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=no_data_text,
+                    text_type="body_primary",
                     color=ft.Colors.with_opacity(0.7, self._current_text_color),
                     text_align=ft.TextAlign.CENTER
                 ),
                 ft.Container(height=8),
-                ft.Text(
-                    "☀️ Tempo sereno previsto",
-                    size=12,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="☀️ Tempo sereno previsto",
+                    text_type="body_primary",
                     color=ft.Colors.with_opacity(0.6, self._current_text_color),
                     text_align=ft.TextAlign.CENTER
                 )
@@ -540,7 +572,8 @@ class PrecipitationChartDisplay(ft.Container):
         text_color = self.theme_handler.get_text_color()
         
         # Get translations
-        no_significant_rain = TranslationService.translate_from_dict(
+        no_significant_rain = translation_manager.get_translation(
+            "charts", 
             "precipitation_chart_items", 
             "no_significant_precipitation", 
             self._current_language
@@ -555,17 +588,19 @@ class PrecipitationChartDisplay(ft.Container):
                     color=ft.Colors.AMBER_400
                 ),
                 ft.Container(height=16),
-                ft.Text(
-                    no_significant_rain,
-                    size=16,
-                    weight=ft.FontWeight.W_500,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=no_significant_rain,
+                    text_type="title_small",
                     color=text_color,
+                    weight=ft.FontWeight.W_500,
                     text_align=ft.TextAlign.CENTER
                 ),
                 ft.Container(height=8),
-                ft.Text(
-                    "☀️ Tempo sereno per le prossime 24 ore",
-                    size=13,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="Tempo sereno per le prossime 24 ore",
+                    text_type="body_primary",
                     color=ft.Colors.with_opacity(0.7, text_color),
                     text_align=ft.TextAlign.CENTER
                 ),
@@ -573,9 +608,10 @@ class PrecipitationChartDisplay(ft.Container):
                 ft.Container(
                     content=ft.Row([
                         ft.Icon(ft.Icons.UMBRELLA, size=20, color=ft.Colors.BLUE_300),
-                        ft.Text(
-                            "Probabilità di pioggia < 20%",
-                            size=12,
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text="Probabilità di pioggia < 20%",
+                            text_type="body_primary",
                             color=ft.Colors.with_opacity(0.8, text_color)
                         )
                     ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
@@ -779,13 +815,13 @@ class PrecipitationChartDisplay(ft.Container):
     def _get_precipitation_intensity(self, precipitation: float) -> str:
         """Get precipitation intensity description based on amount."""
         if precipitation <= 0.1:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "intensity_light", self._current_language) or "Light"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "intensity_light", self._current_language) or "Light"
         elif precipitation <= 2.5:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "intensity_moderate", self._current_language) or "Moderate"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "intensity_moderate", self._current_language) or "Moderate"
         elif precipitation <= 10:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "intensity_heavy", self._current_language) or "Heavy"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "intensity_heavy", self._current_language) or "Heavy"
         else:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "intensity_very_heavy", self._current_language) or "Very heavy"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "intensity_very_heavy", self._current_language) or "Very heavy"
             
     def _get_intensity_color(self, precipitation: float, is_dark: bool) -> str:
         """Get color for precipitation intensity badge based on amount."""
@@ -808,11 +844,11 @@ class PrecipitationChartDisplay(ft.Container):
         has_rain = any(data.get('rain', 0) > 0 for data in self._precipitation_data if isinstance(data, dict))
         
         if has_snow and has_rain:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "mixed", self._current_language) or "Mixed"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "mixed", self._current_language) or "Mixed"
         elif has_snow:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "snow", self._current_language) or "Snow"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "snow", self._current_language) or "Snow"
         else:
-            return TranslationService.translate_from_dict("precipitation_chart_items", "rain", self._current_language) or "Rain"
+            return translation_manager.get_translation("charts", "precipitation_chart_items", "rain", self._current_language) or "Rain"
 
     def _find_peak_precipitation_time(self) -> str:
         """Find when peak precipitation is expected."""

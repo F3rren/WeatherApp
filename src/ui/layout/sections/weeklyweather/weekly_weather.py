@@ -4,8 +4,10 @@ import traceback
 import asyncio
 import logging
 from services.api.api_service import ApiService, load_dotenv
-from services.ui.translation_service import TranslationService
+from translations import translation_manager
+from services.ui.translation_service import TranslationService  # For unit symbols
 from services.ui.theme_handler import ThemeHandler
+from utils.responsive_utils import ResponsiveTextFactory
 
 class WeeklyForecastDisplay(ft.Container):
     """
@@ -179,10 +181,11 @@ class WeeklyForecastDisplay(ft.Container):
             if "must be added to the page first" not in error_msg:
                 try:
                     self.content = ft.Container(
-                        content=ft.Text(
-                            "Error loading weekly forecast",
-                            color=ft.Colors.RED_400,
-                            size=14
+                        content=ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text="Error loading weekly forecast",
+                            text_type="body_primary",
+                            color=ft.Colors.RED_400
                         ),
                         alignment=ft.alignment.center,
                         padding=20
@@ -202,7 +205,7 @@ class WeeklyForecastDisplay(ft.Container):
         theme = self.theme_handler.get_theme()
         
         # Header section
-        header_text = TranslationService.translate_from_dict("weekly_forecast_items", "header", self._current_language)
+        header_text = translation_manager.get_translation("weather", "weekly_forecast_items", "header", self._current_language)
         is_dark = theme == self.theme_handler.get_theme() and theme.get("BACKGROUND", "").lower() == "#0d1117"
         header = ft.Row(
             controls=[
@@ -212,9 +215,10 @@ class WeeklyForecastDisplay(ft.Container):
                     color=ft.Colors.BLUE_400 if not is_dark else ft.Colors.BLUE_300
                 ),
                 ft.Container(width=5),
-                ft.Text(
-                    header_text,
-                    size=20,
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=header_text,
+                    text_type="title_main",
                     weight=ft.FontWeight.BOLD,
                     color=self._current_text_color
                 )
@@ -225,17 +229,18 @@ class WeeklyForecastDisplay(ft.Container):
 
         
         if not self._forecast_data:
-            loading_text = TranslationService.translate_from_dict("weekly_forecast_items", "loading", self._current_language)
+            loading_text = translation_manager.get_translation("weather", "weekly_forecast_items", "loading", self._current_language)
             return ft.Column([
                 ft.Container(
                     content=header,
                     padding=ft.padding.only(left=20, right=20, top=20, bottom=10)
                 ),
                 ft.Container(
-                    content=ft.Text(
-                        loading_text,
-                        color=self._current_text_color,
-                        size=14
+                    content=ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=loading_text,
+                        text_type="subtitle",
+                        color=self._current_text_color
                     ),
                     alignment=ft.alignment.center,
                     padding=ft.padding.all(20)
@@ -266,7 +271,12 @@ class WeeklyForecastDisplay(ft.Container):
                 logging.error(f"[ERROR WeeklyForecastDisplay] Failed to build card for {day_data.get('day_key', 'Unknown Day')}: {e}\nTraceback: {traceback.format_exc()}")
                 # Add error placeholder card
                 error_card = ft.Container(
-                    content=ft.Text("Error loading day", color=ft.Colors.RED, size=12),
+                    content=ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text="Error loading day",
+                        text_type="caption",
+                        color=ft.Colors.RED
+                    ),
                     padding=ft.padding.all(20),
                     alignment=ft.alignment.center
                 )
@@ -288,7 +298,7 @@ class WeeklyForecastDisplay(ft.Container):
 
     def _build_daily_card(self, day_data, theme):
         """Builds a clean styled row for a single day forecast with additional weather information."""
-        translated_day = TranslationService.translate_from_dict("weekly_forecast_items", day_data["day_key"], self._current_language)
+        translated_day = translation_manager.get_translation("weather", "weekly_forecast_items", day_data["day_key"], self._current_language)
         
         # Temperature data
         unit_symbol = TranslationService.get_unit_symbol("temperature", self._current_unit_system)
@@ -304,29 +314,35 @@ class WeeklyForecastDisplay(ft.Container):
         )
         
         # Day label
-        day_label = ft.Text(
-            translated_day,
-            size=16,
+        day_label = ResponsiveTextFactory.create_adaptive_text(
+            page=self.page,
+            text=translated_day,
+            text_type="title_main",
             weight=ft.FontWeight.W_600,
             color=self._current_text_color
         )
         
         # Temperature spans
-        temperature_text = ft.Text(
-            spans=[
-                ft.TextSpan(
-                    temp_min_str, 
-                    ft.TextStyle(
-                        weight=ft.FontWeight.W_600, 
+        temperature_text = ResponsiveTextFactory.create_adaptive_text(
+            page=self.page,
+            text="",  # Il testo sarà impostato tramite spans
+            text_type="title_section"
+        )
+        # Imposta manualmente gli spans dopo la creazione
+        temperature_text.spans = [
+            ft.TextSpan(
+                temp_min_str, 
+                ft.TextStyle(
+                    weight=ft.FontWeight.W_600,
                         color=ft.Colors.BLUE_400,
-                        size=15
+                        #size=15
                     )
                 ),
                 ft.TextSpan(
                     "\n", 
                     ft.TextStyle(
                         color=self._current_text_color, 
-                        size=15
+                        #size=15
                     )
                 ),
                 ft.TextSpan(
@@ -334,11 +350,11 @@ class WeeklyForecastDisplay(ft.Container):
                     ft.TextStyle(
                         weight=ft.FontWeight.W_600, 
                         color=ft.Colors.RED_400,
-                        size=15
+                        #size=15
                     )
                 )
             ]
-        )
+        
         
         # Additional weather information in a compact row
         additional_info_widgets = []
@@ -349,7 +365,13 @@ class WeeklyForecastDisplay(ft.Container):
                 ft.Container(
                     content=ft.Row([
                         ft.Icon(ft.Icons.WATER_DROP, size=12, color=ft.Colors.BLUE_400),
-                        ft.Text(f"{day_data['rain_probability']}%", size=11, color=ft.Colors.BLUE_400, weight="w500")
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=f"{day_data['rain_probability']}%",
+                            text_type="subtitle",
+                            color=ft.Colors.BLUE_400,
+                            weight="w500"
+                        )
                     ], spacing=2),
                     padding=ft.padding.symmetric(horizontal=6, vertical=2),
                     border_radius=8,
@@ -362,7 +384,13 @@ class WeeklyForecastDisplay(ft.Container):
             ft.Container(
                 content=ft.Row([
                     ft.Icon(ft.Icons.OPACITY, size=12, color=ft.Colors.CYAN_400),
-                    ft.Text(f"{day_data.get('humidity', 0)}%", size=11, color=ft.Colors.CYAN_400, weight="w500")
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=f"{day_data.get('humidity', 0)}%",
+                        text_type="subtitle",
+                        color=ft.Colors.CYAN_400,
+                        weight="w500"
+                    )
                 ], spacing=2),
                 padding=ft.padding.symmetric(horizontal=6, vertical=2),
                 border_radius=8,
@@ -376,7 +404,13 @@ class WeeklyForecastDisplay(ft.Container):
             ft.Container(
                 content=ft.Row([
                     ft.Icon(ft.Icons.AIR, size=12, color=ft.Colors.GREEN_400),
-                    ft.Text(f"{day_data.get('wind_speed', 0)}{wind_unit}", size=11, color=ft.Colors.GREEN_400, weight="w500")
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=f"{day_data.get('wind_speed', 0)}{wind_unit}",
+                        text_type="subtitle",
+                        color=ft.Colors.GREEN_400,
+                        weight="w500"
+                    )
                 ], spacing=2),
                 padding=ft.padding.symmetric(horizontal=6, vertical=2),
                 border_radius=8,

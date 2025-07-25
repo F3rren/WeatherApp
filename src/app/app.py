@@ -547,13 +547,19 @@ class MeteoApp:
         try:
             await asyncio.wait_for(
                 self.location_toggle_service.initialize_tracking(), 
-                timeout=5.0
+                timeout=10.0  # Increased timeout for better reliability
             )
             logger.info("Location service initialized successfully")
         except asyncio.TimeoutError:
-            logger.warning("Location service initialization timed out")
+            logger.warning("Location service initialization timed out - continuing without location services")
+            # Set a flag to indicate location services are not available
+            if hasattr(self, 'location_toggle_service'):
+                self.location_toggle_service.is_available = False
         except Exception as e:
             logger.warning(f"Failed to initialize location tracking: {e}")
+            # Ensure location services are marked as unavailable
+            if hasattr(self, 'location_toggle_service'):
+                self.location_toggle_service.is_available = False
         
         # Initialize theme service
         try:
@@ -847,6 +853,11 @@ class MeteoApp:
             if self.page and self.page.session:
                 self.page.session.set('current_language', language)
                 logging.debug(f"Session language updated to: {language}")
+            
+            # Update weather alerts service with new language and units
+            if self.weather_alerts_service:
+                self.weather_alerts_service.update_language_and_units(language, unit)
+                logging.debug(f"Weather alerts service updated with language: {language}, unit: {unit}")
             
             # Trigger weather update with new language
             if using_location and current_lat is not None and current_lon is not None:

@@ -1,3 +1,0 @@
-"""
-UI layout package initialization
-"""

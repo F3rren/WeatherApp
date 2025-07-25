@@ -2,37 +2,119 @@ import flet as ft
 from core.state_manager import StateManager
 from services.location.location_manager_service import LocationManagerService
 from services.location.geocoding_service import GeocodingService
-from services.ui.translation_service import TranslationService
+from translations import translation_manager
+from utils.responsive_utils import ResponsiveTextFactory
 import logging
+import requests
+import os
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+# Constants for better maintainability
+@dataclass
+class UIConstants:
+    """UI constants for consistent design."""
+    DIALOG_MIN_WIDTH: int = 600
+    DIALOG_MAX_WIDTH: int = 800
+    LOCATIONS_LIST_HEIGHT: int = 280
+    SEARCH_RESULTS_MAX_HEIGHT: int = 350
+    SEARCH_RESULTS_ITEM_HEIGHT: int = 70
+    MAX_SEARCH_RESULTS: int = 10
+    ANIMATION_DURATION: int = 250
+    BORDER_RADIUS_SMALL: int = 6
+    BORDER_RADIUS_MEDIUM: int = 8
+    BORDER_RADIUS_LARGE: int = 12
+    ICON_SIZE_SMALL: int = 16
+    ICON_SIZE_MEDIUM: int = 18
+    ICON_SIZE_LARGE: int = 24
+    BUTTON_HEIGHT: int = 40
+    SEARCH_TIMEOUT: int = 15
+
+@dataclass 
+class ColorScheme:
+    """Color scheme for theming."""
+    bg: str
+    surface: str
+    surface_variant: str
+    text: str
+    text_secondary: str
+    border: str
+    accent: str
+    success: str
+    warning: str
+    error: str
+    favorite: str
+
 
 class LocationManagerDialog:
-    def __init__(self, page: ft.Page, update_weather_callback=None):
+    """Advanced location manager dialog with enhanced UI/UX features."""
+    
+    def __init__(self, page: ft.Page, update_weather_callback=None, state_manager=None, language=None):
+        # Core dependencies
         self.page = page
-        self.state_manager = StateManager(page)
+        self.state_manager = state_manager if state_manager else StateManager(page)
         self.location_service = LocationManagerService()
         self.geocoding_service = GeocodingService()
         self.update_weather_callback = update_weather_callback
         
+        # UI constants
+        self.ui_constants = UIConstants()
+        
+        # Theme and language setup
         theme_mode = self.state_manager.get_state("theme_mode")
         self.theme = "dark" if theme_mode == ft.ThemeMode.DARK else "light"
-        self.language = self.state_manager.get_state("language") or "italian"
+        self.language = language if language else (self.state_manager.get_state("language") or "it")
         
-        # Centralized color management  
-        self.Colors = {}
-        self.update_theme_Colors()
+        # Enhanced color management with better organization
+        self.colors = self._create_color_scheme()
         
-        # Register observers
-        self.state_manager.register_observer("language_event", self.update_ui)
-        self.state_manager.register_observer("theme_event", self.update_ui)
+        # Component state management
+        self._init_component_state()
         
+        # Register observers for reactive UI updates
+        self._register_observers()
+        
+        logger.info(f"LocationManagerDialog initialized - Theme: {self.theme}, Language: {self.language}")
+    
+    def _create_color_scheme(self) -> ColorScheme:
+        """Create appropriate color scheme based on current theme."""
+        if self.theme == "dark":
+            return ColorScheme(
+                bg="#1E1E1E",
+                surface="#2D2D2D", 
+                surface_variant="#373737",
+                text="#FFFFFF",
+                text_secondary="#B0B0B0",
+                border="#404040",
+                accent="#2196F3",
+                success="#4CAF50",
+                warning="#FF9800", 
+                error="#F44336",
+                favorite="#FFD700"
+            )
+        else:
+            return ColorScheme(
+                bg="#FFFFFF",
+                surface="#F5F5F5",
+                surface_variant="#EEEEEE", 
+                text="#212121",
+                text_secondary="#757575",
+                border="#E0E0E0",
+                accent="#2196F3",
+                success="#4CAF50",
+                warning="#FF9800",
+                error="#F44336", 
+                favorite="#FFD700"
+            )
+    
+    def _init_component_state(self):
+        """Initialize component state variables."""
         # Dialog components
         self.dialog = None
         self.locations_list = None
         
-        # Search components
+        # Search components  
         self.city_field = None
         self.state_field = None
         self.country_field = None
@@ -40,370 +122,964 @@ class LocationManagerDialog:
         self.search_results_container = None
         self.is_searching = False
         
-        # Stats dialog components
+        # Secondary dialogs
         self.stats_dialog = None
         
-        logger.info("LocationManagerDialog inizializzato con input strutturato professionale")
+        # Performance optimization - cache frequently used translations
+        self._translation_cache = {}
     
-    def update_theme_Colors(self):
-        """Update theme Colors based on current theme."""
-        if self.theme == "dark":
-            self.Colors.update({
-                "bg": "#1E1E1E", "surface": "#2D2D2D", "text": "#FFFFFF", 
-                "text_secondary": "#B0B0B0", "border": "#404040", "accent": "#2196F3"
-            })
-        else:  # light
-            self.Colors.update({
-                "bg": "#FFFFFF", "surface": "#F5F5F5", "text": "#212121", 
-                "text_secondary": "#757575", "border": "#E0E0E0", "accent": "#2196F3"
-            })
+    def _register_observers(self):
+        """Register state observers for reactive updates."""
+        self.state_manager.register_observer("language_event", self._handle_language_change)
+        self.state_manager.register_observer("theme_event", self._handle_theme_change)
     
-    def update_ui(self, event=None):
-        """Update UI when theme or language changes."""
+    def _get_field_value(self, field, allow_empty=False):
+        """Safely extract and clean field value with improved error handling."""
+        if not field or not hasattr(field, 'value'):
+            return None if allow_empty else ""
+        
+        try:
+            value = field.value
+            if value is None:
+                return None if allow_empty else ""
+                
+            cleaned_value = str(value).strip()
+            return cleaned_value if cleaned_value or allow_empty else (None if allow_empty else "")
+            
+        except (AttributeError, TypeError, ValueError) as e:
+            logger.warning(f"Error extracting field value: {e}")
+            return None if allow_empty else ""
+    
+    def _get_country_name(self, country_code: str) -> str:
+        """Convert country code to localized full name with enhanced coverage."""
+        # Extended country mapping with more comprehensive coverage
+        country_names = {
+            # European countries
+            "IT": "Italia", "FR": "Francia", "ES": "Spagna", "DE": "Germania",
+            "GB": "Regno Unito", "UK": "Regno Unito", "CH": "Svizzera", "AT": "Austria", 
+            "NL": "Paesi Bassi", "BE": "Belgio", "PT": "Portogallo", "GR": "Grecia", 
+            "PL": "Polonia", "CZ": "Repubblica Ceca", "HU": "Ungheria", "RO": "Romania", 
+            "BG": "Bulgaria", "HR": "Croazia", "SI": "Slovenia", "SK": "Slovacchia", 
+            "LT": "Lituania", "LV": "Lettonia", "EE": "Estonia", "FI": "Finlandia", 
+            "SE": "Svezia", "NO": "Norvegia", "DK": "Danimarca", "IE": "Irlanda", 
+            "LU": "Lussemburgo", "MT": "Malta", "CY": "Cipro", "IS": "Islanda",
+            
+            # Major world countries
+            "US": "Stati Uniti", "CA": "Canada", "MX": "Messico", "BR": "Brasile",
+            "AR": "Argentina", "CL": "Cile", "PE": "Perù", "CO": "Colombia",
+            "AU": "Australia", "NZ": "Nuova Zelanda", "JP": "Giappone", "KR": "Corea del Sud",
+            "CN": "Cina", "IN": "India", "RU": "Russia", "TR": "Turchia", "EG": "Egitto",
+            "ZA": "Sudafrica", "NG": "Nigeria", "KE": "Kenya", "MA": "Marocco",
+            "IL": "Israele", "AE": "Emirati Arabi Uniti", "SA": "Arabia Saudita",
+            "TH": "Tailandia", "VN": "Vietnam", "ID": "Indonesia", "MY": "Malesia",
+            "SG": "Singapore", "PH": "Filippine"
+        }
+        
+        if not country_code:
+            return "Sconosciuto"
+            
+        return country_names.get(country_code.upper(), country_code.upper())
+    
+    def _handle_theme_change(self, event=None):
+        """Handle theme change events with optimized updates."""
         if event and event.get("type") == "theme_event":
             theme_mode = event.get("data")
             self.theme = "dark" if theme_mode == ft.ThemeMode.DARK else "light"
-            self.update_theme_Colors()
-        elif event and event.get("type") == "language_event":
+            self.colors = self._create_color_scheme()
+            self._clear_translation_cache()  # Clear cache on theme change
+            
+            if self.dialog and self.dialog.open:
+                self._refresh_dialog_ui()
+    
+    def _handle_language_change(self, event=None):
+        """Handle language change events with optimized updates."""
+        if event and event.get("type") == "language_event":
             self.language = event.get("data", "italian")
-        
-        if self.page and self.dialog and self.dialog.open:
-            self.show_dialog()  # Refresh dialog with new settings
+            self._clear_translation_cache()  # Clear cache on language change
+            
+            if self.dialog and self.dialog.open:
+                self._refresh_dialog_ui()
+    
+    # Legacy method kept for backward compatibility
+    def update_theme_Colors(self):
+        """Legacy method - use _create_color_scheme instead."""
+        logger.warning("update_theme_Colors is deprecated, use _create_color_scheme")
+        self.colors = self._create_color_scheme()
+    
+    # Legacy method kept for backward compatibility  
+    def update_ui(self, event=None):
+        """Legacy method - use specific handlers instead."""
+        if event and event.get("type") == "theme_event":
+            self._handle_theme_change(event)
+        elif event and event.get("type") == "language_event":
+            self._handle_language_change(event)
+    
+    def _clear_translation_cache(self):
+        """Clear translation cache for memory optimization."""
+        self._translation_cache.clear()
+    
+    def _refresh_dialog_ui(self):
+        """Refresh dialog UI with current theme and language."""
+        try:
+            if self.page and self.dialog and self.dialog.open:
+                # Close current dialog
+                self.page.close(self.dialog)
+                # Recreate and reopen with new settings
+                self.dialog = self.create_dialog()
+                self.page.open(self.dialog)
+        except Exception as e:
+            logger.error(f"Error refreshing dialog UI: {e}")
     
     def show_dialog(self):
-        """Show the location manager dialog."""
+        """Show the location manager dialog with enhanced error handling."""
         try:
-            # Chiudi eventuali dialog esistenti usando il metodo corretto
-            if self.dialog:
+            # Close any existing dialogs safely
+            if self.dialog and self.page:
                 self.page.close(self.dialog)
                 self.dialog = None
             
-            # Crea e mostra il nuovo dialog usando page.open()
+            # Create and show new dialog
             self.dialog = self.create_dialog()
             self.page.open(self.dialog)
+            logger.info("LocationManagerDialog opened successfully")
             
         except Exception as ex:
-            logger.error(f"Errore durante la visualizzazione del dialog: {ex}")
+            logger.error(f"Error showing dialog: {ex}")
+            self._show_error_snackbar(f"Errore apertura dialog: {str(ex)}")
     
     def create_dialog(self):
-        """Create the unified location manager dialog with integrated search."""
+        """Create the enhanced location manager dialog with improved UI/UX."""
         texts = self.get_texts()
         
-        # Crea i campi di input per la ricerca
-        self.city_field = ft.TextField(
-            label="Città *",
-            hint_text="Es. Milano, Roma, Tokyo...",
-            border_color=self.Colors["border"],
-            focused_border_color=self.Colors["accent"],
-            color=self.Colors["text"],
-            bgcolor=self.Colors["surface"],
-            width=150
-        )
+        # Calculate responsive dialog width
+        dialog_width = min(
+            self.ui_constants.DIALOG_MAX_WIDTH, 
+            max(self.ui_constants.DIALOG_MIN_WIDTH, self.page.width * 0.9)
+        ) if self.page else self.ui_constants.DIALOG_MIN_WIDTH
         
-        self.state_field = ft.TextField(
-            label="Regione/Stato",
-            hint_text="Opzionale",
-            border_color=self.Colors["border"],
-            focused_border_color=self.Colors["accent"],
-            color=self.Colors["text"],
-            bgcolor=self.Colors["surface"],
-            width=130
-        )
+        # Create enhanced search fields with better styling
+        self._create_search_fields()
         
-        self.country_field = ft.TextField(
-            label="Paese",
-            hint_text="Opzionale",
-            border_color=self.Colors["border"],
-            focused_border_color=self.Colors["accent"],
-            color=self.Colors["text"],
-            bgcolor=self.Colors["surface"],
-            width=120
-        )
-        
-        self.search_button = ft.ElevatedButton(
-            text="🔍 Cerca",
-            icon=ft.Icons.SEARCH,
-            on_click=self.search_locations,
-            bgcolor=ft.Colors.with_opacity(0.1, self.Colors["accent"]),
-            color=self.Colors["accent"],
-            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
-            width=100
-        )
-        
-        # Container per i risultati di ricerca
-        self.search_results_container = ft.Container(
-            content=ft.Column([], spacing=5),
-            visible=False,
-            height=0,
-            bgcolor=ft.Colors.with_opacity(0.02, self.Colors["text"]),
-            border=ft.border.all(1, ft.Colors.with_opacity(0.1, self.Colors["text"])),
-            border_radius=8,
-            padding=10,
-            animate=ft.Animation(300, ft.AnimationCurve.EASE_OUT)
-        )
+        # Create enhanced search results container
+        self._create_search_results_container()
         
         return ft.AlertDialog(
             modal=False,
-            title=ft.Row([
-                ft.Icon(ft.Icons.LOCATION_ON, color=self.Colors["accent"], size=24),
-                ft.Text(texts['dialog_title'], weight=ft.FontWeight.BOLD, color=self.Colors["text"])
-            ], spacing=10),
-            bgcolor=self.Colors["bg"],
+            title=self._create_dialog_title(texts),
+            bgcolor=self.colors.bg,
             content=ft.Container(
-                width=min(600, self.page.width * 0.95) if self.page else 600,
-                bgcolor=self.Colors["bg"],
-                padding=20,
+                width=dialog_width,
+                height=600,  # Fixed height for natural scrolling like weather alert
+                bgcolor=self.colors.bg,
+                padding=20,  # Added back padding for content
                 content=ft.Column([
-                    # Sezione ricerca integrata
-                    ft.Row([
-                        ft.Icon(ft.Icons.SEARCH, size=20, color="#ff6b35"),
-                        ft.Text("Cerca Nuova Località", weight=ft.FontWeight.W_600, 
-                               color=self.Colors["text"], size=15),
-                    ], spacing=10),
+                    # Enhanced search section
+                    self._create_search_section(),
                     
-                    # Campi di input per la ricerca
-                    ft.Row([
-                        self.city_field,
-                        self.state_field,
-                        self.country_field,
-                        self.search_button
-                    ], spacing=10, scroll=ft.ScrollMode.AUTO),
-                    
-                    # Container per risultati di ricerca
+                    # Search results container
                     self.search_results_container,
                     
-                    ft.Divider(color=ft.Colors.with_opacity(0.2, self.Colors["text"])),
+                    # Visual separator
+                    ft.Divider(
+                        color=ft.Colors.with_opacity(0.15, self.colors.text),
+                        height=20
+                    ),
                     
-                    # Sezione località salvate con azioni
-                    ft.Row([
-                        ft.Icon(ft.Icons.BOOKMARK, size=20, color="#22c55e"),
-                        ft.Text(texts['saved_locations'], weight=ft.FontWeight.W_600, 
-                               color=self.Colors["text"], size=15),
-                        ft.Container(expand=True),
-                        ft.Row([
-                            ft.IconButton(
-                                icon=ft.Icons.BAR_CHART,
-                                tooltip=texts['stats'],
-                                on_click=lambda e: self.show_statistics(),
-                                icon_color=self.Colors["accent"],
-                                icon_size=18
-                            ),
-                            ft.IconButton(
-                                icon=ft.Icons.GPS_FIXED,
-                                tooltip=texts['use_current'],
-                                on_click=lambda e: self.use_current_location(),
-                                icon_color=self.Colors["accent"],
-                                icon_size=18
-                            )
-                        ], spacing=0)
-                    ], spacing=10),
+                    # Enhanced saved locations section
+                    self._create_saved_locations_section(texts),
                     
-                    # Lista località salvate
+                    # Locations list (now without fixed height)
                     self.create_locations_list(),
                     
-                    ft.Container(height=15),
+                    # Bottom spacing
+                    ft.Container(height=20),
 
-                ], spacing=20, scroll=ft.ScrollMode.AUTO)
+                ], spacing=16, scroll=ft.ScrollMode.AUTO, expand=True)
             ),
             actions=[
                 ft.FilledButton(
                     icon=ft.Icons.CLOSE,
-                    text=TranslationService.translate_from_dict("settings_alert_dialog_items", "close", self.language),
-                    on_click=lambda e: self.close_dialog(e),
+                    text=self.get_translation("dialog_buttons.close"),
+                    on_click=self.close_dialog,
                     style=ft.ButtonStyle(
-                        bgcolor="#3F51B5",
+                        bgcolor=self.colors.accent,
                         color=ft.Colors.WHITE,
-                        shape=ft.RoundedRectangleBorder(radius=12),
+                        shape=ft.RoundedRectangleBorder(
+                            radius=self.ui_constants.BORDER_RADIUS_LARGE
+                        ),
                         padding=ft.padding.symmetric(horizontal=24, vertical=12)
                     )
                 ),
             ],
-            actions_alignment=ft.MainAxisAlignment.CENTER,
-            content_padding=ft.padding.all(8),
-            title_padding=ft.padding.all(16),
-            open=False,
+            actions_alignment=ft.MainAxisAlignment.END,
+            title_text_style=ft.TextStyle(size=18, weight=ft.FontWeight.BOLD, color=self.colors.text),
+            content_text_style=ft.TextStyle(size=14, color=self.colors.text),
+            inset_padding=ft.padding.all(20)
+        )
+    
+    def _create_dialog_title(self, texts):
+        """Create enhanced dialog title with responsive mobile text sizing."""
+        return ft.Row([
+            ft.Container(
+                content=ft.Icon(
+                    ft.Icons.LOCATION_ON_OUTLINED, 
+                    color=self.colors.accent, 
+                    size=self.ui_constants.ICON_SIZE_LARGE
+                ),
+                padding=ft.padding.only(right=8)
+            ),
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=texts['dialog_title'],
+                text_type="title_main",
+                weight=ft.FontWeight.BOLD,
+                color=self.colors.text
+            )
+        ], spacing=8)
+    
+    def _create_search_fields(self):
+        """Create enhanced search input fields with modern mobile-optimized design."""
+        # Enhanced field styling for better visual hierarchy
+        field_style = {
+            "border_color": ft.Colors.with_opacity(0.2, self.colors.text),
+            "focused_border_color": self.colors.accent,
+            "color": self.colors.text,
+            "bgcolor": self.colors.surface,
+            "border_radius": self.ui_constants.BORDER_RADIUS_LARGE,
+            "content_padding": ft.padding.symmetric(horizontal=16, vertical=12),
+            "cursor_color": self.colors.accent,
+            "selection_color": ft.Colors.with_opacity(0.3, self.colors.accent)
+        }
+        
+        self.city_field = ft.TextField(
+            #label=self.get_translation("location_manager_dialog.city_label"),
+            hint_text=self.get_translation("location_manager_dialog.city_hint"),
+            prefix_icon=ft.Icons.LOCATION_CITY,
+            expand=True,  # Make it responsive
+            **field_style
+        )
+        
+        self.state_field = ft.TextField(
+            #label=self.get_translation("location_input_dialog.state_label"),
+            hint_text=self.get_translation("location_input_dialog.state_hint"),
+            prefix_icon=ft.Icons.MAP_OUTLINED,
+            expand=True,
+            **field_style
+        )
+        
+        self.country_field = ft.TextField(
+            #label=self.get_translation("location_input_dialog.country_label"),
+            hint_text=self.get_translation("location_input_dialog.country_hint"),
+            prefix_icon=ft.Icons.PUBLIC,
+            expand=True,
+            **field_style
+        )
+        
+        # Enhanced search button with modern styling
+        self.search_button = ft.Container(
+            content=ft.ElevatedButton(
+                content=ft.Row([
+                    ft.Icon(ft.Icons.SEARCH, size=20),
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=self.get_translation("location_manager_dialog.search_button"),
+                        text_type="button",
+                        weight=ft.FontWeight.W_600,
+                        color=ft.Colors.WHITE
+                    )
+                ], spacing=8, tight=True),
+                on_click=self._handle_search_click,
+                style=ft.ButtonStyle(
+                    bgcolor=self.colors.accent,
+                    color=ft.Colors.WHITE,
+                    shape=ft.RoundedRectangleBorder(
+                        radius=self.ui_constants.BORDER_RADIUS_LARGE
+                    ),
+                    padding=ft.padding.symmetric(horizontal=20, vertical=12),
+                    elevation=2
+                ),
+                height=48
+            ),
+            expand=True
+        )
+    
+    def _create_search_results_container(self):
+        """Create enhanced search results container with modern design and better animations."""
+        self.search_results_container = ft.Container(
+            content=ft.Column([], spacing=8),
+            visible=False,
+            height=0,
+            bgcolor=ft.Colors.with_opacity(0.02, self.colors.text),
+            border=ft.border.all(1, ft.Colors.with_opacity(0.1, self.colors.text)),
+            border_radius=self.ui_constants.BORDER_RADIUS_LARGE,
+            padding=16,
+            margin=ft.margin.only(bottom=12),
+            animate=ft.Animation(
+                300,  # Slightly faster animation
+                ft.AnimationCurve.EASE_OUT
+            ),
+            shadow=ft.BoxShadow(
+                spread_radius=0,
+                blur_radius=4,
+                color=ft.Colors.with_opacity(0.1, self.colors.text),
+                offset=ft.Offset(0, 2)
+            )
+        )
+    
+    def _create_search_section(self):
+        """Create enhanced search section with modern mobile-optimized design."""
+        return ft.Container(
+            content=ft.Column([
+                # Enhanced section header with modern styling
+                ft.Container(
+                    content=ft.Row([
+                        ft.Container(
+                            content=ft.Icon(
+                                ft.Icons.SEARCH_OUTLINED, 
+                                size=24, 
+                                color=self.colors.accent
+                            ),
+                            bgcolor=ft.Colors.with_opacity(0.1, self.colors.accent),
+                            border_radius=8,
+                            padding=8
+                        ),
+                        ft.Column([
+                            ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text=self.get_translation("location_manager_dialog.search_new_location"),
+                                text_type="title_secondary",
+                                weight=ft.FontWeight.BOLD,
+                                color=self.colors.text
+                            ),
+                            ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text="",
+                                text_type="caption",
+                                color=self.colors.text_secondary
+                            )
+                        ], spacing=2, expand=True)
+                    ], spacing=12),
+                    padding=ft.padding.only(bottom=16)
+                ),
+                
+                # Mobile-optimized input fields layout
+                ft.Column([
+                    # Primary field (city) - full width
+                    self.city_field,
+                    
+                    # Secondary fields (state and country) - side by side
+                    ft.Row([
+                        self.state_field,
+                        ft.Container(width=8),  # Spacing
+                        self.country_field
+                    ], expand=True),
+                    
+                    # Search button - full width for easy tapping
+                    self.search_button
+                    
+                ], spacing=12)
+                
+            ], spacing=0),
+            
+            # Enhanced container styling
+            padding=20,
+            border=ft.border.all(1, ft.Colors.with_opacity(0.1, self.colors.text)),
+            border_radius=self.ui_constants.BORDER_RADIUS_LARGE,
+            bgcolor=ft.Colors.with_opacity(0.02, self.colors.text),
+            margin=ft.margin.only(bottom=16)
+        )
+    
+    def _create_saved_locations_section(self, texts):
+        """Create enhanced saved locations header with responsive mobile text sizing."""
+        return ft.Row([
+            ft.Icon(
+                ft.Icons.BOOKMARK_OUTLINE, 
+                size=self.ui_constants.ICON_SIZE_MEDIUM, 
+                color=self.colors.success
+            ),
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=texts['saved_locations'],
+                text_type="title_secondary",
+                weight=ft.FontWeight.W_600,
+                color=self.colors.text
+            ),
+            ft.Container(expand=True),
+            
+            # Action buttons with enhanced styling
+            ft.Row([
+                self._create_action_button(
+                    ft.Icons.BAR_CHART_OUTLINED,
+                    texts['stats'],
+                    self.show_statistics,
+                    self.colors.accent
+                ),
+                self._create_action_button(
+                    ft.Icons.GPS_FIXED,
+                    texts['use_current'],
+                    self.use_current_location,
+                    self.colors.success
+                )
+            ], spacing=4)
+        ], spacing=8)
+    
+    def _create_action_button(self, icon, tooltip, on_click, color):
+        """Create standardized action button with consistent styling."""
+        return ft.Container(
+            content=ft.IconButton(
+                icon=icon,
+                tooltip=tooltip,
+                on_click=lambda e: on_click(),
+                icon_color=color,
+                icon_size=self.ui_constants.ICON_SIZE_MEDIUM
+            ),
+            bgcolor=ft.Colors.with_opacity(0.08, color),
+            border_radius=self.ui_constants.BORDER_RADIUS_MEDIUM,
+            width=36,
+            height=36
         )
     
     def create_locations_list(self):
-        """Create the list of saved locations using the professional service."""
-        locations_column = ft.Column([], spacing=5, scroll=ft.ScrollMode.AUTO)
+        """Create enhanced locations list with natural scrolling (no fixed height)."""
+        locations_column = ft.Column([], spacing=6)  # Removed scroll from here
         
-        # Ottieni le località dal servizio professionale
-        all_locations = self.location_service.get_all_locations()
-        logger.info(f"create_locations_list: Trovate {len(all_locations)} località")
+        # Get locations with enhanced error handling
+        try:
+            all_locations = self.location_service.get_all_locations()
+            logger.info(f"Loading {len(all_locations)} locations for display")
+        except Exception as e:
+            logger.error(f"Error loading locations: {e}")
+            all_locations = []
         
         if not all_locations:
-            # Nessuna località salvata
-            no_locations_msg = ft.Container(
-                content=ft.Column([
-                    ft.Icon(ft.Icons.LOCATION_OFF, size=48, color=self.Colors["text_secondary"]),
-                    ft.Text("Nessuna località salvata", 
-                           weight=ft.FontWeight.BOLD, 
-                           color=self.Colors["text_secondary"],
-                           text_align=ft.TextAlign.CENTER),
-                    ft.Text("Aggiungi una località per iniziare", 
-                           size=12, 
-                           color=self.Colors["text_secondary"],
-                           text_align=ft.TextAlign.CENTER)
-                ], spacing=8, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                padding=20,
-                alignment=ft.alignment.center
-            )
-            locations_column.controls.append(no_locations_msg)
-            
+            # Enhanced empty state with better visual design
+            locations_column.controls.append(self._create_empty_state())
         else:
-            # Ordina le località: prima i preferiti, poi per data aggiunta
-            sorted_locations = sorted(all_locations, 
-                                    key=lambda x: (not x.get('favorite', False), 
-                                                  x.get('added_date', '')))
+            # Sort locations with enhanced logic
+            sorted_locations = self._sort_locations(all_locations)
             
+            # Create location cards with enhanced design
             for location in sorted_locations:
-                # Indicatori di stato
-                status_icons = []
-                if location.get("last_selected", False):
-                    status_icons.append(ft.Icon(ft.Icons.MY_LOCATION, 
-                                              color=self.Colors["accent"], size=16))
-                if location.get("favorite", False):
-                    status_icons.append(ft.Icon(ft.Icons.STAR, 
-                                              color="#FFD700", size=16))
-                
-                # Informazioni aggiuntive
-                location_info = [
-                    ft.Text(location["name"], weight=ft.FontWeight.BOLD, size=13, 
-                           color=self.Colors["text"]),
-                    ft.Text(f"{location['lat']:.4f}, {location['lon']:.4f}", 
-                           size=11, color=self.Colors["text_secondary"])
-                ]
-                
-                # Aggiungi paese se disponibile
-                if location.get("country") and location["country"] != "Unknown":
-                    location_info.insert(1, 
-                        ft.Text(f"🏳️ {location['country']}", 
-                               size=11, color=self.Colors["text_secondary"]))
-                
-                location_row = ft.Container(
-                    content=ft.Row([
-                        # Status indicators e info località
-                        ft.Row([
-                            # Status icons
-                            ft.Container(
-                                content=ft.Row(status_icons, spacing=2),
-                                width=40,
-                            ),
-                            # Location info
-                            ft.Column(location_info, spacing=2, expand=True),
-                        ], spacing=8, expand=True),
-                        
-                        # Action buttons con design coerente
-                        ft.Row([
-                            ft.Container(
-                                content=ft.IconButton(
-                                    icon=ft.Icons.STAR if location.get("favorite") else ft.Icons.STAR_BORDER,
-                                    icon_color="#FFD700" if location.get("favorite") else self.Colors["text_secondary"],
-                                    tooltip="Toggle Preferito",
-                                    on_click=lambda e, loc_id=location["id"]: self.toggle_favorite(loc_id),
-                                    icon_size=18
-                                ),
-                                width=40, height=40,
-                                border_radius=20,
-                                bgcolor=ft.Colors.with_opacity(0.05, self.Colors["text"]) if not location.get("favorite") else ft.Colors.with_opacity(0.1, "#FFD700")
-                            ),
-                            ft.Container(
-                                content=ft.IconButton(
-                                    icon=ft.Icons.LOCATION_ON,
-                                    icon_color=self.Colors["accent"],
-                                    tooltip="Usa Località",
-                                    on_click=lambda e, loc=location: self.use_location(loc),
-                                    icon_size=18
-                                ),
-                                width=40, height=40,
-                                border_radius=20,
-                                bgcolor=ft.Colors.with_opacity(0.1, self.Colors["accent"])
-                            ),
-                            ft.Container(
-                                content=ft.IconButton(
-                                    icon=ft.Icons.SETTINGS,
-                                    icon_color=self.Colors["text_secondary"],
-                                    tooltip="Configurazioni",
-                                    on_click=lambda e, loc=location: self.show_location_settings(loc),
-                                    icon_size=18
-                                ),
-                                width=40, height=40,
-                                border_radius=20,
-                                bgcolor=ft.Colors.with_opacity(0.05, self.Colors["text"])
-                            ),
-                            ft.Container(
-                                content=ft.IconButton(
-                                    icon=ft.Icons.DELETE,
-                                    icon_color="#F44336",
-                                    tooltip="Rimuovi",
-                                    on_click=lambda e, loc_id=location["id"]: self.remove_location(loc_id),
-                                    icon_size=18
-                                ),
-                                width=40, height=40,
-                                border_radius=20,
-                                bgcolor=ft.Colors.with_opacity(0.1, "#F44336")
-                            ),
-                        ], spacing=8)
-                    ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                    padding=16,
-                    margin=ft.margin.symmetric(vertical=4),
-                    border=ft.border.all(1, ft.Colors.with_opacity(0.1, self.Colors["text"])),
-                    border_radius=12,
-                    bgcolor=self.Colors["surface"] if not location.get("last_selected") else ft.Colors.with_opacity(0.1, self.Colors["accent"]),
-                    animate=ft.Animation(300, ft.AnimationCurve.EASE_OUT)
-                )
-                locations_column.controls.append(location_row)
+                location_card = self._create_location_card(location)
+                locations_column.controls.append(location_card)
         
         return ft.Container(
             content=locations_column,
-            height=220,
+            # Removed fixed height for natural scrolling
             padding=12,
-            border=ft.border.all(1, ft.Colors.with_opacity(0.1, self.Colors["text"])),
-            border_radius=12,
-            bgcolor=ft.Colors.with_opacity(0.02, self.Colors["text"])
+            border=ft.border.all(
+                1, 
+                ft.Colors.with_opacity(0.12, self.colors.text)
+            ),
+            border_radius=self.ui_constants.BORDER_RADIUS_LARGE,
+            bgcolor=ft.Colors.with_opacity(0.03, self.colors.text)
         )
     
+    def _create_empty_state(self):
+        """Create enhanced empty state with better visual hierarchy."""
+        return ft.Container(
+            content=ft.Column([
+                ft.Container(
+                    content=ft.Icon(
+                        ft.Icons.LOCATION_OFF_OUTLINED, 
+                        size=56, 
+                        color=self.colors.text_secondary
+                    ),
+                    padding=ft.padding.only(bottom=12)
+                ),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("location_manager_dialog.no_saved_locations"),
+                    text_type="title_small",
+                    color=self.colors.text_secondary,
+                    weight=ft.FontWeight.BOLD,
+                    text_align=ft.TextAlign.CENTER
+                ),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("location_manager_dialog.add_location_to_start"),
+                    text_type="body_primary",
+                    color=self.colors.text_secondary,
+                    text_align=ft.TextAlign.CENTER
+                )
+            ], 
+            spacing=10, 
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            padding=30,
+            alignment=ft.alignment.center
+        )
+    
+    def _sort_locations(self, locations):
+        """Sort locations with enhanced logic for better UX."""
+        return sorted(
+            locations, 
+            key=lambda x: (
+                not x.get('last_selected', False),  # Current location first
+                not x.get('favorite', False),       # Then favorites
+                x.get('name', '').lower()           # Then alphabetical
+            )
+        )
+    
+    def _create_location_card(self, location):
+        """Create enhanced location card optimized for Samsung A55 5G mobile layout."""
+        # Location information with better formatting
+        location_info = self._create_location_info(location)
+        
+        # Action buttons with consistent design
+        action_buttons = self._create_location_action_buttons(location)
+        
+        # Enhanced card styling based on location status
+        card_bgcolor = self._get_card_background_color(location)
+        
+        # Mobile-optimized layout: two rows - text on top, buttons on bottom
+        return ft.Container(
+            content=ft.Column([
+                # First row: Location info (full width)
+                ft.Container(
+                    content=location_info,
+                    expand=True
+                ),
+                
+                # Second row: Action buttons (centered)
+                ft.Container(
+                    content=action_buttons,
+                    alignment=ft.alignment.center_right,
+                    padding=ft.padding.only(top=8)
+                )
+                
+            ], spacing=0),
+            
+            padding=12,  # Reduced padding for more space
+            margin=ft.margin.symmetric(vertical=2),
+            border=ft.border.all(
+                1, 
+                ft.Colors.with_opacity(0.12, self.colors.text)
+            ),
+            border_radius=self.ui_constants.BORDER_RADIUS_LARGE,
+            bgcolor=card_bgcolor,
+            animate=ft.Animation(
+                self.ui_constants.ANIMATION_DURATION, 
+                ft.AnimationCurve.EASE_OUT
+            )
+        )
+    
+    def _create_status_indicators(self, location):
+        """Create enhanced status indicators for location cards."""
+        indicators = []
+        
+        if location.get("last_selected", False):
+            indicators.append(
+                ft.Container(
+                    content=ft.Icon(
+                        ft.Icons.MY_LOCATION, 
+                        color=self.colors.accent, 
+                        size=self.ui_constants.ICON_SIZE_SMALL
+                    ),
+                    tooltip="Località corrente",
+                    bgcolor=ft.Colors.with_opacity(0.15, self.colors.accent),
+                    border_radius=self.ui_constants.BORDER_RADIUS_SMALL,
+                    padding=4
+                )
+            )
+        
+        if location.get("favorite", False):
+            indicators.append(
+                ft.Container(
+                    content=ft.Icon(
+                        ft.Icons.STAR, 
+                        color=self.colors.favorite, 
+                        size=self.ui_constants.ICON_SIZE_SMALL
+                    ),
+                    tooltip="Preferito",
+                    bgcolor=ft.Colors.with_opacity(0.15, self.colors.favorite),
+                    border_radius=self.ui_constants.BORDER_RADIUS_SMALL,
+                    padding=4
+                )
+            )
+        
+        return ft.Container(
+            content=ft.Row(indicators, spacing=2),  # Horizontal layout for mobile
+            width=60,  # Increased width for horizontal layout
+        )
+    
+    def _create_location_info(self, location):
+        """Create enhanced location information display optimized for Samsung A55 5G."""
+        info_items = [
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=location["name"],
+                text_type="label_small",  # Changed from tiny to label_small for better readability
+                weight=ft.FontWeight.BOLD,
+                color=self.colors.text,
+                overflow=ft.TextOverflow.ELLIPSIS
+            ),
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=f"📍 {location['lat']:.4f}, {location['lon']:.4f}",
+                text_type="caption",  # Changed from tiny to caption
+                color=self.colors.text_secondary,
+                overflow=ft.TextOverflow.ELLIPSIS
+            )
+        ]
+        
+        # Add country info if available and meaningful
+        country = location.get("country", "").strip()
+        if country and country.lower() not in ["unknown", "sconosciuto", ""]:
+            country_display = self._get_country_name(country) if len(country) <= 3 else country
+            info_items.insert(1, 
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"🌍 {country_display}",
+                    text_type="caption",  # Changed from tiny to caption
+                    color=self.colors.text_secondary,
+                    overflow=ft.TextOverflow.ELLIPSIS
+                )
+            )
+        
+        return ft.Column(info_items, spacing=2)  # Removed expand=True for two-row layout
+    
+    def _create_location_action_buttons(self, location):
+        """Create enhanced action buttons for location cards."""
+        buttons = []
+        
+        # Favorite toggle button
+        is_favorite = location.get("favorite", False)
+        buttons.append(
+            self._create_location_button(
+                icon=ft.Icons.STAR if is_favorite else ft.Icons.STAR_OUTLINE,
+                tooltip=self.get_translation("toggle_favorite"),
+                on_click=lambda e, loc_id=location["id"]: self.toggle_favorite(loc_id),
+                color=self.colors.favorite if is_favorite else self.colors.text_secondary,
+                bg_color=self.colors.favorite if is_favorite else None
+            )
+        )
+        
+        # Use location button
+        buttons.append(
+            self._create_location_button(
+                icon=ft.Icons.LOCATION_ON,
+                tooltip="Usa località",
+                on_click=lambda e, loc=location: self.use_location(loc),
+                color=self.colors.accent,
+                bg_color=self.colors.accent
+            )
+        )
+
+        
+        # Delete button
+        buttons.append(
+            self._create_location_button(
+                icon=ft.Icons.DELETE_OUTLINE,
+                tooltip="Rimuovi",
+                on_click=lambda e, loc_id=location["id"]: self.remove_location(loc_id),
+                color=self.colors.error,
+                bg_color=self.colors.error
+            )
+        )
+        
+        return ft.Row(buttons, spacing=8, alignment=ft.MainAxisAlignment.END)  # Increased spacing and right alignment
+    
+    def _create_location_button(self, icon, tooltip, on_click, color, bg_color=None):
+        """Create standardized location action button optimized for mobile touch."""
+        return ft.Container(
+            content=ft.IconButton(
+                icon=icon,
+                icon_color=color,
+                tooltip=tooltip,
+                on_click=on_click,
+                icon_size=18  # Slightly larger for easier touch
+            ),
+            width=36,  # Larger touch target
+            height=36,
+            border_radius=self.ui_constants.BORDER_RADIUS_MEDIUM,
+            bgcolor=ft.Colors.with_opacity(
+                0.12 if bg_color else 0.06, 
+                bg_color or color
+            )
+        )
+    
+    def _get_card_background_color(self, location):
+        """Get appropriate background color for location card."""
+        if location.get("last_selected", False):
+            return ft.Colors.with_opacity(0.15, self.colors.accent)  # More visible for current location
+        else:
+            return self.colors.surface
+    
+    def get_translation(self, key: str) -> str:
+        """Get translation with caching for improved performance."""
+        # Check cache first
+        cache_key = f"{self.language}:{key}"
+        if cache_key in self._translation_cache:
+            return self._translation_cache[cache_key]
+        
+        # Get translation
+        if "." in key:
+            parts = key.split(".", 1)
+            section = parts[0]
+            sub_key = parts[1]
+            translation = translation_manager.get_translation("weather", section, sub_key, self.language)
+        else:
+            # Fallback for simple keys
+            translation = translation_manager.get_translation("weather", "general", key, self.language)
+        
+        # Cache and return
+        self._translation_cache[cache_key] = translation
+        return translation
+    
     def get_texts(self):
-        """Get localized texts based on current language."""
-        if self.language == "en":
-            return {
-                "title": "Location Manager", "dialog_title": "Professional Location Manager",
-                "description": "Manage your saved weather locations with professional features",
-                "add_location": "Add New Location", "saved_locations": "Saved Locations",
-                "open_location_input": "Add New Location",
-                "add": "Add", "use_current": "Use Current Location", "close": "Close",
-                "stats": "Statistics", "export": "Export", "import": "Import"
+        """Get localized texts with enhanced caching and organization."""
+        base_texts = {
+            "title": self.get_translation("location_manager_dialog.title"),
+            "dialog_title": self.get_translation("location_manager_dialog.dialog_title"),
+            "description": self.get_translation("location_manager_dialog.description"),
+            "add_location": self.get_translation("location_manager_dialog.add_location"),
+            "saved_locations": self.get_translation("location_manager_dialog.saved_locations"),
+            "open_location_input": self.get_translation("location_manager_dialog.open_location_input"),
+            "add": self.get_translation("location_manager_dialog.add_button"),
+            "use_current": self.get_translation("location_manager_dialog.use_current"),
+            "close": self.get_translation("dialog_buttons.close"),
+            "stats": self.get_translation("location_manager_dialog.stats")
+        }
+        
+        return base_texts
+    
+    def _handle_search_click(self, e=None):
+        """Enhanced search handler with better UX feedback."""
+        try:
+            if self.is_searching:
+                logger.info("Search already in progress, ignoring duplicate request")
+                return
+                
+            # Validate search fields
+            if not self._validate_search_input():
+                return
+                
+            # Clear previous results
+            self._clear_search_results()
+            
+            # Execute search with enhanced feedback
+            self._search_locations_sync(e)
+            
+        except Exception as ex:
+            logger.error(f"Error in search handler: {ex}")
+            self._show_error_snackbar(f"{self.get_translation('location_manager_dialog.search_error')}: {str(ex)}")
+    
+    def _validate_search_input(self) -> bool:
+        """Validate search input with enhanced user feedback."""
+        if not self.city_field or not self.state_field or not self.country_field:
+            logger.error("Search fields not initialized")
+            self._show_error_snackbar("Errore interno: campi di ricerca non inizializzati")
+            return False
+            
+        city = self._get_field_value(self.city_field)
+        if not city or len(city.strip()) < 2:
+            self._show_warning_snackbar(
+                self.get_translation("location_manager_dialog.enter_city_name")
+            )
+            self._focus_field(self.city_field)
+            return False
+            
+        return True
+    
+    def _clear_search_results(self):
+        """Clear search results with smooth animation."""
+        if self.search_results_container:
+            self.search_results_container.visible = False
+            self.search_results_container.height = 0
+            if self.page:
+                self.page.update()
+    
+    def _focus_field(self, field):
+        """Focus on a specific field for better UX."""
+        try:
+            if field and self.page:
+                field.focus()
+                self.page.update()
+        except Exception as e:
+            logger.warning(f"Could not focus field: {e}")
+    
+    def _search_locations_sync(self, e=None):
+        """Enhanced synchronous search with better error handling and feedback."""
+        if self.is_searching:
+            return
+        
+        city = self._get_field_value(self.city_field)
+        state = self._get_field_value(self.state_field, allow_empty=True)
+        country = self._get_field_value(self.country_field, allow_empty=True)
+        
+        # Set loading state with enhanced UI feedback
+        self._set_search_loading_state(True)
+        
+        try:
+            logger.info(f"Starting search for: city='{city}', state='{state}', country='{country}'")
+            
+            # Perform synchronous geocoding
+            results = self._geocode_sync(city, state, country)
+            
+            if results:
+                logger.info(f"Search completed successfully: {len(results)} results found")
+                self.display_search_results(results)
+                self._show_success_snackbar(
+                    f"Trovati {len(results)} risultati per '{city}'"
+                )
+            else:
+                logger.info("Search completed: no results found")
+                self.show_search_message(
+                    self.get_translation("location_manager_dialog.no_locations_found"), 
+                    "#FF9800"  # Orange warning color
+                )
+                
+        except Exception as ex:
+            logger.error(f"Search error: {ex}")
+            self.show_search_message(
+                f"{self.get_translation('location_manager_dialog.search_error')}: {str(ex)}", 
+                "#F44336"  # Red error color
+            )
+        finally:
+            self._set_search_loading_state(False)
+    
+    def _set_search_loading_state(self, is_loading: bool):
+        """Set search loading state with enhanced visual feedback for new button design."""
+        if not self.search_button:
+            return
+            
+        self.is_searching = is_loading
+        
+        # Get the actual button inside the container
+        actual_button = self.search_button.content
+        
+        if is_loading:
+            actual_button.content = ft.Row([
+                ft.ProgressRing(width=16, height=16, stroke_width=2, color=ft.Colors.WHITE),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("location_manager_dialog.searching"),
+                    text_type="button",
+                    weight=ft.FontWeight.W_600,
+                    color=ft.Colors.WHITE
+                )
+            ], spacing=8, tight=True)
+            actual_button.disabled = True
+        else:
+            actual_button.content = ft.Row([
+                ft.Icon(ft.Icons.SEARCH, size=20),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=self.get_translation("location_manager_dialog.search_button"),
+                    text_type="button",
+                    weight=ft.FontWeight.W_600,
+                    color=ft.Colors.WHITE
+                )
+            ], spacing=8, tight=True)
+            actual_button.disabled = False
+        
+        if self.page:
+            self.page.update()
+    
+    def _geocode_sync(self, city: str, state: str = None, country: str = None):
+        """Synchronous geocoding using requests."""
+        try:
+            from services.location.geocoding_service import LocationCandidate
+            
+            # Get API key
+            api_key = os.getenv("API_KEY")
+            if not api_key:
+                raise Exception("OpenWeatherMap API key not found in environment variables")
+            
+            # Build query
+            query_parts = [city.strip()]
+            if state and state.strip():
+                query_parts.append(state.strip())
+            if country and country.strip():
+                query_parts.append(country.strip())
+            
+            query = ",".join(query_parts)
+            logger.info(f"Geocoding query: {query}")
+            
+            # Make API call
+            url = "http://api.openweathermap.org/geo/1.0/direct"
+            params = {
+                "q": query,
+                "limit": 5,
+                "appid": api_key
             }
-        else:  # Italian (default)
-            return {
-                "title": "Gestione Località", "dialog_title": "Gestione Professionale Località",
-                "description": "Gestisci le tue località meteo con funzionalità avanzate",
-                "add_location": "Aggiungi Nuova Località", "saved_locations": "Località Salvate",
-                "open_location_input": "Inserisci Località",
-                "add": "Aggiungi", "use_current": "Usa Posizione Attuale", "close": "Chiudi",
-                "stats": "Statistiche", "export": "Esporta", "import": "Importa"
-            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            
+            data = response.json()
+            logger.info(f"API returned {len(data)} results")
+            
+            # Parse response
+            candidates = []
+            for item in data:
+                try:
+                    # Extract info from API response
+                    name = item.get("name", "")
+                    lat = float(item.get("lat", 0))
+                    lon = float(item.get("lon", 0))
+                    country_code = item.get("country", "")  # This is actually the country code from API
+                    state = item.get("state", "")
+                    
+                    # Get full country name
+                    country_name = self._get_country_name(country_code)
+                    
+                    candidate = LocationCandidate(
+                        name=name,
+                        country=country_name,
+                        country_code=country_code,
+                        state=state,
+                        lat=lat,
+                        lon=lon
+                    )
+                    candidates.append(candidate)
+                except Exception as e:
+                    logger.warning(f"Error parsing location item: {e}")
+                    continue
+            
+            return candidates
+            
+        except requests.exceptions.Timeout:
+            logger.error("Geocoding API timeout")
+            raise Exception("Search timeout - please try again")
+        except requests.exceptions.ConnectionError:
+            logger.error("Geocoding API connection error")
+            raise Exception("Connection error - check your internet connection")
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"Geocoding API HTTP error: {e}")
+            raise Exception(f"API error: {e}")
+        except Exception as e:
+            logger.error(f"Geocoding error: {e}")
+            raise
+    
+    async def _run_search_async(self):
+        """Run the async search in a thread-safe manner."""
+        await self.search_locations()
     
     async def search_locations(self, e=None):
         """Search for locations using the integrated search."""
         if self.is_searching:
             return
+        
+        # Ensure fields are initialized
+        if not self.city_field or not self.state_field or not self.country_field:
+            logger.error("Search fields not initialized. Dialog must be shown first.")
+            return
             
-        city = self.city_field.value.strip()
+        city = self._get_field_value(self.city_field)
         if not city:
-            self.show_snackbar("Inserisci almeno il nome della città", "#FF9800")
+            self.show_snackbar(self.get_translation("location_manager_dialog.enter_city_name"), "#FF9800")
             return
         
         self.is_searching = True
-        self.search_button.text = "🔍 Ricerca..."
+        self.search_button.text = self.get_translation("location_manager_dialog.searching")
         self.search_button.disabled = True
         self.page.update()
         
         try:
             # Prepara query di ricerca strutturata
-            state = self.state_field.value.strip() if self.state_field.value else None
-            country = self.country_field.value.strip() if self.country_field.value else None
+            state = self._get_field_value(self.state_field, allow_empty=True)
+            country = self._get_field_value(self.country_field, allow_empty=True)
             
             # Esegui ricerca
             results = await self.geocoding_service.search_by_structured_input(city, state, country)
@@ -411,80 +1087,203 @@ class LocationManagerDialog:
             if results:
                 self.display_search_results(results)
             else:
-                self.show_search_message("Nessuna località trovata", "#FF9800")
+                self.show_search_message(self.get_translation("location_manager_dialog.no_locations_found"), "#FF9800")
                 
         except Exception as ex:
             logger.error(f"Errore durante la ricerca: {ex}")
-            self.show_search_message(f"Errore nella ricerca: {str(ex)}", "#F44336")
+            self.show_search_message(f"{self.get_translation('location_manager_dialog.search_error')}: {str(ex)}", "#F44336")
         finally:
             self.is_searching = False
-            self.search_button.text = "🔍 Cerca"
+            self.search_button.text = self.get_translation("location_manager_dialog.search_button")
             self.search_button.disabled = False
             self.page.update()
     
     def display_search_results(self, results):
-        """Display search results in the integrated container."""
-        if not self.search_results_container:
+        """Display search results with enhanced UI design and animations."""
+        if not self.search_results_container or not results:
             return
             
-        results_column = ft.Column([], spacing=5)
+        results_column = ft.Column([], spacing=8)
         
-        # Header risultati
-        results_column.controls.append(
-            ft.Text(f"🔍 Trovate {len(results)} località:", 
-                   weight=ft.FontWeight.BOLD, color=self.Colors["text"], size=14)
+        # Enhanced header with result count and styling
+        header = ft.Container(
+            content=ft.Row([
+                ft.Icon(
+                    ft.Icons.SEARCH_OUTLINED, 
+                    size=self.ui_constants.ICON_SIZE_MEDIUM,
+                    color=self.colors.accent
+                ),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"Trovati {len(results)} risultati:",
+                    text_type="body_secondary",
+                    weight=ft.FontWeight.BOLD,
+                    color=self.colors.text
+                )
+            ], spacing=8),
+            padding=ft.padding.only(bottom=8)
         )
+        results_column.controls.append(header)
         
-        # Lista risultati
-        for i, candidate in enumerate(results[:10]):  # Limita a 10 risultati
-            result_card = ft.Container(
-                content=ft.Row([
-                    ft.Column([
-                        ft.Text(candidate.full_name, weight=ft.FontWeight.BOLD, 
-                               size=13, color=self.Colors["text"]),
-                        ft.Text(f"📍 {candidate.lat:.4f}, {candidate.lon:.4f}", 
-                               size=11, color=self.Colors["text_secondary"]),
-                        ft.Text(f"🏳️ {candidate.country_code}", 
-                               size=11, color=self.Colors["text_secondary"])
-                    ], spacing=2, expand=True),
-                    ft.ElevatedButton(
-                        "✅ Aggiungi",
-                        on_click=lambda e, loc=candidate: self.add_location_from_search(loc),
-                        bgcolor=ft.Colors.with_opacity(0.1, self.Colors["accent"]),
-                        color=self.Colors["accent"],
-                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=6)),
-                        height=35
-                    )
-                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                padding=8,
-                border=ft.border.all(1, ft.Colors.with_opacity(0.1, self.Colors["text"])),
-                border_radius=8,
-                bgcolor=self.Colors["surface"],
-                animate=ft.animation.Animation(200, ft.AnimationCurve.EASE_OUT)
-            )
+        # Limit results for better performance and UX
+        display_results = results[:self.ui_constants.MAX_SEARCH_RESULTS]
+        if len(results) > self.ui_constants.MAX_SEARCH_RESULTS:
+            logger.info(f"Limiting display to {self.ui_constants.MAX_SEARCH_RESULTS} of {len(results)} results")
+        
+        # Create enhanced result cards
+        for i, candidate in enumerate(display_results):
+            result_card = self._create_search_result_card(candidate, i)
             results_column.controls.append(result_card)
         
-        # Aggiorna container risultati
+        # Add truncation notice if needed
+        if len(results) > self.ui_constants.MAX_SEARCH_RESULTS:
+            truncation_notice = ft.Container(
+                content=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"... e altri {len(results) - self.ui_constants.MAX_SEARCH_RESULTS} risultati. Affina la ricerca per risultati più precisi.",
+                    text_type="small",
+                    color=self.colors.text_secondary,
+                    italic=True
+                ),
+                padding=ft.padding.only(top=8)
+            )
+            results_column.controls.append(truncation_notice)
+        
+        # Update container with smooth animation
         self.search_results_container.content = results_column
         self.search_results_container.visible = True
-        self.search_results_container.height = min(300, len(results) * 70 + 50)
-        self.page.update()
+        self.search_results_container.height = min(
+            self.ui_constants.SEARCH_RESULTS_MAX_HEIGHT,
+            len(display_results) * self.ui_constants.SEARCH_RESULTS_ITEM_HEIGHT + 80
+        )
+        
+        if self.page:
+            self.page.update()
+    
+    def _create_search_result_card(self, candidate, index):
+        """Create enhanced search result card with improved design."""
+        return ft.Container(
+            content=ft.Row([
+                # Result information with enhanced layout
+                ft.Column([
+                    ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=candidate.full_name,
+                        text_type="body_primary",
+                        weight=ft.FontWeight.BOLD,
+                        color=self.colors.text
+                    ),
+                    ft.Row([
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=f"📍 {candidate.lat:.4f}, {candidate.lon:.4f}",
+                            text_type="small",
+                            color=self.colors.text_secondary
+                        ),
+                        ft.Container(width=8),
+                        ResponsiveTextFactory.create_adaptive_text(
+                            page=self.page,
+                            text=f"🌍 {candidate.country_code}",
+                            text_type="small",
+                            color=self.colors.text_secondary
+                        )
+                    ], spacing=0)
+                ], spacing=4, expand=True),
+                
+                # Enhanced add button
+                ft.Container(
+                    content=ft.ElevatedButton(
+                        content=ft.Row([
+                            ft.Icon(ft.Icons.ADD, size=16),
+                            ResponsiveTextFactory.create_adaptive_text(
+                                page=self.page,
+                                text="Aggiungi",
+                                text_type="small"
+                            )
+                        ], spacing=4, tight=True),
+                        on_click=lambda e, loc=candidate: self.add_location_from_search(loc),
+                        bgcolor=ft.Colors.with_opacity(0.1, self.colors.success),
+                        color=self.colors.success,
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(
+                                radius=self.ui_constants.BORDER_RADIUS_MEDIUM
+                            ),
+                            padding=ft.padding.symmetric(horizontal=12, vertical=8)
+                        ),
+                        height=36
+                    )
+                )
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            
+            padding=12,
+            margin=ft.margin.symmetric(vertical=2),
+            border=ft.border.all(
+                1, 
+                ft.Colors.with_opacity(0.12, self.colors.text)
+            ),
+            border_radius=self.ui_constants.BORDER_RADIUS_MEDIUM,
+            bgcolor=self.colors.surface_variant,
+            animate=ft.Animation(
+                self.ui_constants.ANIMATION_DURATION, 
+                ft.AnimationCurve.EASE_OUT
+            )
+        )
     
     def show_search_message(self, message, color):
-        """Show a message in the search results container."""
-        message_content = ft.Column([
-            ft.Icon(ft.Icons.INFO_OUTLINE, size=32, color=color),
-            ft.Text(message, text_align=ft.TextAlign.CENTER, color=color)
-        ], spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+        """Show enhanced message in search results with better visual design."""
+        # Determine appropriate icon based on message type
+        if "errore" in message.lower() or "error" in message.lower():
+            icon = ft.Icons.ERROR_OUTLINE
+        elif "nessun" in message.lower() or "no " in message.lower():
+            icon = ft.Icons.SEARCH_OFF
+        else:
+            icon = ft.Icons.INFO_OUTLINE
         
-        self.search_results_container.content = message_content
+        message_content = ft.Column([
+            ft.Container(
+                content=ft.Icon(icon, size=40, color=color),
+                padding=ft.padding.only(bottom=12)
+            ),
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=message,
+                text_type="body_secondary",
+                text_align=ft.TextAlign.CENTER,
+                color=color,
+                weight=ft.FontWeight.W_500
+            )
+        ], 
+        spacing=8, 
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+        
+        self.search_results_container.content = ft.Container(
+            content=message_content,
+            padding=20,
+            alignment=ft.alignment.center
+        )
         self.search_results_container.visible = True
-        self.search_results_container.height = 100
-        self.page.update()
+        self.search_results_container.height = 120
+        
+        if self.page:
+            self.page.update()
+    
+    # Legacy method kept for backward compatibility
+    def show_search_message_old(self, message, color):
+        """Legacy method - use show_search_message instead."""
+        self.show_search_message(message, color)
     
     def add_location_from_search(self, candidate):
-        """Add a location from search results."""
+        """Add location from search results with enhanced feedback and validation."""
         try:
+            # Validate candidate
+            if not candidate or not hasattr(candidate, 'full_name'):
+                logger.error("Invalid candidate provided")
+                self._show_error_snackbar("Errore: candidato non valido")
+                return
+            
+            logger.info(f"Adding location: {candidate.full_name}")
+            
+            # Add location using service
             result = self.location_service.add_location(
                 name=candidate.full_name,
                 lat=candidate.lat,
@@ -493,60 +1292,102 @@ class LocationManagerDialog:
             )
             
             if result:
-                logger.info(f"Posizione aggiunta con successo: {candidate.full_name}")
+                logger.info(f"Location added successfully: {candidate.full_name}")
                 
-                # Ricarica le località
+                # Reload locations
                 self.location_service.load_locations()
                 
-                # Nascondi risultati ricerca
+                # Clear search with smooth animation
                 self.clear_search()
                 
-                # Refresh lista località
+                # Refresh locations list
                 self.refresh_locations_list()
                 
-                # Snackbar di successo
-                self.show_snackbar(f"✅ Aggiunta: {candidate.full_name}", "#4CAF50")
+                # Show success notification
+                self._show_success_snackbar(
+                    f"{self.get_translation('location_manager_dialog.location_added_successfully')}: {candidate.full_name}"
+                )
                 
-                # Callback per aggiornare UI principale
+                # Update main UI if callback is available
                 if self.update_weather_callback:
-                    self.update_weather_callback()
-                    
+                    try:
+                        # Get current settings for the callback
+                        language = self.language or "it"
+                        unit = self.state_manager.get_state("unit") or "metric"
+                        
+                        # Call the callback with proper async handling
+                        if hasattr(self.page, 'run_task'):
+                            self.page.run_task(self.update_weather_callback, candidate.full_name, language, unit)
+                        else:
+                            logger.warning("Page doesn't support run_task, skipping weather update")
+                    except Exception as e:
+                        logger.warning(f"Weather callback error: {e}")
+                        
             else:
-                self.show_snackbar("⚠️ Località già esistente", "#FF9800")
+                self._show_warning_snackbar(
+                    self.get_translation('location_manager_dialog.location_already_exists')
+                )
                 
         except Exception as e:
-            logger.error(f"Errore durante l'aggiunta: {e}")
-            self.show_snackbar(f"Errore: {str(e)}", "#F44336")
+            logger.error(f"Error adding location: {e}")
+            self._show_error_snackbar(
+                f"{self.get_translation('location_manager_dialog.error_adding_location')}: {str(e)}"
+            )
     
     def clear_search(self):
-        """Clear search results and reset form."""
-        self.search_results_container.visible = False
-        self.search_results_container.height = 0
-        self.city_field.value = ""
-        self.state_field.value = ""
-        self.country_field.value = ""
-        self.page.update()
+        """Clear search results and reset form with enhanced UX."""
+        if self.search_results_container:
+            self.search_results_container.visible = False
+            self.search_results_container.height = 0
+            
+        # Clear form fields
+        if self.city_field:
+            self.city_field.value = ""
+        if self.state_field:
+            self.state_field.value = ""
+        if self.country_field:
+            self.country_field.value = ""
+            
+        if self.page:
+            self.page.update()
     
     def refresh_locations_list(self):
-        """Refresh only the locations list without recreating the entire dialog."""
+        """Enhanced refresh that updates only the locations list for better performance."""
         try:
-            # Trova il container della lista località nel dialog
-            if self.dialog and self.dialog.content and hasattr(self.dialog.content, 'content'):
-                column = self.dialog.content.content
-                if hasattr(column, 'controls'):
-                    # Trova l'indice del container delle località (dovrebbe essere l'ultimo prima del Container(height=15))
-                    for i, control in enumerate(column.controls):
-                        if hasattr(control, 'content') and hasattr(control.content, 'controls'):
-                            # Sostituisci con la nuova lista
-                            column.controls[i] = self.create_locations_list()
-                            break
-                    
+            if not self.dialog or not self.dialog.content:
+                logger.warning("Dialog not available for refresh")
+                return
+                
+            # Get the main column container
+            main_column = self.dialog.content.content
+            if not hasattr(main_column, 'controls'):
+                logger.warning("Dialog structure unexpected")
+                return
+            
+            # Find and update the locations list container
+            # The locations list should be the second-to-last control (before the bottom spacing)
+            locations_list_index = -2  # Second to last position
+            
+            if len(main_column.controls) > abs(locations_list_index):
+                # Create new locations list
+                new_locations_list = self.create_locations_list()
+                
+                # Replace the old list with the new one
+                main_column.controls[locations_list_index] = new_locations_list
+                
+                # Update the page
+                if self.page:
                     self.page.update()
                     
+                logger.info("Locations list refreshed successfully")
+            else:
+                logger.warning("Could not find locations list in dialog structure")
+                
         except Exception as ex:
-            logger.error(f"Errore durante il refresh della lista: {ex}")
-            # Fallback: ricrea tutto il dialog
-            self.show_dialog()
+            logger.error(f"Error refreshing locations list: {ex}")
+            logger.info("Attempting fallback: partial dialog refresh")
+            # Enhanced fallback: try to refresh dialog UI instead of full recreation
+            self._refresh_dialog_ui()
     
     def toggle_favorite(self, location_id: str):
         """Toggle favorite status using professional service."""
@@ -562,16 +1403,21 @@ class LocationManagerDialog:
                 # Ottieni lo stato aggiornato dopo il toggle
                 updated_location = self.location_service.get_location_by_id(location_id)
                 is_favorite = updated_location.get("favorite", False) if updated_location else False
-                status_text = "aggiunto ai" if is_favorite else "rimosso dai"
+                status_text = self.get_translation("added_to_favorites") if is_favorite else self.get_translation("removed_from_favorites")
                 self.page.snack_bar = ft.SnackBar(
-                    content=ft.Text(f"Località {status_text} preferiti"),
-                    bgcolor=self.Colors["accent"]
+                    content=ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=f"Località {status_text} {self.get_translation('favorites')}",
+                        text_type="body_primary",
+                        color=ft.Colors.WHITE
+                    ),
+                    bgcolor=self.colors.accent
                 )
                 self.page.snack_bar.open = True
                 self.page.update()
                 
-                # Refresh dialog - usa il nuovo metodo di refresh sicuro
-                self.refresh_dialog_safely()
+                # Refresh only the locations list instead of the entire dialog
+                self.refresh_locations_list()
             
         except Exception as ex:
             logger.error(f"Errore nel toggle favorite: {ex}")
@@ -580,65 +1426,124 @@ class LocationManagerDialog:
         """Safely refresh the dialog without causing overlay issues."""
         try:
             if self.dialog and self.page:
-                # Chiudi il dialog corrente usando page.close()
-                self.page.close(self.dialog)
-                    
-                # Ricrea il dialog
-                self.dialog = self.create_dialog()
-                self.page.open(self.dialog)
+                # Instead of closing and reopening, just refresh the locations list
+                self.refresh_locations_list()
+                logger.info("Dialog refreshed by updating locations list only")
                 
         except Exception as ex:
             logger.error(f"Errore durante il refresh sicuro del dialog: {ex}")
-            # Se c'è un errore, prova a mostrare il dialog da zero
-            self.show_dialog()
+            # Fallback to full refresh only if list refresh fails
+            try:
+                self.page.close(self.dialog)
+                self.dialog = self.create_dialog()
+                self.page.open(self.dialog)
+            except Exception as fallback_ex:
+                logger.error(f"Fallback refresh failed: {fallback_ex}")
     
     def use_location(self, location):
         """Use selected location as current location."""
         try:
+            logger.info(f"Using location: {location['name']} (ID: {location['id']})")
+            
             # Seleziona la località nel servizio
             success = self.location_service.select_location(location['id'])
             
             if success:
+                logger.info(f"Location service selected successfully: {location['name']}")
+                
                 # Aggiorna lo stato nell'app principale usando il metodo sincrono
                 if self.state_manager:
                     self.state_manager.set_state_sync('current_lat', location['lat'])
                     self.state_manager.set_state_sync('current_lon', location['lon'])
                     self.state_manager.set_state_sync('current_city', location['name'])
+                    
+                    # Trigger location change event through state manager
+                    try:
+                        self.state_manager.notify_observers("location_changed", {
+                            "city": location['name'],
+                            "lat": location['lat'],
+                            "lon": location['lon']
+                        })
+                        logger.info("Location change event triggered through state manager")
+                    except Exception as event_error:
+                        logger.warning(f"Could not trigger location change event: {event_error}")
+                    
+                    logger.info(f"State updated - lat: {location['lat']}, lon: {location['lon']}, city: {location['name']}")
                 
                 # Triggerare l'aggiornamento completo dell'UI
                 if self.update_weather_callback:
+                    logger.info("Triggering weather update callback")
                     # Ottieni impostazioni correnti
                     language = self.state_manager.get_state("language") or "it"
                     unit = self.state_manager.get_state("unit") or "metric"
+                    logger.info(f"Update parameters - city: {location['name']}, language: {language}, unit: {unit}")
                     
-                    # Chiama il callback per aggiornare l'UI usando run_task di Flet
-                    self.page.run_task(self._update_ui_async, location['name'], language, unit)
+                    # Try async callback first
+                    try:
+                        # Chiama il callback per aggiornare l'UI usando run_task di Flet
+                        self.page.run_task(self._update_ui_async, location['name'], language, unit)
+                    except Exception as callback_error:
+                        logger.error(f"Error in async callback: {callback_error}")
+                        # Fallback: try to trigger page update directly
+                        try:
+                            logger.info("Attempting fallback page update")
+                            if hasattr(self.page, 'update'):
+                                self.page.update()
+                        except Exception as update_error:
+                            logger.error(f"Fallback page update failed: {update_error}")
+                else:
+                    logger.warning("No update_weather_callback available")
                 
+                # Show success feedback
+                self._show_success_snackbar(f"Località selezionata: {location['name']}")
+                
+                # Refresh the locations list to show the new current location
+                self.refresh_locations_list()
+                
+                # Close dialog after a brief moment to allow user to see the feedback
                 if self.page:
-                    self.page.snack_bar = ft.SnackBar(
-                        content=ft.Text(f"Aggiornando meteo per: {location['name']}"),
-                        bgcolor=self.Colors["accent"]
-                    )
-                    self.page.snack_bar.open = True
-                    self.page.update()
-                
-                # Close dialog after selection
-                self.close_dialog()
+                    import asyncio
+                    async def delayed_close():
+                        await asyncio.sleep(1.5)  # 1.5 second delay
+                        try:
+                            self.close_dialog()
+                            logger.info("Dialog closed after location selection")
+                        except Exception as ex:
+                            logger.error(f"Error closing dialog: {ex}")
+                    
+                    self.page.run_task(delayed_close)
+            else:
+                logger.error(f"Failed to select location in service: {location['name']}")
+                self._show_error_snackbar(f"Errore nella selezione della località: {location['name']}")
                 
         except Exception as ex:
             logger.error(f"Errore nell'uso della località: {ex}")
+            self._show_error_snackbar(f"Errore nell'uso della località: {str(ex)}")
     
     async def _update_ui_async(self, city_name, language, unit):
-        """Aggiorna l'UI in modo asincrono."""
+        """Aggiorna l'UI in modo asincrono con logging dettagliato."""
         try:
+            logger.info(f"Starting async UI update for: city={city_name}, language={language}, unit={unit}")
+            
             if self.update_weather_callback:
+                logger.info("Calling update_weather_callback...")
                 result = await self.update_weather_callback(city_name, language, unit)
+                
                 if result:
                     logger.info(f"UI aggiornata con successo per: {city_name}")
                 else:
-                    logger.warning(f"Errore nell'aggiornamento UI per: {city_name}")
+                    logger.warning(f"Update callback returned false for: {city_name}")
+            else:
+                logger.error("update_weather_callback is None!")
+                
         except Exception as ex:
-            logger.error(f"Errore nell'aggiornamento asincrono: {ex}")
+            logger.error(f"Errore nell'aggiornamento asincrono per {city_name}: {ex}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            
+            # Show error feedback to user
+            if self.page:
+                self._show_error_snackbar(f"Errore nell'aggiornamento meteo per {city_name}")
     
     def remove_location(self, location_id: str):
         """Remove a location using professional service."""
@@ -652,7 +1557,12 @@ class LocationManagerDialog:
             
             if success and self.page:
                 self.page.snack_bar = ft.SnackBar(
-                    content=ft.Text(f"Località '{location_name}' rimossa"),
+                    content=ResponsiveTextFactory.create_adaptive_text(
+                        page=self.page,
+                        text=f"{self.get_translation('location_manager_dialog.location_removed')}: '{location_name}'",
+                        text_type="body_primary",
+                        color=ft.Colors.WHITE
+                    ),
                     bgcolor="#F44336"
                 )
                 self.page.snack_bar.open = True
@@ -664,37 +1574,56 @@ class LocationManagerDialog:
         except Exception as ex:
             logger.error(f"Errore nella rimozione della località: {ex}")
     
-    def show_location_settings(self, location):
-        """Show location-specific settings dialog."""
-        # Per ora mostra solo un messaggio, in futuro implementeremo il dialog completo
-        if self.page:
-            self.page.snack_bar = ft.SnackBar(
-                content=ft.Text(f"Configurazioni per {location['name']} (in sviluppo)"),
-                bgcolor=self.Colors["accent"]
-            )
-            self.page.snack_bar.open = True
-            self.page.update()
-    
     def show_statistics(self):
         """Show location statistics dialog."""
         try:
             stats = self.location_service.get_statistics()
             
             stats_content = ft.Column([
-                ft.Text("Statistiche Località", weight=ft.FontWeight.BOLD, size=16),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="Statistiche Località",
+                    text_type="title_secondary",
+                    weight=ft.FontWeight.BOLD
+                ),
                 ft.Divider(),
-                ft.Text(f"📍 Totale località: {stats['total_locations']}"),
-                ft.Text(f"⭐ Località preferite: {stats['favorite_locations']}"),
-                ft.Text(f"🗂️ File storage: {stats['storage_size_bytes']} bytes"),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"Totale località: {stats['total_locations']}",
+                    text_type="body_primary"
+                ),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"Località preferite: {stats['favorite_locations']}",
+                    text_type="body_primary"
+                ),
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"File storage: {stats['storage_size_bytes']} bytes",
+                    text_type="body_primary"
+                ),
                 
-                ft.Text("📊 Paesi rappresentati:", weight=ft.FontWeight.BOLD, size=14),
-                *[ft.Text(f"  🏳️ {country}: {count}") 
-                  for country, count in stats['countries'].items()],
+                ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="Paesi rappresentati:",
+                    text_type="body_secondary",
+                    weight=ft.FontWeight.BOLD
+                ),
+                *[ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text=f"{country}: {count}",
+                    text_type="caption"
+                ) for country, count in stats['countries'].items()],
                 
             ], spacing=8)
             
             self.stats_dialog = ft.AlertDialog(
-                title=ft.Text("Statistiche"),
+                title=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="Statistiche",
+                    text_type="title_small",
+                    weight=ft.FontWeight.BOLD
+                ),
                 content=ft.Container(content=stats_content, width=300),
                 actions=[ft.TextButton("Chiudi", on_click=lambda e: self.close_stats_dialog())]
             )
@@ -715,23 +1644,6 @@ class LocationManagerDialog:
             logger.error(f"Errore durante l'aggiornamento: {e}")
             self.show_snackbar("Errore durante l'aggiornamento")
     
-    def export_locations(self):
-        """Export locations to a file."""
-        try:
-            all_locations = self.location_service.get_all_locations()
-            if not all_locations:
-                self.show_snackbar("Nessuna località da esportare")
-                return
-            
-            # Simulazione esportazione (in futuro potresti implementare il salvataggio file)
-            export_count = len(all_locations)
-            logger.info(f"Exported {export_count} locations")
-            self.show_snackbar(f"Esportate {export_count} località!", "#4CAF50")
-            
-        except Exception as e:
-            logger.error(f"Errore durante l'esportazione: {e}")
-            self.show_snackbar("Errore durante l'esportazione")
-    
     def close_stats_dialog(self):
         """Close statistics dialog properly."""
         try:
@@ -746,67 +1658,162 @@ class LocationManagerDialog:
         """Use current GPS location."""
         if self.page:
             self.page.snack_bar = ft.SnackBar(
-                content=ft.Text("Funzionalità GPS in sviluppo"),
-                bgcolor=self.Colors["accent"]
+                content=ResponsiveTextFactory.create_adaptive_text(
+                    page=self.page,
+                    text="Funzionalità GPS in sviluppo",
+                    text_type="body_primary",
+                    color=ft.Colors.WHITE
+                ),
+                bgcolor=self.colors.accent
             )
             self.page.snack_bar.open = True
             self.page.update()
     
     def close_dialog(self, e=None):
-        """Close the dialog properly using page.close()."""
+        """Enhanced dialog closure with proper cleanup and error handling."""
         try:
-            logger.info("Iniziando chiusura LocationManagerDialog")
+            logger.info("Closing LocationManagerDialog")
             
-            # Chiudi prima eventuali dialog secondari (stats)
+            # Close secondary dialogs first
             if self.stats_dialog and self.page:
-                self.page.close(self.stats_dialog)
-                self.stats_dialog = None
+                try:
+                    self.page.close(self.stats_dialog)
+                    self.stats_dialog = None
+                    logger.info("Stats dialog closed")
+                except Exception as ex:
+                    logger.warning(f"Error closing stats dialog: {ex}")
             
-            # Poi chiudi il dialog principale usando page.close()
-            if self.dialog and self.page:
-                self.page.close(self.dialog)
-                self.dialog = None
-            
-            logger.info("LocationManagerDialog chiuso correttamente")
-            
-        except Exception as ex:
-            logger.error(f"Errore durante la chiusura del dialog: {ex}")
-            # Fallback: prova a chiudere forzatamente
+            # Close main dialog
             if self.dialog and self.page:
                 try:
                     self.page.close(self.dialog)
                     self.dialog = None
-                except Exception:
-                    pass
-
-    def show_snackbar(self, message, color="#4CAF50"):
-        """Helper per mostrare notifiche snackbar."""
-        if self.page:
-            self.page.snack_bar = ft.SnackBar(
-                content=ft.Text(message),
-                bgcolor=color
-            )
-            self.page.snack_bar.open = True
-            self.page.update()
-
-    def cleanup(self):
-        """Cleanup method to unregister observers and close dialogs."""
-        try:
-            # Chiudi tutti i dialog aperti usando page.close()
-            if self.dialog and self.page:
-                self.page.close(self.dialog)
-                self.dialog = None
-                
-            if self.stats_dialog and self.page:
-                self.page.close(self.stats_dialog)
-                self.stats_dialog = None
+                    logger.info("Main dialog closed successfully")
+                except Exception as ex:
+                    logger.warning(f"Error closing main dialog: {ex}")
             
-            # Unregister observers
-            if self.state_manager:
-                self.state_manager.unregister_observer("language_event", self.update_ui)
-                self.state_manager.unregister_observer("theme_event", self.update_ui)
-                
-            logger.info("LocationManagerDialog cleanup completato")
+            # Clear component references for memory optimization
+            self._clear_component_references()
+            
+            logger.info("LocationManagerDialog closed successfully")
             
         except Exception as ex:
-            logger.error(f"Errore durante il cleanup: {ex}")
+            logger.error(f"Error during dialog closure: {ex}")
+            # Fallback cleanup
+            self._force_cleanup()
+    
+    def _clear_component_references(self):
+        """Clear component references for memory optimization."""
+        try:
+            self.city_field = None
+            self.state_field = None
+            self.country_field = None
+            self.search_button = None
+            self.search_results_container = None
+            self.locations_list = None
+            self.is_searching = False
+        except Exception as e:
+            logger.warning(f"Error clearing component references: {e}")
+    
+    def _force_cleanup(self):
+        """Force cleanup in case of errors."""
+        try:
+            if self.page:
+                # Try to close any open dialogs
+                for dialog_attr in ['dialog', 'stats_dialog']:
+                    dialog = getattr(self, dialog_attr, None)
+                    if dialog:
+                        try:
+                            self.page.close(dialog)
+                            setattr(self, dialog_attr, None)
+                        except Exception:
+                            pass
+        except Exception as e:
+            logger.error(f"Error in force cleanup: {e}")
+
+    def _show_success_snackbar(self, message: str):
+        """Show success snackbar with consistent styling."""
+        self._show_snackbar(message, self.colors.success, ft.Icons.CHECK_CIRCLE_OUTLINE)
+    
+    def _show_warning_snackbar(self, message: str):
+        """Show warning snackbar with consistent styling."""
+        self._show_snackbar(message, self.colors.warning, ft.Icons.WARNING_OUTLINED)
+    
+    def _show_error_snackbar(self, message: str):
+        """Show error snackbar with consistent styling."""
+        self._show_snackbar(message, self.colors.error, ft.Icons.ERROR_OUTLINE)
+    
+    def _show_snackbar(self, message: str, color: str, icon=None):
+        """Enhanced snackbar with consistent design and icons."""
+        if not self.page:
+            return
+            
+        content = ft.Row([
+            ft.Icon(icon, color=ft.Colors.WHITE, size=20) if icon else ft.Container(),
+            ResponsiveTextFactory.create_adaptive_text(
+                page=self.page,
+                text=message,
+                text_type="body_primary",
+                color=ft.Colors.WHITE,
+                weight=ft.FontWeight.W_500
+            )
+        ], spacing=8, tight=True)
+        
+        self.page.snack_bar = ft.SnackBar(
+            content=content,
+            bgcolor=color,
+            duration=3000,
+            show_close_icon=True
+        )
+        self.page.snack_bar.open = True
+        self.page.update()
+    
+    # Legacy method for backward compatibility
+    def show_snackbar(self, message, color="#4CAF50"):
+        """Legacy method - use specific snackbar methods instead."""
+        if color == "#4CAF50":
+            self._show_success_snackbar(message)
+        elif color in ["#FF9800", "#FFC107"]:
+            self._show_warning_snackbar(message)
+        elif color in ["#F44336", "#D32F2F"]:
+            self._show_error_snackbar(message)
+        else:
+            self._show_snackbar(message, color)
+
+    def cleanup(self):
+        """Enhanced cleanup with comprehensive resource management."""
+        try:
+            logger.info("Starting LocationManagerDialog cleanup")
+            
+            # Close all dialogs
+            self.close_dialog()
+            
+            # Unregister observers to prevent memory leaks
+            if self.state_manager:
+                try:
+                    self.state_manager.unregister_observer("language_event", self._handle_language_change)
+                    self.state_manager.unregister_observer("theme_event", self._handle_theme_change)
+                    # Legacy observers for backward compatibility
+                    self.state_manager.unregister_observer("language_event", self.update_ui)
+                    self.state_manager.unregister_observer("theme_event", self.update_ui)
+                    logger.info("State observers unregistered")
+                except Exception as ex:
+                    logger.warning(f"Error unregistering observers: {ex}")
+            
+            # Clear translation cache
+            self._clear_translation_cache()
+            
+            # Clear component references
+            self._clear_component_references()
+            
+            logger.info("LocationManagerDialog cleanup completed successfully")
+            
+        except Exception as ex:
+            logger.error(f"Error during cleanup: {ex}")
+    
+    def __del__(self):
+        """Destructor to ensure cleanup."""
+        try:
+            self.cleanup()
+        except Exception:
+            pass  # Ignore errors in destructor

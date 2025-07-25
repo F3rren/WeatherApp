@@ -2,6 +2,7 @@ import flet as ft
 from typing import Callable, Optional
 import inspect
 import asyncio
+from translations import translation_manager
 
 class LocationToggle:
     """
@@ -13,6 +14,13 @@ class LocationToggle:
         self._value = value
         self.page = page
         self.switch = None
+    
+    def _get_translation(self, key: str) -> str:
+        """Get translation for a key using the new modular translation system."""
+        language = "it"  # Default fallback
+        if self.page and hasattr(self.page, 'session') and hasattr(self.page.session, 'language'):
+            language = self.page.session.language or "it"
+        return translation_manager.get_translation("weather", key, language)
     
     def build(self) -> ft.Row:
         """Build the location toggle"""
@@ -47,7 +55,7 @@ class LocationToggle:
                     self.on_change(e)
         
         self.switch = ft.Switch(
-            label="Usa posizione attuale",
+            label=self._get_translation("location_toggle.use_current_location"),
             value=self._value,
             on_change=handle_toggle_change,
             active_color=ft.Colors.BLUE,

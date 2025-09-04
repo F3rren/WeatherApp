@@ -1,4 +1,4 @@
-# MeteoApp
+# WeatherApp
 
 A modern cross-platform weather application built with Python, Flet, and Flutter.
 

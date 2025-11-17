@@ -1,19 +1,47 @@
 # WeatherApp
+![Python](https://img.shields.io/badge/python-3.11-blue.svg)
+![MIT](https://img.shields.io/badge/license-MIT-green.svg)
+![Status: Stable](https://img.shields.io/badge/status-stable-success.svg)
 
 A modern cross-platform weather application built with Python, Flet, and Flutter.
 
-## ✨ Features
+## Demo 
+<div>
+  <img src="./assets/main-dashboard.png" height="300" width="500" style="margin-right:10px;">
+  <img src="./assets/bottom-dashboard.png" height="300" width="500" style="margin-right:10px;">
+</div>
+<i>Main dashboard overview | Detailed analysis and advanced tools</i>
 
-- 🌤️ **Real-time Weather Data**: Current conditions, hourly and daily forecasts
-- 📊 **Interactive Charts**: Temperature trends and precipitation forecasts  
-- 🌍 **Multi-language Support**: 12+ languages with automatic locale detection
-- 🎨 **Dynamic Theming**: Light/dark themes with automatic switching
-- 📍 **Location Services**: GPS integration and city search
-- 🚨 **Weather Alerts**: Customizable notifications for severe weather
-- 📱 **Responsive Design**: Optimized for desktop, tablet, and mobile
-- ⚡ **High Performance**: Async operations with intelligent caching
-- 🔄 **State Persistence**: Settings and preferences saved across sessions
-- 🌐 **Cross-platform**: Native experience on Windows, macOS, Linux, iOS, Android, and Web
+<br>
+<br>
+
+<img src="./assets/settings.png" width="600">
+<i>Settings section (theme, language, units)</i>
+
+## Current Status
+
+- **Functionality:** Project is completed and fully operational on all supported platforms. All main features (weather dashboard, settings, charts) are working as intended.
+- **Known limitations:** 
+  - Layout and container structure could be optimized for better ergonomics across some screen resolutions.
+  - Mobile/tablet responsiveness can be improved.
+  - Some UI widgets could be streamlined for usability.
+- **Roadmap / Future Improvements:**
+  - Advanced layout optimization for multi-screen experience.
+  - Refactoring of “settings” and “alerts” sections.
+  - Possible addition of custom weather widgets and new API integrations.
+
+## Features
+
+- **Real-time Weather Data**: Current conditions, hourly and daily forecasts
+- **Interactive Charts**: Temperature trends and precipitation forecasts  
+- **Multi-language Support**: 12+ languages with automatic locale detection
+- **Dynamic Theming**: Light/dark themes with automatic switching
+- **Location Services**: GPS integration and city search
+- **Weather Alerts**: Customizable notifications for severe weather
+- **Responsive Design**: Optimized for desktop, tablet, and mobile
+- **High Performance**: Async operations with intelligent caching
+- **State Persistence**: Settings and preferences saved across sessions
+- **Cross-platform**: Native experience on Windows, macOS, Linux, iOS, Android, and Web
 
 ## Project Structure
 
@@ -127,7 +155,6 @@ The project follows a modular architecture with both Python backend and Flutter 
 - Flet
 - Requests
 - python-dotenv
-- Babel
 
 ## Installation
 
